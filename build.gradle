@@ -1,0 +1,132 @@
+plugins {
+    id 'fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+    maven { url = 'https://maven.shedaniel.me/' }
+    maven { url = 'https://maven.terraformersmc.com/releases/' }
+    maven { url = 'https://cursemaven.com' }
+    maven { url = 'https://api.modrinth.com/maven' }
+}
+
+def exactTideJar = file('dev/libs/tide-fabric-1.21.1-2.1.1.jar')
+def apexJar = file('dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar')
+
+configurations {
+    optionalCompatCompileOnly
+    compileOnly.extendsFrom(optionalCompatCompileOnly)
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings "net.fabricmc:yarn:${yarn_mappings}:v2"
+
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    if (exactTideJar.exists()) {
+        modImplementation files(exactTideJar)
+        logger.lifecycle('Tideborne: compiling against exact local Tide 2.1.1 JAR')
+    } else {
+        modImplementation "maven.modrinth:die1AF7i:${tide_fallback_modrinth_version}"
+        logger.lifecycle('Tideborne: exact Tide 2.1.1 JAR not found; using Tide 2.1 Fabric API-compatible fallback for compilation')
+    }
+
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:${cloth_config_version}") {
+        exclude group: 'net.fabricmc.fabric-api'
+    }
+    modImplementation "com.terraformersmc:modmenu:${modmenu_version}"
+    modImplementation "maven.modrinth:lhGA9TYQ:${architectury_modrinth_version}"
+    modImplementation "curse.maven:ftb-library-fabric-438495:${ftb_library_curse_file}"
+    modImplementation "curse.maven:ftb-teams-fabric-438497:${ftb_teams_curse_file}"
+
+    if (apexJar.exists()) {
+        optionalCompatCompileOnly files(apexJar)
+        logger.lifecycle('Tideborne: Apex Waters compile-only compatibility enabled')
+    }
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+loom {
+    runs {
+        client {
+            client()
+            name 'Tideborne Client'
+            runDir 'run/client'
+        }
+        server {
+            server()
+            name 'Tideborne Server'
+            runDir 'run/server'
+        }
+        gametest {
+            server()
+            name 'Tideborne GameTest'
+            runDir 'run/gametest'
+            vmArg '-Dfabric-api.gametest'
+        }
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') {
+        expand version: project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked']
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    from('LICENSE') {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
+
+tasks.register('verifyExactDependencies') {
+    group = 'verification'
+    description = 'Fails unless the exact local Tide 2.1.1 dependency is present.'
+    doLast {
+        if (!exactTideJar.exists()) {
+            throw new GradleException('Missing dev/libs/tide-fabric-1.21.1-2.1.1.jar')
+        }
+    }
+}
+
+tasks.register('printBuildBaseline') {
+    group = 'help'
+    doLast {
+        println "Tideborne ${project.version}"
+        println "Minecraft ${minecraft_version}"
+        println "Java 21"
+        println "Tide runtime target ${tide_runtime_version}"
+        println "Exact Tide local JAR present: ${exactTideJar.exists()}"
+        println "Apex Waters local JAR present: ${apexJar.exists()}"
+    }
+}
