@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Minecraft run directories
+run/
+runs/
+logs/
+crash-reports/
+saves/
+
+# Local exact dependency JARs. Never commit third-party binaries here.
+dev/libs/*.jar
+!dev/libs/README.md
+
+# Reconstruction scratch output
+reconstruction/work/
+reconstruction/generated/
+
+# OS
+.DS_Store
+Thumbs.db
