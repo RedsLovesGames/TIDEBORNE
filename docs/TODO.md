@@ -94,7 +94,11 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Prevent legacy mutation selection from rerolling Condition for canonical V2 specimens, including when the compatibility mirror is missing.
 - [x] Add deterministic Condition tests for repeatability, approximately 5% event rate, approximately 65/35 subtype split, Body Type stacking, and scalar one-Condition state.
 - [x] Verify canonical Condition survives the current item/entity/item transfer path and legacy catch handling. Green Condition run: `33165044512` on commit `023c9a01918f525c8a726862d7cd800bc587d9f3`.
-- [ ] Add independent Pigmentation axis with event 1.5%, Albino 70%, Iridescent 30%.
+- [x] Add independent Pigmentation axis with event 1.5%, Albino 70%, Iridescent 30%.
+- [x] Derive Pigmentation deterministically from independent `PIGMENTATION_EVENT` and `PIGMENTATION_VARIANT` specimen-seed salts.
+- [x] Allow Body Type, Condition, and Pigmentation to stack without legacy mutation exclusivity; seed `29894` proves `GIANT + PARASITE_RIDDEN + IRIDESCENT` in full canonical generation.
+- [x] Persist exactly one canonical Pigmentation value and prove legacy catch individualization cannot reroll it.
+- [x] Verify canonical Pigmentation survives item/entity/item representation transfer. Green Pigmentation run: `33165703632` on commit `7fd6181c09ca0e49dd598adf5fbb39d992eb29e3`.
 - [ ] Keep Specimen Quality independent from Body Type, Condition, and Pigmentation.
 - [ ] Prove all intended compatible trait combinations can stack and incompatible combinations are rejected deterministically.
 - [ ] Add deterministic seeded tests for every remaining independent axis.

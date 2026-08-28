@@ -63,7 +63,7 @@ Implementation root:
 src/main/java/com/redslovesgames/tideborne/fishing/v2/
 ```
 
-The original deterministic pure V2 suite remains green, with additional Body Type and Condition coverage layered on top.
+The original deterministic pure V2 suite remains green, with additional Body Type, Condition, and Pigmentation coverage layered on top.
 
 ## Steps 1 through 4 runtime integration is green
 
@@ -198,17 +198,43 @@ The runtime GameTest fixture now carries canonical `DWARF` plus `SCARRED`. Item/
 
 Condition implementation commit `023c9a01918f525c8a726862d7cd800bc587d9f3` is green in GitHub Actions run `33165044512`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
+## Step 6 Pigmentation axis is complete
+
+The Pigmentation portion of the independent trait-axis step is implemented as a separate canonical axis and does not use the legacy mutually-exclusive mutation selector.
+
+Frozen Pigmentation behavior:
+
+- canonical values are `NORMAL`, `ALBINO`, and `IRIDESCENT`
+- the base Pigmentation event probability is exactly 1.5%; a failed event returns `NORMAL`
+- when the event triggers, Albino is exactly 70% of the conditional split and Iridescent is exactly 30%
+- event and subtype selection use the reserved `TraitRandom.Salts.PIGMENTATION_EVENT` and `PIGMENTATION_VARIANT` streams
+- Pigmentation does not consume or depend on Body Type or Condition streams, and those axes do not consume Pigmentation streams
+- `SpecimenData.pigmentation` is one required enum-valued field, so every canonical specimen has exactly one Pigmentation state
+- `SpecimenGenerator.generate` finalizes Body Type physical size, then Condition, then Pigmentation; all three decisions derive independently from the same immutable canonical specimen seed through separate salts
+- there is no cross-axis mutual exclusion: deterministic seed `29894` produces `GIANT + PARASITE_RIDDEN + IRIDESCENT` in full canonical generation
+- Pigmentation application preserves species identity, natural percentile, base and final length, final percentile, Body Type, Condition, Quality, Perfect Catch state, score fields, and provenance
+- `CanonicalSpecimenStorage` persists Pigmentation to `SPECIMEN_PIGMENTATION`; it is not packed into legacy `MUTATION`, so legacy Condition compatibility state cannot make Pigmentation mutually exclusive
+- `CatchTraitService.assignIfAbsent` exits through the canonical V2 path before legacy mutation selection and does not write `SPECIMEN_PIGMENTATION`, so canonical Pigmentation cannot be rerolled by the old mutation authority
+- the existing generic canonical source-stack snapshot preserves `SPECIMEN_PIGMENTATION` through item/entity/item representation transfer without adding a second Pigmentation representation
+- no Trait Luck, rarity compensation, Specimen Quality, Perfect Catch redesign, or scoring behavior is introduced by this slice
+
+Deterministic Pigmentation tests cover exact probability constants, repeatability, approximately 1.5% event frequency, approximately 70/30 triggered subtype frequency, independence from Body Type and Condition streams, deterministic three-axis stacking, idempotent Pigmentation application, and preservation of the single natural specimen sample.
+
+Runtime GameTests write a canonical `GIANT + PARASITE_RIDDEN + IRIDESCENT` specimen, deliberately replace the legacy `MUTATION` mirror with `albino`, invoke the legacy catch individualizer, and prove canonical Iridescent Pigmentation remains unchanged while only the Condition compatibility mirror is repaired. A second GameTest proves the same canonical Pigmentation survives item/entity/item representation transfer.
+
+Pigmentation implementation commit `7fd6181c09ca0e49dd598adf5fbb39d992eb29e3` is green in GitHub Actions run `33165703632`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition portion of Step 6 is complete with server-authoritative deterministic generation, canonical persistence, Body Type stacking, transfer survival, and legacy mutation reroll isolation.
+Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, transfer survival, and legacy mutation reroll isolation.
 
-Do not begin Trait Luck, rarity compensation, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next incomplete independent-axis work is Pigmentation; it is not implemented by the Condition slice.
+Do not begin Trait Luck, rarity compensation, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next incomplete independent-axis work is Specimen Quality.
 
 ## Later frozen slices
 
 Execute in this order:
 
-1. remaining independent Pigmentation and Specimen Quality axis work
+1. remaining independent Specimen Quality axis work
 2. Trait Luck, rarity compensation, and per-species Momentum
 3. Perfect Catch redesign and percentile-based Perfect Specimen
 4. FishScore V2 with the canonical linear 1 to 3000 mapping
