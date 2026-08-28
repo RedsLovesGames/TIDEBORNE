@@ -14,14 +14,14 @@ Updated: 2026-08-28
 
 ## Fishing System 2.0 run boundary
 
-This run stopped after specification execution steps 1 through 4:
+Specification execution steps 1 through 4 are complete in the pure V2 domain layer:
 
 1. `FishingContext`, `SpeciesProfile`, and canonical rarity
 2. species selection and Fishing Luck
 3. `SpecimenData`, direct percentile, and size math
 4. fight normalization and size fight scaling
 
-Body Type generation, independent traits, Trait Luck, Momentum, Perfect Catch changes, Perfect Specimen, FishScore V2, migration, UI integration, and progression were not started.
+They are not yet wired into the reconstructed Tideborne runtime. Body Type generation, independent traits, Trait Luck, Momentum, Perfect Catch changes, Perfect Specimen, FishScore V2, migration, UI integration, and progression remain gated on the authoritative 1.3.57 baseline.
 
 ## Verified implementation status
 
@@ -33,9 +33,9 @@ Body Type generation, independent traits, Trait Luck, Momentum, Perfect Catch ch
 | Step 3 specimen data and exact size math | Domain layer complete | Immutable canonical `SpecimenData`, deterministic seeded base generation, and direct lognormal CDF and quantile calculations replace sampled lookup behavior in the new layer |
 | Step 4 fight normalization and size scaling | Domain layer complete | Formula-based Tempo normalization, bounded Strength, catch-zone calculation, external outlier clamps, and percentile Strength and Tempo multipliers |
 | Deterministic unit tests | Green | 17 of 17 tests passed locally on Java 21 |
-| Full repository build | Green | GitHub Actions run `33138932023` completed `./gradlew clean build --stacktrace` successfully on Java 21 and uploaded JAR artifacts |
+| Full repository build | Green for maintained source | GitHub Actions run `33138932023` executes `./gradlew clean build --stacktrace` successfully on Java 21 and uploads JAR artifacts |
 | Gradle wrapper | Complete | Pinned Gradle 8.12 wrapper with distribution SHA-256 verification |
-| Reconstructed 1.3.57 legacy integration | Blocked by missing baseline | Current `dev` still lacks the reconstructed legacy Java source, resources, tests, and complete reconstruction payload, so no legacy caller could be migrated or superseded code safely removed |
+| Reconstructed 1.3.57 legacy integration | Blocked by unavailable authoritative input | The staged reconstruction archive is corrupt and incomplete, authoritative resources are absent, and the exact 1.3.57 JAR/content tree is not present in the repository or retained Actions artifacts |
 
 ## Implemented files
 
@@ -67,26 +67,40 @@ Tests are under the matching `src/test/java` package.
 - `e080d8fa9def6b52c80b0899fa72c144f8fba6be`: persist specification and baseline blocker state
 - `dbbcd382f33fa7ed0dd428bd20e3162036e2127f`: implement Fishing System 2.0 domain steps 1 through 4
 - `babba1747c71d9f08274b085b5e0b599daa7f6d7`: restore the Gradle wrapper and validate `dev` builds
+- `248f1dca2d560491dc862f8098f2861d9753b965`: record green Fishing System 2.0 steps 1 through 4
 
 ## Reconstruction blocker evidence
 
-The repository's staged 1.3.57 class archive remains incomplete:
+Phase 0 was rechecked against the current repository and Git history on 2026-08-28. The staged 1.3.57 class payload cannot satisfy the frozen reconstruction contract:
 
-- expected compressed archive SHA-256: `e7265ad9a6df36f79be098d47b5fcda570532e5488671e58a0047b6ad70f4ac6`
-- committed partial payload SHA-256: `5e05d2065e4c41b72c5830cd17f70abbfc343b5358953ec5e476f264abb2825f`
-- expected classes: 272
-- readable classes before archive truncation: 91
-- missing: remaining class chunks, resource chunks, reconstruction completion marker, reconstructed legacy Java source, reconstructed resources, baseline tests, and persistence fixtures
+- expected authoritative release JAR SHA-256: `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`
+- expected canonical content-tree SHA-256: `5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6`
+- expected compressed class archive SHA-256: `e7265ad9a6df36f79be098d47b5fcda570532e5488671e58a0047b6ad70f4ac6`
+- current staged class archive SHA-256: `5e05d2065e4c41b72c5830cd17f70abbfc343b5358953ec5e476f264abb2825f`
+- current staged class archive size: 256,503 bytes
+- `xz --test` result: corrupt compressed data
+- extraction result: 91 readable `.class` files before corruption, versus 272 required
+- historical payload scan: no committed staged class payload reproduces the expected class archive SHA-256
+- the historical `Stage remaining Tideborne reconstruction class payload` commit contains a literal `[... truncated for display ...]` marker at character 10,000, so the missing bytes are not recoverable from Git history
+- `reconstruction/input` contains no authoritative `resources.tar.xz.b64.part-*` payload
+- therefore the required 442-file canonical content tree cannot be reconstructed or hash-verified from the repository as it stands
 
-The green build verifies the new pure domain layer and current repository contents. It does not prove runtime integration with the missing 1.3.57 legacy code, Tide mixins, Satchel, Journal, records, history, teams, networking, or minigame callers.
+The expected JAR SHA and canonical tree SHA remain frozen verification anchors, not verified artifacts in this run. Verification of the actual 1.3.57 release and 442-file tree must wait until the authoritative JAR, content-identical tree, or corrected complete class/resource payload is available.
+
+The green maintained-source build verifies the existing pure domain layer only. It does not prove runtime integration with legacy Tideborne code, Tide mixins, Satchel, Journal, records, history, teams, networking, or minigame callers.
 
 ## Exact next action
 
-Restore the complete reconstructed Tideborne 1.3.57 `src/main/java`, `src/main/resources`, baseline tests, and persistence fixtures onto `dev`. Verify the pinned content-tree hash, then run the untouched baseline build.
+Restore one authoritative reconstruction input that can reproduce the frozen 1.3.57 content tree:
 
-After that baseline is green, inspect only the legacy rarity, selection, percentile, size, and fight paths. Adapt those callers to the completed `com.redslovesgames.tideborne.fishing.v2` domain layer, remove old `selection_quality` behavior only after every affected caller is migrated, and add integration and serialization tests. Do not start step 5 until this integration pass is green.
+1. the exact Tideborne 1.3.57 release JAR with SHA-256 `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`, or
+2. a content-identical 442-file tree, or
+3. corrected complete class and resource reconstruction payloads.
+
+Then verify 442 actual files, 272 `.class` files, and canonical content-tree SHA-256 `5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6`. Reconstruct complete `src/main/java`, `src/main/resources`, baseline tests, and persistence fixtures and run the untouched baseline `./gradlew clean build --stacktrace`.
+
+Only after that baseline is green should legacy rarity, selection, percentile, size, and fight callers be adapted to `com.redslovesgames.tideborne.fishing.v2`, with integration and serialization tests added and superseded calculations removed after migration. Step 5 remains blocked until steps 1 through 4 are actually integrated and green.
 
 ## Later work
 
 The prioritized backlog is in `docs/TODO.md`. The next design slice after the integration gate is step 5, Body Type.
-
