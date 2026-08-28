@@ -1,91 +1,74 @@
 # Current development state
 
-Updated: 2026-08-27
+Updated: 2026-08-28
 
-## Baseline
+## Baseline and branch
 
-- target release behavior: Tideborne 1.3.57
+- compatibility baseline: Tideborne 1.3.57
 - Minecraft: 1.21.1
 - Java: 21
 - Tide runtime target: 2.1.1
-- working branch: `reconstruct-1.3.57`
+- active development branch: `dev`
+- `main` must remain untouched
+- authoritative redesign contract: `docs/FISHING_SYSTEM_2_SPEC.md`
 
-## Verified from the authoritative JAR
+## Fishing System 2.0 run boundary
+
+This run is limited to specification execution steps 1 through 4:
+
+1. `FishingContext`, `SpeciesProfile`, and canonical rarity
+2. species selection and Fishing Luck
+3. `SpecimenData`, exact percentile, and size math
+4. fight normalization and size fight scaling
+
+Do not begin Body Type generation, independent traits, Trait Luck, Momentum, Perfect Catch changes, Perfect Specimen, FishScore V2, migration, UI integration, or progression work during this run.
+
+## Current implementation status
+
+| Slice | Status | Verification |
+|---|---|---|
+| Authoritative Fishing System 2.0 specification | Complete locally | Design persisted in `docs/FISHING_SYSTEM_2_SPEC.md` |
+| Reconstructed 1.3.57 compatibility baseline | Blocked in repository | Current `dev` tree contains only 91 of 272 class files in an incomplete reconstruction archive, no reconstructed `src/`, no tests, no resources payload, and no Gradle wrapper |
+| Step 1 domain models and canonical rarity | Not started | Waiting for complete baseline inspection |
+| Step 2 species selection and Fishing Luck | Not started | Waiting for complete baseline inspection |
+| Step 3 specimen data and exact size math | Not started | Waiting for complete baseline inspection |
+| Step 4 fight normalization and size scaling | Not started | Waiting for complete baseline inspection |
+| Full `./gradlew build` | Blocked | `gradlew` and reconstructed source are absent from the current branch |
+
+## Repository evidence
+
+At the start of this run, `dev`, `main`, and `reconstruct-1.3.57` all pointed to commit `41e53b052660e04e546b07b305c5047b3f646675` with tree `946bae9433a6f7a73e4381ac46b32dd47e463b66`.
+
+The committed class reconstruction payload decodes to a corrupt and incomplete archive:
+
+- expected compressed archive SHA-256: `e7265ad9a6df36f79be098d47b5fcda570532e5488671e58a0047b6ad70f4ac6`
+- committed payload SHA-256: `5e05d2065e4c41b72c5830cd17f70abbfc343b5358953ec5e476f264abb2825f`
+- expected classes: 272
+- readable classes before archive truncation: 91
+- missing: remaining class chunks, resource chunks, reconstruction completion marker, reconstructed Java source, reconstructed resources, tests, and Gradle wrapper
+
+Do not invent legacy behavior or claim a compatibility build from this partial payload.
+
+## Verified from the authoritative 1.3.57 metadata
 
 - version and Fabric metadata
 - entrypoint classes
 - mixin config names
-- declared required/suggested dependencies
-- package/class inventory
-- authentic resource inventory
-- Tideborne JAR SHA-256
-- supplied Tide 2.1.1 JAR SHA-256/SHA-1
+- declared required and suggested dependencies
+- package architecture
+- Tideborne JAR and content-tree hashes
+- Tide 2.1.1 target hashes
+- persistence, networking, and ID compatibility requirements documented in `AGENTS.md` and `docs/RECONSTRUCTION.md`
 
-## Repository bootstrap status
+## Exact next action
 
-Completed:
+Complete the 1.3.57 baseline transfer onto `dev` by supplying either:
 
-- Gradle/Loom project metadata
-- pinned Minecraft/Fabric/Yarn dependency versions
-- exact-local Tide 2.1.1 override path
-- CI-compatible Tide compile fallback
-- human/AI instructions
-- recovered package architecture map
-- reconstruction provenance rules
-- validation requirements
-- local dependency isolation rules
+1. the full reconstructed `src/main/java`, `src/main/resources`, tests, and Gradle wrapper, or
+2. the authoritative `Tideborne-1.3.57-perfect-catch-trait-luck.jar` plus the missing reconstruction payload needed to reproduce them.
 
-In progress:
+Then verify the content-tree hash and run the baseline build before implementing step 1. Once the baseline is green, inspect only legacy rarity, selection, percentile, size, and fight code and continue in the order recorded above.
 
-- reconstructing `src/main/java` from 1.3.57 bytecode
-- extracting `src/main/resources` from the release JAR
-- producing Gradle wrapper
-- compiling recovered source without semantic changes
+## Later work
 
-Not started on this branch:
-
-- Fishing System 2.0
-- new mutation rates
-- new fishing luck model
-- new specimen model
-- new FishScore formula
-- minigame rebalance beyond characterization
-
-## Highest-priority reconstruction tasks
-
-1. Recover all top-level Java sources and resources.
-2. Make `./gradlew build` succeed with exact Tide 2.1.1 locally.
-3. Make client and dedicated-server smoke tests start cleanly.
-4. Add characterization tests for trait roll, percentile, size transforms, FishScore, Satchel capacity/XP, team records, Leviathan Bait, and minigame modifiers.
-5. Move algorithms out of mixins/screens into named services without changing results.
-6. Isolate optional Apex/Myths integrations from core class loading.
-7. Add migration fixtures from existing 1.3.57 saves/items/config.
-8. Merge the clean baseline to `main` only after validation.
-
-## Known structural debt recovered from the JAR
-
-These are refactor targets, not defects by themselves:
-
-- multiple legacy module namespaces inside one final mod JAR
-- several static/global service-style classes
-- gameplay logic mixed into integration/mixin paths
-- large Satchel and team-journal screen classes
-- persistence, networking, and domain logic coupled in some services
-- separate legacy config systems coordinated by a unified facade
-- optional Apex integration that references external classes directly
-- repeated Tide hook/player-data integration across modules
-
-## Stop condition for the reconstruction phase
-
-The phase is complete only when:
-
-- source and resources are committed
-- clean checkout builds with documented dependency setup
-- exact Tide 2.1.1 build passes locally
-- CI build passes
-- GameTests/characterization tests pass
-- no known 1.3.57 feature is intentionally removed
-- persistence/network identifiers are inventoried
-- the major package boundaries are understandable from code and docs
-
-Only then should the new fishing system branch from this baseline.
+The complete prioritized backlog is in `docs/TODO.md`. Do not advance beyond step 4 until this run's tests and full build are green.
