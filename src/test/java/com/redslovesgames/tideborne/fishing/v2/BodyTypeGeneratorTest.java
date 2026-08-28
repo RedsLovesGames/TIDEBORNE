@@ -3,11 +3,26 @@ package com.redslovesgames.tideborne.fishing.v2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class BodyTypeGeneratorTest {
     private static final int SAMPLE_SIZE = 200_000;
     private final BodyTypeGenerator generator = new BodyTypeGenerator();
+    private final SpecimenGenerator specimenGenerator = new SpecimenGenerator();
+    private final SpeciesProfile species = new SpeciesProfile(
+            "tide:test_fish",
+            CanonicalRarity.THREE_STAR,
+            1.0,
+            SpeciesEligibility.always(),
+            0.8,
+            1.0,
+            "steady",
+            new LogNormalSizeDistribution(25.0, 0.4),
+            Set.of(),
+            Map.of()
+    );
 
     @Test
     void baseEventProbabilityIsExactlyFivePercent() {
@@ -87,6 +102,104 @@ class BodyTypeGeneratorTest {
         assertEquals(0.50, BodyTypeGenerator.giantProbability(50.0));
         assertEquals(0.625, BodyTypeGenerator.giantProbability(75.0));
         assertEquals(0.75, BodyTypeGenerator.giantProbability(100.0));
+    }
+
+    @Test
+    void bodyTypeSizeMultiplierIsDeterministic() {
+        long seed = 2_468_013_579L;
+        assertEquals(
+                generator.sizeMultiplier(seed, SpecimenData.BodyType.GIANT),
+                generator.sizeMultiplier(seed, SpecimenData.BodyType.GIANT)
+        );
+        assertEquals(
+                generator.sizeMultiplier(seed, SpecimenData.BodyType.DWARF),
+                generator.sizeMultiplier(seed, SpecimenData.BodyType.DWARF)
+        );
+    }
+
+    @Test
+    void bodyTypeSizeMultipliersStayInsideCanonicalBounds() {
+        for (long seed = 0; seed < 50_000; seed++) {
+            double giant = generator.sizeMultiplier(seed, SpecimenData.BodyType.GIANT);
+            double dwarf = generator.sizeMultiplier(seed, SpecimenData.BodyType.DWARF);
+
+            assertTrue(giant >= BodyTypeGenerator.GIANT_MIN_SIZE_MULTIPLIER);
+            assertTrue(giant <= BodyTypeGenerator.GIANT_MAX_SIZE_MULTIPLIER);
+            assertTrue(dwarf >= BodyTypeGenerator.DWARF_MIN_SIZE_MULTIPLIER);
+            assertTrue(dwarf <= BodyTypeGenerator.DWARF_MAX_SIZE_MULTIPLIER);
+        }
+    }
+
+    @Test
+    void normalMultiplierAndPhysicalSizeAreExactlyUnchanged() {
+        SpecimenData base = specimenGenerator.generateBase(species, 13579L, SpecimenData.Provenance.generated());
+        SpecimenData normal = generator.applyPhysicalSize(species, base, SpecimenData.BodyType.NORMAL);
+
+        assertEquals(1.0, generator.sizeMultiplier(base.deterministicSeed(), SpecimenData.BodyType.NORMAL));
+        assertEquals(base.baseLength(), normal.finalLength());
+        assertEquals(base.basePercentile(), normal.finalPercentile());
+        assertEquals(base.basePercentile(), normal.basePercentile());
+        assertEquals(SpecimenData.BodyType.NORMAL, normal.bodyType());
+    }
+
+    @Test
+    void giantIsAlwaysPhysicallyLargerThanBase() {
+        for (long seed = 0; seed < 10_000; seed += 101) {
+            SpecimenData base = specimenGenerator.generateBase(species, seed, SpecimenData.Provenance.generated());
+            SpecimenData giant = generator.applyPhysicalSize(species, base, SpecimenData.BodyType.GIANT);
+            assertTrue(giant.finalLength() > base.baseLength());
+        }
+    }
+
+    @Test
+    void dwarfIsAlwaysPhysicallySmallerThanBase() {
+        for (long seed = 0; seed < 10_000; seed += 101) {
+            SpecimenData base = specimenGenerator.generateBase(species, seed, SpecimenData.Provenance.generated());
+            SpecimenData dwarf = generator.applyPhysicalSize(species, base, SpecimenData.BodyType.DWARF);
+            assertTrue(dwarf.finalLength() < base.baseLength());
+        }
+    }
+
+    @Test
+    void physicalSizeAdjustmentPreservesNaturalPercentile() {
+        SpecimenData base = specimenGenerator.generateBase(species, 777123L, SpecimenData.Provenance.generated());
+        SpecimenData giant = generator.applyPhysicalSize(species, base, SpecimenData.BodyType.GIANT);
+        SpecimenData dwarf = generator.applyPhysicalSize(species, base, SpecimenData.BodyType.DWARF);
+
+        assertEquals(base.basePercentile(), giant.basePercentile());
+        assertEquals(base.basePercentile(), dwarf.basePercentile());
+        assertEquals(
+                species.sizeDistribution().percentile(giant.finalLength()),
+                giant.finalPercentile(),
+                1.0e-10
+        );
+        assertEquals(
+                species.sizeDistribution().percentile(dwarf.finalLength()),
+                dwarf.finalPercentile(),
+                1.0e-10
+        );
+    }
+
+    @Test
+    void noPhysicalSizeSpeciesRetainNaturalPercentile() {
+        SpeciesProfile sizeless = new SpeciesProfile(
+                "tide:sizeless",
+                CanonicalRarity.ONE_STAR,
+                1.0,
+                SpeciesEligibility.always(),
+                0.5,
+                0.5,
+                "steady",
+                NoPhysicalSizeDistribution.INSTANCE,
+                Set.of(),
+                Map.of()
+        );
+        SpecimenData base = specimenGenerator.generateBase(sizeless, 9988L, SpecimenData.Provenance.generated());
+        SpecimenData giant = generator.applyPhysicalSize(sizeless, base, SpecimenData.BodyType.GIANT);
+
+        assertEquals(0.0, giant.finalLength());
+        assertEquals(base.basePercentile(), giant.finalPercentile());
+        assertEquals(base.basePercentile(), giant.basePercentile());
     }
 
     private int count(SpecimenData.BodyType bodyType, double percentile) {

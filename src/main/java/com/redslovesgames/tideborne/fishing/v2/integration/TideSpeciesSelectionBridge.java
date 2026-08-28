@@ -23,7 +23,7 @@ import java.util.SplittableRandom;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
-/** Server-authoritative bridge that owns V2 species selection and natural specimen generation. */
+/** Server-authoritative bridge that owns V2 species selection and canonical specimen generation. */
 public final class TideSpeciesSelectionBridge {
     public static final TideSpeciesSelectionBridge INSTANCE = new TideSpeciesSelectionBridge();
 
@@ -67,7 +67,7 @@ public final class TideSpeciesSelectionBridge {
             return CatchResult.empty();
         }
 
-        SpecimenData specimen = specimenGenerator.generateBase(
+        SpecimenData specimen = specimenGenerator.generate(
                 selected,
                 CatchSeedDeriver.specimenSeed(catchSeed),
                 new SpecimenData.Provenance(

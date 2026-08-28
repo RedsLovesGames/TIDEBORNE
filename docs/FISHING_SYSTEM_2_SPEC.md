@@ -174,6 +174,10 @@ Persist:
 - `finalLength`
 - `finalPercentile`
 
+`basePercentile` is the single natural specimen percentile generated with the base-size sample and is never rerolled by Body Type or later trait axes. `baseLength` is the matching natural physical length.
+
+`finalLength` is the physical length after deterministic physical-size modifiers such as Giant or Dwarf. `finalPercentile` is the percentile implied by that `finalLength` in the same species size distribution, calculated with the direct CDF. It is a deterministic size-adjusted percentile, not a second random specimen percentile. For species with no physical-size distribution, `finalPercentile` remains equal to `basePercentile` because no meaningful size-adjusted percentile exists.
+
 ### Size fight effect
 
 ```text
@@ -277,7 +281,7 @@ Physical multipliers:
 - Giant: 1.10x to 1.30x
 - Dwarf: 0.60x to 0.82x
 
-Prefer a deterministic specimen-seeded multiplier.
+Use a dedicated deterministic specimen-seeded Body Type size stream. The multiplier must not consume the natural percentile/base-size RNG stream or any Condition, Pigmentation, or Specimen Quality stream.
 
 Fight modifiers:
 

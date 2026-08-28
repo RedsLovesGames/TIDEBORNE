@@ -73,8 +73,8 @@ Verified runtime contracts:
 
 - `FishSelectorMixin` replaces only Tide `FishSelector#getResult`. Tide's top-level `TideFishingManager` category selector and `FishSelector.weight(context) = 85` remain unchanged, so ordinary Tide fish versus junk, crate, and treasure probability is unchanged.
 - `TideSpeciesProfileAdapter` preserves Tide `shouldKeep` eligibility and existing fishing/compatibility weight modifiers while omitting the superseded legacy `selection_quality` adjustment from the canonical species-selection path.
-- one server-owned Tide fishing context produces one canonical catch seed, one V2 species selection, and one `SpecimenGenerator.generateBase` call.
-- `SpecimenGenerator` produces one canonical natural percentile and one canonical final length for the current Steps 1 through 4 model.
+- one server-owned Tide fishing context produces one canonical catch seed, one V2 species selection, and one `SpecimenGenerator` canonical generation call.
+- `SpecimenGenerator` samples one canonical natural percentile and one matching base length, then deterministic trait finalization may transform physical size without another natural sample.
 - the V2 bridge intentionally does not call Tide `FishData#getResult`, preventing Tide's independent `SizeData#getRandomLength` roll from becoming a hidden second natural size roll.
 - `CanonicalSpecimenStorage` persists canonical specimen identity and mirrors the canonical final percentile/length into compatibility components before downstream catch handling.
 - the canonical `FightProfile` explicitly drives minigame behavior, strength, tempo, and catch-zone baseline values.
@@ -102,15 +102,15 @@ The utility:
 - derives each trait decision directly from the canonical specimen seed plus a fixed salt
 - exposes deterministic unit doubles in `[0, 1)` using the upper 53 bits of a mixed 64-bit value
 - uses no mutable or shared RNG state
-- gives Body Type, Condition, Pigmentation, and Perfect Specimen decisions reserved stable salts
-- keeps event and variant decisions on separate salts
+- gives Body Type event, Body Type variant, Body Type physical size, Condition, Pigmentation, and Perfect Specimen decisions reserved stable salts
+- keeps event, variant, and physical-size decisions on separate salts
 - guarantees that evaluating or adding an unrelated future salt does not consume state or shift existing outcomes
 
-## Step 5 Body Type probability selection
+## Step 5 Body Type selection and physical size
 
-The pure V2 `BodyTypeGenerator` now implements only the Body Type probability-selection slice.
+The V2 `BodyTypeGenerator` now implements Body Type probability selection plus canonical physical-size finalization.
 
-Frozen behavior in this slice:
+Frozen behavior implemented so far:
 
 - canonical values are `NORMAL`, `GIANT`, and `DWARF`
 - the Body Type event probability is exactly 5%; a failed event returns `NORMAL`
@@ -118,23 +118,34 @@ Frozen behavior in this slice:
 - after an event, Giant probability is `0.25 + 0.50 * (naturalPercentile / 100.0)`
 - Giant therefore rises smoothly from 25% of Body Type events at P0 to 75% at P100, with 50% at P50
 - there is no hard percentile threshold; Giant remains possible at low percentile and Dwarf remains possible at high percentile
-- Body Type selection does not consume or depend on Condition or Pigmentation random streams
+- Giant physical size is sampled uniformly and deterministically from 1.10x to 1.30x using the independent `BODY_TYPE_SIZE` stream
+- Dwarf physical size is sampled uniformly and deterministically from 0.60x to 0.82x using the same dedicated Body Type size stream
+- Normal physical size is exactly 1.0x
+- Body Type finalization always starts from canonical `baseLength`; it never rerolls or stacks a second base-size sample
+- `basePercentile` remains the one natural specimen percentile generated with `baseLength`
+- `finalLength` is `baseLength * bodyTypeSizeMultiplier`
+- for species with a physical size distribution, `finalPercentile` is the deterministic CDF percentile of `finalLength`; it is size-adjusted, not independently sampled
+- species represented by `NoPhysicalSizeDistribution` retain `finalPercentile == basePercentile` because there is no meaningful physical-size percentile to derive
+- Body Type selection and physical size do not consume or depend on Condition, Pigmentation, or Quality streams
+- the Tide V2 species bridge now calls full `SpecimenGenerator.generate`, which performs exactly one base specimen sample and then applies Body Type finalization before canonical storage and fight-profile creation
 
-This slice intentionally does not apply Giant/Dwarf physical-size multipliers or fight modifiers and does not yet wire Body Type selection into downstream catch finalization.
+This interpretation of `finalPercentile` is now explicit in `docs/FISHING_SYSTEM_2_SPEC.md`: the separate base and final size pairs exist so the natural specimen identity remains frozen while deterministic physical modifiers can change the final measured percentile without introducing a second random specimen roll.
 
-Deterministic tests cover exact 5% configuration, repeatability, approximately 5% sampled event frequency, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, and independence from other trait streams.
+Deterministic tests cover exact 5% configuration, repeatability, approximately 5% sampled event frequency, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, independence from other trait streams, physical multiplier bounds, deterministic multiplier values, exact Normal identity, Giant/Dwarf size direction, preserved base percentile, size-adjusted final percentile, no-physical-size fallback, and exactly one base-size quantile sample during complete generation.
+
+The explicit Giant/Dwarf fight multipliers are not implemented in this slice. Their Strength and Tempo multipliers remain the next Step 5 task.
 
 ## Current execution gate
 
-Steps 1 through 4 are runtime-integrated and green, deterministic trait RNG splitting is in place, and the isolated Body Type selection service is implemented.
+Steps 1 through 4 are runtime-integrated and green. Deterministic trait RNG splitting is in place. Body Type probability selection and physical-size finalization are implemented and runtime-wired.
 
-Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 in this slice. Giant/Dwarf physical-size and fight modifiers remain pending Step 5 work after this isolated probability-selection stage.
+Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 in this slice. The remaining Step 5 work is only the explicit Giant/Dwarf fight modifiers: Giant Strength 1.08 and Tempo 0.95, Dwarf Strength 0.92 and Tempo 1.08.
 
 ## Later frozen slices
 
 Execute in this order:
 
-1. finish Body Type physical-size/fight integration
+1. finish Body Type fight modifiers
 2. independent Condition and Pigmentation axes
 3. Trait Luck, rarity compensation, and per-species Momentum
 4. Perfect Catch redesign and percentile-based Perfect Specimen

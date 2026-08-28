@@ -19,7 +19,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Persist the complete Fishing System 2.0 specification.
 - [x] Implement `FishingContext`, `SpeciesProfile`, canonical rarity, and compatibility-ready eligibility/environment boundaries.
 - [x] Implement `SpeciesSelectionService` and rarity-aware Fishing Luck.
-- [x] Implement canonical immutable `SpecimenData`, deterministic base generation, and direct lognormal percentile/quantile math.
+- [x] Implement canonical immutable `SpecimenData`, deterministic base generation, and direct percentile/quantile math.
 - [x] Implement normalized Strength/Tempo, catch-zone math, external clamps, and percentile fight scaling.
 - [x] Add deterministic unit tests for the pure V2 mechanics.
 - [x] Verify the existing V2 deterministic suite at 17 of 17 passing tests.
@@ -54,6 +54,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Add stateless V2 trait random splitting derived from canonical specimen seed plus stable named salts.
 - [x] Provide deterministic unit-double generation in `[0, 1)` without mutable shared RNG state.
 - [x] Reserve independent event/variant salts for Body Type, Condition, Pigmentation, plus a Perfect Specimen salt.
+- [x] Reserve an independent Body Type physical-size salt so size finalization cannot shift any trait decision stream.
 - [x] Prove same seed plus same salt is exactly stable.
 - [x] Prove different salts produce independent deterministic values.
 - [x] Prove call order and unrelated future salts cannot shift existing outcomes.
@@ -63,12 +64,14 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 ## Step 5 - Body Type
 
 - [x] Implement independent `NORMAL`, `GIANT`, and `DWARF` Body Type selection using the frozen 5% event model and smooth percentile bias.
-- [ ] Implement Giant final-size multiplier 1.10 to 1.30 and Dwarf multiplier 0.60 to 0.82.
+- [x] Implement Giant final-size multiplier 1.10 to 1.30 and Dwarf multiplier 0.60 to 0.82.
 - [ ] Apply Giant fight modifiers Strength 1.08 and Tempo 0.95.
 - [ ] Apply Dwarf fight modifiers Strength 0.92 and Tempo 1.08.
 - [x] Ensure Body Type selection uses the canonical specimen seed and never rerolls natural percentile.
+- [x] Keep `basePercentile` as the original natural roll and derive size-adjusted `finalPercentile` deterministically from `finalLength` through the species CDF, with no second random percentile.
 - [x] Add deterministic seeded Body Type probability tests, including event rate, percentile bias, endpoint possibility, P50 balance, and trait-stream independence.
-- [ ] Wire selected Body Type into canonical specimen finalization when the physical-size/fight integration slice is implemented.
+- [x] Add physical-size tests for multiplier bounds, deterministic multipliers, Normal identity, Giant/Dwarf direction, preserved natural percentile, and exactly one base-size sample.
+- [x] Wire selected Body Type and physical size into canonical specimen finalization and the Tide V2 catch bridge.
 
 ## Step 6 - independent trait axes
 

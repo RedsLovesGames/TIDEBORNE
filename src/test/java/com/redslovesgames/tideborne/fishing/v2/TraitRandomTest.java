@@ -23,11 +23,15 @@ class TraitRandomTest {
     void differentSaltsProduceIndependentDeterministicValues() {
         long seed = 8827349234L;
         double bodyType = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_EVENT);
+        double bodyTypeSize = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_SIZE);
         double condition = TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_EVENT);
         double pigmentation = TraitRandom.unitDouble(seed, TraitRandom.Salts.PIGMENTATION_EVENT);
 
+        assertNotEquals(bodyType, bodyTypeSize);
         assertNotEquals(bodyType, condition);
         assertNotEquals(bodyType, pigmentation);
+        assertNotEquals(bodyTypeSize, condition);
+        assertNotEquals(bodyTypeSize, pigmentation);
         assertNotEquals(condition, pigmentation);
     }
 
@@ -35,27 +39,33 @@ class TraitRandomTest {
     void repeatedCallsDoNotDependOnCallOrder() {
         long seed = -551928371337L;
         double bodyFirst = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_EVENT);
-        double conditionSecond = TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_EVENT);
+        double sizeSecond = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_SIZE);
+        double conditionThird = TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_EVENT);
 
         double conditionFirst = TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_EVENT);
-        double bodySecond = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_EVENT);
+        double sizeSecondAgain = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_SIZE);
+        double bodyThird = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_EVENT);
 
-        assertEquals(bodyFirst, bodySecond);
-        assertEquals(conditionSecond, conditionFirst);
+        assertEquals(bodyFirst, bodyThird);
+        assertEquals(sizeSecond, sizeSecondAgain);
+        assertEquals(conditionThird, conditionFirst);
     }
 
     @Test
     void unrelatedSaltCannotShiftExistingValues() {
         long seed = 42L;
         double bodyBefore = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_VARIANT);
+        double bodySizeBefore = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_SIZE);
         double conditionBefore = TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_VARIANT);
 
         TraitRandom.unitDouble(seed, 0x0F0E0D0C0B0A0908L);
 
         double bodyAfter = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_VARIANT);
+        double bodySizeAfter = TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_SIZE);
         double conditionAfter = TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_VARIANT);
 
         assertEquals(bodyBefore, bodyAfter);
+        assertEquals(bodySizeBefore, bodySizeAfter);
         assertEquals(conditionBefore, conditionAfter);
     }
 
@@ -65,6 +75,7 @@ class TraitRandomTest {
         long[] salts = {
                 TraitRandom.Salts.BODY_TYPE_EVENT,
                 TraitRandom.Salts.BODY_TYPE_VARIANT,
+                TraitRandom.Salts.BODY_TYPE_SIZE,
                 TraitRandom.Salts.CONDITION_EVENT,
                 TraitRandom.Salts.CONDITION_VARIANT,
                 TraitRandom.Salts.PIGMENTATION_EVENT,

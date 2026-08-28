@@ -21,6 +21,7 @@ public final class TraitRandom {
     public static final class Salts {
         public static final long BODY_TYPE_EVENT = 0x2D99787926D46932L;
         public static final long BODY_TYPE_VARIANT = 0xA3C59AC3C14F91D5L;
+        public static final long BODY_TYPE_SIZE = 0xE7037ED1A0B428DBL;
         public static final long CONDITION_EVENT = 0x6C8E9CF570932BD5L;
         public static final long CONDITION_VARIANT = 0xB8A7E7D6F31D4A19L;
         public static final long PIGMENTATION_EVENT = 0x41C64E6DA3C59A7BL;
