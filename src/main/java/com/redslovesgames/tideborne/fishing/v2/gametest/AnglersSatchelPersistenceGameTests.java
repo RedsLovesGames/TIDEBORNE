@@ -88,7 +88,7 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
                         == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
                 "Successful Satchel legacy migration did not write the current canonical schema");
         assertCanonicalMetadata(helper, migrated, stored, "on repeated canonical read");
-        assertLegacyMetadata(helper, stored, "after one-time migration while stored");
+        assertLegacyCustomName(helper, stored, "after one-time migration while stored");
 
         AnglersSatchelStorage.ExtractionResult extraction = AnglersSatchelStorage.extractAt(satchel, 0, true);
         helper.assertTrue(extraction.status() == AnglersSatchelStorage.ExtractionStatus.SUCCESS,
@@ -98,7 +98,7 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
         helper.assertTrue(CanonicalSpecimenStorage.detectMigration(extracted)
                         == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
                 "Extracted migrated specimen no longer had current canonical schema");
-        assertLegacyMetadata(helper, extracted, "after extraction");
+        assertLegacyCustomName(helper, extracted, "after extraction");
         helper.assertTrue(AnglersSatchelStorage.size(satchel) == 0,
                 "Extracted migrated specimen remained duplicated in the Satchel");
         helper.complete();
@@ -161,6 +161,10 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
                 "Legacy percentile changed " + phase);
         helper.assertTrue(Double.compare(47.75, TideItemData.FISH_LENGTH.getOrDefault(stack, -1.0)) == 0,
                 "Legacy Tide fish length changed " + phase);
+        assertLegacyCustomName(helper, stack, phase);
+    }
+
+    private static void assertLegacyCustomName(TestContext helper, ItemStack stack, String phase) {
         helper.assertTrue("Legacy Satchel Cod".equals(stack.getName().getString()), "Legacy custom name changed " + phase);
     }
 
