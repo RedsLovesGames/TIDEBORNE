@@ -318,11 +318,32 @@ Statistical coverage samples Body Type events across multiple rarity and Trait L
 
 Implementation commit `149aa5b9d67ec59334dae4fb3810c27db586029a` introduced the canonical pipeline integration. Commit `ee5bc701feed9aa7fff2c9c4694ed45bfcba38cb` updated the remaining Body Type test callers to the species-aware canonical API after CI exposed the stale two-argument calls. GitHub Actions run `33168959022` is green: exact-dependency `./gradlew clean build --stacktrace`, unit and statistical tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
+## Condition and Pigmentation trait probability integration is complete
+
+Stage 13 moves Condition and Pigmentation event probability onto the same canonical `TraitProbabilityService` path already used by Body Type.
+
+Frozen integration behavior:
+
+- Condition keeps its exact 5% base event probability, then selected-species rarity compensation is applied, then Trait Luck, then the final bounded probability is compared against `TraitRandom.Salts.CONDITION_EVENT`.
+- Pigmentation keeps its exact 1.5% base event probability, then selected-species rarity compensation is applied, then Trait Luck, then the final bounded probability is compared against `TraitRandom.Salts.PIGMENTATION_EVENT`.
+- `ConditionGenerator` and `PigmentationGenerator` now require the selected canonical `SpeciesProfile` and Trait Luck for event selection. Neither accepts a second independent rarity value.
+- `SpecimenGenerator` forwards the same server-owned Trait Luck value it already receives from `TideSpeciesSelectionBridge` to Body Type, Condition, and Pigmentation in the existing single-pass generation order.
+- Condition subtype selection still uses `TraitRandom.Salts.CONDITION_VARIANT` with the frozen 65% Scarred and 35% Parasite-Ridden conditional split.
+- Pigmentation subtype selection still uses `TraitRandom.Salts.PIGMENTATION_VARIANT` with the frozen 70% Albino and 30% Iridescent conditional split.
+- rarity compensation and Trait Luck alter only whether each axis event occurs. They do not alter subtype ratios and do not consume the variant RNG streams.
+- Body Type, Condition, and Pigmentation continue to use independent event and variant salts, so evaluating one axis does not shift any other axis and notable values can still stack.
+- all adjusted trait probability decisions remain in the server-authoritative canonical specimen generator. Client/UI and legacy compatibility code continue to consume persisted canonical axis values rather than recomputing them.
+- no Specimen Quality, Momentum, Perfect Catch reward, Perfect Specimen, or FishScore behavior is implemented by this stage.
+
+Exact tests prove one-star zero-Trait-Luck base probabilities remain 5% and 1.5%, five-star rarity compensation raises them to 12% and 3.6%, and five-star T=10 raises them to 22.56% and 7.0704% respectively. Statistical tests apply the compensated T=10 event probabilities while checking that triggered Condition remains approximately 65/35 and triggered Pigmentation remains approximately 70/30. The existing deterministic stacking seed remains valid at the one-star zero-Trait-Luck baseline, and `SpecimenGeneratorTest` now proves the same Trait Luck value is forwarded to all three implemented axes without changing the single natural specimen sample.
+
+Implementation commit `7e4a9f6804b07428c57c752e56d40e5075b7b6a2` contains the generator, runtime forwarding, and test changes. GitHub Actions run `33169902017` performs the exact-dependency clean build, unit/statistical tests, Fabric GameTests, and artifact upload for that implementation commit.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. Trait Luck and rarity compensation are implemented canonically, and Body Type is now the first trait axis fully routed through that shared probability pipeline.
+Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. Trait Luck and rarity compensation are implemented canonically and are now routed through Body Type, Condition, and Pigmentation without changing their independent subtype streams.
 
-Do not wire Trait Luck or rarity compensation into Condition, Pigmentation, Specimen Quality, or other axes as part of this completed stage. Do not implement Momentum or the Perfect Catch redesign here. Specimen Quality also remains incomplete. Continue only with the next explicitly queued stage.
+Do not extend this completed stage into Specimen Quality, Momentum, Perfect Catch rewards, Perfect Specimen, or FishScore. Continue only with the next explicitly queued stage.
 
 ## Later frozen slices
 
