@@ -133,11 +133,13 @@ This interpretation of `finalPercentile` is now explicit in `docs/FISHING_SYSTEM
 
 Deterministic tests cover exact 5% configuration, repeatability, approximately 5% sampled event frequency, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, independence from other trait streams, physical multiplier bounds, deterministic multiplier values, exact Normal identity, Giant/Dwarf size direction, preserved base percentile, size-adjusted final percentile, no-physical-size fallback, and exactly one base-size quantile sample during complete generation.
 
+Validation is green on implementation commit `d2d7fe9fd5b9d874bf94a64a2ce347fff1932d21` with GitHub Actions run `33162634808`. `./gradlew clean build --stacktrace`, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
 The explicit Giant/Dwarf fight multipliers are not implemented in this slice. Their Strength and Tempo multipliers remain the next Step 5 task.
 
 ## Current execution gate
 
-Steps 1 through 4 are runtime-integrated and green. Deterministic trait RNG splitting is in place. Body Type probability selection and physical-size finalization are implemented and runtime-wired.
+Steps 1 through 4 are runtime-integrated and green. Deterministic trait RNG splitting is in place. Body Type probability selection and physical-size finalization are implemented, runtime-wired, and green.
 
 Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 in this slice. The remaining Step 5 work is only the explicit Giant/Dwarf fight modifiers: Giant Strength 1.08 and Tempo 0.95, Dwarf Strength 0.92 and Tempo 1.08.
 
