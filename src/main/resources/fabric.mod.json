@@ -28,7 +28,8 @@
     "fabric-gametest": [
       "com.redslovesgames.tidetraits.gametest.TideTraitsGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.CanonicalFishingGameTests",
-      "com.redslovesgames.tideborne.fishing.v2.gametest.FishDisplayPersistenceGameTests"
+      "com.redslovesgames.tideborne.fishing.v2.gametest.FishDisplayPersistenceGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.gametest.AnglersSatchelPersistenceGameTests"
     ]
   },
   "mixins": [
