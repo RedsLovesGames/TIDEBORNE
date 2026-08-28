@@ -47,6 +47,15 @@ public final class PerfectCatchTraitBoost {
 
    private static void applyOne(ItemStack var0) {
       if (var0 != null && !var0.isEmpty()) {
+         // Fishing System 2.0 owns natural percentile and final length once a canonical
+         // specimen marker is present. Keep the center-zone Perfect Catch skill check,
+         // but defer its V2 reward behavior to the dedicated Step 8 redesign instead of
+         // letting this 1.x compatibility path rewrite canonical size after the fight.
+         String canonicalSpecies = (String)var0.get(TideTraitsComponents.SPECIMEN_SPECIES_ID);
+         if (canonicalSpecies != null && !canonicalSpecies.isBlank()) {
+            return;
+         }
+
          Optional var1 = FishData.get(var0);
          if (!var1.isEmpty()) {
             Double var2 = (Double)var0.get(TideTraitsComponents.SIZE_PERCENTILE);
