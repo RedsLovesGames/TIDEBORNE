@@ -17,7 +17,7 @@ public final class TideboundEntities {
    public static final EntityType<ChumProjectileEntity> CHUM_PROJECTILE = (EntityType<ChumProjectileEntity>)Registry.register(
       Registries.ENTITY_TYPE,
       TideboundCompatibility.id("chum_projectile"),
-      Builder.create(ChumProjectileEntity::new, SpawnGroup.MISC).dimensions(0.25F, 0.25F).maxTrackingRange(4).trackingTickInterval(10).build()
+      Builder.<ChumProjectileEntity>create(ChumProjectileEntity::new, SpawnGroup.MISC).dimensions(0.25F, 0.25F).maxTrackingRange(4).trackingTickInterval(10).build()
    );
 
    private TideboundEntities() {

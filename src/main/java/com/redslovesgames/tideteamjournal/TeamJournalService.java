@@ -95,7 +95,7 @@ public final class TeamJournalService {
          TeamJournalService.TeamContext context = resolveAndMigrate(player);
          NbtCompound root = getOrCreateRoot(context.effectiveTeam());
          boolean captured = RecordHolderStore.updateAfterCatch(root, beforeData, afterData, player.getUuid(), player.getGameProfile().getName());
-         List events = TeamProgressStore.recordCatch(
+         List<TeamProgressStore.RecordEvent> events = TeamProgressStore.recordCatch(
             root, beforeData, afterData, player.getUuid(), player.getGameProfile().getName(), player.getServerWorld().getTime(), ServerConfig.get()
          );
          TeamProgressStore.tideborneRecordCurrentTopFish(root, player.getUuid(), player.getGameProfile().getName());

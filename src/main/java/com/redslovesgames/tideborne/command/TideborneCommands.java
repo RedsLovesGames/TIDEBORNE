@@ -27,48 +27,52 @@ public final class TideborneCommands {
       }
    }
 
-   private static void register(CommandDispatcher<ServerCommandSource> var0) {
-      CommandNode var1 = var0.getRoot().getChild("tideborne_internal_traits");
-      CommandNode var2 = var0.getRoot().getChild("tideborne_internal_team");
-      CommandNode var3 = var0.getRoot().getChild("tideborne_internal_fishing");
-      LiteralArgumentBuilder var4 = (LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)LiteralArgumentBuilder.literal(
-                           "tideborne"
-                        )
-                        .executes(var0x -> help((ServerCommandSource)var0x.getSource())))
-                     .then(LiteralArgumentBuilder.literal("help").executes(var0x -> help((ServerCommandSource)var0x.getSource()))))
-                  .then(LiteralArgumentBuilder.literal("status").executes(var0x -> status((ServerCommandSource)var0x.getSource()))))
-               .then(
-                  ((LiteralArgumentBuilder)LiteralArgumentBuilder.literal("reload").requires(var0x -> var0x.hasPermissionLevel(2)))
-                     .executes(var0x -> reload((ServerCommandSource)var0x.getSource()))
-               ))
-            .then(
-               LiteralArgumentBuilder.literal("migrate")
-                  .then(LiteralArgumentBuilder.literal("status").executes(var0x -> migrationStatus((ServerCommandSource)var0x.getSource())))
-            ))
+   private static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
+      CommandNode<ServerCommandSource> traits = dispatcher.getRoot().getChild("tideborne_internal_traits");
+      CommandNode<ServerCommandSource> journal = dispatcher.getRoot().getChild("tideborne_internal_team");
+      CommandNode<ServerCommandSource> fishing = dispatcher.getRoot().getChild("tideborne_internal_fishing");
+
+      LiteralArgumentBuilder<ServerCommandSource> root = LiteralArgumentBuilder.<ServerCommandSource>literal("tideborne")
+         .executes(context -> help(context.getSource()))
+         .then(LiteralArgumentBuilder.<ServerCommandSource>literal("help").executes(context -> help(context.getSource())))
+         .then(LiteralArgumentBuilder.<ServerCommandSource>literal("status").executes(context -> status(context.getSource())))
          .then(
-            LiteralArgumentBuilder.literal("debug")
-               .then(LiteralArgumentBuilder.literal("backend").executes(var0x -> debugBackend((ServerCommandSource)var0x.getSource())))
+            LiteralArgumentBuilder.<ServerCommandSource>literal("reload")
+               .requires(source -> source.hasPermissionLevel(2))
+               .executes(context -> reload(context.getSource()))
+         )
+         .then(
+            LiteralArgumentBuilder.<ServerCommandSource>literal("migrate")
+               .then(LiteralArgumentBuilder.<ServerCommandSource>literal("status").executes(context -> migrationStatus(context.getSource())))
+         )
+         .then(
+            LiteralArgumentBuilder.<ServerCommandSource>literal("debug")
+               .then(LiteralArgumentBuilder.<ServerCommandSource>literal("backend").executes(context -> debugBackend(context.getSource())))
+         )
+         .then(
+            LiteralArgumentBuilder.<ServerCommandSource>literal("badges")
+               .then(LiteralArgumentBuilder.<ServerCommandSource>literal("backfillhistory").executes(HistoryBadgeCommand.INSTANCE))
          );
-      redirect(var4, "traits", var1);
-      redirect(var4, "journal", var2);
-      redirect(var4, "team", var2);
-      redirect(var4, "fishing", var3);
-      var4.then(LiteralArgumentBuilder.literal("badges").then(LiteralArgumentBuilder.literal("backfillhistory").executes(HistoryBadgeCommand.INSTANCE)));
-      var0.register(var4);
-      alias(var0, "tidetraits", var1);
-      alias(var0, "tideteamjournal", var2);
-      alias(var0, "tideboundcompat", var3);
+
+      redirect(root, "traits", traits);
+      redirect(root, "journal", journal);
+      redirect(root, "team", journal);
+      redirect(root, "fishing", fishing);
+      dispatcher.register(root);
+      alias(dispatcher, "tidetraits", traits);
+      alias(dispatcher, "tideteamjournal", journal);
+      alias(dispatcher, "tideboundcompat", fishing);
    }
 
-   private static void redirect(LiteralArgumentBuilder<ServerCommandSource> var0, String var1, CommandNode<ServerCommandSource> var2) {
-      if (var2 != null) {
-         var0.then(LiteralArgumentBuilder.literal(var1).redirect(var2));
+   private static void redirect(LiteralArgumentBuilder<ServerCommandSource> root, String name, CommandNode<ServerCommandSource> target) {
+      if (target != null) {
+         root.then(LiteralArgumentBuilder.<ServerCommandSource>literal(name).redirect(target));
       }
    }
 
-   private static void alias(CommandDispatcher<ServerCommandSource> var0, String var1, CommandNode<ServerCommandSource> var2) {
-      if (var2 != null) {
-         var0.register((LiteralArgumentBuilder)LiteralArgumentBuilder.literal(var1).redirect(var2));
+   private static void alias(CommandDispatcher<ServerCommandSource> dispatcher, String name, CommandNode<ServerCommandSource> target) {
+      if (target != null) {
+         dispatcher.register(LiteralArgumentBuilder.<ServerCommandSource>literal(name).redirect(target));
       }
    }
 

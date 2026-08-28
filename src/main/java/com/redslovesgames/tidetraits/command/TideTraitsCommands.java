@@ -52,35 +52,29 @@ public final class TideTraitsCommands {
 
    public static synchronized void init() {
       if (!initialized) {
-         CommandRegistrationCallback.EVENT
-            .register(
-               (CommandRegistrationCallback)(dispatcher, registryAccess, environment) -> dispatcher.register(
-                  (LiteralArgumentBuilder & LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)CommandManager.literal(
-                                       "tideborne_internal_traits"
-                                    )
-                                    .requires(source -> source.hasPermissionLevel(2)))
-                                 .then((LiteralArgumentBuilder)CommandManager.literal("inspect").executes(context -> inspect((ServerCommandSource)context.getSource()))))
-                              .then(
-                                 (LiteralArgumentBuilder)CommandManager.literal("setmutation")
-                                    .then(
-                                       (RequiredArgumentBuilder)CommandManager.argument("id", StringArgumentType.word())
-                                          .executes(context -> setMutation((ServerCommandSource)context.getSource(), StringArgumentType.getString(context, "id")))
-                                    )
-                              ))
-                           .then(
-                              (LiteralArgumentBuilder)CommandManager.literal("clearmutation")
-                                 .executes(context -> clearMutation((ServerCommandSource)context.getSource()))
-                           ))
+         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
+            dispatcher.register(
+               CommandManager.literal(ROOT)
+                  .requires(source -> source.hasPermissionLevel(2))
+                  .then(CommandManager.literal("inspect").executes(context -> inspect(context.getSource())))
+                  .then(
+                     CommandManager.literal("setmutation")
                         .then(
-                           (LiteralArgumentBuilder)CommandManager.literal("percentile")
-                              .then(
-                                 (RequiredArgumentBuilder)CommandManager.argument("value", DoubleArgumentType.doubleArg(0.0, 1.0))
-                                    .executes(context -> setPercentile((ServerCommandSource)context.getSource(), DoubleArgumentType.getDouble(context, "value")))
-                              )
-                        ))
-                     .then((LiteralArgumentBuilder)CommandManager.literal("dumpfish").executes(context -> dumpFish((ServerCommandSource)context.getSource())))
-               )
-            );
+                           CommandManager.argument("id", StringArgumentType.word())
+                              .executes(context -> setMutation(context.getSource(), StringArgumentType.getString(context, "id")))
+                        )
+                  )
+                  .then(CommandManager.literal("clearmutation").executes(context -> clearMutation(context.getSource())))
+                  .then(
+                     CommandManager.literal("percentile")
+                        .then(
+                           CommandManager.argument("value", DoubleArgumentType.doubleArg(0.0, 1.0))
+                              .executes(context -> setPercentile(context.getSource(), DoubleArgumentType.getDouble(context, "value")))
+                        )
+                  )
+                  .then(CommandManager.literal("dumpfish").executes(context -> dumpFish(context.getSource())))
+            )
+         );
          initialized = true;
       }
    }

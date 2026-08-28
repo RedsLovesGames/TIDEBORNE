@@ -113,25 +113,24 @@ public final class TideboundCompatibility implements ModInitializer {
    }
 
    private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-      dispatcher.register(
-         (LiteralArgumentBuilder & LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)CommandManager.literal("tideborne_internal_fishing")
-                  .executes(context -> status((ServerCommandSource)context.getSource())))
-               .then((LiteralArgumentBuilder)CommandManager.literal("status").executes(context -> status((ServerCommandSource)context.getSource()))))
-            .then(
-               (LiteralArgumentBuilder)((LiteralArgumentBuilder)CommandManager.literal("reload").requires(source -> source.hasPermissionLevel(2)))
-                  .executes(context -> {
-                     TideboundConfig.Result result = TideboundConfig.reloadBalance();
-                     if (!result.success()) {
-                        ((ServerCommandSource)context.getSource()).sendError(Text.literal(result.message()));
-                        return 0;
-                     } else {
-                        ((ServerCommandSource)context.getSource()).getServer().getPlayerManager().getPlayerList().forEach(TideboundCompatibility::syncSettings);
-                        ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tidebound_compatibility.reload"), true);
-                        return 1;
-                     }
-                  })
-            )
-      );
+      LiteralArgumentBuilder<ServerCommandSource> root = CommandManager.literal("tideborne_internal_fishing")
+         .executes(context -> status(context.getSource()))
+         .then(CommandManager.literal("status").executes(context -> status(context.getSource())))
+         .then(
+            CommandManager.literal("reload")
+               .requires(source -> source.hasPermissionLevel(2))
+               .executes(context -> {
+                  TideboundConfig.Result result = TideboundConfig.reloadBalance();
+                  if (!result.success()) {
+                     context.getSource().sendError(Text.literal(result.message()));
+                     return 0;
+                  }
+                  context.getSource().getServer().getPlayerManager().getPlayerList().forEach(TideboundCompatibility::syncSettings);
+                  context.getSource().sendFeedback(() -> Text.translatable("command.tidebound_compatibility.reload"), true);
+                  return 1;
+               })
+         );
+      dispatcher.register(root);
    }
 
    private static int status(ServerCommandSource source) {

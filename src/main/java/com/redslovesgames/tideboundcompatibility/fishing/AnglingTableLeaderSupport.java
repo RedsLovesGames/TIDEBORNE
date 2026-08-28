@@ -25,7 +25,7 @@ public final class AnglingTableLeaderSupport {
          var2.invoke(var1, 1, 134, 8, (Predicate<Object>)var0x -> inTag(var0x, "LINES") && !SteelLeaderAttachment.isSteelLeaderStack(var0x));
          var2.invoke(var1, 2, 134, 32, (Predicate<Object>)var0x -> inTag(var0x, "BOBBERS"));
          var2.invoke(var1, 3, 134, 56, (Predicate<Object>)var0x -> inTag(var0x, "HOOKS"));
-         var2.invoke(var1, 4, 110, 56, SteelLeaderAttachment::isSteelLeaderStack);
+         var2.invoke(var1, 4, 110, 56, (Predicate<Object>)SteelLeaderAttachment::isSteelLeaderStack);
          var3.invoke(var1, 5, 26, 49);
          return var4.invoke(var1);
       } catch (Throwable var5) {
