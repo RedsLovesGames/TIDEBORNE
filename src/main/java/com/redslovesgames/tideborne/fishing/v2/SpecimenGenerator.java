@@ -15,19 +15,51 @@ public final class SpecimenGenerator {
     private final PigmentationGenerator pigmentations = new PigmentationGenerator();
 
     /**
-     * Generates the complete canonical specimen state currently implemented through the independent
-     * Pigmentation axis. Natural percentile and base length are sampled exactly once. Body Type,
-     * Condition, and Pigmentation are each derived once from independent deterministic trait streams.
+     * Generates with zero Trait Luck and no Body Type-specific event multiplier.
      */
     public SpecimenData generate(
             SpeciesProfile species,
             long deterministicSeed,
             SpecimenData.Provenance provenance
     ) {
+        return generate(species, deterministicSeed, provenance, 0.0, 1.0);
+    }
+
+    /**
+     * Generates with canonical Trait Luck and no Body Type-specific event multiplier.
+     */
+    public SpecimenData generate(
+            SpeciesProfile species,
+            long deterministicSeed,
+            SpecimenData.Provenance provenance,
+            double traitLuck
+    ) {
+        return generate(species, deterministicSeed, provenance, traitLuck, 1.0);
+    }
+
+    /**
+     * Generates the complete canonical specimen state currently implemented through the independent
+     * Pigmentation axis. Natural percentile and base length are sampled exactly once. Body Type,
+     * Condition, and Pigmentation are each derived once from independent deterministic trait streams.
+     *
+     * <p>The Body Type event uses the shared base -> rarity -> Trait Luck probability path. The
+     * explicit Body Type event multiplier is currently {@code 1.0}; it reserves the call shape needed
+     * by the later Perfect Catch Body Type multiplier without introducing another probability path.
+     */
+    public SpecimenData generate(
+            SpeciesProfile species,
+            long deterministicSeed,
+            SpecimenData.Provenance provenance,
+            double traitLuck,
+            double bodyTypeEventProbabilityMultiplier
+    ) {
         SpecimenData baseSpecimen = generateBase(species, deterministicSeed, provenance);
         SpecimenData.BodyType bodyType = bodyTypes.generate(
                 baseSpecimen.deterministicSeed(),
-                baseSpecimen.basePercentile()
+                baseSpecimen.basePercentile(),
+                species,
+                traitLuck,
+                bodyTypeEventProbabilityMultiplier
         );
         SpecimenData sizedSpecimen = bodyTypes.applyPhysicalSize(species, baseSpecimen, bodyType);
         SpecimenData conditionedSpecimen = conditions.apply(sizedSpecimen);

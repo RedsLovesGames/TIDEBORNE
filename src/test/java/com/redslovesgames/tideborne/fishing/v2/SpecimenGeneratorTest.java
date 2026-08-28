@@ -59,9 +59,23 @@ class SpecimenGeneratorTest {
         assertEquals(base.baseLength(), finalized.baseLength());
         assertEquals(seed, finalized.deterministicSeed());
         assertEquals(
-                new BodyTypeGenerator().generate(seed, base.basePercentile()),
+                new BodyTypeGenerator().generate(seed, base.basePercentile(), species, 0.0),
                 finalized.bodyType()
         );
+    }
+
+    @Test
+    void traitLuckIsForwardedIntoBodyTypeGeneration() {
+        long seed = 1_234_567L;
+        SpecimenData base = generator.generateBase(species, seed, SpecimenData.Provenance.generated());
+        SpecimenData finalized = generator.generate(species, seed, SpecimenData.Provenance.generated(), 25.0);
+
+        assertEquals(
+                new BodyTypeGenerator().generate(seed, base.basePercentile(), species, 25.0),
+                finalized.bodyType()
+        );
+        assertEquals(base.basePercentile(), finalized.basePercentile());
+        assertEquals(base.baseLength(), finalized.baseLength());
     }
 
     @Test

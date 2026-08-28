@@ -5,10 +5,12 @@ import java.util.Objects;
 /**
  * Deterministic Body Type selection and physical-size finalization for canonical Fishing System 2.0 specimens.
  *
- * <p>Body Type is a 5% event. When the event triggers, the natural percentile smoothly biases
- * the Giant-versus-Dwarf split without making either variant impossible anywhere in the valid
- * percentile range. Giant and Dwarf physical multipliers use their own deterministic trait stream
- * and never consume or replace the specimen's natural percentile or base-size sample.
+ * <p>Body Type starts from a 5% base event probability. Canonical species rarity compensation and
+ * Trait Luck are applied through {@link TraitProbabilityService} before the deterministic Body Type
+ * event stream is evaluated. When the event triggers, the natural percentile smoothly biases the
+ * Giant-versus-Dwarf split without making either variant impossible anywhere in the valid percentile
+ * range. Giant and Dwarf physical multipliers use their own deterministic trait stream and never
+ * consume or replace the specimen's natural percentile or base-size sample.
  */
 public final class BodyTypeGenerator {
     public static final double BASE_EVENT_PROBABILITY = 0.05;
@@ -17,13 +19,47 @@ public final class BodyTypeGenerator {
     public static final double DWARF_MIN_SIZE_MULTIPLIER = 0.60;
     public static final double DWARF_MAX_SIZE_MULTIPLIER = 0.82;
 
-    /**
-     * Selects the canonical Body Type from the specimen seed and natural percentile.
-     */
-    public SpecimenData.BodyType generate(long specimenSeed, double naturalPercentile) {
-        validatePercentile(naturalPercentile);
+    private final TraitProbabilityService traitProbabilities;
 
-        if (TraitRandom.unitDouble(specimenSeed, TraitRandom.Salts.BODY_TYPE_EVENT) >= BASE_EVENT_PROBABILITY) {
+    public BodyTypeGenerator() {
+        this(new TraitProbabilityService());
+    }
+
+    BodyTypeGenerator(TraitProbabilityService traitProbabilities) {
+        this.traitProbabilities = Objects.requireNonNull(traitProbabilities, "traitProbabilities");
+    }
+
+    /**
+     * Selects the canonical Body Type using species rarity and Trait Luck.
+     */
+    public SpecimenData.BodyType generate(
+            long specimenSeed,
+            double naturalPercentile,
+            SpeciesProfile species,
+            double traitLuck
+    ) {
+        return generate(specimenSeed, naturalPercentile, species, traitLuck, 1.0);
+    }
+
+    /**
+     * Selects the canonical Body Type with an axis-specific post-pipeline event multiplier.
+     *
+     * <p>The multiplier is currently {@code 1.0}. The parameter is deliberately part of the API so
+     * a later Perfect Catch Body Type multiplier can be supplied without changing the generator's
+     * call shape. It is applied only after the canonical base -> rarity -> Trait Luck pipeline and
+     * does not affect the Giant/Dwarf conditional split.
+     */
+    public SpecimenData.BodyType generate(
+            long specimenSeed,
+            double naturalPercentile,
+            SpeciesProfile species,
+            double traitLuck,
+            double eventProbabilityMultiplier
+    ) {
+        validatePercentile(naturalPercentile);
+        double eventProbability = eventProbability(species, traitLuck, eventProbabilityMultiplier);
+
+        if (TraitRandom.unitDouble(specimenSeed, TraitRandom.Salts.BODY_TYPE_EVENT) >= eventProbability) {
             return SpecimenData.BodyType.NORMAL;
         }
 
@@ -31,6 +67,27 @@ public final class BodyTypeGenerator {
                 < giantProbability(naturalPercentile)
                 ? SpecimenData.BodyType.GIANT
                 : SpecimenData.BodyType.DWARF;
+    }
+
+    /**
+     * Returns the final Body Type event probability without consuming any RNG.
+     */
+    public double eventProbability(
+            SpeciesProfile species,
+            double traitLuck,
+            double eventProbabilityMultiplier
+    ) {
+        Objects.requireNonNull(species, "species");
+        if (!Double.isFinite(eventProbabilityMultiplier) || eventProbabilityMultiplier < 0.0) {
+            throw new IllegalArgumentException("eventProbabilityMultiplier must be finite and nonnegative");
+        }
+
+        double canonicalProbability = traitProbabilities.calculate(
+                BASE_EVENT_PROBABILITY,
+                species,
+                traitLuck
+        );
+        return Math.max(0.0, Math.min(1.0, canonicalProbability * eventProbabilityMultiplier));
     }
 
     /**
@@ -54,11 +111,29 @@ public final class BodyTypeGenerator {
     }
 
     /**
-     * Selects Body Type and applies its physical-size effect to a base canonical specimen.
+     * Selects Body Type at zero Trait Luck and applies its physical-size effect to a base specimen.
      */
     public SpecimenData applyPhysicalSize(SpeciesProfile species, SpecimenData specimen) {
+        return applyPhysicalSize(species, specimen, 0.0, 1.0);
+    }
+
+    /**
+     * Selects Body Type through the canonical probability pipeline and applies its physical-size effect.
+     */
+    public SpecimenData applyPhysicalSize(
+            SpeciesProfile species,
+            SpecimenData specimen,
+            double traitLuck,
+            double eventProbabilityMultiplier
+    ) {
         Objects.requireNonNull(specimen, "specimen");
-        SpecimenData.BodyType bodyType = generate(specimen.deterministicSeed(), specimen.basePercentile());
+        SpecimenData.BodyType bodyType = generate(
+                specimen.deterministicSeed(),
+                specimen.basePercentile(),
+                species,
+                traitLuck,
+                eventProbabilityMultiplier
+        );
         return applyPhysicalSize(species, specimen, bodyType);
     }
 

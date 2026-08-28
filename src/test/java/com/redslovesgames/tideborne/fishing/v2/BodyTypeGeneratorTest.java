@@ -1,6 +1,7 @@
 package com.redslovesgames.tideborne.fishing.v2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
@@ -9,20 +10,11 @@ import org.junit.jupiter.api.Test;
 
 class BodyTypeGeneratorTest {
     private static final int SAMPLE_SIZE = 200_000;
+    private static final int PIPELINE_SAMPLE_SIZE = 150_000;
     private final BodyTypeGenerator generator = new BodyTypeGenerator();
+    private final TraitProbabilityService traitProbabilities = new TraitProbabilityService();
     private final SpecimenGenerator specimenGenerator = new SpecimenGenerator();
-    private final SpeciesProfile species = new SpeciesProfile(
-            "tide:test_fish",
-            CanonicalRarity.THREE_STAR,
-            1.0,
-            SpeciesEligibility.always(),
-            0.8,
-            1.0,
-            "steady",
-            new LogNormalSizeDistribution(25.0, 0.4),
-            Set.of(),
-            Map.of()
-    );
+    private final SpeciesProfile species = species(CanonicalRarity.THREE_STAR);
 
     @Test
     void baseEventProbabilityIsExactlyFivePercent() {
@@ -30,24 +22,83 @@ class BodyTypeGeneratorTest {
     }
 
     @Test
-    void sameSeedAndPercentileAreDeterministic() {
+    void sameSeedAndInputsAreDeterministic() {
         for (long seed = 0; seed < 10_000; seed += 97) {
-            assertEquals(generator.generate(seed, 37.5), generator.generate(seed, 37.5));
+            assertEquals(
+                    generator.generate(seed, 37.5, species, 12.0),
+                    generator.generate(seed, 37.5, species, 12.0)
+            );
         }
     }
 
     @Test
-    void bodyTypeEventRateIsApproximatelyFivePercent() {
-        int events = 0;
-        for (long seed = 0; seed < SAMPLE_SIZE; seed++) {
-            if (generator.generate(seed, 50.0) != SpecimenData.BodyType.NORMAL) {
-                events++;
-            }
-        }
-
-        double eventRate = events / (double) SAMPLE_SIZE;
+    void oneStarZeroTraitLuckEventRateIsApproximatelyFivePercent() {
+        double eventRate = eventRate(species(CanonicalRarity.ONE_STAR), 0.0, SAMPLE_SIZE);
         assertTrue(eventRate >= 0.047 && eventRate <= 0.053,
                 "expected about 5% Body Type events, got " + eventRate);
+    }
+
+    @Test
+    void eventRatesFollowSharedRarityAndTraitLuckPipeline() {
+        ProbabilityCase[] cases = {
+                new ProbabilityCase(CanonicalRarity.ONE_STAR, -5.0),
+                new ProbabilityCase(CanonicalRarity.ONE_STAR, 10.0),
+                new ProbabilityCase(CanonicalRarity.THREE_STAR, 0.0),
+                new ProbabilityCase(CanonicalRarity.FOUR_STAR, 20.0),
+                new ProbabilityCase(CanonicalRarity.FIVE_STAR, 10.0)
+        };
+
+        for (ProbabilityCase probabilityCase : cases) {
+            SpeciesProfile caseSpecies = species(probabilityCase.rarity());
+            double expected = traitProbabilities.calculate(
+                    BodyTypeGenerator.BASE_EVENT_PROBABILITY,
+                    caseSpecies,
+                    probabilityCase.traitLuck()
+            );
+            double actual = eventRate(caseSpecies, probabilityCase.traitLuck(), PIPELINE_SAMPLE_SIZE);
+            double standardError = Math.sqrt(expected * (1.0 - expected) / PIPELINE_SAMPLE_SIZE);
+            double tolerance = Math.max(0.0025, 5.0 * standardError);
+
+            assertEquals(expected, actual, tolerance,
+                    "Body Type event rate must follow shared probability pipeline for "
+                            + probabilityCase.rarity() + " at Trait Luck " + probabilityCase.traitLuck());
+        }
+    }
+
+    @Test
+    void eventProbabilityMatchesSharedPipelineExactly() {
+        for (CanonicalRarity rarity : CanonicalRarity.values()) {
+            SpeciesProfile caseSpecies = species(rarity);
+            for (double traitLuck : new double[] {-5.0, 0.0, 10.0, 35.0}) {
+                assertEquals(
+                        traitProbabilities.calculate(
+                                BodyTypeGenerator.BASE_EVENT_PROBABILITY,
+                                caseSpecies,
+                                traitLuck
+                        ),
+                        generator.eventProbability(caseSpecies, traitLuck, 1.0),
+                        1.0e-12
+                );
+            }
+        }
+    }
+
+    @Test
+    void futureBodyTypeMultiplierIsPostPipelineAndBounded() {
+        SpeciesProfile fiveStar = species(CanonicalRarity.FIVE_STAR);
+        double canonical = traitProbabilities.calculate(
+                BodyTypeGenerator.BASE_EVENT_PROBABILITY,
+                fiveStar,
+                10.0
+        );
+
+        assertEquals(canonical * 1.25, generator.eventProbability(fiveStar, 10.0, 1.25), 1.0e-12);
+        assertEquals(1.0, generator.eventProbability(fiveStar, 100.0, 10.0));
+        assertEquals(0.0, generator.eventProbability(fiveStar, 10.0, 0.0));
+        assertThrows(IllegalArgumentException.class,
+                () -> generator.eventProbability(fiveStar, 0.0, -1.0));
+        assertThrows(IllegalArgumentException.class,
+                () -> generator.eventProbability(fiveStar, 0.0, Double.NaN));
     }
 
     @Test
@@ -85,14 +136,14 @@ class BodyTypeGeneratorTest {
     @Test
     void bodyTypeDoesNotDependOnOtherTraitStreams() {
         long seed = 98_765_432_101L;
-        SpecimenData.BodyType before = generator.generate(seed, 63.0);
+        SpecimenData.BodyType before = generator.generate(seed, 63.0, species, 18.0);
 
         TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_EVENT);
         TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_VARIANT);
         TraitRandom.unitDouble(seed, TraitRandom.Salts.PIGMENTATION_EVENT);
         TraitRandom.unitDouble(seed, TraitRandom.Salts.PIGMENTATION_VARIANT);
 
-        assertEquals(before, generator.generate(seed, 63.0));
+        assertEquals(before, generator.generate(seed, 63.0, species, 18.0));
     }
 
     @Test
@@ -202,13 +253,41 @@ class BodyTypeGeneratorTest {
         assertEquals(base.basePercentile(), giant.basePercentile());
     }
 
+    private double eventRate(SpeciesProfile caseSpecies, double traitLuck, int sampleSize) {
+        int events = 0;
+        for (long seed = 0; seed < sampleSize; seed++) {
+            if (generator.generate(seed, 50.0, caseSpecies, traitLuck) != SpecimenData.BodyType.NORMAL) {
+                events++;
+            }
+        }
+        return events / (double) sampleSize;
+    }
+
     private int count(SpecimenData.BodyType bodyType, double percentile) {
         int matches = 0;
         for (long seed = 0; seed < SAMPLE_SIZE; seed++) {
-            if (generator.generate(seed, percentile) == bodyType) {
+            if (generator.generate(seed, percentile, species, 0.0) == bodyType) {
                 matches++;
             }
         }
         return matches;
+    }
+
+    private static SpeciesProfile species(CanonicalRarity rarity) {
+        return new SpeciesProfile(
+                "tide:test_fish",
+                rarity,
+                1.0,
+                SpeciesEligibility.always(),
+                0.8,
+                1.0,
+                "steady",
+                new LogNormalSizeDistribution(25.0, 0.4),
+                Set.of(),
+                Map.of()
+        );
+    }
+
+    private record ProbabilityCase(CanonicalRarity rarity, double traitLuck) {
     }
 }

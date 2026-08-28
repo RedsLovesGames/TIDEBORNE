@@ -74,7 +74,8 @@ public final class TideSpeciesSelectionBridge {
                         "new-catch",
                         "fishing-system-2-runtime",
                         Map.of("selection", "tide-fish-selector", "authority", "server")
-                )
+                ),
+                context.traitLuck()
         );
         FightProfile fightProfile = fightProfiles.create(selected, specimen);
 
