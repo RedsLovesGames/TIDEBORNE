@@ -62,3 +62,7 @@ No second specimen serialization format was introduced for Satchel contents.
 5. absent optional FishScore fields remain absent rather than being recalculated.
 
 Stage 29 intentionally does not redesign Journal or Satchel UI and does not begin later migration or cleanup stages.
+
+## Validation
+
+GitHub Actions run `33191044106` is green for source/test commit `ef85e19d6da5867473157445e44be4b1dc48af76`. Exact external dependencies resolved successfully, `./gradlew clean build --stacktrace` completed with the new serialization tests, `./gradlew runGametest --stacktrace` completed successfully, and the built JAR artifact uploaded successfully.
