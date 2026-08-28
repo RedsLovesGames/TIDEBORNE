@@ -8,6 +8,7 @@
     "CrateDataMixin",
     "FishCatchMinigameMixin",
     "FishDataMixin",
+    "FishSelectorMixin",
     "TideFishingHookMixin"
   ],
   "client": [
