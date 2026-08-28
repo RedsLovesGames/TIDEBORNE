@@ -6,6 +6,7 @@
     "AnglersSatchelRecipeMixin",
     "ApplyFishEntityLengthFunctionMixin",
     "BucketableMixin",
+    "FishDisplayPersistenceMixin",
     "MobBucketItemMixin",
     "MobSpecimenMixin",
     "TideFishingHookMixin",
