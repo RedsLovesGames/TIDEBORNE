@@ -168,6 +168,11 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Prove canonical maximum Dragon Fish at P100 with best compatible trait combination = 3000.
 - [x] Prove intermediate FishScore mapping is linear.
 - [x] Add deterministic scoring tests.
+- [x] Calculate FishScore only after Body Type/size, Condition, Pigmentation, Specimen Quality, and Perfect Catch state are finalized.
+- [x] Persist canonical raw FishScore and normalized 1 through 3000 FishScore on finalized V2 specimens.
+- [x] Make the existing ItemStack-based journal/tooltip score bridge prefer persisted canonical V2 FishScore instead of recalculating the legacy formula.
+- [x] Preserve canonical FishScore through item/entity/item, item/entity/bucket/entity/item, and explicit transfer-NBT round trips.
+- [x] Add deterministic post-finalization score persistence tests plus Fabric GameTest round-trip coverage.
 
 ## Migration, progression, compatibility, cleanup
 
