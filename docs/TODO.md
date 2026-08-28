@@ -110,15 +110,18 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 ## Step 7 - Trait Luck, rarity compensation, Momentum
 
-- [ ] Implement rarity trait compensation multipliers: 1★ 1.00, 2★ 1.15, 3★ 1.40, 4★ 1.80, 5★ 2.40.
+- [x] Implement rarity trait compensation multipliers: 1★ 1.00, 2★ 1.15, 3★ 1.40, 4★ 1.80, 5★ 2.40.
 - [x] Implement exact Trait Luck formula `P' = 1 - (1-P)^(1 + T/10)` as the pure `TraitLuckProbabilityService`.
 - [x] Clamp numeric probability inputs to `[0,1]`, reject `NaN` probability, floor Trait Luck at `-10`, treat `NaN` Trait Luck as zero, and safely saturate extreme positive Trait Luck.
+- [x] Centralize canonical trait-event probability calculation in `TraitProbabilityService` with fixed order: base probability, canonical species rarity compensation, Trait Luck transform, final bound.
+- [x] Read rarity compensation only from the selected canonical `SpeciesProfile.rarity()` and keep the existing Fishing Luck coefficients separate and unchanged.
 - [x] Keep Fishing Luck and Trait Luck mechanically separate, including a seeded species-selection regression proving Trait Luck does not affect species selection.
 - [x] Keep deterministic trait RNG selection separate from Trait Luck probability calculation; no axis is wired to the service in this slice.
-- [ ] Wire Trait Luck probability adjustment into the intended trait axes only in its dedicated integration slice.
+- [ ] Wire Trait Luck and rarity compensation into the intended trait axes only in its dedicated integration slice.
 - [ ] Implement per-species persisted Trait Momentum, approximately +1 temporary Trait Luck after a fully normal catch, capped around 15, substantially reduced after notable traits.
 - [x] Add pure probability tests for T=0 identity, monotonic positive Trait Luck, valid output range, known numerical cases, exact 0/1 endpoints, probability validation/clamping, and negative/extreme Trait Luck behavior.
-- [ ] Add deterministic rarity-compensation, Momentum cap, persistence, and species-isolation tests when those mechanics are implemented.
+- [x] Add exact rarity multiplier tests for all five canonical rarities plus compensated zero-Trait-Luck and combined Trait Luck cases, including a test that freezes rarity-before-Trait-Luck ordering.
+- [ ] Add Momentum cap, persistence, and species-isolation tests when Momentum is implemented.
 
 ## Step 8 - Perfect Catch and Perfect Specimen
 
@@ -139,7 +142,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [ ] Implement canonical linear normalization `round(1 + 2999 * normalized)` clamped to 1 through 3000.
 - [ ] Prove canonical minimum Incandescent Larva = 1.
 - [ ] Prove canonical maximum Dragon Fish at P100 with best compatible trait combination = 3000.
-- [ ] Prove intermediate mapping is linear.
+- [ ] Prove intermediate FishScore mapping is linear.
 - [ ] Add deterministic scoring tests.
 
 ## Migration, progression, compatibility, cleanup

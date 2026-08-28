@@ -277,18 +277,37 @@ Unit coverage includes T=0 identity, monotonic increase for positive Trait Luck,
 
 Implementation commit `7606bc21d4d5489692e210227d8c7fdeac15f339` is validated by GitHub Actions run `33167369448`: `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload completed successfully.
 
+## Rarity compensation probability path is complete
+
+Stage 11 adds canonical rare-species trait compensation without wiring probability changes into the trait generators yet.
+
+Frozen probability behavior:
+
+- `CanonicalRarity` now stores the exact trait-event multipliers 1 star 1.00, 2 star 1.15, 3 star 1.40, 4 star 1.80, and 5 star 2.40 alongside the pre-existing, unchanged Fishing Luck coefficients
+- `TraitProbabilityService` is the reusable canonical V2 trait-event probability path
+- callers provide a base trait event probability plus the selected canonical `SpeciesProfile`; rarity is read only from `SpeciesProfile.rarity()` so a second independent rarity value cannot disagree with the selected species
+- the calculation order is fixed as base trait probability, rarity compensation, Trait Luck transform, then final defensive bounding to `[0, 1]`
+- the existing `TraitLuckProbabilityService` remains the single implementation of the Trait Luck formula and its frozen input-safety behavior; `TraitProbabilityService` composes it rather than duplicating the formula
+- no random selection is performed by either probability service
+- `SpeciesSelectionService` is unchanged, so rarity compensation and Trait Luck do not participate in Fishing Luck species selection
+- Body Type, Condition, Pigmentation, and later Specimen Quality generators are intentionally not wired to the new probability path in this stage; that remains a dedicated integration slice
+
+Exact unit coverage verifies all five canonical rarity multipliers, all five compensated probabilities at zero Trait Luck, combined rarity plus Trait Luck numerical cases, the required rarity-before-Trait-Luck order using the 5-star 5% plus T=10 result of 22.56%, final probability bounds, and inherited invalid-input behavior.
+
+Implementation commit `abf75156f906a0ef2e40b813e5b20f6870372430` contains the code and tests. Full CI validation is recorded below once the documentation commit is validated.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. The pure Trait Luck probability calculation is also complete as an isolated service.
+Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. The pure Trait Luck probability calculation and canonical rarity-compensation probability path are complete as isolated services.
 
-Do not wire Trait Luck into trait axes, implement rarity compensation, or implement Momentum as part of this completed slice. Specimen Quality also remains incomplete. Continue only with the next explicitly queued stage.
+Do not wire Trait Luck or rarity compensation into trait axes, implement Momentum, or begin later stages as part of this completed slice. Specimen Quality also remains incomplete. Continue only with the next explicitly queued stage.
 
 ## Later frozen slices
 
 Execute in this order unless a later explicit queued stage narrows the work further:
 
 1. remaining independent Specimen Quality axis work
-2. Trait Luck axis integration, rarity compensation, and per-species Momentum
+2. Trait Luck plus rarity-compensation axis integration and per-species Momentum
 3. Perfect Catch redesign and percentile-based Perfect Specimen
 4. FishScore V2 with the canonical linear 1 to 3000 mapping
 5. deterministic migration and canonical `SpecimenData` adoption across persistence/UI/network systems
