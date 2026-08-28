@@ -15,9 +15,7 @@ public final class SpecimenGenerator {
     private final ConditionGenerator conditions = new ConditionGenerator();
     private final PigmentationGenerator pigmentations = new PigmentationGenerator();
 
-    /**
-     * Generates with zero Trait Luck and no Body Type-specific event multiplier.
-     */
+    /** Generates with zero Trait Luck and no Body Type-specific event multiplier. */
     public SpecimenData generate(
             SpeciesProfile species,
             long deterministicSeed,
@@ -26,9 +24,7 @@ public final class SpecimenGenerator {
         return generate(species, deterministicSeed, provenance, 0.0, 1.0);
     }
 
-    /**
-     * Generates with canonical Trait Luck and no Body Type-specific event multiplier.
-     */
+    /** Generates with canonical Trait Luck and no Body Type-specific event multiplier. */
     public SpecimenData generate(
             SpeciesProfile species,
             long deterministicSeed,
@@ -41,7 +37,7 @@ public final class SpecimenGenerator {
     /**
      * Generates a complete canonical specimen without a Perfect Catch. This pure convenience path
      * preserves the same two-phase ordering used by runtime: pre-fight identity first, then post-fight
-     * Condition and Pigmentation finalization.
+     * trait finalization.
      */
     public SpecimenData generate(
             SpeciesProfile species,
@@ -63,7 +59,8 @@ public final class SpecimenGenerator {
     /**
      * Generates the portion of canonical specimen identity required before Tide's minigame starts.
      * Natural percentile/base length are sampled exactly once, then Body Type and its physical-size
-     * effect are finalized. Post-fight axes remain at their neutral values until Perfect Catch is known.
+     * effect are finalized for the fight. Post-fight axes remain at their neutral values until the
+     * Perfect Catch result is known.
      */
     public SpecimenData generatePreFight(
             SpeciesProfile species,
@@ -74,10 +71,7 @@ public final class SpecimenGenerator {
         return generatePreFight(species, deterministicSeed, provenance, traitLuck, 1.0);
     }
 
-    /**
-     * Pre-fight generation with the explicit Body Type event multiplier reserved by the shared trait
-     * probability API. The multiplier remains 1.0 in the current runtime stage.
-     */
+    /** Pre-fight generation with an explicit Body Type base event multiplier. */
     public SpecimenData generatePreFight(
             SpeciesProfile species,
             long deterministicSeed,
@@ -97,15 +91,21 @@ public final class SpecimenGenerator {
     }
 
     /**
-     * Finalizes post-fight canonical state after Tide has resolved the center-zone skill check.
-     * Perfect Catch is copied into canonical specimen state before Condition or Pigmentation are
-     * generated. A Perfect Catch adds {@value #PERFECT_CATCH_TRAIT_LUCK_BONUS} temporary Trait Luck
-     * only for these post-fight trait probability decisions. The supplied Trait Luck already contains
-     * the server-owned gear/context contribution plus the captured per-species Momentum contribution.
-     * No persistent Trait Luck or Momentum state is modified here.
+     * Finalizes canonical state after Tide has resolved the center-zone skill check.
      *
-     * <p>The existing pre-fight species, deterministic seed, natural percentile, base length, Body
-     * Type, final physical length, and size-adjusted final percentile are preserved exactly.
+     * <p>Perfect Catch is copied into canonical specimen state before post-fight trait generation. A
+     * Perfect Catch adds {@value #PERFECT_CATCH_TRAIT_LUCK_BONUS} temporary Trait Luck for this catch
+     * and multiplies the Body Type base event chance by
+     * {@link BodyTypeGenerator#PERFECT_CATCH_EVENT_MULTIPLIER}. Body Type is reevaluated from the same
+     * deterministic event and subtype salts, so a non-perfect finalization reproduces the pre-fight
+     * Body Type exactly while a Perfect Catch can cross the higher event threshold. Natural percentile
+     * and base length are never sampled again. If Body Type changes, final physical size is recomputed
+     * from the original base length using the canonical deterministic Body Type size salt.
+     *
+     * <p>The supplied Trait Luck already contains the server-owned gear/context contribution plus the
+     * captured per-species Momentum contribution. No persistent Trait Luck or Momentum state is modified
+     * here. The Perfect Catch Body Type event order is base chance, Perfect Catch multiplier, rarity
+     * compensation, total Trait Luck, final bound. The Giant/Dwarf subtype roll remains separate.
      */
     public SpecimenData finalizeAfterFight(
             SpeciesProfile species,
@@ -122,8 +122,20 @@ public final class SpecimenGenerator {
         double postFightTraitLuck = perfectCatch
                 ? traitLuck + PERFECT_CATCH_TRAIT_LUCK_BONUS
                 : traitLuck;
+        double bodyTypeEventMultiplier = perfectCatch
+                ? BodyTypeGenerator.PERFECT_CATCH_EVENT_MULTIPLIER
+                : 1.0;
+
         SpecimenData skillCaptured = withPerfectCatch(preFightSpecimen, perfectCatch);
-        SpecimenData conditionedSpecimen = conditions.apply(species, skillCaptured, postFightTraitLuck);
+        SpecimenData.BodyType finalizedBodyType = bodyTypes.generate(
+                skillCaptured.deterministicSeed(),
+                skillCaptured.basePercentile(),
+                species,
+                postFightTraitLuck,
+                bodyTypeEventMultiplier
+        );
+        SpecimenData bodyFinalized = bodyTypes.applyPhysicalSize(species, skillCaptured, finalizedBodyType);
+        SpecimenData conditionedSpecimen = conditions.apply(species, bodyFinalized, postFightTraitLuck);
         return pigmentations.apply(species, conditionedSpecimen, postFightTraitLuck);
     }
 

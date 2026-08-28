@@ -84,15 +84,17 @@ class BodyTypeGeneratorTest {
     }
 
     @Test
-    void futureBodyTypeMultiplierIsPostPipelineAndBounded() {
+    void bodyTypeMultiplierRunsBeforeRarityAndTraitLuckAndIsBounded() {
         SpeciesProfile fiveStar = species(CanonicalRarity.FIVE_STAR);
-        double canonical = traitProbabilities.calculate(
+        double expected = traitProbabilities.calculate(
                 BodyTypeGenerator.BASE_EVENT_PROBABILITY,
                 fiveStar,
-                10.0
+                10.0,
+                1.25
         );
 
-        assertEquals(canonical * 1.25, generator.eventProbability(fiveStar, 10.0, 1.25), 1.0e-12);
+        assertEquals(0.2775, expected, 1.0e-12);
+        assertEquals(expected, generator.eventProbability(fiveStar, 10.0, 1.25), 1.0e-12);
         assertEquals(1.0, generator.eventProbability(fiveStar, 100.0, 10.0));
         assertEquals(0.0, generator.eventProbability(fiveStar, 10.0, 0.0));
         assertThrows(IllegalArgumentException.class,
