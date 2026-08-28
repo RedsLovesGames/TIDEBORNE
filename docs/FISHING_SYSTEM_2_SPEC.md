@@ -259,6 +259,16 @@ For `P = 1%`:
 
 Centralize all probability calculations.
 
+Probability safety is frozen as follows:
+
+- clamp numeric `P` inputs to `[0, 1]`; reject `NaN` because it cannot represent an event probability
+- preserve exact endpoint behavior, so `P = 0` always remains 0 and `P = 1` always remains 1
+- clamp Trait Luck below `-10` to `-10`, which prevents a negative exponent and therefore prevents invalid negative adjusted probabilities
+- treat `NaN` Trait Luck as 0
+- negative infinity Trait Luck reaches the `-10` floor; positive infinity saturates every nonzero, nonunit probability to 1
+- keep the probability calculation pure and separate from deterministic trait RNG selection
+- Trait Luck must never participate in species selection; `SpeciesSelectionService` remains driven by Fishing Luck only
+
 ## Trait Momentum
 
 Use bounded, hidden, per-species bad-luck protection:

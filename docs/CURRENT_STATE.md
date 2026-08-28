@@ -257,18 +257,38 @@ The runtime GameTests use the deterministic stacked fixture `GIANT + PARASITE_RI
 
 Runtime axis integration implementation is commit `774752af3b22f7a4dcb814602f48c21cd1895779`. GitHub Actions run `33166720586` is green: exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
+## Pure Trait Luck probability math is complete
+
+Stage 10 adds the isolated Fishing System 2.0 Trait Luck probability service without wiring Trait Luck into Body Type, Condition, Pigmentation, Specimen Quality, rarity compensation, Momentum, or any runtime trait generator.
+
+Frozen probability behavior:
+
+- `TraitLuckProbabilityService` implements exactly `P' = 1 - (1 - P)^(1 + T / 10)`
+- numeric probability inputs clamp to `[0, 1]`; `NaN` probability is rejected because it cannot represent an event chance
+- `P = 0` and `P = 1` remain exact fixed endpoints for every supported Trait Luck input
+- Trait Luck below `-10` clamps to `-10`, keeping the exponent nonnegative and preventing invalid negative adjusted probabilities
+- `NaN` Trait Luck behaves as zero; negative infinity reaches the `-10` floor; positive infinity safely saturates every nonzero, nonunit base probability to 1
+- the implementation uses `log1p` and `expm1` for stable probability math while preserving exact T=0 and endpoint behavior
+- the service contains no RNG state and performs no trait selection; deterministic trait selection remains the responsibility of the existing independent trait streams
+- Fishing Luck and Trait Luck remain mechanically separate; `SpeciesSelectionService` production code is unchanged and continues to read only `FishingContext.fishingLuck()`
+- a seeded regression compares species selection under identical Fishing Luck with Trait Luck 0 versus 1,000,000 and requires the selected species sequence to remain identical
+
+Unit coverage includes T=0 identity, monotonic increase for positive Trait Luck, output range, the documented 1% numerical examples, additional known numerical cases, exact 0/1 endpoints, probability clamping and NaN rejection, and defined negative/extreme Trait Luck behavior.
+
+Implementation commit `7606bc21d4d5489692e210227d8c7fdeac15f339` is validated by GitHub Actions run `33167369448`: `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload completed successfully.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation.
+Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. The pure Trait Luck probability calculation is also complete as an isolated service.
 
-Do not begin Trait Luck, rarity compensation, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next incomplete independent-axis work is Specimen Quality.
+Do not wire Trait Luck into trait axes, implement rarity compensation, or implement Momentum as part of this completed slice. Specimen Quality also remains incomplete. Continue only with the next explicitly queued stage.
 
 ## Later frozen slices
 
-Execute in this order:
+Execute in this order unless a later explicit queued stage narrows the work further:
 
 1. remaining independent Specimen Quality axis work
-2. Trait Luck, rarity compensation, and per-species Momentum
+2. Trait Luck axis integration, rarity compensation, and per-species Momentum
 3. Perfect Catch redesign and percentile-based Perfect Specimen
 4. FishScore V2 with the canonical linear 1 to 3000 mapping
 5. deterministic migration and canonical `SpecimenData` adoption across persistence/UI/network systems
