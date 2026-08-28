@@ -5,6 +5,7 @@
  */
 package com.redslovesgames.tideteamjournal.network;
 
+import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenNetworkCodec;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
@@ -20,6 +21,10 @@ public record RecordHoldersPayload(NbtCompound tag) implements CustomPayload {
          return new RecordHoldersPayload(tag == null ? new NbtCompound() : tag);
       }
    );
+
+   public RecordHoldersPayload {
+      tag = JournalSpecimenNetworkCodec.sanitizeRecordHoldersPayload(tag);
+   }
 
    public Id<? extends CustomPayload> getId() {
       return TYPE;
