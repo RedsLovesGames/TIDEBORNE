@@ -49,6 +49,17 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Run `./gradlew runGametest --stacktrace` successfully after the runtime integration changes. Green runtime run: `33159465388`.
 - [x] Search the migrated runtime path for duplicate species-selection, percentile, size, Strength, and Tempo calculations. No active canonical duplicate remains; guarded legacy fallback remains for old/noncanonical catches until migration.
 
+## Deterministic trait RNG splitting
+
+- [x] Add stateless V2 trait random splitting derived from canonical specimen seed plus stable named salts.
+- [x] Provide deterministic unit-double generation in `[0, 1)` without mutable shared RNG state.
+- [x] Reserve independent event/variant salts for Body Type, Condition, Pigmentation, plus a Perfect Specimen salt.
+- [x] Prove same seed plus same salt is exactly stable.
+- [x] Prove different salts produce independent deterministic values.
+- [x] Prove call order and unrelated future salts cannot shift existing outcomes.
+- [x] Prove generated unit doubles remain inside valid bounds.
+- [ ] Body Type itself remains intentionally unimplemented until the next slice.
+
 ## Step 5 - Body Type
 
 - [ ] Implement independent `Normal`, `Giant`, and `Dwarf` Body Type generation using the frozen 5% event model and percentile bias.
