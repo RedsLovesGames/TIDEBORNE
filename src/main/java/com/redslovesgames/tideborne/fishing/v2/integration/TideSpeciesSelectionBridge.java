@@ -1,8 +1,11 @@
 package com.redslovesgames.tideborne.fishing.v2.integration;
 
+import com.li64.tide.Tide;
+import com.li64.tide.config.TideServerConfig;
 import com.li64.tide.data.TideData;
 import com.li64.tide.data.fishing.CatchResult;
 import com.li64.tide.data.fishing.FishData;
+import com.li64.tide.data.item.TideItemData;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.redslovesgames.tideborne.fishing.v2.FightProfile;
 import com.redslovesgames.tideborne.fishing.v2.FightProfileService;
@@ -17,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SplittableRandom;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 
 /** Server-authoritative bridge that owns V2 species selection and natural specimen generation. */
 public final class TideSpeciesSelectionBridge {
@@ -72,8 +77,16 @@ public final class TideSpeciesSelectionBridge {
                 )
         );
         FightProfile fightProfile = fightProfiles.create(selected, specimen);
-        CatchResult result = data.getResult(tideContext);
-        result.items().forEach(stack -> CanonicalSpecimenStorage.write(stack, specimen));
+
+        // Do not call FishData#getResult here. Tide's implementation performs its own
+        // independent fish-length roll, which would violate the one-canonical-size rule.
+        ItemStack stack = new ItemStack((Item) data.fish().value());
+        if (Tide.SERVER_CONFIG.items.bucketableFishItems == TideServerConfig.Items.BucketableMode.WHEN_LIVING
+                && data.bucket().isPresent()) {
+            TideItemData.IS_BUCKETABLE.set(stack, true);
+        }
+        CanonicalSpecimenStorage.write(stack, specimen);
+        CatchResult result = data.createResult(stack);
 
         TideFishingHook hook = tideContext.hook();
         if (hook != null) {
