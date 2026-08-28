@@ -100,6 +100,18 @@ public final class CatchTraitService {
    }
 
    public boolean assignIfAbsent(ItemStack stack, Random random) {
+      // Canonical V2 specimens already own their Condition. The legacy mutation selector is only a
+      // compatibility fallback for noncanonical catches and must never reroll a canonical specimen.
+      if (TraitAxesRuntime.isCanonicalV2(stack)) {
+         String canonicalCondition = (String)stack.get(TideTraitsComponents.SPECIMEN_CONDITION);
+         if (canonicalCondition != null && !canonicalCondition.isBlank()) {
+            stack.set(TideTraitsComponents.MUTATION, canonicalCondition);
+         }
+
+         TraitAxesRuntime.migrateLegacy(stack);
+         return false;
+      }
+
       Optional<FishData> fishData = FishData.get(stack);
       if (fishData.isEmpty()) {
          return false;
