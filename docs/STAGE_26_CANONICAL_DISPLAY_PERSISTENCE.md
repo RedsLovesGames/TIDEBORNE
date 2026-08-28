@@ -29,4 +29,15 @@ This keeps old block-entity NBT compatible because the serialized display format
 3. Tide display metadata remains present, confirming the migration does not replace Tide's model/display-data path;
 4. a legacy display continues to use its Tide length and remains noncanonical after placement/removal, proving no migration-time specimen generation occurs.
 
-Validation status is recorded in the stage completion commit after the exact-dependency build and Fabric GameTests run.
+## Validation
+
+Implementation commit `2cd78305f4119b70441f27005ea307546ce056f0` is green in GitHub Actions run `33188581378`.
+
+The exact Tide 2.1.1/Apex dependency workflow completed:
+
+- reconstruction identifier validation;
+- `./gradlew clean build --stacktrace`, including unit tests;
+- `./gradlew runGametest --stacktrace`, including both display persistence GameTests;
+- built-JAR artifact upload.
+
+Stage 26 is complete. No later migration slice was started.
