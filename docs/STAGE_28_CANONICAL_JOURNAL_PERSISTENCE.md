@@ -32,3 +32,7 @@ The sidecar carries the complete existing canonical payload: species, schema/gen
 ## Coverage
 
 `JournalSpecimenStoreTest` verifies complete canonical round-trip serialization, selective latest/largest/smallest updates, preservation of unrelated legacy journal/team NBT, absence of synthetic migration for legacy-only data, idempotent repeated capture, and species isolation.
+
+## Validation
+
+Implementation commit `1d1cfdfb1a93c3b169e83686cd992e5fee327ad0` is green in GitHub Actions run `33190321092`. The exact-dependency clean Gradle build, unit tests included by the build, Fabric GameTests, and built-JAR artifact upload all completed successfully.
