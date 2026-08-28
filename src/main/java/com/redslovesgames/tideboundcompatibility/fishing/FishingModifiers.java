@@ -9,6 +9,7 @@ import com.li64.tide.Tide;
 import com.li64.tide.data.TideTags.Items;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.fishing.FishingContext;
+import com.li64.tide.data.fishing.MinigameBehavior;
 import com.li64.tide.registries.TideItems;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.redslovesgames.tideborne.fishing.v2.FightProfileService;
@@ -69,8 +70,10 @@ public final class FishingModifiers {
    public static FishingModifiers.MinigameValues modifyMinigame(TideFishingHook hook, byte behavior, float area, float speed) {
       var canonical = CanonicalCatchStateManager.get(hook);
       if (canonical.isPresent()) {
-         double strength = canonical.get().fightProfile().strength();
-         double tempo = canonical.get().fightProfile().tempo();
+         var fightProfile = canonical.get().fightProfile();
+         double strength = fightProfile.strength();
+         double tempo = fightProfile.tempo();
+         behavior = canonicalBehavior(fightProfile.behavior(), behavior);
          ItemStack tideLine = hook.getLine();
          if (tideLine.isOf(TideItems.COPPER_LINE)) tempo *= 0.9;
          if (tideLine.isOf(TideItems.IRON_LINE)) strength *= 0.86;
@@ -104,6 +107,20 @@ public final class FishingModifiers {
       } else {
          return new FishingModifiers.MinigameValues(behavior, MathHelper.clamp(area, 0.05F, 1.0F), Math.max(0.05F, speed));
       }
+   }
+
+   private static byte canonicalBehavior(String behavior, byte fallback) {
+      if (behavior == null || behavior.isBlank()) {
+         return fallback;
+      }
+
+      for (MinigameBehavior candidate : MinigameBehavior.values()) {
+         if (candidate.name().equalsIgnoreCase(behavior) || candidate.toString().equalsIgnoreCase(behavior)) {
+            return (byte)candidate.ordinal();
+         }
+      }
+
+      return fallback;
    }
 
    public record MinigameValues(byte behavior, float area, float speed) {
