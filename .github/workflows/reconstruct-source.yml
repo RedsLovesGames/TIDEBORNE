@@ -72,6 +72,21 @@ jobs:
               raise SystemExit('Authoritative content-tree verification failed')
           PY
 
+      - name: Prepare Tiny v2 Yarn mappings
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="$GITHUB_WORKSPACE/.gradle/tideborne-tools"
+          mkdir -p "$TOOLS"
+          curl -fsSL 'https://maven.fabricmc.net/net/fabricmc/yarn/1.21.1+build.3/yarn-1.21.1+build.3-v2.jar' -o /tmp/yarn-v2.jar
+          unzip -p /tmp/yarn-v2.jar mappings/mappings.tiny | gzip -c > "$TOOLS/yarn-1.21.1+build.3-tiny.gz"
+          first_line="$(gzip -cd "$TOOLS/yarn-1.21.1+build.3-tiny.gz" | head -n 1 || true)"
+          echo "Yarn mapping header: $first_line"
+          case "$first_line" in
+            $'tiny\t2\t'*) ;;
+            *) echo 'Expected Tiny v2 mappings in Yarn v2 artifact' >&2; exit 1 ;;
+          esac
+
       - name: Reconstruct named source and resources
         shell: bash
         run: |
