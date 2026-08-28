@@ -1,6 +1,6 @@
 # Stage 23: Canonical ItemStack specimen persistence
 
-Status: complete on `dev` after validation.
+Status: complete on `dev`.
 
 ## Canonical ownership
 
@@ -60,20 +60,34 @@ Legacy-only transfer data remains supported on its separate compatibility path. 
 
 ## Serialization coverage
 
-`CanonicalSpecimenStorageTest` covers:
+Ordinary unit tests in `CanonicalSpecimenStorageTest` cover the registry-independent canonical transfer codec:
 
-- complete canonical ItemStack round trip of every persisted field
-- canonical seed, final percentile, and final length authority when legacy mirrors disagree
-- side-effect-free reads with stale mirrors
-- incomplete canonical payload detection
-- legacy-only migration detection
-- older and newer schema detection
-- older and newer generation detection
-- canonical transfer NBT round trip
-- unknown percentile-definition rejection
-- incomplete transfer rejection without synthesized defaults
-- `SpecimenTransfer` canonical delegation without read-time mirror mutation
-- invalid canonical transfer refusal without legacy fallback
+- complete round trip of every canonical specimen field
+- explicit canonical percentile definition and preservation of both base and final percentiles
+- unknown percentile-definition rejection without normalization
+- incomplete canonical payload rejection without synthesized defaults
+- older and newer schema-version rejection
+- older and newer generation-version rejection
 - absence-preserving pre-fight FishScore serialization
 
+Fabric server GameTests in `CanonicalSpecimenStorageGameTests` cover actual registered ItemStack behavior:
+
+- complete ItemStack write/read plus transfer round trip of every canonical field
+- canonical seed, percentile, length, Body Type, and Condition authority when legacy mirrors disagree
+- side-effect-free canonical reads that leave deliberately stale mirrors untouched
+- explicit `LEGACY_ONLY` and `CANONICAL_INCOMPLETE` migration classification
+- incomplete canonical stacks refusing repair from legacy mirrors
+- invalid declared canonical transfer payloads refusing legacy-key fallback
+
 No read path introduced by this stage samples RNG or calls specimen generation.
+
+## Validation
+
+GitHub Actions run `33181805114` is green for commit `fdd51c43c8576bbe3b3da05175307d0203bad1e9`:
+
+- exact external dependency fetch and reconstruction-identifier validation passed
+- `./gradlew clean build --stacktrace` passed, including all unit tests
+- `./gradlew runGametest --stacktrace` passed, including the canonical ItemStack persistence GameTests
+- built JAR artifact upload passed
+
+The first validation run exposed that direct ItemStack unit tests were loading registered mod components outside Fabric server bootstrap. Those assertions were moved to Fabric GameTests rather than weakening the production persistence boundary. The registry-independent transfer codec remains covered by ordinary JUnit tests.
