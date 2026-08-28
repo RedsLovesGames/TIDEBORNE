@@ -36,6 +36,7 @@ The workflow runs:
 
 ```text
 ./gradlew clean build --stacktrace
+./gradlew runGametest --stacktrace
 ```
 
 against Java 21 with exact external compile dependencies fetched in CI:
@@ -43,15 +44,13 @@ against Java 21 with exact external compile dependencies fetched in CI:
 - Tide 2.1.1 Fabric 1.21.1, SHA-256 `498a5e8dda940866c9b0decadf7960724ef489fb49215b30f70c18d12f07b1c8`
 - Apex Waters 1.1.1 Fabric 1.21.1, SHA-256 `00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37`
 
-Uploaded build artifact digest:
-
-- `sha256:7000d9527a11f0b894d068d489d54fc8ebcd12f29161155168e3e91499cbcdbd`
-
-The reconstructed baseline was then fast-forwarded onto `dev`. No merge conflict or history rewrite was required because the reconstruction work is a direct descendant of the previous `dev` head.
+The reconstructed baseline was fast-forwarded onto `dev`. No merge conflict or history rewrite was required because the reconstruction work is a direct descendant of the previous `dev` head.
 
 ## Fishing System 2.0 execution state
 
-Specification execution steps 1 through 4 exist and are tested in the pure V2 domain layer:
+Specification execution steps 1 through 4 are complete in the pure V2 domain layer and are now runtime-integrated on `dev`.
+
+Pure V2 steps:
 
 1. `FishingContext`, `SpeciesProfile`, and canonical rarity
 2. species selection and rarity-aware Fishing Luck
@@ -64,50 +63,47 @@ Implementation root:
 src/main/java/com/redslovesgames/tideborne/fishing/v2/
 ```
 
-The pure V2 layer currently contains:
+The deterministic pure V2 suite remains 17 of 17 passing tests.
 
-- `CanonicalRarity`
-- `FishingContext`
-- `FishingEnvironment`
-- `SpeciesEligibility`
-- `SpeciesProfile`
-- `SpeciesSelectionService`
-- `SizeDistribution`
-- `LogNormalSizeDistribution`
-- `NormalDistributionMath`
-- `SpecimenData`
-- `SpecimenGenerator`
-- `FightProfile`
-- `FightProfileService`
+## Steps 1 through 4 runtime integration is green
 
-The earlier deterministic V2 suite passed 17 of 17 tests. The full reconstructed project now also compiles and packages successfully.
+Runtime validation completed on `dev` with GitHub Actions run `33159465388`. Both the clean Gradle build and Fabric GameTests passed.
+
+Verified runtime contracts:
+
+- `FishSelectorMixin` replaces only Tide `FishSelector#getResult`. Tide's top-level `TideFishingManager` category selector and `FishSelector.weight(context) = 85` remain unchanged, so ordinary Tide fish versus junk, crate, and treasure probability is unchanged.
+- `TideSpeciesProfileAdapter` preserves Tide `shouldKeep` eligibility and existing fishing/compatibility weight modifiers while omitting the superseded legacy `selection_quality` adjustment from the canonical species-selection path.
+- one server-owned Tide fishing context produces one canonical catch seed, one V2 species selection, and one `SpecimenGenerator.generateBase` call.
+- `SpecimenGenerator` produces one canonical natural percentile and one canonical final length for the current Steps 1 through 4 model.
+- the V2 bridge intentionally does not call Tide `FishData#getResult`, preventing Tide's independent `SizeData#getRandomLength` roll from becoming a hidden second natural size roll.
+- `CanonicalSpecimenStorage` persists canonical specimen identity and mirrors the canonical final percentile/length into compatibility components before downstream catch handling.
+- the canonical `FightProfile` explicitly drives minigame behavior, strength, tempo, and catch-zone baseline values.
+- existing Tide copper, iron, golden, and diamond line effects still layer on top of the canonical fight baseline.
+- existing Tideborne Tentacle Line, Swift Line, Steel Leader, Leviathan Bait, Perfect Catch skill detection, and related compatibility hooks remain in their current integration positions unless a later specification step replaces their behavior.
+- canonical specimen components survive the current item-to-entity-to-item and bucket transfer paths. Full source stack serialization preserves canonical components, and the specimen transfer hooks preserve the compatibility mirrors.
+- the invalid Mixin 0.8.7 injector on the `Bucketable` interface was replaced by a concrete `FishEntity#copyDataToStack` hook, allowing the GameTest server to start while preserving entity-to-bucket specimen transfer.
+- legacy `CatchTraitService` natural-size sampling is bypassed for canonical specimens because canonical storage has already supplied the compatibility identity/seed/percentile state.
+- legacy `PerfectCatchTraitBoost` now refuses to rewrite percentile or fish length when canonical specimen identity is present. The actual Fishing System 2.0 Perfect Catch reward redesign remains Step 8.
+
+Runtime GameTests cover:
+
+1. canonical specimen item/entity representation round trip
+2. canonical specimen immunity to the legacy catch individualizer reroll path
+3. canonical specimen immunity to the legacy Perfect Catch percentile/length rewrite
+
+A focused search of the migrated runtime path found no remaining duplicate species selection, natural percentile, natural size, fight strength, or fight tempo calculation used by canonical V2 catches. Legacy sampled-size and trait paths still exist as guarded fallback compatibility for old/noncanonical catches and should remain until their stored-data callers are migrated.
 
 ## Current execution gate
 
-The next work is runtime integration of V2 steps 1 through 4. Do not implement later mechanics on top of the old catch pipeline first.
+Steps 1 through 4 are runtime-integrated and green. Do not redo reconstruction or broaden cleanup before the next frozen slice.
 
-Runtime integration order:
+The exact next implementation slice is Step 5: Body Type.
 
-1. adapt Tide fish data into canonical `SpeciesProfile`
-2. build one server-owned canonical `FishingContext` per catch attempt
-3. use `SpeciesSelectionService` inside the fish pool while preserving Tide's overall fish/non-fish category probability
-4. generate the base canonical specimen once with `SpecimenGenerator`
-5. derive the normalized `FightProfile`
-6. feed those values into the existing Tide minigame without redesigning the minigame
-7. persist enough canonical specimen state to prevent downstream rerolls
-8. add deterministic adapter/integration tests
-9. remove superseded legacy rarity/selection/percentile/fight calculations only after their callers migrate
-
-Known legacy integration points already identified:
-
-- `tidetraits/mixin/TideFishingHookMixin.java` currently individualizes catches and assigns legacy specimen traits before the minigame flow finishes
-- `tideboundcompatibility/mixin/TideFishingHookMixin.java` currently redirects Tide catch selection for Leviathan Bait and applies the old post-fight Perfect Catch trait boost
-- `tideboundcompatibility/mixin/FishCatchMinigameMixin.java` currently modifies minigame behavior, catch-zone area, and speed
-- Tide's `TideFishingManager.selectCatch(FishingContext)` delegates to its random selector, so V2 integration must replace/reweight only the fish-species choice rather than changing the overall fish category chance
+Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 until the preceding frozen slices are complete.
 
 ## Later frozen slices
 
-After runtime steps 1 through 4 are green, execute in this order:
+Execute in this order:
 
 1. Body Type
 2. independent Condition and Pigmentation axes

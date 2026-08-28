@@ -10,7 +10,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Reconstruct complete maintained Java source and resources from the authoritative JAR.
 - [x] Normalize mechanical Vineflower/Yarn reconstruction artifacts without changing gameplay behavior.
 - [x] Compile against exact Tide 2.1.1 and Apex Waters 1.1.1 dependencies.
-- [x] Run `./gradlew clean build --stacktrace` successfully. Green run: `33152569860`.
+- [x] Run `./gradlew clean build --stacktrace` successfully. Green reconstruction run: `33152569860`.
 - [x] Upload built JAR artifacts from the green reconstructed baseline.
 - [x] Fast-forward the reconstructed runtime onto `dev` without touching `main`.
 
@@ -24,22 +24,30 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Add deterministic unit tests for the pure V2 mechanics.
 - [x] Verify the existing V2 deterministic suite at 17 of 17 passing tests.
 
-## Current slice - runtime integrate steps 1 through 4
+## Steps 1 through 4 - runtime integration complete
 
-- [ ] Add a Tide-to-V2 species adapter that produces canonical `SpeciesProfile` data without inventing unsupported fish.
-- [ ] Build one server-owned canonical `FishingContext` for each catch attempt.
-- [ ] Integrate `SpeciesSelectionService` into the actual Tide fish-species pool while preserving Tide's overall fish/non-fish category probability.
-- [ ] Preserve current eligibility, location, biome, dimension, weather, time, bait, and compatibility restrictions while translating them into the V2 boundary.
-- [ ] Remove affected legacy `selection_quality` species-selection behavior only after V2 owns the migrated caller.
-- [ ] Generate the base canonical specimen once with `SpecimenGenerator` and prevent downstream natural percentile/length rerolls.
-- [ ] Persist/bridge canonical specimen identity into the reconstructed 1.3.57 item/component path.
-- [ ] Feed canonical percentile/size into the existing Tide minigame path.
-- [ ] Feed `FightProfileService` Strength, Tempo, catch-zone area, and behavior into the existing minigame without redesigning its interaction model.
-- [ ] Preserve the existing marker, catch region, behavior, center-zone Perfect Catch skill check, Steel Leader, bait, rod, and compatibility hooks unless the specification explicitly replaces them later.
-- [ ] Add deterministic adapter, integration, and serialization round-trip tests.
-- [ ] Run the relevant tests after each integration slice.
-- [ ] Run the full repository build after steps 1 through 4 are runtime-integrated.
-- [ ] Remove superseded legacy rarity, sampled percentile, size, and fight calculations after all callers migrate.
+- [x] Add a Tide-to-V2 species adapter that produces canonical `SpeciesProfile` data without inventing unsupported fish.
+- [x] Build one server-owned canonical `FishingContext` for each catch attempt.
+- [x] Integrate `SpeciesSelectionService` only into Tide `FishSelector#getResult`, leaving the top-level Tide catch-category selector unchanged.
+- [x] Verify Tide `FishSelector.weight(context) = 85` remains unchanged, preserving ordinary fish versus junk/crate/treasure category probability.
+- [x] Preserve Tide `shouldKeep` eligibility plus current location, biome, dimension, weather, time, bait, and compatibility restrictions at the V2 boundary.
+- [x] Preserve existing fishing and compatibility weight modifiers while removing affected legacy `selection_quality` behavior from the canonical species-selection path.
+- [x] Generate one catch seed, select one species, and call `SpecimenGenerator.generateBase` once for the canonical catch.
+- [x] Generate one canonical natural percentile and one canonical final size for the current Steps 1 through 4 specimen model.
+- [x] Avoid Tide `FishData#getResult` in the V2 bridge so Tide cannot perform its independent hidden `getRandomLength` roll.
+- [x] Persist canonical specimen identity and canonical percentile/length into the reconstructed item/component path before downstream catch handling.
+- [x] Make canonical `FightProfile` behavior, Strength, Tempo, and catch-zone baseline drive the existing Tide minigame.
+- [x] Preserve existing Tide copper, iron, golden, and diamond line effects on top of the canonical fight baseline.
+- [x] Preserve Tideborne Tentacle Line, Swift Line, Steel Leader, Leviathan Bait, center-zone Perfect Catch detection, bait, rod, and compatibility hooks unless a later spec step explicitly replaces them.
+- [x] Verify canonical specimen data survives current item/entity/item and entity/bucket transfer paths.
+- [x] Replace the invalid Mixin 0.8.7 `Bucketable` interface injector with a concrete `FishEntity#copyDataToStack` transfer hook.
+- [x] Verify the legacy catch individualizer cannot reroll canonical specimen seed/percentile state.
+- [x] Prevent legacy `PerfectCatchTraitBoost` from rewriting canonical percentile or fish length.
+- [x] Add deterministic adapter/integration coverage and three runtime GameTests for canonical transfer and no-reroll guarantees.
+- [x] Run the relevant tests and verify the pure V2 deterministic suite remains 17 of 17 passing.
+- [x] Run `./gradlew clean build --stacktrace` successfully after the runtime integration changes.
+- [x] Run `./gradlew runGametest --stacktrace` successfully after the runtime integration changes. Green runtime run: `33159465388`.
+- [x] Search the migrated runtime path for duplicate species-selection, percentile, size, Strength, and Tempo calculations. No active canonical duplicate remains; guarded legacy fallback remains for old/noncanonical catches until migration.
 
 ## Step 5 - Body Type
 
@@ -70,7 +78,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 ## Step 8 - Perfect Catch and Perfect Specimen
 
 - [ ] Preserve the existing center-zone Perfect Catch skill check.
-- [ ] Remove the old post-fight percentile/length rewrite from `PerfectCatchTraitBoost` after callers migrate.
+- [ ] Implement the V2 Perfect Catch reward path. Canonical catches already bypass the legacy percentile/length rewrite.
 - [ ] Make Perfect Catch grant +10 temporary Trait Luck.
 - [ ] Make Perfect Catch multiply Body Type event chance by 1.25.
 - [ ] Give Perfect Catch a substantial Perfect Specimen bonus without forcing it.
