@@ -29,6 +29,8 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Add normalization, target-value, boundary, and size-scaling tests.
 - [x] Run all currently available tests and the maintained-source repository `./gradlew clean build --stacktrace` successfully.
 - [x] Recheck the reconstruction blocker against current Git history and prove the staged archive is corrupt, hash-mismatched, and historically unrecoverable from the truncated payload commit.
+- [x] Exhaust retained authoritative-input recovery across File Library, connected Drive, TIDEBORNE releases/history/Actions artifacts, and available local workspace files.
+- [x] Trace the Fish Wiki runtime provenance that loaded the exact 1.3.57 SHA and inspect its historical export ZIP. The export contains 1,056 entries but 0 JARs and 0 `.class` files, so it cannot recover the authoritative baseline.
 - [x] Update `docs/CURRENT_STATE.md` with the verified reconstruction evidence and exact external input required to proceed.
 
 ## Blocked until Phase 0 and runtime integration are green

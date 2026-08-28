@@ -35,7 +35,7 @@ They are not yet wired into the reconstructed Tideborne runtime. Body Type gener
 | Deterministic unit tests | Green | 17 of 17 tests passed locally on Java 21 |
 | Full repository build | Green for maintained source | GitHub Actions run `33138932023` executes `./gradlew clean build --stacktrace` successfully on Java 21 and uploads JAR artifacts |
 | Gradle wrapper | Complete | Pinned Gradle 8.12 wrapper with distribution SHA-256 verification |
-| Reconstructed 1.3.57 legacy integration | Blocked by unavailable authoritative input | The staged reconstruction archive is corrupt and incomplete, authoritative resources are absent, and the exact 1.3.57 JAR/content tree is not present in the repository or retained Actions artifacts |
+| Reconstructed 1.3.57 legacy integration | Blocked by unavailable authoritative input | The staged reconstruction archive is corrupt and incomplete, authoritative resources are absent, and the exact 1.3.57 JAR/content tree is not present in the repository or retained artifact sources checked below |
 
 ## Implemented files
 
@@ -68,6 +68,7 @@ Tests are under the matching `src/test/java` package.
 - `dbbcd382f33fa7ed0dd428bd20e3162036e2127f`: implement Fishing System 2.0 domain steps 1 through 4
 - `babba1747c71d9f08274b085b5e0b599daa7f6d7`: restore the Gradle wrapper and validate `dev` builds
 - `248f1dca2d560491dc862f8098f2861d9753b965`: record green Fishing System 2.0 steps 1 through 4
+- `da023a6a878486c38e4e5de608c82911560fe144`: record verified 1.3.57 reconstruction blocker
 
 ## Reconstruction blocker evidence
 
@@ -85,7 +86,20 @@ Phase 0 was rechecked against the current repository and Git history on 2026-08-
 - `reconstruction/input` contains no authoritative `resources.tar.xz.b64.part-*` payload
 - therefore the required 442-file canonical content tree cannot be reconstructed or hash-verified from the repository as it stands
 
-The expected JAR SHA and canonical tree SHA remain frozen verification anchors, not verified artifacts in this run. Verification of the actual 1.3.57 release and 442-file tree must wait until the authoritative JAR, content-identical tree, or corrected complete class/resource payload is available.
+### Expanded retained-artifact recovery sweep
+
+The same run exhausted the additional retained sources available to this workspace:
+
+- File Library exact-name, version, reconstructed-project, and recent-upload searches found release notes and registry metadata for `Tideborne-1.3.57-perfect-catch-trait-luck.jar`, but not the JAR bytes, a content-identical extracted tree, or a complete reconstructed project archive.
+- Connected Google Drive exact-name search found no authoritative 1.3.57 JAR.
+- The TIDEBORNE repository has no release asset containing the authoritative binary, and the retained Actions/build artifacts checked do not contain it.
+- The Fish Wiki repository `RedsLovesGames/Tide-2-Addons` contains runtime provenance proving that a real Minecraft environment loaded `Tideborne-1.3.57-perfect-catch-trait-luck.jar` with the frozen SHA-256 on 2026-08-27.
+- That Fish Wiki runtime export was traced to historical commit `a9dea553f790a7086a36428c07917b9c4bf7636f` and inspected on an isolated reconstruction branch runner.
+- The historical runtime export ZIP is 4,377,605 bytes, SHA-256 `b667605d30cdcf7ce15456969ae2e35aa912981285d17206989c11b1b616b971`, and contains 1,056 entries.
+- The export contains 0 `.jar` files and 0 `.class` files. No entry matches the authoritative Tideborne JAR SHA-256. It contains rendered PNGs and runtime metadata, not reconstructable Tideborne code/resources.
+- Therefore the cross-repository runtime evidence proves the exact binary existed on the machine that generated the export, but it does not recover the missing binary or canonical content tree.
+
+The expected JAR SHA and canonical tree SHA remain frozen verification anchors, not verified artifacts in this run. Phase 0 is now blocked by genuinely unavailable authoritative bytes in the currently accessible sources.
 
 The green maintained-source build verifies the existing pure domain layer only. It does not prove runtime integration with legacy Tideborne code, Tide mixins, Satchel, Journal, records, history, teams, networking, or minigame callers.
 
