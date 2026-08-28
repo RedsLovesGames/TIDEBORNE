@@ -27,6 +27,12 @@ public final class CanonicalSpecimenStorage {
         stack.set(TideTraitsComponents.SPECIMEN_PIGMENTATION, specimen.pigmentation().name().toLowerCase());
         stack.set(TideTraitsComponents.SPECIMEN_QUALITY, specimen.specimenQuality().name().toLowerCase());
         stack.set(TideTraitsComponents.SPECIMEN_PERFECT_CATCH, specimen.perfectCatch());
+        if (specimen.rawFishScore().isPresent()) {
+            stack.set(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE, specimen.rawFishScore().getAsDouble());
+        }
+        if (specimen.fishScore().isPresent()) {
+            stack.set(TideTraitsComponents.SPECIMEN_FISH_SCORE, specimen.fishScore().getAsInt());
+        }
 
         // Compatibility mirrors only. Canonical V2 consumers must read the specimen components above.
         stack.set(TideTraitsComponents.MUTATION_SEED, specimen.deterministicSeed());

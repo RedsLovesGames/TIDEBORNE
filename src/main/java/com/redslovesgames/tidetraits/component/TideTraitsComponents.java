@@ -65,6 +65,12 @@ public final class TideTraitsComponents {
    public static final ComponentType<Boolean> SPECIMEN_PERFECT_CATCH = register(
       "specimen_perfect_catch", ComponentType.<Boolean>builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build()
    );
+   public static final ComponentType<Double> SPECIMEN_RAW_FISH_SCORE = register(
+      "specimen_raw_fish_score", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
+   );
+   public static final ComponentType<Integer> SPECIMEN_FISH_SCORE = register(
+      "specimen_fish_score", ComponentType.<Integer>builder().codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).build()
+   );
 
    private TideTraitsComponents() {
    }
