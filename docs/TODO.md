@@ -151,7 +151,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Bypass the reconstructed late `PerfectCatchTraitBoost` mutation for canonical V2 catches while retaining it for noncanonical/legacy catches.
 - [x] Add integration coverage proving the Perfect Catch flag reaches canonical post-fight specimen generation before the persistence callback, with repeated finalization unable to overwrite the captured result.
 - [ ] Implement the V2 Perfect Catch reward math on the new pre-persistence finalization path.
-- [ ] Make Perfect Catch grant +10 temporary Trait Luck.
+- [x] Make Perfect Catch grant +10 temporary Trait Luck.
 - [ ] Make Perfect Catch multiply Body Type event chance by 1.25.
 - [ ] Give Perfect Catch a substantial Perfect Specimen bonus without forcing it.
 - [ ] Implement Perfect Specimen percentile curve: below 95 = 0%, 95 = 2%, 97.5 = 8%, 99 = 25%, 99.9+ = 60%, smooth interpolation between anchors.
