@@ -202,7 +202,8 @@ public final class TideTraitsCommands {
 
       ensureSeed(held, source);
       lengthCm = TraitAxesRuntime.applyCurrentPhysicalEffects(held, lengthCm, CatchTraitService.INSTANCE.config());
-      TideItemData.FISH_LENGTH.set(held, lengthCm);
+      final double physicalLengthCm = lengthCm;
+      TideItemData.FISH_LENGTH.set(held, physicalLengthCm);
       held.set(TideTraitsComponents.SIZE_PERCENTILE, actualPercent);
       source.sendFeedback(
          () -> Text.literal(
@@ -211,7 +212,7 @@ public final class TideTraitsCommands {
                "Set %s target quantile to %.4f (physical length %.3f cm); baseline percentile %.4f%%, band %s. Body Type and Condition preserved.",
                descriptor.canonicalSpeciesId(),
                normalized,
-               lengthCm,
+               physicalLengthCm,
                actualPercent,
                band.serializedName()
             )
@@ -278,16 +279,17 @@ public final class TideTraitsCommands {
          CatchTraitService.INSTANCE.config()
       );
       applied = TraitAxesRuntime.finishAdminEdit(held, newMutation, clearing, applied, CatchTraitService.INSTANCE.config());
+      final SpecimenSizeService.AppliedSize finalApplied = applied;
       held.set(TideTraitsComponents.MUTATION, TraitAxesRuntime.conditionForEdit(held, newMutation, clearing));
       held.set(TideTraitsComponents.MUTATION_SEED, seed);
-      if (applied.percentile().isPresent()) {
-         held.set(TideTraitsComponents.SIZE_PERCENTILE, applied.percentile().getAsDouble());
+      if (finalApplied.percentile().isPresent()) {
+         held.set(TideTraitsComponents.SIZE_PERCENTILE, finalApplied.percentile().getAsDouble());
       } else {
          held.remove(TideTraitsComponents.SIZE_PERCENTILE);
       }
 
-      if (Double.isFinite(applied.finalPhysicalLengthCm()) && applied.finalPhysicalLengthCm() > 0.0) {
-         TideItemData.FISH_LENGTH.set(held, applied.finalPhysicalLengthCm());
+      if (Double.isFinite(finalApplied.finalPhysicalLengthCm()) && finalApplied.finalPhysicalLengthCm() > 0.0) {
+         TideItemData.FISH_LENGTH.set(held, finalApplied.finalPhysicalLengthCm());
       }
 
       String verb = clearing ? "Cleared" : "Set";
@@ -300,8 +302,8 @@ public final class TideTraitsCommands {
                descriptor.canonicalSpeciesId(),
                newMutation.serializedName(),
                seed,
-               applied.finalPhysicalLengthCm(),
-               applied.percentile().isPresent() ? String.format(Locale.ROOT, ", percentile %.4f%%", applied.percentile().getAsDouble()) : ", no Tide SizeData"
+               finalApplied.finalPhysicalLengthCm(),
+               finalApplied.percentile().isPresent() ? String.format(Locale.ROOT, ", percentile %.4f%%", finalApplied.percentile().getAsDouble()) : ", no Tide SizeData"
             )
          ),
          false
