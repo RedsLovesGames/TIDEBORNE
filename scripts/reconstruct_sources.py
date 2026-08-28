@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""Reconstruct Tideborne 1.3.57 sources from the authoritative release JAR.
+"""Reconstruct Tideborne 1.3.57 maintained source from the authoritative bytecode tree.
 
-This is intentionally a recovery tool, not part of the normal Gradle build. It:
-1. validates the input JAR hash,
-2. downloads pinned Vineflower and Yarn mappings,
-3. decompiles Tideborne,
-4. remaps Minecraft intermediary identifiers in Java source to Yarn names,
-5. copies non-class resources verbatim,
-6. writes a provenance manifest.
-
-The generated source is a behavioral reconstruction baseline. Decompiler output still
-requires compilation, tests, bytecode inspection, and cleanup before it is considered
-maintained source.
+The preferred input is the exact release JAR. For the one-time private GitHub recovery,
+a content-identical repacked JAR is also accepted when its canonical content-tree digest
+matches the pinned 1.3.57 baseline. ZIP container metadata is not treated as gameplay
+state.
 """
 
 from __future__ import annotations
@@ -22,6 +15,7 @@ import hashlib
 import json
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import urllib.request
@@ -32,6 +26,9 @@ from pathlib import Path
 
 BASELINE_VERSION = "1.3.57"
 EXPECTED_TIDEBORNE_SHA256 = "0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5"
+EXPECTED_CONTENT_TREE_SHA256 = "5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6"
+EXPECTED_FILE_COUNT = 442
+EXPECTED_CLASS_COUNT = 272
 VINEFLOWER_VERSION = "1.12.0"
 YARN_VERSION = "1.21.1+build.3"
 
@@ -66,6 +63,57 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def content_tree_sha256(input_jar: Path) -> tuple[str, int, int]:
+    """Hash path + uncompressed bytes, independent of ZIP ordering/timestamps."""
+    digest = hashlib.sha256()
+    with zipfile.ZipFile(input_jar) as archive:
+        files = sorted(
+            (info.filename, archive.read(info.filename))
+            for info in archive.infolist()
+            if not info.is_dir()
+        )
+    for name, data in files:
+        encoded_name = name.encode("utf-8")
+        digest.update(struct.pack(">I", len(encoded_name)))
+        digest.update(encoded_name)
+        digest.update(struct.pack(">Q", len(data)))
+        digest.update(data)
+    class_count = sum(name.endswith(".class") for name, _ in files)
+    return digest.hexdigest(), len(files), class_count
+
+
+def verify_baseline(input_jar: Path, allow_repacked: bool) -> dict[str, object]:
+    jar_digest = sha256(input_jar)
+    tree_digest, file_count, class_count = content_tree_sha256(input_jar)
+
+    if jar_digest == EXPECTED_TIDEBORNE_SHA256:
+        mode = "exact-release-jar"
+    elif allow_repacked and (
+        tree_digest == EXPECTED_CONTENT_TREE_SHA256
+        and file_count == EXPECTED_FILE_COUNT
+        and class_count == EXPECTED_CLASS_COUNT
+    ):
+        mode = "content-identical-repacked-jar"
+    else:
+        raise SystemExit(
+            "Refusing to reconstruct from an unrecognized Tideborne input.\n"
+            f"Expected release SHA-256: {EXPECTED_TIDEBORNE_SHA256}\n"
+            f"Actual JAR SHA-256:       {jar_digest}\n"
+            f"Expected tree SHA-256:    {EXPECTED_CONTENT_TREE_SHA256}\n"
+            f"Actual tree SHA-256:      {tree_digest}\n"
+            f"Expected files/classes:   {EXPECTED_FILE_COUNT}/{EXPECTED_CLASS_COUNT}\n"
+            f"Actual files/classes:     {file_count}/{class_count}"
+        )
+
+    return {
+        "verification_mode": mode,
+        "jar_sha256": jar_digest,
+        "content_tree_sha256": tree_digest,
+        "file_count": file_count,
+        "class_count": class_count,
+    }
 
 
 def download(url: str, destination: Path) -> None:
@@ -117,6 +165,7 @@ def run_vineflower(vineflower_jar: Path, input_jar: Path, output_dir: Path) -> N
         "-lit=1",
         "-asc=1",
         "-ren=0",
+        "--folder",
         str(input_jar), str(output_dir),
     ]
     print("Running Vineflower...")
@@ -268,11 +317,16 @@ def ensure_clean_directory(path: Path, force: bool) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("jar", type=Path, help="Path to Tideborne 1.3.57 release JAR")
+    parser.add_argument("jar", type=Path, help="Path to Tideborne 1.3.57 JAR/content-equivalent repack")
     parser.add_argument("--repo", type=Path, default=Path.cwd(), help="Repository root (default: cwd)")
     parser.add_argument("--tools", type=Path, default=None, help="Tool cache directory")
     parser.add_argument("--force", action="store_true", help="Replace existing src/main/java and resources")
     parser.add_argument("--skip-download", action="store_true", help="Require tools/mappings to already exist")
+    parser.add_argument(
+        "--allow-repacked",
+        action="store_true",
+        help="Accept a JAR whose canonical content tree exactly matches the pinned 1.3.57 baseline",
+    )
     args = parser.parse_args()
 
     repo = args.repo.resolve()
@@ -280,13 +334,7 @@ def main() -> int:
     if not jar.is_file():
         parser.error(f"JAR not found: {jar}")
 
-    actual_hash = sha256(jar)
-    if actual_hash != EXPECTED_TIDEBORNE_SHA256:
-        raise SystemExit(
-            "Refusing to reconstruct from an unrecognized JAR.\n"
-            f"Expected SHA-256: {EXPECTED_TIDEBORNE_SHA256}\n"
-            f"Actual SHA-256:   {actual_hash}"
-        )
+    baseline_verification = verify_baseline(jar, args.allow_repacked)
 
     tools = (args.tools or repo / ".gradle" / "tideborne-tools").resolve()
     vineflower = tools / f"vineflower-{VINEFLOWER_VERSION}.jar"
@@ -316,12 +364,13 @@ def main() -> int:
     class_count = count_class_files(jar)
 
     manifest = {
-        "schema": 1,
+        "schema": 2,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "baseline": {
             "tideborne_version": BASELINE_VERSION,
-            "sha256": actual_hash,
-            "class_files": class_count,
+            "expected_release_sha256": EXPECTED_TIDEBORNE_SHA256,
+            "expected_content_tree_sha256": EXPECTED_CONTENT_TREE_SHA256,
+            **baseline_verification,
         },
         "tools": {
             "vineflower": VINEFLOWER_VERSION,
@@ -330,6 +379,7 @@ def main() -> int:
         "output": {
             "java_files": source_count,
             "resources": resource_count,
+            "class_files": class_count,
             "intermediary_replacements": replacements,
             "unresolved_intermediary_tokens": unresolved,
         },
