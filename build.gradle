@@ -22,11 +22,6 @@ repositories {
 def exactTideJar = file('dev/libs/tide-fabric-1.21.1-2.1.1.jar')
 def apexJar = file('dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar')
 
-configurations {
-    optionalCompatCompileOnly
-    compileOnly.extendsFrom(optionalCompatCompileOnly)
-}
-
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings "net.fabricmc:yarn:${yarn_mappings}:v2"
@@ -51,8 +46,11 @@ dependencies {
     modImplementation "curse.maven:ftb-teams-fabric-438497:${ftb_teams_curse_file}"
 
     if (apexJar.exists()) {
-        optionalCompatCompileOnly files(apexJar)
-        logger.lifecycle('Tideborne: Apex Waters compile-only compatibility enabled')
+        // Apex publishes its Fabric artifact in Mojang mappings. modCompileOnly tells
+        // Loom to remap that external mod into this project's Yarn namespace before
+        // Mixin annotation processing, which keeps target hierarchy/member names valid.
+        modCompileOnly files(apexJar)
+        logger.lifecycle('Tideborne: Apex Waters remapped compile-only compatibility enabled')
     }
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
