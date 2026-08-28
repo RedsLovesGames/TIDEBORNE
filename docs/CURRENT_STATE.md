@@ -93,11 +93,26 @@ Runtime GameTests cover:
 
 A focused search of the migrated runtime path found no remaining duplicate species selection, natural percentile, natural size, fight strength, or fight tempo calculation used by canonical V2 catches. Legacy sampled-size and trait paths still exist as guarded fallback compatibility for old/noncanonical catches and should remain until their stored-data callers are migrated.
 
+## Deterministic trait RNG splitting
+
+A stateless V2 `TraitRandom` utility is now defined inside the Fishing System 2.0 package for all future specimen trait axes.
+
+The utility:
+
+- derives each trait decision directly from the canonical specimen seed plus a fixed salt
+- exposes deterministic unit doubles in `[0, 1)` using the upper 53 bits of a mixed 64-bit value
+- uses no mutable or shared RNG state
+- gives Body Type, Condition, Pigmentation, and Perfect Specimen decisions reserved stable salts
+- keeps event and variant decisions on separate salts
+- guarantees that evaluating or adding an unrelated future salt does not consume state or shift existing outcomes
+
+Body Type itself is still not implemented in this slice.
+
 ## Current execution gate
 
-Steps 1 through 4 are runtime-integrated and green. Do not redo reconstruction or broaden cleanup before the next frozen slice.
+Steps 1 through 4 are runtime-integrated and green, and deterministic trait RNG splitting is in place. Do not redo reconstruction or broaden cleanup before the next frozen slice.
 
-The exact next implementation slice is Step 5: Body Type.
+The exact next implementation slice is Step 5: Body Type, using `TraitRandom` and its reserved Body Type salts.
 
 Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 until the preceding frozen slices are complete.
 
