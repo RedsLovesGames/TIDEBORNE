@@ -42,9 +42,11 @@ public final class SpecimenGenerator {
      * Pigmentation axis. Natural percentile and base length are sampled exactly once. Body Type,
      * Condition, and Pigmentation are each derived once from independent deterministic trait streams.
      *
-     * <p>The Body Type event uses the shared base -> rarity -> Trait Luck probability path. The
-     * explicit Body Type event multiplier is currently {@code 1.0}; it reserves the call shape needed
-     * by the later Perfect Catch Body Type multiplier without introducing another probability path.
+     * <p>Each implemented notable-trait event uses the shared base -> rarity -> Trait Luck
+     * probability path. The explicit Body Type event multiplier is currently {@code 1.0}; it reserves
+     * the call shape needed by the later Perfect Catch Body Type multiplier without introducing
+     * another probability path. Conditional subtype selection remains axis-local and is not changed
+     * by rarity compensation or Trait Luck.
      */
     public SpecimenData generate(
             SpeciesProfile species,
@@ -62,8 +64,8 @@ public final class SpecimenGenerator {
                 bodyTypeEventProbabilityMultiplier
         );
         SpecimenData sizedSpecimen = bodyTypes.applyPhysicalSize(species, baseSpecimen, bodyType);
-        SpecimenData conditionedSpecimen = conditions.apply(sizedSpecimen);
-        return pigmentations.apply(conditionedSpecimen);
+        SpecimenData conditionedSpecimen = conditions.apply(species, sizedSpecimen, traitLuck);
+        return pigmentations.apply(species, conditionedSpecimen, traitLuck);
     }
 
     /** Generates only the natural percentile and base length exactly once. */

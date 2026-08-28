@@ -9,22 +9,13 @@ import org.junit.jupiter.api.Test;
 
 class PigmentationGeneratorTest {
     private static final int SAMPLE_SIZE = 200_000;
+    private static final double EPSILON = 1.0e-12;
     private final PigmentationGenerator generator = new PigmentationGenerator();
     private final BodyTypeGenerator bodyTypes = new BodyTypeGenerator();
     private final ConditionGenerator conditions = new ConditionGenerator();
     private final SpecimenGenerator specimens = new SpecimenGenerator();
-    private final SpeciesProfile species = new SpeciesProfile(
-            "tide:test_fish",
-            CanonicalRarity.THREE_STAR,
-            1.0,
-            SpeciesEligibility.always(),
-            0.8,
-            1.0,
-            "steady",
-            new LogNormalSizeDistribution(25.0, 0.4),
-            Set.of(),
-            Map.of()
-    );
+    private final SpeciesProfile species = profile(CanonicalRarity.ONE_STAR);
+    private final SpeciesProfile fiveStarSpecies = profile(CanonicalRarity.FIVE_STAR);
 
     @Test
     void probabilitiesMatchTheBasePigmentationContract() {
@@ -41,15 +32,18 @@ class PigmentationGeneratorTest {
     @Test
     void sameSeedIsDeterministic() {
         for (long seed = 0; seed < 10_000; seed += 97) {
-            assertEquals(generator.generate(seed), generator.generate(seed));
+            assertEquals(
+                    generator.generate(seed, species, 0.0),
+                    generator.generate(seed, species, 0.0)
+            );
         }
     }
 
     @Test
-    void pigmentationEventRateIsApproximatelyOnePointFivePercent() {
+    void oneStarZeroTraitLuckEventRateIsApproximatelyOnePointFivePercent() {
         int events = 0;
         for (long seed = 0; seed < SAMPLE_SIZE; seed++) {
-            if (generator.generate(seed) != SpecimenData.Pigmentation.NORMAL) {
+            if (generator.generate(seed, species, 0.0) != SpecimenData.Pigmentation.NORMAL) {
                 events++;
             }
         }
@@ -60,12 +54,32 @@ class PigmentationGeneratorTest {
     }
 
     @Test
-    void triggeredSubtypeSplitIsApproximatelySeventyThirty() {
+    void rarityCompensationIncreasesPigmentationEventProbability() {
+        double oneStar = generator.eventProbability(species, 0.0);
+        double fiveStar = generator.eventProbability(fiveStarSpecies, 0.0);
+
+        assertEquals(0.015, oneStar, EPSILON);
+        assertEquals(0.036, fiveStar, EPSILON);
+        assertTrue(fiveStar > oneStar);
+    }
+
+    @Test
+    void traitLuckIncreasesPigmentationEventProbabilityAfterRarityCompensation() {
+        double withoutTraitLuck = generator.eventProbability(fiveStarSpecies, 0.0);
+        double withTraitLuck = generator.eventProbability(fiveStarSpecies, 10.0);
+
+        assertEquals(0.036, withoutTraitLuck, EPSILON);
+        assertEquals(0.070704, withTraitLuck, EPSILON);
+        assertTrue(withTraitLuck > withoutTraitLuck);
+    }
+
+    @Test
+    void triggeredSubtypeSplitIsNotDistortedByRarityAndTraitLuck() {
         int albino = 0;
         int iridescent = 0;
 
         for (long seed = 0; seed < SAMPLE_SIZE; seed++) {
-            switch (generator.generate(seed)) {
+            switch (generator.generate(seed, fiveStarSpecies, 10.0)) {
                 case ALBINO -> albino++;
                 case IRIDESCENT -> iridescent++;
                 case NORMAL -> {
@@ -77,15 +91,15 @@ class PigmentationGeneratorTest {
         double albinoShare = albino / (double) events;
         double iridescentShare = iridescent / (double) events;
         assertTrue(albinoShare >= 0.67 && albinoShare <= 0.73,
-                "expected about 70% Albino among Pigmentation events, got " + albinoShare);
+                "expected about 70% Albino among adjusted Pigmentation events, got " + albinoShare);
         assertTrue(iridescentShare >= 0.27 && iridescentShare <= 0.33,
-                "expected about 30% Iridescent among Pigmentation events, got " + iridescentShare);
+                "expected about 30% Iridescent among adjusted Pigmentation events, got " + iridescentShare);
     }
 
     @Test
     void pigmentationIsIndependentFromBodyTypeAndConditionStreams() {
         long seed = 98_765_432_101L;
-        SpecimenData.Pigmentation before = generator.generate(seed);
+        SpecimenData.Pigmentation before = generator.generate(seed, species, 0.0);
 
         TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_EVENT);
         TraitRandom.unitDouble(seed, TraitRandom.Salts.BODY_TYPE_VARIANT);
@@ -93,7 +107,7 @@ class PigmentationGeneratorTest {
         TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_EVENT);
         TraitRandom.unitDouble(seed, TraitRandom.Salts.CONDITION_VARIANT);
 
-        assertEquals(before, generator.generate(seed));
+        assertEquals(before, generator.generate(seed, species, 0.0));
     }
 
     @Test
@@ -105,8 +119,8 @@ class PigmentationGeneratorTest {
         assertEquals(SpecimenData.Condition.PARASITE_RIDDEN, specimen.condition());
         assertEquals(SpecimenData.Pigmentation.IRIDESCENT, specimen.pigmentation());
         assertEquals(bodyTypes.generate(seed, specimen.basePercentile(), species, 0.0), specimen.bodyType());
-        assertEquals(conditions.generate(seed), specimen.condition());
-        assertEquals(generator.generate(seed), specimen.pigmentation());
+        assertEquals(conditions.generate(seed, species, 0.0), specimen.condition());
+        assertEquals(generator.generate(seed, species, 0.0), specimen.pigmentation());
     }
 
     @Test
@@ -132,8 +146,8 @@ class PigmentationGeneratorTest {
                 giant.provenance()
         );
 
-        SpecimenData once = generator.apply(conditioned);
-        SpecimenData twice = generator.apply(once);
+        SpecimenData once = generator.apply(species, conditioned, 0.0);
+        SpecimenData twice = generator.apply(species, once, 0.0);
 
         assertEquals(SpecimenData.BodyType.GIANT, once.bodyType());
         assertEquals(SpecimenData.Condition.PARASITE_RIDDEN, once.condition());
@@ -151,8 +165,23 @@ class PigmentationGeneratorTest {
         SpecimenData complete = specimens.generate(species, seed, SpecimenData.Provenance.generated());
 
         assertEquals(SpecimenData.Pigmentation.IRIDESCENT, complete.pigmentation());
-        assertEquals(generator.generate(seed), complete.pigmentation());
+        assertEquals(generator.generate(seed, species, 0.0), complete.pigmentation());
         assertEquals(base.basePercentile(), complete.basePercentile());
         assertEquals(base.baseLength(), complete.baseLength());
+    }
+
+    private static SpeciesProfile profile(CanonicalRarity rarity) {
+        return new SpeciesProfile(
+                "tide:test_fish",
+                rarity,
+                1.0,
+                SpeciesEligibility.always(),
+                0.8,
+                1.0,
+                "steady",
+                new LogNormalSizeDistribution(25.0, 0.4),
+                Set.of(),
+                Map.of()
+        );
     }
 }

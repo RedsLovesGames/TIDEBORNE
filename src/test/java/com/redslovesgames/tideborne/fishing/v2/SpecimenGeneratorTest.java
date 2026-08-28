@@ -65,14 +65,28 @@ class SpecimenGeneratorTest {
     }
 
     @Test
-    void traitLuckIsForwardedIntoBodyTypeGeneration() {
+    void traitLuckIsForwardedIntoAllImplementedTraitAxes() {
         long seed = 1_234_567L;
+        double traitLuck = 25.0;
         SpecimenData base = generator.generateBase(species, seed, SpecimenData.Provenance.generated());
-        SpecimenData finalized = generator.generate(species, seed, SpecimenData.Provenance.generated(), 25.0);
+        SpecimenData finalized = generator.generate(
+                species,
+                seed,
+                SpecimenData.Provenance.generated(),
+                traitLuck
+        );
 
         assertEquals(
-                new BodyTypeGenerator().generate(seed, base.basePercentile(), species, 25.0),
+                new BodyTypeGenerator().generate(seed, base.basePercentile(), species, traitLuck),
                 finalized.bodyType()
+        );
+        assertEquals(
+                new ConditionGenerator().generate(seed, species, traitLuck),
+                finalized.condition()
+        );
+        assertEquals(
+                new PigmentationGenerator().generate(seed, species, traitLuck),
+                finalized.pigmentation()
         );
         assertEquals(base.basePercentile(), finalized.basePercentile());
         assertEquals(base.baseLength(), finalized.baseLength());
