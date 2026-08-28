@@ -12,6 +12,9 @@ import com.li64.tide.data.player.CatchTimestamp;
 import com.li64.tide.data.player.FishStats;
 import com.li64.tide.data.player.TidePlayerData;
 import com.li64.tide.data.player.TidePlayerData.FishPlayerData;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
+import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenStore;
 import com.redslovesgames.tidetraits.TideTraits;
 import java.util.Collections;
 import java.util.Optional;
@@ -98,27 +101,40 @@ public final class PersonalTideJournal {
    public static PersonalTideJournal.RecordBefore completeCatch(
       PersonalTideJournal.CatchContext context, ItemStack caught, ServerPlayerEntity player, World level
    ) {
-      if (context != null && context.teamRouted()) {
-         if (context.before().available() && caught != null && !caught.isEmpty() && player != null && level != null) {
-            try {
-               NbtCompound root = Tide.PLATFORM.getPlayerData(player);
-               TidePlayerData personalData = TidePlayerData.getOrCreate(root);
-               if (!mirrorCatch(personalData, caught, level)) {
-                  return PersonalTideJournal.RecordBefore.unavailable();
-               }
+      if (context == null) {
+         return PersonalTideJournal.RecordBefore.unavailable();
+      }
 
-               root.put("TidePlayerData", personalData.getAsTag());
-               return context.before();
-            } catch (RuntimeException | LinkageError failure) {
-               warn(player, "update personal Tide journal", failure);
-               return PersonalTideJournal.RecordBefore.unavailable();
-            }
-         } else {
+      PersonalTideJournal.RecordBefore before = context.before();
+      if (context.teamRouted()) {
+         if (!before.available() || caught == null || caught.isEmpty() || player == null || level == null) {
             return PersonalTideJournal.RecordBefore.unavailable();
          }
-      } else {
-         return context == null ? PersonalTideJournal.RecordBefore.unavailable() : context.before();
+
+         try {
+            NbtCompound root = Tide.PLATFORM.getPlayerData(player);
+            TidePlayerData personalData = TidePlayerData.getOrCreate(root);
+            if (!mirrorCatch(personalData, caught, level)) {
+               return PersonalTideJournal.RecordBefore.unavailable();
+            }
+
+            root.put(TIDE_PLAYER_DATA_KEY, personalData.getAsTag());
+            persistCanonicalCatch(root, caught, before);
+            return before;
+         } catch (RuntimeException | LinkageError failure) {
+            warn(player, "update personal Tide journal", failure);
+            return PersonalTideJournal.RecordBefore.unavailable();
+         }
       }
+
+      if (caught != null && !caught.isEmpty() && player != null) {
+         try {
+            persistCanonicalCatch(Tide.PLATFORM.getPlayerData(player), caught, before);
+         } catch (RuntimeException | LinkageError failure) {
+            warn(player, "persist canonical personal Tide journal specimen", failure);
+         }
+      }
+      return before;
    }
 
    private static boolean mirrorCatch(TidePlayerData personalData, ItemStack caught, World level) {
@@ -145,6 +161,24 @@ public final class PersonalTideJournal {
 
       entry.stats = Optional.of(stats);
       return true;
+   }
+
+   private static void persistCanonicalCatch(NbtCompound root, ItemStack caught, PersonalTideJournal.RecordBefore before) {
+      SpecimenData specimen = CanonicalSpecimenStorage.read(caught).orElse(null);
+      if (root == null || specimen == null) {
+         return;
+      }
+
+      double length = specimen.finalLength();
+      boolean largest = before.available()
+         && (!before.hadStats() || length > before.largest() + tolerance(before.largest()));
+      boolean smallest = before.available()
+         && (!before.hadStats() || length < before.smallest() - tolerance(before.smallest()));
+      JournalSpecimenStore.capture(root, specimen, largest, smallest);
+   }
+
+   private static double tolerance(double value) {
+      return Double.isFinite(value) ? Math.max(1.0E-6, Math.ulp(value) * 4.0) : 0.0;
    }
 
    private static void warn(ServerPlayerEntity player, String operation, Throwable failure) {

@@ -6,7 +6,9 @@
   "mixins": [
     "TidePlayerDataMixin",
     "TideUtilsMixin",
-    "TideFishingHookMixin"
+    "TideFishingHookMixin",
+    "TeamProgressCanonicalJournalMixin",
+    "RecordHolderCanonicalJournalMixin"
   ],
   "client": [
     "client.FishProfileMixin",
