@@ -50,6 +50,9 @@ public final class TideTraitsComponents {
    public static final ComponentType<Double> SPECIMEN_FINAL_LENGTH = register(
       "specimen_final_length", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
    );
+   public static final ComponentType<String> SPECIMEN_BODY_TYPE = register(
+      "specimen_body_type", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
+   );
    public static final ComponentType<String> SPECIMEN_CONDITION = register(
       "specimen_condition", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
    );

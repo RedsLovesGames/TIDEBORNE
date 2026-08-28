@@ -14,14 +14,19 @@ public final class SpecimenGenerator {
 
     /**
      * Generates the complete canonical specimen state currently implemented through Body Type
-     * physical size. Natural percentile and base length are sampled exactly once.
+     * physical size. Natural percentile, base length, and Body Type are each sampled exactly once.
      */
     public SpecimenData generate(
             SpeciesProfile species,
             long deterministicSeed,
             SpecimenData.Provenance provenance
     ) {
-        return bodyTypes.applyPhysicalSize(species, generateBase(species, deterministicSeed, provenance));
+        SpecimenData baseSpecimen = generateBase(species, deterministicSeed, provenance);
+        SpecimenData.BodyType bodyType = bodyTypes.generate(
+                baseSpecimen.deterministicSeed(),
+                baseSpecimen.basePercentile()
+        );
+        return bodyTypes.applyPhysicalSize(species, baseSpecimen, bodyType);
     }
 
     /** Generates only the natural percentile and base length exactly once. */

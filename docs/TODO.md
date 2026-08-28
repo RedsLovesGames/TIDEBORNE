@@ -76,6 +76,12 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Compare otherwise identical Normal, Giant, and Dwarf specimens and prove the exact fight multipliers, catch-zone recomputation, preserved behavior, and unchanged Normal baseline.
 - [x] Preserve the existing final Tempo clamp and canonical catch-zone clamping behavior after Body Type modification.
 - [x] Verify the runtime minigame still consumes the canonical `FightProfile` before existing Tide line and Tideborne compatibility modifiers.
+- [x] Make the server runtime order explicit: species selection, one base specimen sample, one Body Type sample, final physical size, canonical `FightProfile`, then persistence.
+- [x] Persist Body Type as canonical `SPECIMEN_BODY_TYPE` state and mirror it to legacy `BODY_TYPE` only for compatibility.
+- [x] Make canonical V2 Body Type authoritative in `TraitAxesRuntime`, including migration, display/edit reads, and physical-effect helpers.
+- [x] Bypass the legacy P97/P3 Giant/Dwarf gates and legacy body-size multiplier for canonical V2 catches.
+- [x] Preserve canonical Body Type explicitly in specimen transfer NBT and repair stale legacy mirrors from canonical state instead of rerolling.
+- [x] Add GameTests proving a high-percentile canonical Dwarf survives item/entity/item transfer, direct transfer NBT, legacy individualization, and legacy Perfect Catch handling without changing Body Type.
 - [x] Run `./gradlew clean build --stacktrace` and `./gradlew runGametest --stacktrace` successfully. Green Body Type fight run: `33163133061` on commit `72c98ea3d3f79161d97720a5833d47eb4e2f4a33`.
 
 ## Step 6 - independent trait axes

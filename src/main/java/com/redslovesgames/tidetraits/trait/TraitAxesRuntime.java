@@ -20,7 +20,45 @@ public final class TraitAxesRuntime {
    private TraitAxesRuntime() {
    }
 
+   /** True when the stack carries the server-authoritative Fishing System 2.0 specimen identity. */
+   public static boolean isCanonicalV2(ItemStack stack) {
+      if (stack == null || stack.isEmpty()) {
+         return false;
+      }
+
+      Integer schemaVersion = (Integer)stack.get(TideTraitsComponents.SPECIMEN_SCHEMA_VERSION);
+      String speciesId = (String)stack.get(TideTraitsComponents.SPECIMEN_SPECIES_ID);
+      return schemaVersion != null && schemaVersion >= 2 && speciesId != null && !speciesId.isBlank();
+   }
+
+   /**
+    * Mirrors the canonical Body Type to the legacy component without rolling or reclassifying it.
+    * Interim V2 stacks created before the canonical component existed are migrated by copying the
+    * already-persisted legacy Body Type once.
+    */
+   public static void mirrorCanonicalBodyType(ItemStack stack) {
+      if (!isCanonicalV2(stack)) {
+         return;
+      }
+
+      String canonical = normalizedBodyType((String)stack.get(TideTraitsComponents.SPECIMEN_BODY_TYPE));
+      if (canonical == null) {
+         canonical = normalizedBodyType((String)stack.get(TideTraitsComponents.BODY_TYPE));
+         if (canonical == null) {
+            canonical = "normal";
+         }
+         stack.set(TideTraitsComponents.SPECIMEN_BODY_TYPE, canonical);
+      }
+      stack.set(TideTraitsComponents.BODY_TYPE, canonical);
+   }
+
    public static String bodyType(ItemStack var0) {
+      if (isCanonicalV2(var0)) {
+         mirrorCanonicalBodyType(var0);
+         String canonical = normalizedBodyType((String)var0.get(TideTraitsComponents.SPECIMEN_BODY_TYPE));
+         return canonical == null ? "normal" : canonical;
+      }
+
       String var1 = (String)var0.getOrDefault(TideTraitsComponents.BODY_TYPE, "normal");
       if (var1 == null || var1.isBlank()) {
          var1 = "normal";
@@ -40,6 +78,11 @@ public final class TraitAxesRuntime {
    }
 
    public static void migrateLegacy(ItemStack var0) {
+      if (isCanonicalV2(var0)) {
+         mirrorCanonicalBodyType(var0);
+         return;
+      }
+
       String var1 = (String)var0.getOrDefault(TideTraitsComponents.MUTATION, "normal");
       if ("giant".equals(var1) || "dwarf".equals(var1)) {
          var0.set(TideTraitsComponents.BODY_TYPE, var1);
@@ -50,6 +93,13 @@ public final class TraitAxesRuntime {
    }
 
    public static SpecimenSizeService.AppliedSize normalizeNew(ItemStack var0, SpecimenSizeService.AppliedSize var1, TideTraitsConfig var2) {
+      // Canonical V2 catches already own Body Type and final physical size. Never run the legacy
+      // P97/P3 gates or legacy body-size multiplier on them.
+      if (isCanonicalV2(var0)) {
+         mirrorCanonicalBodyType(var0);
+         return var1;
+      }
+
       SpecimenData var3 = var1.specimen();
       long var4 = var3.identitySeed();
       FishMutation var6 = var3.mutation();
@@ -159,6 +209,9 @@ public final class TraitAxesRuntime {
    }
 
    public static double applyBodyEffects(ItemStack var0, double var1, TideTraitsConfig var3) {
+      if (isCanonicalV2(var0)) {
+         return var1;
+      }
       if (Double.isFinite(var1) && !(var1 <= 0.0)) {
          double var4 = bodyMultiplier(bodyType(var0), identitySeed(var0), var3);
          return Double.isFinite(var4) && var4 > 0.0 ? var1 * var4 : var1;
@@ -168,6 +221,9 @@ public final class TraitAxesRuntime {
    }
 
    public static double recoverBodyNormalLength(ItemStack var0, double var1, TideTraitsConfig var3) {
+      if (isCanonicalV2(var0)) {
+         return var1;
+      }
       if (Double.isFinite(var1) && !(var1 <= 0.0)) {
          double var4 = bodyMultiplier(bodyType(var0), identitySeed(var0), var3);
          return Double.isFinite(var4) && var4 > 0.0 ? var1 / var4 : var1;
@@ -187,6 +243,9 @@ public final class TraitAxesRuntime {
    }
 
    public static String bodyTypeForEdit(ItemStack var0, FishMutation var1, boolean var2) {
+      if (isCanonicalV2(var0)) {
+         return bodyType(var0);
+      }
       if (var2) {
          return "normal";
       } else {
@@ -201,6 +260,11 @@ public final class TraitAxesRuntime {
    public static SpecimenSizeService.AppliedSize finishAdminEdit(
       ItemStack var0, FishMutation var1, boolean var2, SpecimenSizeService.AppliedSize var3, TideTraitsConfig var4
    ) {
+      if (isCanonicalV2(var0)) {
+         mirrorCanonicalBodyType(var0);
+         return var3;
+      }
+
       String var5 = bodyTypeForEdit(var0, var1, var2);
       String var6 = conditionForEdit(var0, var1, var2);
       var0.set(TideTraitsComponents.BODY_TYPE, var5);
@@ -214,11 +278,17 @@ public final class TraitAxesRuntime {
    }
 
    public static double physicalMultiplier(ItemStack var0, TideTraitsConfig var1) {
+      if (isCanonicalV2(var0)) {
+         return 1.0;
+      }
       long var2 = identitySeed(var0);
       return bodyMultiplier(bodyType(var0), var2, var1) * conditionSizeMultiplier(condition(var0), var2, var1);
    }
 
    public static double applyCurrentPhysicalEffects(ItemStack var0, double var1, TideTraitsConfig var3) {
+      if (isCanonicalV2(var0)) {
+         return var1;
+      }
       if (Double.isFinite(var1) && !(var1 <= 0.0)) {
          double var4 = physicalMultiplier(var0, var3);
          return Double.isFinite(var4) && var4 > 0.0 ? var1 * var4 : var1;
@@ -228,6 +298,9 @@ public final class TraitAxesRuntime {
    }
 
    public static double recoverCurrentNormalLength(ItemStack var0, double var1, TideTraitsConfig var3) {
+      if (isCanonicalV2(var0)) {
+         return var1;
+      }
       if (Double.isFinite(var1) && !(var1 <= 0.0)) {
          double var4 = physicalMultiplier(var0, var3);
          return Double.isFinite(var4) && var4 > 0.0 ? var1 / var4 : var1;
@@ -371,6 +444,19 @@ public final class TraitAxesRuntime {
       } else {
          return "Normal";
       }
+   }
+
+   private static String normalizedBodyType(String value) {
+      if (value == null || value.isBlank()) {
+         return null;
+      }
+
+      return switch (value.toLowerCase()) {
+         case "normal" -> "normal";
+         case "giant" -> "giant";
+         case "dwarf" -> "dwarf";
+         default -> null;
+      };
    }
 
    private static double clamp(double var0, double var2, double var4) {

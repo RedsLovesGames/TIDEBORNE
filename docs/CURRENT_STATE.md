@@ -141,9 +141,40 @@ Deterministic tests cover exact 5% configuration, repeatability, approximately 5
 
 Body Type fight implementation is commit `72c98ea3d3f79161d97720a5833d47eb4e2f4a33`. Validation is green with GitHub Actions run `33163133061`: `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
+## Body Type runtime authority is complete
+
+The completed Body Type model is now wired into the server-authoritative V2 specimen lifecycle without adding a second trait decision path.
+
+Runtime order is explicit and fixed:
+
+```text
+species selected
+-> base specimen generated once
+-> Body Type generated once
+-> final physical size produced
+-> canonical FightProfile generated
+-> specimen persisted
+```
+
+Runtime authority and compatibility contracts:
+
+- `SpecimenGenerator.generate` explicitly calls base generation first, then performs one deterministic Body Type selection, then applies the selected Body Type to physical size without another Body Type or natural-size sample.
+- `TideSpeciesSelectionBridge` creates the canonical `FightProfile` from that finalized specimen before `CanonicalSpecimenStorage` persists it.
+- `SpecimenData.bodyType` remains the immutable in-memory canonical value.
+- `CanonicalSpecimenStorage` persists Body Type in the canonical `SPECIMEN_BODY_TYPE` component and mirrors the exact same value to legacy `BODY_TYPE` only for compatibility.
+- `TraitAxesRuntime` recognizes canonical schema-v2 specimens and reads canonical Body Type first. For those specimens its migration, editing, and physical-effect helpers cannot generate or reapply a legacy Body Type.
+- `TraitAxesRuntime.normalizeNew` returns before the old P97 Giant and P3 Dwarf gates and before the legacy body-size multiplier when canonical V2 specimen identity is present.
+- interim schema-v2 stacks that predate `SPECIMEN_BODY_TYPE` are migrated by copying their already-persisted legacy `BODY_TYPE` into canonical storage once. This migration consumes no RNG.
+- `SpecimenTransfer` writes an explicit `CanonicalBodyType` transfer field in addition to the existing compatibility `BodyType` field and generic source-stack snapshot. Restoration makes the canonical value authoritative and repairs a stale compatibility mirror rather than rerolling it.
+- entity, item, bucket, serialization, UI/admin compatibility reads, and legacy physical-effect helpers therefore preserve canonical Body Type instead of deriving a new value.
+
+The runtime GameTest fixture deliberately uses a P99.25 canonical Dwarf while corrupting only the legacy mirror to Giant. This places the specimen inside the old P97 Giant gate and proves canonical Dwarf survives direct transfer NBT, item/entity/item transfer, the legacy catch individualizer, and legacy Perfect Catch handling without changing.
+
+Stage 6 implementation plus TODO state at commit `faeb4d3c102a976740749cb5af6017bbba76b38d` is green in GitHub Actions run `33164107173`. The exact-dependency clean Gradle build, unit tests included by the build, Fabric GameTests, and built-JAR artifact upload all completed successfully.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, with Steps 1 through 4 runtime integration and the complete Body Type slice green on `dev`.
+Steps 1 through 5 are complete for the implemented V2 pipeline, including server-authoritative Body Type generation, persistence, compatibility mirroring, transfer survival, and legacy reroll isolation.
 
 Do not begin Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next Step 6 slice is the independent Condition and Pigmentation axes.
 
