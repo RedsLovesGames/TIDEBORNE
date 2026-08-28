@@ -81,7 +81,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Compare otherwise identical Normal, Giant, and Dwarf specimens and prove the exact fight multipliers, catch-zone recomputation, preserved behavior, and unchanged Normal baseline.
 - [x] Preserve the existing final Tempo clamp and canonical catch-zone clamping behavior after Body Type modification.
 - [x] Verify the runtime minigame still consumes the canonical `FightProfile` before existing Tide line and Tideborne compatibility modifiers.
-- [x] Make the server runtime order explicit: species selection, one base specimen sample, one Body Type sample, final physical size, canonical `FightProfile`, then persistence.
+- [x] Keep the server pre-fight order explicit: species selection, one base specimen sample, one Body Type sample, final physical size, then canonical `FightProfile` creation.
 - [x] Persist Body Type as canonical `SPECIMEN_BODY_TYPE` state and mirror it to legacy `BODY_TYPE` only for compatibility.
 - [x] Make canonical V2 Body Type authoritative in `TraitAxesRuntime`, including migration, display/edit reads, and physical-effect helpers.
 - [x] Bypass the legacy P97/P3 Giant/Dwarf gates and legacy body-size multiplier for canonical V2 catches.
@@ -104,7 +104,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Allow Body Type, Condition, and Pigmentation to stack without legacy mutation exclusivity; seed `29894` proves `GIANT + PARASITE_RIDDEN + IRIDESCENT` in full canonical generation.
 - [x] Persist exactly one canonical Pigmentation value and prove legacy catch individualization cannot reroll it.
 - [x] Verify canonical Pigmentation survives item/entity/item representation transfer. Green Pigmentation run: `33165703632` on commit `7fd6181c09ca0e49dd598adf5fbb39d992eb29e3`.
-- [x] Keep runtime generation order explicit and single-pass: base specimen, Body Type, final physical size, Condition, Pigmentation, FightProfile, persistence.
+- [x] Keep runtime generation split explicitly: pre-fight base specimen, Body Type, final physical size, and FightProfile; post-fight Perfect Catch capture, Condition, Pigmentation, then final persistence before delivery.
 - [x] Keep Body Type, Condition, and Pigmentation server-authoritative in one canonical `SpecimenData`; legacy `CatchTraitService` and `TraitAxesRuntime` remain guarded compatibility fallbacks and do not regenerate canonical axes.
 - [x] Preserve all three canonical axes explicitly in specimen transfer NBT, including snapshot-free fallback restoration, while mirroring Body Type and Condition only to their existing legacy compatibility components.
 - [x] Add GameTests for stacked `GIANT + PARASITE_RIDDEN + IRIDESCENT` specimens through legacy handling and item/entity/bucket/entity/item plus explicit transfer-NBT round trips.
@@ -144,8 +144,13 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 ## Step 8 - Perfect Catch and Perfect Specimen
 
-- [ ] Preserve the existing center-zone Perfect Catch skill check.
-- [ ] Implement the V2 Perfect Catch reward path. Canonical catches already bypass the legacy percentile/length rewrite.
+- [x] Preserve Tide's existing center-zone Perfect Catch skill check and consume its server-side `retrieve(perfectCatch)` result without replacing the minigame check.
+- [x] Split canonical runtime generation at the fight boundary: pre-fight identity/Body Type/physical size remain frozen, then Perfect Catch is captured before post-fight Condition and Pigmentation finalization and item delivery.
+- [x] Store `perfectCatch` in transient canonical catch state and finalized `SpecimenData`, then persist `SPECIMEN_PERFECT_CATCH` onto the selected item before Tide's delivery path continues.
+- [x] Preserve selected species, deterministic specimen seed, natural percentile, base length, Body Type, final length, and final percentile across Perfect Catch capture; no second species or natural-size sample is taken and Perfect Catch alone does not alter length.
+- [x] Bypass the reconstructed late `PerfectCatchTraitBoost` mutation for canonical V2 catches while retaining it for noncanonical/legacy catches.
+- [x] Add integration coverage proving the Perfect Catch flag reaches canonical post-fight specimen generation before the persistence callback, with repeated finalization unable to overwrite the captured result.
+- [ ] Implement the V2 Perfect Catch reward math on the new pre-persistence finalization path.
 - [ ] Make Perfect Catch grant +10 temporary Trait Luck.
 - [ ] Make Perfect Catch multiply Body Type event chance by 1.25.
 - [ ] Give Perfect Catch a substantial Perfect Specimen bonus without forcing it.
