@@ -34,7 +34,7 @@ Missing values still use the deterministic Stage 30 migration rules. No specimen
 
 ## Tests
 
-`CanonicalSpecimenStorageGameTests` now covers:
+`CanonicalSpecimenStorageGameTests` covers:
 
 - Giant + Scarred legacy migration;
 - Dwarf + Albino legacy migration;
@@ -48,4 +48,10 @@ Missing values still use the deterministic Stage 30 migration rules. No specimen
 - incomplete current-schema payloads continuing to fail closed;
 - current canonical reads continuing to ignore stale compatibility mirrors.
 
-This stage does not redesign later Satchel, Journal, UI, networking, or general persistence consumers and does not implement a separate FishScore recalculation policy beyond preserving an existing usable canonical score during older-schema migration.
+The Angler's Satchel persistence regression now reflects the same boundary: reading Satchel contents alone leaves a legacy specimen untouched, the first canonical specimen read migrates it once, later reads use persisted canonical state, and extraction preserves that canonical identity plus unrelated ItemStack metadata such as the custom name. Legacy compatibility mirrors are not treated as post-migration authorities.
+
+## Validation
+
+GitHub Actions run `33210443398` is green for implementation/test commit `ba19d216869732521420b7bc9f2c3859f6e0d164`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, all 16 Fabric GameTests, and built-JAR artifact upload completed successfully.
+
+This stage does not redesign later Journal, UI, networking, or general persistence consumers and does not implement a separate FishScore recalculation policy beyond preserving an existing usable canonical score during older-schema migration.
