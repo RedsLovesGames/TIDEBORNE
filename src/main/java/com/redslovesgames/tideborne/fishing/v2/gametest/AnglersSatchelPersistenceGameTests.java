@@ -87,17 +87,14 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
         helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stored)
                         == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
                 "Successful Satchel legacy migration did not write the current canonical schema");
-        SpecimenData reread = CanonicalSpecimenStorage.read(stored).orElseThrow();
-        helper.assertTrue(migrated.equals(reread), "Second canonical read changed the migrated Satchel specimen");
+        assertCanonicalMetadata(helper, migrated, stored, "on repeated canonical read");
         assertLegacyMetadata(helper, stored, "after one-time migration while stored");
 
         AnglersSatchelStorage.ExtractionResult extraction = AnglersSatchelStorage.extractAt(satchel, 0, true);
         helper.assertTrue(extraction.status() == AnglersSatchelStorage.ExtractionStatus.SUCCESS,
                 "Migrated Satchel specimen extraction failed");
         ItemStack extracted = extraction.item().orElseThrow();
-        SpecimenData extractedSpecimen = CanonicalSpecimenStorage.read(extracted).orElseThrow();
-        helper.assertTrue(migrated.equals(extractedSpecimen),
-                "Extracting the migrated legacy specimen changed canonical identity");
+        assertCanonicalMetadata(helper, migrated, extracted, "after migrated extraction");
         helper.assertTrue(CanonicalSpecimenStorage.detectMigration(extracted)
                         == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
                 "Extracted migrated specimen no longer had current canonical schema");
