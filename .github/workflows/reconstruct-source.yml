@@ -39,10 +39,48 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p reconstruction/work
-          cat reconstruction/input/tideborne-1.3.57.jar.b64.part-* \
-            | tr -d '\r\n' \
-            | base64 --decode \
-            > reconstruction/work/Tideborne-1.3.57.jar
+
+          # The initial private reconstruction uses temporary text chunks so the
+          # authoritative binary does not remain in repository history as a JAR.
+          # Each Unicode symbol stores 14 bits in U+4E00..U+8DFF. The decoded
+          # bytes are an xz stream whose exact byte length is pinned below.
+          python3 - <<'PY'
+          from pathlib import Path
+          import lzma
+
+          input_dir = Path('reconstruction/input')
+          encoded = ''.join(
+              part.read_text(encoding='utf-8')
+              for part in sorted(input_dir.glob('tideborne-1.3.57.jar.xz.b16384.part-*'))
+          )
+          if not encoded:
+              raise SystemExit('No reconstruction input chunks found')
+
+          expected_xz_length = 627968
+          acc = 0
+          bits = 0
+          decoded = bytearray()
+          for char in encoded:
+              value = ord(char) - 0x4E00
+              if not 0 <= value < 0x4000:
+                  raise SystemExit(f'Invalid reconstruction symbol U+{ord(char):04X}')
+              acc = (acc << 14) | value
+              bits += 14
+              while bits >= 8:
+                  bits -= 8
+                  decoded.append((acc >> bits) & 0xFF)
+                  acc &= (1 << bits) - 1 if bits else 0
+
+          compressed = bytes(decoded[:expected_xz_length])
+          if len(compressed) != expected_xz_length:
+              raise SystemExit(
+                  f'Expected {expected_xz_length} compressed bytes, got {len(compressed)}'
+              )
+
+          jar = lzma.decompress(compressed, format=lzma.FORMAT_XZ)
+          Path('reconstruction/work/Tideborne-1.3.57.jar').write_bytes(jar)
+          print(f'Decoded Tideborne JAR: {len(jar)} bytes')
+          PY
 
           echo '0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5  reconstruction/work/Tideborne-1.3.57.jar' \
             | sha256sum --check --strict
