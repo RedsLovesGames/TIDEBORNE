@@ -9,8 +9,8 @@ import com.li64.tide.data.player.TidePlayerData;
 import com.redslovesgames.tideteamjournal.TeamJournalService;
 import com.redslovesgames.tideteamjournal.TeamProgressStore;
 import net.minecraft.item.ItemStack;
-import net.minecraft.world.World;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,12 +18,18 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(TidePlayerData.class)
+/**
+ * TidePlayerData is owned by Tide rather than Minecraft, so its member names are not
+ * part of Yarn's obfuscation map. Keeping this mixin non-remapped prevents the Mixin
+ * annotation processor from trying to resolve Tide's getOrCreate/syncTo/logCatch names
+ * as Minecraft symbols while Loom still remaps the Minecraft types in our bytecode.
+ */
+@Mixin(value = TidePlayerData.class, remap = false)
 abstract class TidePlayerDataMixin {
    @Unique
    private TidePlayerData tideTeamJournal$beforeCatchData;
 
-   @Inject(method = "getOrCreate(Lnet/minecraft/server/level/ServerPlayer;)Lcom/li64/tide/data/player/TidePlayerData;", at = @At("HEAD"), cancellable = true)
+   @Inject(method = "getOrCreate", at = @At("HEAD"), cancellable = true)
    private static void tideTeamJournal$getTeamData(ServerPlayerEntity player, CallbackInfoReturnable<TidePlayerData> callback) {
       callback.setReturnValue(TeamJournalService.loadFor(player));
    }
