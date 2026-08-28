@@ -9,6 +9,7 @@ import java.util.SplittableRandom;
 public final class SpecimenGenerator {
     public static final int SCHEMA_VERSION = 2;
     public static final int GENERATION_VERSION = 1;
+    public static final double PERFECT_CATCH_TRAIT_LUCK_BONUS = 10.0;
 
     private final BodyTypeGenerator bodyTypes = new BodyTypeGenerator();
     private final ConditionGenerator conditions = new ConditionGenerator();
@@ -98,8 +99,10 @@ public final class SpecimenGenerator {
     /**
      * Finalizes post-fight canonical state after Tide has resolved the center-zone skill check.
      * Perfect Catch is copied into canonical specimen state before Condition or Pigmentation are
-     * generated, so later Perfect Catch probability rewards can use this lifecycle without moving the
-     * persistence boundary again. This stage intentionally does not change probability math yet.
+     * generated. A Perfect Catch adds {@value #PERFECT_CATCH_TRAIT_LUCK_BONUS} temporary Trait Luck
+     * only for these post-fight trait probability decisions. The supplied Trait Luck already contains
+     * the server-owned gear/context contribution plus the captured per-species Momentum contribution.
+     * No persistent Trait Luck or Momentum state is modified here.
      *
      * <p>The existing pre-fight species, deterministic seed, natural percentile, base length, Body
      * Type, final physical length, and size-adjusted final percentile are preserved exactly.
@@ -116,9 +119,12 @@ public final class SpecimenGenerator {
             throw new IllegalArgumentException("species profile and specimen IDs must match");
         }
 
+        double postFightTraitLuck = perfectCatch
+                ? traitLuck + PERFECT_CATCH_TRAIT_LUCK_BONUS
+                : traitLuck;
         SpecimenData skillCaptured = withPerfectCatch(preFightSpecimen, perfectCatch);
-        SpecimenData conditionedSpecimen = conditions.apply(species, skillCaptured, traitLuck);
-        return pigmentations.apply(species, conditionedSpecimen, traitLuck);
+        SpecimenData conditionedSpecimen = conditions.apply(species, skillCaptured, postFightTraitLuck);
+        return pigmentations.apply(species, conditionedSpecimen, postFightTraitLuck);
     }
 
     /** Generates only the natural percentile and base length exactly once. */
