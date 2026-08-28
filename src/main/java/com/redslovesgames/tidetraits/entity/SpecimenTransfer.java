@@ -149,12 +149,7 @@ public final class SpecimenTransfer {
    public static void entityToStack(Entity entity, ItemStack stack) {
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound tag = specimenEntity.tideTraits$getSpecimenTag();
-         if (entity instanceof FishLengthHolder holder) {
-            double length = holder.tide$getLength();
-            if (Double.isFinite(length) && length > 0.0) {
-               tag.putDouble(LENGTH_KEY, length);
-            }
-         }
+         syncLegacyLengthFromEntity(tag, entity);
          toStack(tag, stack, entity.getRegistryManager());
       }
    }
@@ -163,12 +158,7 @@ public final class SpecimenTransfer {
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound specimen = specimenEntity.tideTraits$getSpecimenTag();
          if (!specimen.isEmpty()) {
-            if (entity instanceof FishLengthHolder holder) {
-               double length = holder.tide$getLength();
-               if (Double.isFinite(length) && length > 0.0) {
-                  specimen.putDouble(LENGTH_KEY, length);
-               }
-            }
+            syncLegacyLengthFromEntity(specimen, entity);
             NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, bucket, bucketTag -> bucketTag.put(ENTITY_KEY, specimen.copy()));
          }
       }
@@ -255,6 +245,18 @@ public final class SpecimenTransfer {
                .orElseGet(() -> tag.contains(LENGTH_KEY) ? tag.getDouble(LENGTH_KEY) : 0.0);
          if (Double.isFinite(length) && length > 0.0) {
             holder.tide$setLength(length);
+         }
+      }
+   }
+
+   private static void syncLegacyLengthFromEntity(NbtCompound tag, Entity entity) {
+      if (CanonicalSpecimenStorage.hasTransferPayload(tag)) {
+         return;
+      }
+      if (entity instanceof FishLengthHolder holder) {
+         double length = holder.tide$getLength();
+         if (Double.isFinite(length) && length > 0.0) {
+            tag.putDouble(LENGTH_KEY, length);
          }
       }
    }
