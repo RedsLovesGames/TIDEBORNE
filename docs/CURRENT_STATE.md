@@ -106,11 +106,11 @@ The utility:
 - keeps event, variant, and physical-size decisions on separate salts
 - guarantees that evaluating or adding an unrelated future salt does not consume state or shift existing outcomes
 
-## Step 5 Body Type selection and physical size
+## Step 5 Body Type is complete
 
-The V2 `BodyTypeGenerator` now implements Body Type probability selection plus canonical physical-size finalization.
+The V2 Body Type implementation now covers probability selection, canonical physical-size finalization, and canonical fight-profile modification.
 
-Frozen behavior implemented so far:
+Frozen behavior:
 
 - canonical values are `NORMAL`, `GIANT`, and `DWARF`
 - the Body Type event probability is exactly 5%; a failed event returns `NORMAL`
@@ -127,35 +127,38 @@ Frozen behavior implemented so far:
 - for species with a physical size distribution, `finalPercentile` is the deterministic CDF percentile of `finalLength`; it is size-adjusted, not independently sampled
 - species represented by `NoPhysicalSizeDistribution` retain `finalPercentile == basePercentile` because there is no meaningful physical-size percentile to derive
 - Body Type selection and physical size do not consume or depend on Condition, Pigmentation, or Quality streams
-- the Tide V2 species bridge now calls full `SpecimenGenerator.generate`, which performs exactly one base specimen sample and then applies Body Type finalization before canonical storage and fight-profile creation
+- the Tide V2 species bridge calls full `SpecimenGenerator.generate`, which performs exactly one base specimen sample and then applies Body Type finalization before canonical storage and fight-profile creation
+- `FightProfileService` first computes the existing normalized species fight values and percentile fight scaling, then applies the Body Type modifiers to that already-computed canonical profile
+- Giant applies Strength x1.08 and Tempo x0.95
+- Dwarf applies Strength x0.92 and Tempo x1.08
+- Normal applies no fight modification
+- Body Type tempo reuses the existing final Tempo clamp, and catch-zone area is recalculated from the Body Type-adjusted canonical Strength through the existing bounded catch-zone model
+- no second fight calculation path was introduced; `TideSpeciesSelectionBridge` still creates the one canonical `FightProfile`, and `FishingModifiers.modifyMinigame` still consumes that stored profile before layering Tide line effects and Tideborne compatibility effects
 
-This interpretation of `finalPercentile` is now explicit in `docs/FISHING_SYSTEM_2_SPEC.md`: the separate base and final size pairs exist so the natural specimen identity remains frozen while deterministic physical modifiers can change the final measured percentile without introducing a second random specimen roll.
+This interpretation of `finalPercentile` is explicit in `docs/FISHING_SYSTEM_2_SPEC.md`: the separate base and final size pairs exist so the natural specimen identity remains frozen while deterministic physical modifiers can change the final measured percentile without introducing a second random specimen roll.
 
-Deterministic tests cover exact 5% configuration, repeatability, approximately 5% sampled event frequency, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, independence from other trait streams, physical multiplier bounds, deterministic multiplier values, exact Normal identity, Giant/Dwarf size direction, preserved base percentile, size-adjusted final percentile, no-physical-size fallback, and exactly one base-size quantile sample during complete generation.
+Deterministic tests cover exact 5% configuration, repeatability, approximately 5% sampled event frequency, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, independence from other trait streams, physical multiplier bounds, deterministic multiplier values, exact Normal identity, Giant/Dwarf size direction, preserved base percentile, size-adjusted final percentile, no-physical-size fallback, exactly one base-size quantile sample during complete generation, exact Normal/Giant/Dwarf fight multiplier comparisons for otherwise identical specimens, preserved percentile fight scaling, catch-zone recomputation, and unchanged behavior.
 
-Validation is green on implementation commit `d2d7fe9fd5b9d874bf94a64a2ce347fff1932d21` with GitHub Actions run `33162634808`. `./gradlew clean build --stacktrace`, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-The explicit Giant/Dwarf fight multipliers are not implemented in this slice. Their Strength and Tempo multipliers remain the next Step 5 task.
+Body Type fight implementation is commit `72c98ea3d3f79161d97720a5833d47eb4e2f4a33`. Validation is green with GitHub Actions run `33163133061`: `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
 ## Current execution gate
 
-Steps 1 through 4 are runtime-integrated and green. Deterministic trait RNG splitting is in place. Body Type probability selection and physical-size finalization are implemented, runtime-wired, and green.
+Steps 1 through 5 are complete for the implemented V2 pipeline, with Steps 1 through 4 runtime integration and the complete Body Type slice green on `dev`.
 
-Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 in this slice. The remaining Step 5 work is only the explicit Giant/Dwarf fight modifiers: Giant Strength 1.08 and Tempo 0.95, Dwarf Strength 0.92 and Tempo 1.08.
+Do not begin Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next Step 6 slice is the independent Condition and Pigmentation axes.
 
 ## Later frozen slices
 
 Execute in this order:
 
-1. finish Body Type fight modifiers
-2. independent Condition and Pigmentation axes
-3. Trait Luck, rarity compensation, and per-species Momentum
-4. Perfect Catch redesign and percentile-based Perfect Specimen
-5. FishScore V2 with the canonical linear 1 to 3000 mapping
-6. deterministic migration and canonical `SpecimenData` adoption across persistence/UI/network systems
-7. gear and Leviathan Bait progression
-8. compatibility SpeciesProfiles
-9. legacy cleanup
-10. final build, migration, optional-mod, and runtime validation
+1. independent Condition and Pigmentation axes
+2. Trait Luck, rarity compensation, and per-species Momentum
+3. Perfect Catch redesign and percentile-based Perfect Specimen
+4. FishScore V2 with the canonical linear 1 to 3000 mapping
+5. deterministic migration and canonical `SpecimenData` adoption across persistence/UI/network systems
+6. gear and Leviathan Bait progression
+7. compatibility SpeciesProfiles
+8. legacy cleanup
+9. final build, migration, optional-mod, and runtime validation
 
 See `docs/TODO.md` for checkbox-level execution state and `docs/FISHING_SYSTEM_2_SPEC.md` for frozen formulas and compatibility contracts.

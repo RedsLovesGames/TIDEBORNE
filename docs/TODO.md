@@ -65,13 +65,18 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 - [x] Implement independent `NORMAL`, `GIANT`, and `DWARF` Body Type selection using the frozen 5% event model and smooth percentile bias.
 - [x] Implement Giant final-size multiplier 1.10 to 1.30 and Dwarf multiplier 0.60 to 0.82.
-- [ ] Apply Giant fight modifiers Strength 1.08 and Tempo 0.95.
-- [ ] Apply Dwarf fight modifiers Strength 0.92 and Tempo 1.08.
+- [x] Apply Giant fight modifiers Strength 1.08 and Tempo 0.95.
+- [x] Apply Dwarf fight modifiers Strength 0.92 and Tempo 1.08.
 - [x] Ensure Body Type selection uses the canonical specimen seed and never rerolls natural percentile.
 - [x] Keep `basePercentile` as the original natural roll and derive size-adjusted `finalPercentile` deterministically from `finalLength` through the species CDF, with no second random percentile.
 - [x] Add deterministic seeded Body Type probability tests, including event rate, percentile bias, endpoint possibility, P50 balance, and trait-stream independence.
 - [x] Add physical-size tests for multiplier bounds, deterministic multipliers, Normal identity, Giant/Dwarf direction, preserved natural percentile, and exactly one base-size sample.
 - [x] Wire selected Body Type and physical size into canonical specimen finalization and the Tide V2 catch bridge.
+- [x] Apply Body Type only after the existing canonical percentile fight scaling, without creating a second fight calculation path.
+- [x] Compare otherwise identical Normal, Giant, and Dwarf specimens and prove the exact fight multipliers, catch-zone recomputation, preserved behavior, and unchanged Normal baseline.
+- [x] Preserve the existing final Tempo clamp and canonical catch-zone clamping behavior after Body Type modification.
+- [x] Verify the runtime minigame still consumes the canonical `FightProfile` before existing Tide line and Tideborne compatibility modifiers.
+- [x] Run `./gradlew clean build --stacktrace` and `./gradlew runGametest --stacktrace` successfully. Green Body Type fight run: `33163133061` on commit `72c98ea3d3f79161d97720a5833d47eb4e2f4a33`.
 
 ## Step 6 - independent trait axes
 
