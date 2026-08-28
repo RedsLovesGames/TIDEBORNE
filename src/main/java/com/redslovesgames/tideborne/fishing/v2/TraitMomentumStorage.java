@@ -11,7 +11,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
  *
  * <p>Momentum is stored in Tide's existing per-player persistent NBT root. It is intentionally not
  * stored in Tide's team-shared journal data, a fish item, a specimen, or any client-owned state.
- * This stage exposes storage/access only and does not apply Momentum to catch probabilities.
  */
 public final class TraitMomentumStorage {
     public static final int MAX_MOMENTUM = TraitMomentumState.MAX_MOMENTUM;
@@ -42,6 +41,14 @@ public final class TraitMomentumStorage {
         TraitMomentumState state = read(player);
         state.clear(speciesId);
         write(player, state);
+    }
+
+    /** Applies the canonical progression rule after one completed server-side catch. */
+    public static int applyCompletedCatch(ServerPlayerEntity player, SpecimenData specimen) {
+        TraitMomentumState state = read(player);
+        int stored = TraitMomentumProgression.applyCompletedCatch(state, specimen);
+        write(player, state);
+        return stored;
     }
 
     public static Map<String, Integer> snapshot(ServerPlayerEntity player) {

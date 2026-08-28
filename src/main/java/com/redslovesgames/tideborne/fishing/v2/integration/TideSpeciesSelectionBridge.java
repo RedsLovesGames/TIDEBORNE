@@ -15,6 +15,8 @@ import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesSelectionService;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
+import com.redslovesgames.tideborne.fishing.v2.TraitMomentumProgression;
+import com.redslovesgames.tideborne.fishing.v2.TraitMomentumStorage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Map;
 import java.util.SplittableRandom;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 /** Server-authoritative bridge that owns V2 species selection and canonical specimen generation. */
 public final class TideSpeciesSelectionBridge {
@@ -67,6 +70,16 @@ public final class TideSpeciesSelectionBridge {
             return CatchResult.empty();
         }
 
+        TideFishingHook hook = tideContext.hook();
+        int capturedTraitMomentum = 0;
+        if (hook != null && hook.getPlayerOwner() instanceof ServerPlayerEntity serverPlayer) {
+            capturedTraitMomentum = TraitMomentumStorage.get(serverPlayer, selected.speciesId());
+        }
+        double effectiveTraitLuck = TraitMomentumProgression.effectiveTraitLuck(
+                context.traitLuck(),
+                capturedTraitMomentum
+        );
+
         SpecimenData specimen = specimenGenerator.generate(
                 selected,
                 CatchSeedDeriver.specimenSeed(catchSeed),
@@ -75,7 +88,7 @@ public final class TideSpeciesSelectionBridge {
                         "fishing-system-2-runtime",
                         Map.of("selection", "tide-fish-selector", "authority", "server")
                 ),
-                context.traitLuck()
+                effectiveTraitLuck
         );
         FightProfile fightProfile = fightProfiles.create(selected, specimen);
 
@@ -89,7 +102,6 @@ public final class TideSpeciesSelectionBridge {
         CanonicalSpecimenStorage.write(stack, specimen);
         CatchResult result = data.createResult(stack);
 
-        TideFishingHook hook = tideContext.hook();
         if (hook != null) {
             CanonicalCatchStateManager.put(
                     hook,
@@ -99,7 +111,8 @@ public final class TideSpeciesSelectionBridge {
                             environment,
                             selected,
                             specimen,
-                            fightProfile
+                            fightProfile,
+                            capturedTraitMomentum
                     )
             );
         }

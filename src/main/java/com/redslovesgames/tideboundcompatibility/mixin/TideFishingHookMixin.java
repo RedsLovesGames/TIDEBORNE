@@ -92,6 +92,17 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
       this.tidebound$leviathanFishOnlyRoll = false;
    }
 
+   @Inject(
+      target = @Desc(value = "retrieve", ret = int.class, args = {ItemStack.class, ServerWorld.class, PlayerEntity.class}),
+      at = @At("RETURN"),
+      remap = false
+   )
+   private void tidebound$completeTraitMomentum(ItemStack rod, ServerWorld level, PlayerEntity player, CallbackInfoReturnable<Integer> callback) {
+      if (player instanceof ServerPlayerEntity serverPlayer) {
+         CanonicalCatchStateManager.completeTraitMomentum((TideFishingHook)(Object)this, serverPlayer);
+      }
+   }
+
    @Inject(method = "selectCatch", at = @At("RETURN"), remap = false)
    private void tidebound$createInitialFishingScent(ItemStack rod, CallbackInfo callback) {
       SharkScentManager.onCatchSelected((TideFishingHook)(Object)this);
