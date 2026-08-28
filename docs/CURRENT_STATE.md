@@ -224,9 +224,42 @@ Runtime GameTests write a canonical `GIANT + PARASITE_RIDDEN + IRIDESCENT` speci
 
 Pigmentation implementation commit `7fd6181c09ca0e49dd598adf5fbb39d992eb29e3` is green in GitHub Actions run `33165703632`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
+## Condition and Pigmentation runtime integration is complete
+
+The three currently implemented canonical specimen axes are now confirmed end to end in the server-authoritative runtime path.
+
+Runtime generation order is explicit and deterministic:
+
+```text
+species selected
+-> base specimen generated once
+-> Body Type generated once
+-> final physical size produced
+-> Condition generated once
+-> Pigmentation generated once
+-> canonical FightProfile generated
+-> specimen persisted
+```
+
+Runtime authority and transfer contracts:
+
+- `TideSpeciesSelectionBridge` makes one call to `SpecimenGenerator.generate` for the selected species and uses that single returned `SpecimenData` for both `CanonicalSpecimenStorage` and `CanonicalCatchStateManager`.
+- `SpecimenGenerator.generate` uses the already-frozen independent trait salts and applies Body Type, Condition, and Pigmentation exactly once without shared mutable RNG state or a second natural specimen sample.
+- `CanonicalSpecimenStorage` persists all three axes as `SPECIMEN_BODY_TYPE`, `SPECIMEN_CONDITION`, and `SPECIMEN_PIGMENTATION` before downstream legacy catch handling runs.
+- only compatibility mirrors are written into legacy components: Body Type mirrors to `BODY_TYPE`, Condition mirrors to `MUTATION`, and Pigmentation remains canonical-only because there is no separate legacy Pigmentation component.
+- `CatchTraitService.assignIfAbsent` exits before legacy mutation selection for canonical schema-v2 specimens, repairs the Condition compatibility mirror from canonical state, and does not regenerate Body Type, Condition, or Pigmentation.
+- `TraitAxesRuntime` remains a guarded compatibility fallback for canonical specimens. Its canonical migration and normalization paths do not run legacy Body Type gates or mutation generation.
+- `SpecimenTransfer` data version 4 now stores `CanonicalBodyType`, `CanonicalCondition`, and `CanonicalPigmentation` explicitly in addition to the generic source-stack snapshot. This makes all three axes survive even the snapshot-free transfer fallback instead of relying on generic component serialization alone.
+- restoration makes canonical Body Type and Condition authoritative over their legacy compatibility mirrors, while Pigmentation restores only its canonical component and cannot become mutually exclusive with Condition.
+- item, entity, bucket, entity reload, and direct transfer-NBT representations therefore retain the same stacked axes without another trait decision.
+
+The runtime GameTests use the deterministic stacked fixture `GIANT + PARASITE_RIDDEN + IRIDESCENT`. They prove stale legacy Body Type/mutation values are repaired without changing canonical axes, and prove the same three values survive item/entity/bucket/entity/item conversion plus explicit transfer NBT without a registry-backed source-stack snapshot.
+
+Runtime axis integration implementation is commit `774752af3b22f7a4dcb814602f48c21cd1895779`. GitHub Actions run `33166720586` is green: exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, transfer survival, and legacy mutation reroll isolation.
+Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation.
 
 Do not begin Trait Luck, rarity compensation, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next incomplete independent-axis work is Specimen Quality.
 

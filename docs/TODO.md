@@ -99,6 +99,11 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Allow Body Type, Condition, and Pigmentation to stack without legacy mutation exclusivity; seed `29894` proves `GIANT + PARASITE_RIDDEN + IRIDESCENT` in full canonical generation.
 - [x] Persist exactly one canonical Pigmentation value and prove legacy catch individualization cannot reroll it.
 - [x] Verify canonical Pigmentation survives item/entity/item representation transfer. Green Pigmentation run: `33165703632` on commit `7fd6181c09ca0e49dd598adf5fbb39d992eb29e3`.
+- [x] Keep runtime generation order explicit and single-pass: base specimen, Body Type, final physical size, Condition, Pigmentation, FightProfile, persistence.
+- [x] Keep Body Type, Condition, and Pigmentation server-authoritative in one canonical `SpecimenData`; legacy `CatchTraitService` and `TraitAxesRuntime` remain guarded compatibility fallbacks and do not regenerate canonical axes.
+- [x] Preserve all three canonical axes explicitly in specimen transfer NBT, including snapshot-free fallback restoration, while mirroring Body Type and Condition only to their existing legacy compatibility components.
+- [x] Add GameTests for stacked `GIANT + PARASITE_RIDDEN + IRIDESCENT` specimens through legacy handling and item/entity/bucket/entity/item plus explicit transfer-NBT round trips.
+- [x] Run clean build, unit tests, Fabric GameTests, and artifact upload successfully for the runtime axis integration. Green run: `33166720586` on commit `774752af3b22f7a4dcb814602f48c21cd1895779`.
 - [ ] Keep Specimen Quality independent from Body Type, Condition, and Pigmentation.
 - [ ] Prove all intended compatible trait combinations can stack and incompatible combinations are rejected deterministically.
 - [ ] Add deterministic seeded tests for every remaining independent axis.
