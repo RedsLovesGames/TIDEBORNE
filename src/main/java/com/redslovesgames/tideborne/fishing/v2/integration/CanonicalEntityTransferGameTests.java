@@ -64,7 +64,10 @@ public final class CanonicalEntityTransferGameTests implements FabricGameTest {
             ((FishLengthHolder) first).tide$setLength(expected.finalLength() + 211.0 + index);
 
             ItemStack bucket = new ItemStack(Items.COD_BUCKET);
-            SpecimenTransfer.entityToBucket(first, bucket);
+            // Exercise the real FishEntity#copyDataToStack capture hook used by bucket pickup.
+            first.copyDataToStack(bucket);
+            helper.assertTrue(bucket.isOf(Items.COD_BUCKET),
+                    "Specimen persistence changed the vanilla bucket item identity");
             NbtComponent bucketData = bucket.get(DataComponentTypes.BUCKET_ENTITY_DATA);
             helper.assertTrue(bucketData != null, "Canonical specimen bucket entity data was not written");
             if (bucketData == null) {
@@ -74,6 +77,7 @@ public final class CanonicalEntityTransferGameTests implements FabricGameTest {
             CodEntity second = (CodEntity) helper.spawnEntity(EntityType.COD, new BlockPos(1 + index, 2, 3));
             EntityType<?> secondType = second.getType();
             NbtCompound bucketTag = bucketData.copyNbt();
+            // This is the same release adapter invoked by MobBucketItemMixin after vanilla restores its own data.
             SpecimenTransfer.bucketTagToEntity(bucketTag, second);
 
             helper.assertTrue(second.getType() == secondType && second.getType() == EntityType.COD,
@@ -85,6 +89,33 @@ public final class CanonicalEntityTransferGameTests implements FabricGameTest {
             SpecimenTransfer.entityToStack(second, restored);
             assertEveryCanonicalField(helper, expected, CanonicalSpecimenStorage.read(restored).orElse(null));
         }
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void bucketRoundTripWithoutSpecimenDoesNotGenerateCanonicalState(TestContext helper) {
+        CodEntity first = (CodEntity) helper.spawnEntity(EntityType.COD, new BlockPos(1, 2, 1));
+        ItemStack bucket = new ItemStack(Items.COD_BUCKET);
+
+        // The capture mixin is allowed to observe vanilla bucket pickup, but a fish with no specimen
+        // must remain specimen-free. In particular, transfer must never become a generation trigger.
+        first.copyDataToStack(bucket);
+        NbtComponent bucketData = bucket.get(DataComponentTypes.BUCKET_ENTITY_DATA);
+        NbtCompound bucketTag = bucketData == null ? new NbtCompound() : bucketData.copyNbt();
+        helper.assertTrue(!bucketTag.contains(SpecimenTransfer.ENTITY_KEY),
+                "Bucket capture generated specimen state for an uninitialized fish");
+
+        CodEntity second = (CodEntity) helper.spawnEntity(EntityType.COD, new BlockPos(1, 2, 3));
+        SpecimenTransfer.bucketTagToEntity(bucketTag, second);
+        ItemStack restored = new ItemStack(Items.COD);
+        SpecimenTransfer.entityToStack(second, restored);
+
+        helper.assertTrue(CanonicalSpecimenStorage.read(restored).isEmpty(),
+                "Bucket release generated canonical specimen state");
+        helper.assertTrue(!SpecimenTransfer.hasSpecimen(restored),
+                "Bucket release generated a legacy specimen compatibility identity");
+        helper.assertTrue(bucket.isOf(Items.COD_BUCKET),
+                "No-specimen transfer changed normal bucket behavior");
         helper.complete();
     }
 
