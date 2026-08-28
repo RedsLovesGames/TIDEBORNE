@@ -109,6 +109,10 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Preserve all three canonical axes explicitly in specimen transfer NBT, including snapshot-free fallback restoration, while mirroring Body Type and Condition only to their existing legacy compatibility components.
 - [x] Add GameTests for stacked `GIANT + PARASITE_RIDDEN + IRIDESCENT` specimens through legacy handling and item/entity/bucket/entity/item plus explicit transfer-NBT round trips.
 - [x] Run clean build, unit tests, Fabric GameTests, and artifact upload successfully for the runtime axis integration. Green run: `33166720586` on commit `774752af3b22f7a4dcb814602f48c21cd1895779`.
+- [x] Route Condition's 5% base event chance through `TraitProbabilityService` so species rarity compensation is applied before Trait Luck.
+- [x] Route Pigmentation's 1.5% base event chance through `TraitProbabilityService` so species rarity compensation is applied before Trait Luck.
+- [x] Keep Condition 65/35 and Pigmentation 70/30 conditional subtype rolls separate from adjusted event probability.
+- [x] Forward the same server-owned Trait Luck value through `SpecimenGenerator` to Body Type, Condition, and Pigmentation while preserving independent deterministic salts and stacking.
 - [ ] Keep Specimen Quality independent from Body Type, Condition, and Pigmentation.
 - [ ] Prove all intended compatible trait combinations can stack and incompatible combinations are rejected deterministically.
 - [ ] Add deterministic seeded tests for every remaining independent axis.
@@ -123,7 +127,10 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Keep Fishing Luck and Trait Luck mechanically separate, including a seeded species-selection regression proving Trait Luck does not affect species selection.
 - [x] Keep deterministic trait RNG selection separate from Trait Luck probability calculation.
 - [x] Wire Body Type to the shared canonical probability pipeline while leaving its Giant/Dwarf conditional subtype bias and deterministic RNG streams unchanged.
-- [ ] Wire Trait Luck and rarity compensation into the remaining intended trait axes only in their dedicated integration slices.
+- [x] Wire Condition and Pigmentation to the same canonical probability pipeline while preserving their 65/35 and 70/30 conditional subtype distributions and independent RNG streams.
+- [x] Add exact and statistical Condition/Pigmentation coverage proving rarity increases notable-trait event probability, Trait Luck increases it further, and subtype ratios are not distorted.
+- [x] Prove full canonical generation forwards Trait Luck to all three implemented axes and preserves independent three-axis stacking.
+- [ ] Wire Trait Luck and rarity compensation into any remaining intended notable-trait axis only in its dedicated implementation slice.
 - [ ] Implement per-species persisted Trait Momentum, approximately +1 temporary Trait Luck after a fully normal catch, capped around 15, substantially reduced after notable traits.
 - [x] Add pure probability tests for T=0 identity, monotonic positive Trait Luck, valid output range, known numerical cases, exact 0/1 endpoints, probability validation/clamping, and negative/extreme Trait Luck behavior.
 - [x] Add exact rarity multiplier tests for all five canonical rarities plus compensated zero-Trait-Luck and combined Trait Luck cases, including a test that freezes rarity-before-Trait-Luck ordering.
