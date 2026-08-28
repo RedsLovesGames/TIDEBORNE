@@ -6,18 +6,26 @@
 package com.redslovesgames.tidetraits.mixin;
 
 import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
-import net.minecraft.entity.mob.MobEntity;
+import net.minecraft.entity.passive.FishEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.entity.Bucketable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(Bucketable.class)
-public interface BucketableMixin {
+/**
+ * Persists Tideborne specimen state when a living fish writes itself into a bucket.
+ *
+ * <p>The original reconstructed hook targeted {@code Bucketable}, but Mixin 0.8.7
+ * does not support injectors on interface mixins. Vanilla and Tide fish use the
+ * concrete {@link FishEntity#copyDataToStack(ItemStack)} path, so targeting the
+ * concrete fish base class preserves the transfer hook without an interface
+ * injector.</p>
+ */
+@Mixin(FishEntity.class)
+public abstract class BucketableMixin {
    @Inject(method = "copyDataToStack", at = @At("TAIL"))
-   private static void tideTraits$saveSpecimen(MobEntity mob, ItemStack bucket, CallbackInfo ci) {
-      SpecimenTransfer.entityToBucket(mob, bucket);
+   private void tideTraits$saveSpecimen(ItemStack bucket, CallbackInfo ci) {
+      SpecimenTransfer.entityToBucket((FishEntity)(Object)this, bucket);
    }
 }
