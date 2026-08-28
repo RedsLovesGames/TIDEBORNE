@@ -7,6 +7,7 @@ import com.redslovesgames.tidetraits.catching.CatchTraitService;
 import com.redslovesgames.tidetraits.catching.PerfectCatchTraitBoost;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
+import com.redslovesgames.tidetraits.trait.TraitAxesRuntime;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
@@ -15,6 +16,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.CodEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -38,8 +40,25 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         helper.assertTrue(Double.valueOf(specimen.basePercentile()).equals(restored.get(TideTraitsComponents.SPECIMEN_BASE_PERCENTILE)), "Base percentile did not survive representation transfer");
         helper.assertTrue(Double.valueOf(specimen.baseLength()).equals(restored.get(TideTraitsComponents.SPECIMEN_BASE_LENGTH)), "Base length did not survive representation transfer");
         helper.assertTrue(Double.valueOf(specimen.finalLength()).equals(restored.get(TideTraitsComponents.SPECIMEN_FINAL_LENGTH)), "Final length did not survive representation transfer");
+        helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.SPECIMEN_BODY_TYPE)), "Canonical Body Type did not survive representation transfer");
+        helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.BODY_TYPE)), "Legacy Body Type mirror did not survive representation transfer");
         helper.assertTrue(Long.valueOf(specimen.deterministicSeed()).equals(restored.get(TideTraitsComponents.MUTATION_SEED)), "Compatibility seed did not survive representation transfer");
         helper.assertTrue(Double.valueOf(specimen.finalPercentile()).equals(restored.get(TideTraitsComponents.SIZE_PERCENTILE)), "Canonical final percentile did not survive representation transfer");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void canonicalBodyTypeSurvivesTransferNbtWithoutReroll(TestContext helper) {
+        ItemStack original = new ItemStack(Items.COD);
+        CanonicalSpecimenStorage.write(original, specimen());
+
+        NbtCompound transfer = SpecimenTransfer.fromStack(original);
+        helper.assertTrue("dwarf".equals(transfer.getString(SpecimenTransfer.CANONICAL_BODY_TYPE_KEY)), "Transfer NBT did not persist canonical Body Type");
+
+        ItemStack restored = new ItemStack(Items.COD);
+        SpecimenTransfer.toStack(transfer, restored);
+        helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.SPECIMEN_BODY_TYPE)), "Transfer NBT changed canonical Body Type");
+        helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.BODY_TYPE)), "Transfer NBT did not mirror canonical Body Type for compatibility");
         helper.complete();
     }
 
@@ -49,6 +68,9 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         ItemStack stack = new ItemStack(Items.COD);
         CanonicalSpecimenStorage.write(stack, specimen);
 
+        // Simulate a stale legacy mirror at a percentile where the old P97 Giant gate used to apply.
+        // Canonical Body Type must win and the compatibility mirror must be repaired, never regenerated.
+        stack.set(TideTraitsComponents.BODY_TYPE, "giant");
         long seedBefore = stack.getOrDefault(TideTraitsComponents.MUTATION_SEED, Long.MIN_VALUE);
         double percentileBefore = stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0);
         CatchTraitService.INSTANCE.assignIfAbsent(stack, Random.create(0x51A2B3C4L));
@@ -56,6 +78,9 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         helper.assertTrue(seedBefore == stack.getOrDefault(TideTraitsComponents.MUTATION_SEED, Long.MIN_VALUE), "Legacy individualizer rerolled canonical specimen seed");
         helper.assertTrue(Double.compare(percentileBefore, stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0)) == 0, "Legacy individualizer rerolled canonical percentile");
         helper.assertTrue(specimen.speciesId().equals(stack.get(TideTraitsComponents.SPECIMEN_SPECIES_ID)), "Legacy individualizer removed canonical specimen identity");
+        helper.assertTrue("dwarf".equals(stack.get(TideTraitsComponents.SPECIMEN_BODY_TYPE)), "Legacy individualizer changed canonical Body Type");
+        helper.assertTrue("dwarf".equals(TraitAxesRuntime.bodyType(stack)), "Legacy P97 Body Type gate overrode canonical Body Type");
+        helper.assertTrue("dwarf".equals(stack.get(TideTraitsComponents.BODY_TYPE)), "Legacy Body Type mirror was not repaired from canonical state");
         helper.complete();
     }
 
@@ -72,6 +97,7 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         helper.assertTrue(Double.compare(percentileBefore, stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0)) == 0, "Legacy Perfect Catch boost rewrote canonical percentile");
         helper.assertTrue(Double.compare(lengthBefore, TideItemData.FISH_LENGTH.getOrDefault(stack, -1.0)) == 0, "Legacy Perfect Catch boost rewrote canonical length");
         helper.assertTrue(Double.valueOf(specimen.finalLength()).equals(stack.get(TideTraitsComponents.SPECIMEN_FINAL_LENGTH)), "Legacy Perfect Catch boost changed canonical final length identity");
+        helper.assertTrue("dwarf".equals(stack.get(TideTraitsComponents.SPECIMEN_BODY_TYPE)), "Legacy Perfect Catch boost changed canonical Body Type");
         helper.complete();
     }
 
@@ -81,11 +107,11 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
                 2,
                 1,
                 0x123456789ABCDEFL,
-                83.25,
+                99.25,
                 44.5,
-                44.5,
-                83.25,
-                SpecimenData.BodyType.NORMAL,
+                33.0,
+                99.25,
+                SpecimenData.BodyType.DWARF,
                 SpecimenData.Condition.NORMAL,
                 SpecimenData.Pigmentation.NORMAL,
                 SpecimenData.SpecimenQuality.NORMAL,
