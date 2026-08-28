@@ -31,7 +31,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +46,37 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.12'
+
+      - name: Fetch exact external compile dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dev/libs
+
+          # Tide 2.1.1 Fabric for Minecraft 1.21.1. Resolve the exact published
+          # Modrinth version by name/platform rather than compiling against 2.1.
+          tide_json="$(curl -fsSLG \
+            --data-urlencode 'game_versions=["1.21.1"]' \
+            --data-urlencode 'loaders=["fabric"]' \
+            --data-urlencode 'include_changelog=false' \
+            'https://api.modrinth.com/v2/project/die1AF7i/version')"
+          tide_version_id="$(printf '%s' "$tide_json" | jq -r '[.[] | select(.name == "Tide 2.1.1 (Fabric 1.21.1)")][0].id // empty')"
+          tide_url="$(printf '%s' "$tide_json" | jq -r '[.[] | select(.name == "Tide 2.1.1 (Fabric 1.21.1)")][0].files[] | select(.primary == true) | .url' | head -n1)"
+          test -n "$tide_version_id"
+          test -n "$tide_url"
+          curl -fsSL "$tide_url" -o dev/libs/tide-fabric-1.21.1-2.1.1.jar
+          tide_sha="$(sha256sum dev/libs/tide-fabric-1.21.1-2.1.1.jar | awk '{print $1}')"
+          tide_mod_version="$(unzip -p dev/libs/tide-fabric-1.21.1-2.1.1.jar fabric.mod.json | jq -r '.version')"
+          test "$tide_mod_version" = '2.1.1'
+          echo "Tide 2.1.1 Modrinth version: $tide_version_id"
+          echo "Tide 2.1.1 SHA-256: $tide_sha"
+
+          # Apex Waters 1.1.1 Fabric 1.21.1, exact upstream GitHub release asset.
+          curl -fsSL \
+            'https://github.com/acorsicanfrog/apexwaters/releases/download/1.1.1/apexwaters-1.21.1-fabric-1.1.1.jar' \
+            -o dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar
+          echo '00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37  dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar' \
+            | sha256sum --check --strict
 
       - name: Validate reconstruction identifiers
         shell: bash
