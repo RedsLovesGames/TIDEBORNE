@@ -104,7 +104,7 @@ class PigmentationGeneratorTest {
         assertEquals(SpecimenData.BodyType.GIANT, specimen.bodyType());
         assertEquals(SpecimenData.Condition.PARASITE_RIDDEN, specimen.condition());
         assertEquals(SpecimenData.Pigmentation.IRIDESCENT, specimen.pigmentation());
-        assertEquals(bodyTypes.generate(seed, specimen.basePercentile()), specimen.bodyType());
+        assertEquals(bodyTypes.generate(seed, specimen.basePercentile(), species, 0.0), specimen.bodyType());
         assertEquals(conditions.generate(seed), specimen.condition());
         assertEquals(generator.generate(seed), specimen.pigmentation());
     }

@@ -98,7 +98,7 @@ class ConditionGeneratorTest {
     @Test
     void bodyTypeAndConditionCanStack() {
         long seed = 75L;
-        SpecimenData.BodyType bodyType = bodyTypes.generate(seed, 50.0);
+        SpecimenData.BodyType bodyType = bodyTypes.generate(seed, 50.0, species, 0.0);
         SpecimenData.Condition condition = generator.generate(seed);
 
         assertNotEquals(SpecimenData.BodyType.NORMAL, bodyType);
