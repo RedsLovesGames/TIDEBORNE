@@ -26,6 +26,8 @@ public final class SpecimenSizeService {
       return this.applyNew(specimen, tideNormalLengthCm, descriptor.canonicalSpeciesId(), descriptor.sizeData(), config);
    }
 
+   // $VF: Unable to simplify switch on enum
+   // Please report this to the Vineflower issue tracker, at https://github.com/Vineflower/vineflower/issues with a copy of the class file (if you have the rights to distribute it!)
    public SpecimenSizeService.AppliedSize applyNew(
       SpecimenData specimen, double tideNormalLengthCm, Identifier canonicalSpeciesId, Optional<SizeData> sizeData, TideTraitsConfig config
    ) {
@@ -39,14 +41,16 @@ public final class SpecimenSizeService {
             return new SpecimenSizeService.AppliedSize(specimen.withoutPhysicalSizePercentile(), tideNormalLengthCm);
          }
 
-         // The 1.3.57 synthetic enum switch maps only DWARF, GIANT, and
-         // PARASITE_RIDDEN to reachable cases. Vineflower emitted a dead case 4
-         // because PERFECT_SPECIMEN maps to zero in the synthetic switch table.
-         double finalLengthCm = switch (specimen.mutation()) {
-            case DWARF -> tideNormalLengthCm * config.dwarfLengthMultiplier().sample(DeterministicValues.unitDouble(specimen.identitySeed(), 2611923443488327891L));
-            case GIANT -> tideNormalLengthCm * config.giantLengthMultiplier().sample(DeterministicValues.unitDouble(specimen.identitySeed(), 1376283091369227076L));
-            case PARASITE_RIDDEN -> tideNormalLengthCm
+         double finalLengthCm = switch (<unrepresentable>.$SwitchMap$com$redslovesgames$tidetraits$trait$FishMutation[specimen.mutation().ordinal()]) {
+            case 1 -> tideNormalLengthCm * config.dwarfLengthMultiplier().sample(DeterministicValues.unitDouble(specimen.identitySeed(), 2611923443488327891L));
+            case 2 -> tideNormalLengthCm * config.giantLengthMultiplier().sample(DeterministicValues.unitDouble(specimen.identitySeed(), 1376283091369227076L));
+            case 3 -> tideNormalLengthCm
                * config.parasiteLengthMultiplier().sample(DeterministicValues.unitDouble(specimen.identitySeed(), -6626703657320631856L));
+            case 4 -> {
+               double targetPercentile = config.perfectSpecimenNormalPercentile()
+                  .sample(DeterministicValues.unitDouble(specimen.identitySeed(), 589684135938649225L));
+               yield baseline.get().lengthAtPercentile(targetPercentile);
+            }
             default -> tideNormalLengthCm;
          };
          double percentile = baseline.get().percentileOf(tideNormalLengthCm);

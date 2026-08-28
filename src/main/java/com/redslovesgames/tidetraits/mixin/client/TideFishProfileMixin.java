@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = FishProfile.class, priority = 500)
 public abstract class TideFishProfileMixin {
    @Inject(
-      method = "buildComponentsWithStats(Lnet/minecraft/ItemStack;Lcom/li64/tide/data/fishing/FishData;)Ljava/util/ArrayList;",
+      method = "buildComponentsWithStats(Lnet/minecraft/item/ItemStack;Lcom/li64/tide/data/fishing/FishData;)Ljava/util/ArrayList;",
       at = @At("RETURN"),
       require = 0
    )

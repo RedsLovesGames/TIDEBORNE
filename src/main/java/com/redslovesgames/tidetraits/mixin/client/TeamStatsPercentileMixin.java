@@ -35,12 +35,12 @@ public abstract class TeamStatsPercentileMixin {
    @Unique
    private static final FishPercentileService tideTraits$percentiles = new FishPercentileService();
 
-   @Inject(method = "<init>(Lcom/li64/tide/data/player/FishStats;Lnet/minecraft/Identifier;)V", at = @At("RETURN"), require = 1)
+   @Inject(method = "<init>(Lcom/li64/tide/data/player/FishStats;Lnet/minecraft/util/Identifier;)V", at = @At("RETURN"), require = 1)
    private void tideTraits$captureStats(FishStats var1, Identifier var2, CallbackInfo var3) {
       this.tideTraits$stats = var1;
    }
 
-   @Inject(method = "render(Lnet/minecraft/DrawContext;Lnet/minecraft/TextRenderer;IIIIF)V", at = @At("HEAD"), cancellable = true, require = 1)
+   @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/font/TextRenderer;IIIIF)V", at = @At("HEAD"), cancellable = true, require = 1)
    private void tideTraits$renderFitPercentiles(DrawContext var1, TextRenderer var2, int var3, int var4, int var5, int var6, float var7, CallbackInfo var8) {
       if (this.tideTraits$stats != null && this.lines != null) {
          int var9 = var3 + 87;

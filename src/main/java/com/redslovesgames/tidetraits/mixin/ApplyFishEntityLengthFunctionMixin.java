@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ApplyFishEntityLengthFunction.class)
 public abstract class ApplyFishEntityLengthFunctionMixin {
-   @Inject(method = "apply(Lnet/minecraft/ItemStack;Lnet/minecraft/LootContext;)Lnet/minecraft/ItemStack;", at = @At("RETURN"))
+   @Inject(method = "apply(Lnet/minecraft/item/ItemStack;Lnet/minecraft/loot/context/LootContext;)Lnet/minecraft/item/ItemStack;", at = @At("RETURN"))
    private void tideTraits$copySpecimen(ItemStack input, LootContext context, CallbackInfoReturnable<ItemStack> cir) {
       Entity entity = (Entity)context.get(LootContextParameters.THIS_ENTITY);
       if (entity != null) {

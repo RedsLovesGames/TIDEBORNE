@@ -32,10 +32,10 @@ public abstract class ItemRendererMutationTintMixin {
    private static final long VARIANT_SALT = -3335678366873096957L;
 
    @Inject(
-      method = "renderItem(Lnet/minecraft/ItemStack;Lnet/minecraft/ModelTransformationMode;ZLnet/minecraft/MatrixStack;Lnet/minecraft/VertexConsumerProvider;IILnet/minecraft/BakedModel;)V",
+      method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;)V",
       at = @At(
          value = "INVOKE",
-         target = "Lnet/minecraft/ItemRenderer;renderBakedItemModel(Lnet/minecraft/BakedModel;Lnet/minecraft/ItemStack;IILnet/minecraft/MatrixStack;Lnet/minecraft/VertexConsumer;)V",
+         target = "Lnet/minecraft/client/render/item/ItemRenderer;renderBakedItemModel(Lnet/minecraft/client/render/model/BakedModel;Lnet/minecraft/item/ItemStack;IILnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;)V",
          shift = Shift.AFTER
       ),
       require = 1

@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Environment(EnvType.CLIENT)
 @Mixin(value = FishRenderer.class, priority = 1100)
 public abstract class TideFishRendererMixin {
-   @Inject(method = "getTextureLocation(Lnet/minecraft/MobEntity;)Lnet/minecraft/Identifier;", at = @At("RETURN"), cancellable = true, require = 0)
+   @Inject(method = "getTextureLocation(Lnet/minecraft/entity/mob/MobEntity;)Lnet/minecraft/util/Identifier;", at = @At("RETURN"), cancellable = true, require = 0)
    private void tideTraits$mutationTexture(MobEntity mob, CallbackInfoReturnable<Identifier> cir) {
       Identifier original = (Identifier)cir.getReturnValue();
       if (original != null) {

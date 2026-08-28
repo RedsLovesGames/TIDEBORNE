@@ -24,8 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = LivingEntityRenderer.class, priority = 900)
 public abstract class LivingEntityRendererMixin {
    @ModifyExpressionValue(
-      method = "getRenderLayer(Lnet/minecraft/LivingEntity;ZZZ)Lnet/minecraft/RenderLayer;",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/LivingEntityRenderer;getTexture(Lnet/minecraft/Entity;)Lnet/minecraft/Identifier;"),
+      method = "getRenderLayer(Lnet/minecraft/entity/LivingEntity;ZZZ)Lnet/minecraft/client/render/RenderLayer;",
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;getTexture(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/Identifier;"),
       require = 0
    )
    private Identifier tideTraits$foreignMutationTexture(Identifier original, LivingEntity entity) {
@@ -33,8 +33,8 @@ public abstract class LivingEntityRendererMixin {
    }
 
    @Inject(
-      method = "render(Lnet/minecraft/LivingEntity;FFLnet/minecraft/MatrixStack;Lnet/minecraft/VertexConsumerProvider;I)V",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/LivingEntityRenderer;scale(Lnet/minecraft/LivingEntity;Lnet/minecraft/MatrixStack;F)V", shift = Shift.BEFORE),
+      method = "render(Lnet/minecraft/entity/LivingEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;scale(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/util/math/MatrixStack;F)V", shift = Shift.BEFORE),
       require = 0
    )
    private void tideTraits$physicalLengthScale(

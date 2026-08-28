@@ -58,7 +58,7 @@ public abstract class TideFishingHookMixin {
       this.hookedItems = CatchTraitService.INSTANCE.individualizeNewCatches(hook.getHookedItems(), hook.getRandom());
    }
 
-   @Inject(method = "retrieve(Lnet/minecraft/ItemStack;Lnet/minecraft/ServerWorld;Lnet/minecraft/PlayerEntity;)I", at = @At("HEAD"))
+   @Inject(method = "retrieve(Lnet/minecraft/item/ItemStack;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/player/PlayerEntity;)I", at = @At("HEAD"))
    private void tideTraits$beginRetrieve(ItemStack rod, ServerWorld level, PlayerEntity player, CallbackInfoReturnable<Integer> cir) {
       if (this.tideTraits$deferredFish != null) {
          this.tideTraits$spawnDeferred();
@@ -66,8 +66,8 @@ public abstract class TideFishingHookMixin {
    }
 
    @WrapOperation(
-      method = "retrieve(Lnet/minecraft/ItemStack;Lnet/minecraft/ServerWorld;Lnet/minecraft/PlayerEntity;)I",
-      at = @At(value = "INVOKE", target = "Lnet/minecraft/World;spawnEntity(Lnet/minecraft/Entity;)Z")
+      method = "retrieve(Lnet/minecraft/item/ItemStack;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/player/PlayerEntity;)I",
+      at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z")
    )
    private boolean tideTraits$deferEligibleFishEntity(World level, Entity entity, Operation<Boolean> original) {
       TideFishingHook hook = (TideFishingHook)this;
@@ -89,8 +89,8 @@ public abstract class TideFishingHookMixin {
    }
 
    @WrapOperation(
-      method = "retrieve(Lnet/minecraft/ItemStack;Lnet/minecraft/ServerWorld;Lnet/minecraft/PlayerEntity;)I",
-      at = @At(value = "INVOKE", target = "Lcom/li64/tide/util/TideUtils;tryLogCatch(Lnet/minecraft/ItemStack;Lnet/minecraft/ServerPlayerEntity;)Z")
+      method = "retrieve(Lnet/minecraft/item/ItemStack;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/player/PlayerEntity;)I",
+      at = @At(value = "INVOKE", target = "Lcom/li64/tide/util/TideUtils;tryLogCatch(Lnet/minecraft/item/ItemStack;Lnet/minecraft/server/network/ServerPlayerEntity;)Z")
    )
    private boolean tideTraits$stowAfterNativeLog(ItemStack stack, ServerPlayerEntity player, Operation<Boolean> original) {
       boolean nativeCallCompleted = false;
@@ -104,7 +104,7 @@ public abstract class TideFishingHookMixin {
       }
    }
 
-   @Inject(method = "retrieve(Lnet/minecraft/ItemStack;Lnet/minecraft/ServerWorld;Lnet/minecraft/PlayerEntity;)I", at = @At("RETURN"))
+   @Inject(method = "retrieve(Lnet/minecraft/item/ItemStack;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/player/PlayerEntity;)I", at = @At("RETURN"))
    private void tideTraits$neverStrandDeferred(ItemStack rod, ServerWorld level, PlayerEntity player, CallbackInfoReturnable<Integer> cir) {
       this.tideTraits$spawnDeferred();
    }

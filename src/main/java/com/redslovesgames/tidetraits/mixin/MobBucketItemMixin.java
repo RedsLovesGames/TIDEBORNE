@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(EntityBucketItem.class)
 public abstract class MobBucketItemMixin {
-   @WrapOperation(method = "spawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/Bucketable;copyDataFromNbt(Lnet/minecraft/NbtCompound;)V"))
+   @WrapOperation(method = "spawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Bucketable;copyDataFromNbt(Lnet/minecraft/nbt/NbtCompound;)V"))
    private void tideTraits$loadSpecimen(Bucketable bucketable, NbtCompound tag, Operation<Void> original) {
       original.call(new Object[]{bucketable, tag});
       if (bucketable instanceof Entity entity) {

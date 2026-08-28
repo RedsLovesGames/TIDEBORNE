@@ -32,12 +32,12 @@ public abstract class FishProfileSizeRangeMixin {
    @Final
    private TextRenderer font;
 
-   @Inject(method = "render(Lnet/minecraft/DrawContext;IIF)V", at = @At("HEAD"), require = 1)
+   @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;IIF)V", at = @At("HEAD"), require = 1)
    private void tideTraits$beginJournalContext(DrawContext var1, int var2, int var3, float var4, CallbackInfo var5) {
       JournalRenderContext.begin(this.data);
    }
 
-   @Inject(method = "render(Lnet/minecraft/DrawContext;IIF)V", at = @At("TAIL"), require = 1)
+   @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;IIF)V", at = @At("TAIL"), require = 1)
    private void tideTraits$renderSizeRange(DrawContext var1, int var2, int var3, float var4, CallbackInfo var5) {
       int var6 = (var1.getScaledWindowWidth() - 400) / 2;
       int var7 = (var1.getScaledWindowHeight() - 260) / 2;
