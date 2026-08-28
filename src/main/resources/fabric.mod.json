@@ -26,7 +26,8 @@
       "com.redslovesgames.tideborne.client.TideborneModMenu"
     ],
     "fabric-gametest": [
-      "com.redslovesgames.tidetraits.gametest.TideTraitsGameTests"
+      "com.redslovesgames.tidetraits.gametest.TideTraitsGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.gametest.CanonicalFishingGameTests"
     ]
   },
   "mixins": [

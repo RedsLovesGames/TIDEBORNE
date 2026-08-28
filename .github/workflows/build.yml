@@ -97,6 +97,14 @@ jobs:
             gradle clean build --stacktrace
           fi
 
+      - name: Run GameTests
+        run: |
+          if [ -x ./gradlew ]; then
+            ./gradlew runGametest --stacktrace
+          else
+            gradle runGametest --stacktrace
+          fi
+
       - name: Upload built JARs
         if: success()
         uses: actions/upload-artifact@v4
