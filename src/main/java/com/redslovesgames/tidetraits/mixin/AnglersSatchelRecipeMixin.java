@@ -18,14 +18,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "net.minecraft.recipe.ShapedRecipe", remap = false)
 public abstract class AnglersSatchelRecipeMixin {
-   @Inject(method = "matches(Lnet/minecraft/CraftingRecipeInput;Lnet/minecraft/World;)Z", at = @At("RETURN"), cancellable = true, remap = false, require = 0)
+   @Inject(method = "matches(Lnet/minecraft/recipe/input/CraftingRecipeInput;Lnet/minecraft/world/World;)Z", at = @At("RETURN"), cancellable = true, remap = false, require = 0)
    private void tideborne$validateSatchelRecipe(CraftingRecipeInput var1, World var2, CallbackInfoReturnable<Boolean> var3) {
       if (var3.getReturnValueZ() && AnglersSatchelRecipeSupport.isAnglersSatchelRecipe(this) && !AnglersSatchelRecipeSupport.validThreeStarRing(var1)) {
          var3.setReturnValue(Boolean.FALSE);
       }
    }
 
-   @Inject(method = "matches(Lnet/minecraft/RecipeInput;Lnet/minecraft/World;)Z", at = @At("RETURN"), cancellable = true, remap = false, require = 0)
+   @Inject(method = "matches(Lnet/minecraft/recipe/input/RecipeInput;Lnet/minecraft/world/World;)Z", at = @At("RETURN"), cancellable = true, remap = false, require = 0)
    private void tideborne$validateSatchelRecipeBridge(RecipeInput var1, World var2, CallbackInfoReturnable<Boolean> var3) {
       if (var3.getReturnValueZ() && AnglersSatchelRecipeSupport.isAnglersSatchelRecipe(this) && !AnglersSatchelRecipeSupport.validThreeStarRing(var1)) {
          var3.setReturnValue(Boolean.FALSE);
@@ -33,7 +33,7 @@ public abstract class AnglersSatchelRecipeMixin {
    }
 
    @Inject(
-      method = "craft(Lnet/minecraft/CraftingRecipeInput;Lnet/minecraft/class_7225$class_7874;)Lnet/minecraft/ItemStack;",
+      method = "craft(Lnet/minecraft/recipe/input/CraftingRecipeInput;Lnet/minecraft/registry/RegistryWrapper$WrapperLookup;)Lnet/minecraft/item/ItemStack;",
       at = @At("RETURN"),
       cancellable = true,
       remap = false,
@@ -46,7 +46,7 @@ public abstract class AnglersSatchelRecipeMixin {
    }
 
    @Inject(
-      method = "craft(Lnet/minecraft/RecipeInput;Lnet/minecraft/class_7225$class_7874;)Lnet/minecraft/ItemStack;",
+      method = "craft(Lnet/minecraft/recipe/input/RecipeInput;Lnet/minecraft/registry/RegistryWrapper$WrapperLookup;)Lnet/minecraft/item/ItemStack;",
       at = @At("RETURN"),
       cancellable = true,
       remap = false,
