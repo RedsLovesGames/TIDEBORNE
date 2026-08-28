@@ -41,6 +41,9 @@ public final class TideTraitsComponents {
    public static final ComponentType<Integer> SPECIMEN_GENERATION_VERSION = register(
       "specimen_generation_version", ComponentType.<Integer>builder().codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).build()
    );
+   public static final ComponentType<Long> SPECIMEN_DETERMINISTIC_SEED = register(
+      "specimen_deterministic_seed", ComponentType.<Long>builder().codec(Codec.LONG).packetCodec(PacketCodecs.VAR_LONG).build()
+   );
    public static final ComponentType<Double> SPECIMEN_BASE_PERCENTILE = register(
       "specimen_base_percentile", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
    );
@@ -49,6 +52,12 @@ public final class TideTraitsComponents {
    );
    public static final ComponentType<Double> SPECIMEN_FINAL_LENGTH = register(
       "specimen_final_length", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
+   );
+   public static final ComponentType<Double> SPECIMEN_FINAL_PERCENTILE = register(
+      "specimen_final_percentile", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
+   );
+   public static final ComponentType<String> SPECIMEN_PERCENTILE_DEFINITION = register(
+      "specimen_percentile_definition", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
    );
    public static final ComponentType<String> SPECIMEN_BODY_TYPE = register(
       "specimen_body_type", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()

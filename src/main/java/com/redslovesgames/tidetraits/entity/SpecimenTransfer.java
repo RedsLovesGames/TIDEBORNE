@@ -7,15 +7,17 @@ package com.redslovesgames.tidetraits.entity;
 
 import com.li64.tide.data.FishLengthHolder;
 import com.li64.tide.data.item.TideItemData;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.redslovesgames.tidetraits.TideTraits;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
-import com.redslovesgames.tidetraits.trait.TraitAxesRuntime;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.registry.RegistryWrapper.WrapperLookup;
 
 public final class SpecimenTransfer {
@@ -33,80 +35,62 @@ public final class SpecimenTransfer {
    public static final String CANONICAL_PIGMENTATION_KEY = "CanonicalPigmentation";
    public static final String CANONICAL_RAW_FISH_SCORE_KEY = "CanonicalRawFishScore";
    public static final String CANONICAL_FISH_SCORE_KEY = "CanonicalFishScore";
-   public static final int DATA_VERSION = 5;
+   public static final int DATA_VERSION = 6;
    private static final AtomicBoolean SNAPSHOT_WARNING_EMITTED = new AtomicBoolean();
 
    private SpecimenTransfer() {
    }
 
    public static boolean hasSpecimen(ItemStack stack) {
-      if (TraitAxesRuntime.isCanonicalV2(stack)) {
+      CanonicalSpecimenStorage.MigrationState state = CanonicalSpecimenStorage.detectMigration(stack);
+      if (state != CanonicalSpecimenStorage.MigrationState.NONE
+         && state != CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY) {
          return true;
       }
-      String mutation = (String)stack.get(TideTraitsComponents.MUTATION);
+      String mutation = stack == null ? null : stack.get(TideTraitsComponents.MUTATION);
       return mutation != null && !mutation.isBlank();
    }
 
    public static NbtCompound fromStack(ItemStack stack) {
-      TraitAxesRuntime.migrateLegacy(stack);
       NbtCompound tag = new NbtCompound();
-      boolean canonical = TraitAxesRuntime.isCanonicalV2(stack);
-      String mutation = (String)stack.get(TideTraitsComponents.MUTATION);
-      if (!canonical && (mutation == null || mutation.isBlank())) {
+      CanonicalSpecimenStorage.MigrationState state = CanonicalSpecimenStorage.detectMigration(stack);
+      if (state == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT) {
+         Optional<SpecimenData> canonical = CanonicalSpecimenStorage.read(stack);
+         if (canonical.isEmpty()) {
+            return tag;
+         }
+         SpecimenData specimen = canonical.get();
+         tag.putInt(VERSION_KEY, DATA_VERSION);
+         CanonicalSpecimenStorage.writeTransferData(tag, specimen);
+         writeCompatibilityMirrors(tag, specimen);
+         return tag;
+      }
+      if (state != CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY) {
          return tag;
       }
 
+      String mutation = stack.get(TideTraitsComponents.MUTATION);
+      if (mutation == null || mutation.isBlank()) {
+         return tag;
+      }
       tag.putInt(VERSION_KEY, DATA_VERSION);
-      if (mutation != null && !mutation.isBlank()) {
-         tag.putString(MUTATION_KEY, mutation);
-      }
-      tag.putString(BODY_TYPE_KEY, TraitAxesRuntime.bodyType(stack));
-
-      if (canonical) {
-         TraitAxesRuntime.mirrorCanonicalBodyType(stack);
-         String canonicalBodyType = (String)stack.get(TideTraitsComponents.SPECIMEN_BODY_TYPE);
-         if (canonicalBodyType != null && !canonicalBodyType.isBlank()) {
-            tag.putString(CANONICAL_BODY_TYPE_KEY, canonicalBodyType);
-         }
-
-         String canonicalCondition = (String)stack.get(TideTraitsComponents.SPECIMEN_CONDITION);
-         if (canonicalCondition != null && !canonicalCondition.isBlank()) {
-            tag.putString(CANONICAL_CONDITION_KEY, canonicalCondition);
-         }
-
-         String canonicalPigmentation = (String)stack.get(TideTraitsComponents.SPECIMEN_PIGMENTATION);
-         if (canonicalPigmentation != null && !canonicalPigmentation.isBlank()) {
-            tag.putString(CANONICAL_PIGMENTATION_KEY, canonicalPigmentation);
-         }
-
-         Double rawFishScore = (Double)stack.get(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE);
-         if (rawFishScore != null && Double.isFinite(rawFishScore)) {
-            tag.putDouble(CANONICAL_RAW_FISH_SCORE_KEY, rawFishScore);
-         }
-
-         Integer fishScore = (Integer)stack.get(TideTraitsComponents.SPECIMEN_FISH_SCORE);
-         if (fishScore != null) {
-            tag.putInt(CANONICAL_FISH_SCORE_KEY, fishScore);
-         }
-      }
-
-      Long seed = (Long)stack.get(TideTraitsComponents.MUTATION_SEED);
+      tag.putString(MUTATION_KEY, mutation);
+      String bodyType = stack.get(TideTraitsComponents.BODY_TYPE);
+      tag.putString(BODY_TYPE_KEY, bodyType == null || bodyType.isBlank() ? "normal" : bodyType);
+      Long seed = stack.get(TideTraitsComponents.MUTATION_SEED);
       if (seed != null) {
          tag.putLong(SEED_KEY, seed);
       }
-
-      Double percentile = (Double)stack.get(TideTraitsComponents.SIZE_PERCENTILE);
+      Double percentile = stack.get(TideTraitsComponents.SIZE_PERCENTILE);
       if (percentile != null && Double.isFinite(percentile)) {
          tag.putDouble(PERCENTILE_KEY, clampPercentile(percentile));
       }
-
       if (TideItemData.FISH_LENGTH.isPresent(stack)) {
          double length = (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
          if (Double.isFinite(length) && length > 0.0) {
             tag.putDouble(LENGTH_KEY, length);
          }
       }
-
       return tag;
    }
 
@@ -120,100 +104,36 @@ public final class SpecimenTransfer {
          } catch (RuntimeException exception) {
             warnSnapshotFailure("encode", exception);
          }
-
-         return tag;
-      } else {
-         return tag;
       }
+      return tag;
    }
 
    public static void toStack(NbtCompound source, ItemStack stack) {
       if (source == null || stack == null || stack.isEmpty()) {
          return;
       }
-
-      if (source.contains(MUTATION_KEY)) {
-         String mutation = source.getString(MUTATION_KEY);
-         if (!mutation.isBlank()) {
-            stack.set(TideTraitsComponents.MUTATION, mutation);
-         }
+      if (CanonicalSpecimenStorage.hasTransferPayload(source)) {
+         CanonicalSpecimenStorage.restoreTransferData(source, stack);
+         return;
       }
-
-      if (source.contains(BODY_TYPE_KEY)) {
-         String bodyType = source.getString(BODY_TYPE_KEY);
-         stack.set(TideTraitsComponents.BODY_TYPE, bodyType.isBlank() ? "normal" : bodyType);
-      }
-
-      if (source.contains(CANONICAL_BODY_TYPE_KEY)) {
-         String canonicalBodyType = source.getString(CANONICAL_BODY_TYPE_KEY);
-         if (!canonicalBodyType.isBlank()) {
-            stack.set(TideTraitsComponents.SPECIMEN_BODY_TYPE, canonicalBodyType);
-            stack.set(TideTraitsComponents.BODY_TYPE, canonicalBodyType);
-         }
-      }
-
-      if (source.contains(CANONICAL_CONDITION_KEY)) {
-         String canonicalCondition = source.getString(CANONICAL_CONDITION_KEY);
-         if (!canonicalCondition.isBlank()) {
-            stack.set(TideTraitsComponents.SPECIMEN_CONDITION, canonicalCondition);
-            stack.set(TideTraitsComponents.MUTATION, canonicalCondition);
-         }
-      }
-
-      if (source.contains(CANONICAL_PIGMENTATION_KEY)) {
-         String canonicalPigmentation = source.getString(CANONICAL_PIGMENTATION_KEY);
-         if (!canonicalPigmentation.isBlank()) {
-            stack.set(TideTraitsComponents.SPECIMEN_PIGMENTATION, canonicalPigmentation);
-         }
-      }
-
-      if (source.contains(CANONICAL_RAW_FISH_SCORE_KEY)) {
-         double rawFishScore = source.getDouble(CANONICAL_RAW_FISH_SCORE_KEY);
-         if (Double.isFinite(rawFishScore)) {
-            stack.set(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE, rawFishScore);
-         }
-      }
-
-      if (source.contains(CANONICAL_FISH_SCORE_KEY)) {
-         stack.set(TideTraitsComponents.SPECIMEN_FISH_SCORE, source.getInt(CANONICAL_FISH_SCORE_KEY));
-      }
-
-      if (source.contains(SEED_KEY)) {
-         stack.set(TideTraitsComponents.MUTATION_SEED, source.getLong(SEED_KEY));
-      }
-
-      if (source.contains(PERCENTILE_KEY)) {
-         double percentile = source.getDouble(PERCENTILE_KEY);
-         if (Double.isFinite(percentile)) {
-            stack.set(TideTraitsComponents.SIZE_PERCENTILE, clampPercentile(percentile));
-         }
-      }
-
-      if (source.contains(LENGTH_KEY)) {
-         double length = source.getDouble(LENGTH_KEY);
-         if (Double.isFinite(length) && length > 0.0) {
-            TideItemData.FISH_LENGTH.set(stack, length);
-         }
-      }
-
-      TraitAxesRuntime.mirrorCanonicalBodyType(stack);
+      restoreLegacyTransfer(source, stack);
    }
 
    public static void toStack(NbtCompound source, ItemStack stack, WrapperLookup registries) {
-      if (source != null && stack != null && !stack.isEmpty()) {
-         if (registries != null && source.contains(SOURCE_STACK_KEY, 10)) {
-            try {
-               ItemStack savedStack = ItemStack.fromNbtOrEmpty(registries, source.getCompound(SOURCE_STACK_KEY));
-               if (!savedStack.isEmpty()) {
-                  stack.applyComponentsFrom(savedStack.getComponents());
-               }
-            } catch (RuntimeException exception) {
-               warnSnapshotFailure("decode", exception);
-            }
-         }
-
-         toStack(source, stack);
+      if (source == null || stack == null || stack.isEmpty()) {
+         return;
       }
+      if (registries != null && source.contains(SOURCE_STACK_KEY, 10)) {
+         try {
+            ItemStack savedStack = ItemStack.fromNbtOrEmpty(registries, source.getCompound(SOURCE_STACK_KEY));
+            if (!savedStack.isEmpty()) {
+               stack.applyComponentsFrom(savedStack.getComponents());
+            }
+         } catch (RuntimeException exception) {
+            warnSnapshotFailure("decode", exception);
+         }
+      }
+      toStack(source, stack);
    }
 
    public static void stackToEntity(ItemStack stack, Entity entity) {
@@ -235,7 +155,6 @@ public final class SpecimenTransfer {
                tag.putDouble(LENGTH_KEY, length);
             }
          }
-
          toStack(tag, stack, entity.getRegistryManager());
       }
    }
@@ -250,7 +169,6 @@ public final class SpecimenTransfer {
                   specimen.putDouble(LENGTH_KEY, length);
                }
             }
-
             NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, bucket, bucketTag -> bucketTag.put(ENTITY_KEY, specimen.copy()));
          }
       }
@@ -287,9 +205,54 @@ public final class SpecimenTransfer {
       return entity instanceof SpecimenEntity specimenEntity && specimenEntity.tideTraits$getSpecimenTag().getBoolean(DISPLAY_PREVIEW_KEY);
    }
 
+   private static void writeCompatibilityMirrors(NbtCompound tag, SpecimenData specimen) {
+      String bodyType = specimen.bodyType().name().toLowerCase(java.util.Locale.ROOT);
+      String condition = specimen.condition().name().toLowerCase(java.util.Locale.ROOT);
+      tag.putString(MUTATION_KEY, condition);
+      tag.putString(BODY_TYPE_KEY, bodyType);
+      tag.putString(CANONICAL_BODY_TYPE_KEY, bodyType);
+      tag.putString(CANONICAL_CONDITION_KEY, condition);
+      tag.putString(CANONICAL_PIGMENTATION_KEY, specimen.pigmentation().name().toLowerCase(java.util.Locale.ROOT));
+      specimen.rawFishScore().ifPresent(value -> tag.putDouble(CANONICAL_RAW_FISH_SCORE_KEY, value));
+      specimen.fishScore().ifPresent(value -> tag.putInt(CANONICAL_FISH_SCORE_KEY, value));
+      tag.putLong(SEED_KEY, specimen.deterministicSeed());
+      tag.putDouble(PERCENTILE_KEY, specimen.finalPercentile());
+      tag.putDouble(LENGTH_KEY, specimen.finalLength());
+   }
+
+   private static void restoreLegacyTransfer(NbtCompound source, ItemStack stack) {
+      if (source.contains(MUTATION_KEY)) {
+         String mutation = source.getString(MUTATION_KEY);
+         if (!mutation.isBlank()) {
+            stack.set(TideTraitsComponents.MUTATION, mutation);
+         }
+      }
+      if (source.contains(BODY_TYPE_KEY)) {
+         String bodyType = source.getString(BODY_TYPE_KEY);
+         stack.set(TideTraitsComponents.BODY_TYPE, bodyType.isBlank() ? "normal" : bodyType);
+      }
+      if (source.contains(SEED_KEY)) {
+         stack.set(TideTraitsComponents.MUTATION_SEED, source.getLong(SEED_KEY));
+      }
+      if (source.contains(PERCENTILE_KEY)) {
+         double percentile = source.getDouble(PERCENTILE_KEY);
+         if (Double.isFinite(percentile)) {
+            stack.set(TideTraitsComponents.SIZE_PERCENTILE, clampPercentile(percentile));
+         }
+      }
+      if (source.contains(LENGTH_KEY)) {
+         double length = source.getDouble(LENGTH_KEY);
+         if (Double.isFinite(length) && length > 0.0) {
+            TideItemData.FISH_LENGTH.set(stack, length);
+         }
+      }
+   }
+
    private static void applyLengthToEntity(NbtCompound tag, Entity entity) {
-      if (entity instanceof FishLengthHolder holder && tag.contains(LENGTH_KEY)) {
-         double length = tag.getDouble(LENGTH_KEY);
+      if (entity instanceof FishLengthHolder holder) {
+         Optional<SpecimenData> canonical = CanonicalSpecimenStorage.readTransferData(tag);
+         double length = canonical.map(SpecimenData::finalLength)
+               .orElseGet(() -> tag.contains(LENGTH_KEY) ? tag.getDouble(LENGTH_KEY) : 0.0);
          if (Double.isFinite(length) && length > 0.0) {
             holder.tide$setLength(length);
          }
