@@ -191,8 +191,14 @@ def locate_decompiler_output(output_dir: Path) -> Path:
 
 
 def load_yarn_mappings(tiny_gz: Path) -> MappingSet:
-    """Read Tiny v2 Yarn mappings from intermediary to named."""
-    class_fq: dict[str, str] = {}
+    """Read Tiny v2 Yarn mappings from intermediary to named.
+
+    Tiny stores nested classes with '$', while Java source emitted by decompilers often
+    refers to them with dots after the outer class has already been remapped. Build both
+    forms and an inner-class simple-name map so intermediary nested types are not left
+    behind as imports such as ButtonWidget.class_4241.
+    """
+    raw_class_fq: dict[str, str] = {}
     fields: dict[str, str] = {}
     methods: dict[str, str] = {}
 
@@ -219,7 +225,7 @@ def load_yarn_mappings(tiny_gz: Path) -> MappingSet:
                 intermediary = names[intermediary_index]
                 named = names[named_index]
                 if intermediary and named:
-                    class_fq[intermediary.replace("/", ".")] = named.replace("/", ".")
+                    raw_class_fq[intermediary.replace("/", ".")] = named.replace("/", ".")
             elif parts[0] == "" and len(parts) >= 5 and parts[1] in {"f", "m"}:
                 kind = parts[1]
                 names = parts[3:]
@@ -234,10 +240,19 @@ def load_yarn_mappings(tiny_gz: Path) -> MappingSet:
                 elif kind == "m" and intermediary.startswith("method_"):
                     methods[intermediary] = named
 
-    class_simple = {
-        intermediary.rsplit(".", 1)[-1]: named.rsplit(".", 1)[-1]
-        for intermediary, named in class_fq.items()
-    }
+    class_fq: dict[str, str] = dict(raw_class_fq)
+    class_simple: dict[str, str] = {}
+    for intermediary, named in raw_class_fq.items():
+        if "$" in intermediary:
+            class_fq[intermediary.replace("$", ".")] = named.replace("$", ".")
+            intermediary_simple = intermediary.rsplit("$", 1)[-1]
+            named_simple = named.rsplit("$", 1)[-1]
+        else:
+            intermediary_simple = intermediary.rsplit(".", 1)[-1]
+            named_simple = named.rsplit(".", 1)[-1]
+        if intermediary_simple.startswith("class_"):
+            class_simple[intermediary_simple] = named_simple
+
     if not class_fq or not methods or not fields:
         raise RuntimeError(
             f"Unexpected empty Yarn maps: {len(class_fq)} classes, "
@@ -318,50 +333,66 @@ def ensure_clean_directory(path: Path, force: bool) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("jar", type=Path, help="Path to Tideborne 1.3.57 JAR/content-equivalent repack")
-    parser.add_argument("--repo", type=Path, default=Path.cwd(), help="Repository root (default: cwd)")
-    parser.add_argument("--tools", type=Path, default=None, help="Tool cache directory")
-    parser.add_argument("--force", action="store_true", help="Replace existing src/main/java and resources")
-    parser.add_argument("--skip-download", action="store_true", help="Require tools/mappings to already exist")
     parser.add_argument(
-        "--allow-repacked",
+        "--repo",
+        type=Path,
+        default=Path(__file__).resolve().parents[1],
+        help="Repository root (default: script parent repository)",
+    )
+    parser.add_argument(
+        "--allow-content-equivalent-repack",
         action="store_true",
-        help="Accept a JAR whose canonical content tree exactly matches the pinned 1.3.57 baseline",
+        help="Accept a repacked JAR only when its canonical extracted content hash/counts match the pinned baseline",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace generated src/main/java and src/main/resources trees",
     )
     args = parser.parse_args()
 
     repo = args.repo.resolve()
-    jar = args.jar.resolve()
-    if not jar.is_file():
-        parser.error(f"JAR not found: {jar}")
+    input_jar = args.jar.resolve()
+    if not input_jar.is_file():
+        raise SystemExit(f"Input JAR does not exist: {input_jar}")
 
-    baseline_verification = verify_baseline(jar, args.allow_repacked)
+    verification = verify_baseline(input_jar, args.allow_content_equivalent_repack)
+    print(
+        f"Verified Tideborne {BASELINE_VERSION}: {verification['verification_mode']}; "
+        f"{verification['file_count']} files, {verification['class_count']} classes; "
+        f"tree {verification['content_tree_sha256']}"
+    )
 
-    tools = (args.tools or repo / ".gradle" / "tideborne-tools").resolve()
-    vineflower = tools / f"vineflower-{VINEFLOWER_VERSION}.jar"
+    tools = repo / ".gradle" / "tideborne-tools"
+    vineflower_jar = tools / f"vineflower-{VINEFLOWER_VERSION}.jar"
     yarn_tiny = tools / f"yarn-{YARN_VERSION}-tiny.gz"
-    if not args.skip_download:
-        download(VINEFLOWER_URL, vineflower)
-        download(YARN_TINY_URL, yarn_tiny)
-    for required in (vineflower, yarn_tiny):
-        if not required.is_file():
-            raise SystemExit(f"Missing required reconstruction tool: {required}")
+    download(VINEFLOWER_URL, vineflower_jar)
+    download(YARN_TINY_URL, yarn_tiny)
+
+    mappings = load_yarn_mappings(yarn_tiny)
+    print(
+        f"Loaded Yarn mappings: {len(mappings.class_fq)} class forms, "
+        f"{len(mappings.methods)} methods, {len(mappings.fields)} fields"
+    )
+
+    work = repo / "reconstruction" / "work"
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    decompiler_output = work / "vineflower"
+    run_vineflower(vineflower_jar, input_jar, decompiler_output)
+    decompiled_root = locate_decompiler_output(decompiler_output)
 
     java_output = repo / "src" / "main" / "java"
     resources_output = repo / "src" / "main" / "resources"
     ensure_clean_directory(java_output, args.force)
     ensure_clean_directory(resources_output, args.force)
 
-    work_root = repo / "reconstruction" / "work"
-    if work_root.exists():
-        shutil.rmtree(work_root)
-    decompiler_output = work_root / "vineflower"
-
-    run_vineflower(vineflower, jar, decompiler_output)
-    source_root = locate_decompiler_output(decompiler_output)
-    mappings = load_yarn_mappings(yarn_tiny)
-    source_count, replacements, unresolved = copy_and_remap_sources(source_root, java_output, mappings)
-    resource_count = extract_non_class_resources(jar, resources_output)
-    class_count = count_class_files(jar)
+    java_files, replacements, unresolved = copy_and_remap_sources(
+        decompiled_root, java_output, mappings
+    )
+    resource_files = extract_non_class_resources(input_jar, resources_output)
+    class_files = count_class_files(input_jar)
 
     manifest = {
         "schema": 2,
@@ -370,16 +401,16 @@ def main() -> int:
             "tideborne_version": BASELINE_VERSION,
             "expected_release_sha256": EXPECTED_TIDEBORNE_SHA256,
             "expected_content_tree_sha256": EXPECTED_CONTENT_TREE_SHA256,
-            **baseline_verification,
+            **verification,
         },
         "tools": {
             "vineflower": VINEFLOWER_VERSION,
             "yarn": YARN_VERSION,
         },
         "output": {
-            "java_files": source_count,
-            "resources": resource_count,
-            "class_files": class_count,
+            "java_files": java_files,
+            "resources": resource_files,
+            "class_files": class_files,
             "intermediary_replacements": replacements,
             "unresolved_intermediary_tokens": unresolved,
         },
@@ -388,16 +419,18 @@ def main() -> int:
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
-    print(json.dumps(manifest, indent=2))
+    print(
+        f"Reconstructed {java_files} Java files and {resource_files} resources "
+        f"from {class_files} classes; {replacements} intermediary identifiers renamed."
+    )
     if unresolved:
-        print(
-            f"WARNING: {len(unresolved)} unresolved intermediary identifiers remain. "
-            "Inspect reconstruction/manifest.json before compiling.",
-            file=sys.stderr,
-        )
+        print("Unresolved intermediary tokens remain:")
+        for token in unresolved:
+            print(f"  {token}")
         return 2
+    print("No unresolved intermediary tokens remain in generated Java source.")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())
