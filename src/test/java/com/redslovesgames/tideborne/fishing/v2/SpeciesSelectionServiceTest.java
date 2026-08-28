@@ -27,6 +27,26 @@ class SpeciesSelectionServiceTest {
     }
 
     @Test
+    void traitLuckDoesNotAffectSpeciesSelection() {
+        List<SpeciesProfile> profiles = List.of(
+                profile("tide:one", CanonicalRarity.ONE_STAR, SpeciesEligibility.always()),
+                profile("tide:three", CanonicalRarity.THREE_STAR, SpeciesEligibility.always()),
+                profile("tide:five", CanonicalRarity.FIVE_STAR, SpeciesEligibility.always())
+        );
+        FishingContext noTraitLuck = new FishingContext(0.0, 7.0, 0.0, Map.of(), Map.of(), Map.of());
+        FishingContext extremeTraitLuck = new FishingContext(0.0, 7.0, 1_000_000.0, Map.of(), Map.of(), Map.of());
+        SplittableRandom first = new SplittableRandom(92821L);
+        SplittableRandom second = new SplittableRandom(92821L);
+
+        for (int i = 0; i < 10_000; i++) {
+            assertEquals(
+                    selection.select(profiles, noTraitLuck, FishingEnvironment.empty(), first).speciesId(),
+                    selection.select(profiles, extremeTraitLuck, FishingEnvironment.empty(), second).speciesId()
+            );
+        }
+    }
+
+    @Test
     void seededSelectionIsDeterministic() {
         List<SpeciesProfile> profiles = List.of(
                 profile("tide:one", CanonicalRarity.ONE_STAR, SpeciesEligibility.always()),
@@ -115,4 +135,3 @@ class SpeciesSelectionServiceTest {
         );
     }
 }
-
