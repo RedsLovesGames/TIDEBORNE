@@ -1,5 +1,7 @@
 package com.redslovesgames.tideborne.fishing.v2.integration;
 
+import com.li64.tide.data.TideData;
+import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.item.TideItemData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
@@ -8,9 +10,11 @@ import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 
@@ -47,30 +51,130 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
 
         assertPersistedFields(helper, expected, CanonicalSpecimenStorage.read(stack).orElse(null));
         helper.assertTrue(Long.valueOf(-17L).equals(stack.get(TideTraitsComponents.MUTATION_SEED)),
-                "Canonical read repaired legacy seed mirror");
+                "Current canonical read repaired legacy seed mirror");
         helper.assertTrue(Double.valueOf(3.0).equals(stack.get(TideTraitsComponents.SIZE_PERCENTILE)),
-                "Canonical read repaired legacy percentile mirror");
+                "Current canonical read repaired legacy percentile mirror");
         helper.assertTrue("normal".equals(stack.get(TideTraitsComponents.BODY_TYPE)),
-                "Canonical read repaired legacy Body Type mirror");
+                "Current canonical read repaired legacy Body Type mirror");
         helper.assertTrue("normal".equals(stack.get(TideTraitsComponents.MUTATION)),
-                "Canonical read repaired legacy Condition mirror");
-        helper.assertTrue(Math.abs((Double) TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0) - 0.5) < 1.0E-9,
-                "Canonical read repaired legacy length mirror");
+                "Current canonical read repaired legacy Condition mirror");
         helper.complete();
     }
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
-    public void migrationDetectionIsExplicitAndDoesNotRepairPayloads(TestContext helper) {
-        ItemStack legacy = new ItemStack(Items.COD);
-        legacy.set(TideTraitsComponents.MUTATION_SEED, 42L);
-        legacy.set(TideTraitsComponents.SIZE_PERCENTILE, 73.0);
-        legacy.set(TideTraitsComponents.MUTATION, "scarred");
-        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(legacy)
-                == CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY,
-                "Legacy stack was not classified legacy-only");
-        helper.assertTrue(CanonicalSpecimenStorage.read(legacy).isEmpty(),
-                "Legacy stack was silently normalized into a canonical specimen");
+    public void giantScarredLegacyFishMigratesOnce(TestContext helper) {
+        ItemStack stack = registeredFishStack();
+        stack.set(TideTraitsComponents.MUTATION_SEED, 42L);
+        stack.set(TideTraitsComponents.SIZE_PERCENTILE, 73.0);
+        stack.set(TideTraitsComponents.BODY_TYPE, "giant");
+        stack.set(TideTraitsComponents.MUTATION, "scarred");
+        TideItemData.FISH_LENGTH.set(stack, 51.25);
 
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stack)
+                == CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY,
+                "Legacy fish was not classified legacy-only");
+        SpecimenData first = CanonicalSpecimenStorage.read(stack).orElse(null);
+        helper.assertTrue(first != null, "Legacy Giant + Scarred fish did not migrate");
+        if (first == null) {
+            helper.complete();
+            return;
+        }
+        helper.assertTrue(first.bodyType() == SpecimenData.BodyType.GIANT, "Legacy Giant was not preserved");
+        helper.assertTrue(first.condition() == SpecimenData.Condition.SCARRED, "Legacy Scarred was not preserved");
+        helper.assertTrue(first.deterministicSeed() == 42L, "Legacy deterministic seed was not preserved");
+        helper.assertTrue(first.basePercentile() == 73.0, "Legacy percentile was not preserved");
+        helper.assertTrue(first.finalLength() == 51.25, "Legacy physical length was not preserved");
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stack)
+                == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
+                "Migrated stack was not rewritten as current canonical data");
+
+        stack.set(TideTraitsComponents.BODY_TYPE, "dwarf");
+        stack.set(TideTraitsComponents.MUTATION, "albino");
+        SpecimenData second = CanonicalSpecimenStorage.read(stack).orElseThrow();
+        helper.assertTrue(second.bodyType() == SpecimenData.BodyType.GIANT,
+                "Current canonical stack was migrated a second time from legacy mirrors");
+        helper.assertTrue(second.condition() == SpecimenData.Condition.SCARRED,
+                "Current canonical condition changed on repeated read");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void dwarfAlbinoAndPerfectLegacyTraitsMigrate(TestContext helper) {
+        ItemStack dwarfAlbino = registeredFishStack();
+        dwarfAlbino.set(TideTraitsComponents.MUTATION_SEED, 7L);
+        dwarfAlbino.set(TideTraitsComponents.SIZE_PERCENTILE, 12.5);
+        dwarfAlbino.set(TideTraitsComponents.BODY_TYPE, "dwarf");
+        dwarfAlbino.set(TideTraitsComponents.MUTATION, "albino");
+        SpecimenData albino = CanonicalSpecimenStorage.read(dwarfAlbino).orElseThrow();
+        helper.assertTrue(albino.bodyType() == SpecimenData.BodyType.DWARF, "Legacy Dwarf was not preserved");
+        helper.assertTrue(albino.pigmentation() == SpecimenData.Pigmentation.ALBINO,
+                "Legacy Albino was not mapped to pigmentation");
+
+        ItemStack perfect = registeredFishStack();
+        perfect.set(TideTraitsComponents.MUTATION_SEED, 9L);
+        perfect.set(TideTraitsComponents.SIZE_PERCENTILE, 88.0);
+        perfect.set(TideTraitsComponents.MUTATION, "perfect_specimen");
+        SpecimenData quality = CanonicalSpecimenStorage.read(perfect).orElseThrow();
+        helper.assertTrue(quality.specimenQuality() == SpecimenData.SpecimenQuality.PERFECT_SPECIMEN,
+                "Legacy Perfect Specimen was not mapped to Quality");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void olderSchemaPreservesUsableCanonicalValues(TestContext helper) {
+        ItemStack stack = registeredFishStack();
+        stack.set(TideTraitsComponents.MUTATION_SEED, 11L);
+        stack.set(TideTraitsComponents.SIZE_PERCENTILE, 21.0);
+        stack.set(TideTraitsComponents.MUTATION, "scarred");
+        SpecimenData baseline = CanonicalSpecimenStorage.read(stack).orElseThrow();
+
+        long preservedSeed = 987654321L;
+        double preservedPercentile = 64.0;
+        double preservedLength = baseline.finalLength();
+        stack.set(TideTraitsComponents.SPECIMEN_SCHEMA_VERSION, SpecimenGenerator.SCHEMA_VERSION - 1);
+        stack.set(TideTraitsComponents.SPECIMEN_DETERMINISTIC_SEED, preservedSeed);
+        stack.set(TideTraitsComponents.SPECIMEN_BASE_PERCENTILE, preservedPercentile);
+        stack.set(TideTraitsComponents.SPECIMEN_FINAL_LENGTH, preservedLength);
+        stack.set(TideTraitsComponents.SPECIMEN_CONDITION, "parasite_ridden");
+        stack.set(TideTraitsComponents.MUTATION_SEED, -4L);
+        stack.set(TideTraitsComponents.SIZE_PERCENTILE, 1.0);
+        stack.set(TideTraitsComponents.MUTATION, "albino");
+
+        SpecimenData migrated = CanonicalSpecimenStorage.read(stack).orElseThrow();
+        helper.assertTrue(migrated.deterministicSeed() == preservedSeed, "Older canonical seed was not preferred");
+        helper.assertTrue(migrated.basePercentile() == preservedPercentile,
+                "Older canonical base percentile was not preferred");
+        helper.assertTrue(migrated.finalLength() == preservedLength, "Older canonical final length was not preserved");
+        helper.assertTrue(migrated.condition() == SpecimenData.Condition.PARASITE_RIDDEN,
+                "Usable older canonical orthogonal trait was not preserved");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void malformedAndNonFishLegacyStacksFailWithoutMutation(TestContext helper) {
+        ItemStack malformed = registeredFishStack();
+        malformed.set(TideTraitsComponents.SPECIMEN_SCHEMA_VERSION, SpecimenGenerator.SCHEMA_VERSION - 1);
+        malformed.set(TideTraitsComponents.SPECIMEN_SPECIES_ID, "example:not_this_fish");
+        malformed.set(TideTraitsComponents.MUTATION_SEED, 123L);
+        malformed.set(TideTraitsComponents.MUTATION, "scarred");
+        helper.assertTrue(CanonicalSpecimenStorage.read(malformed).isEmpty(),
+                "Malformed older-schema fish was migrated");
+        helper.assertTrue(Integer.valueOf(SpecimenGenerator.SCHEMA_VERSION - 1)
+                        .equals(malformed.get(TideTraitsComponents.SPECIMEN_SCHEMA_VERSION)),
+                "Malformed fish was modified after migration failure");
+
+        ItemStack nonFish = new ItemStack(Items.STONE);
+        nonFish.set(TideTraitsComponents.MUTATION_SEED, 55L);
+        nonFish.set(TideTraitsComponents.SIZE_PERCENTILE, 50.0);
+        nonFish.set(TideTraitsComponents.MUTATION, "albino");
+        helper.assertTrue(CanonicalSpecimenStorage.read(nonFish).isEmpty(), "Non-fish item was migrated");
+        helper.assertTrue(nonFish.get(TideTraitsComponents.SPECIMEN_SCHEMA_VERSION) == null,
+                "Non-fish item received canonical specimen data");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void incompleteCanonicalPayloadStillFailsClosed(TestContext helper) {
         ItemStack incomplete = new ItemStack(Items.COD);
         CanonicalSpecimenStorage.write(incomplete, specimen());
         incomplete.remove(TideTraitsComponents.SPECIMEN_DETERMINISTIC_SEED);
@@ -79,9 +183,9 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
                 == CanonicalSpecimenStorage.MigrationState.CANONICAL_INCOMPLETE,
                 "Incomplete canonical stack was not classified explicitly");
         helper.assertTrue(CanonicalSpecimenStorage.read(incomplete).isEmpty(),
-                "Incomplete canonical stack was repaired from a legacy mirror");
+                "Incomplete current-schema stack was repaired from a legacy mirror");
         helper.assertTrue(Long.valueOf(555L).equals(incomplete.get(TideTraitsComponents.MUTATION_SEED)),
-                "Migration detection modified the legacy seed mirror");
+                "Failed canonical read modified the legacy seed mirror");
         helper.complete();
     }
 
@@ -105,6 +209,12 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
         helper.assertTrue(restored.get(TideTraitsComponents.MUTATION) == null,
                 "Invalid canonical transfer restored legacy mutation fallback");
         helper.complete();
+    }
+
+    private static ItemStack registeredFishStack() {
+        FishData data = TideData.FISH.get().values().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("Tide fish registry is empty during GameTest"));
+        return new ItemStack((Item) data.fish().value());
     }
 
     private static SpecimenData specimen() {
