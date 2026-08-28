@@ -1,10 +1,13 @@
 package com.redslovesgames.tideborne.fishing.v2.gametest;
 
+import com.li64.tide.data.item.TideItemData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.redslovesgames.tidetraits.catching.CatchTraitService;
+import com.redslovesgames.tidetraits.catching.PerfectCatchTraitBoost;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -53,6 +56,22 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         helper.assertTrue(seedBefore == stack.getOrDefault(TideTraitsComponents.MUTATION_SEED, Long.MIN_VALUE), "Legacy individualizer rerolled canonical specimen seed");
         helper.assertTrue(Double.compare(percentileBefore, stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0)) == 0, "Legacy individualizer rerolled canonical percentile");
         helper.assertTrue(specimen.speciesId().equals(stack.get(TideTraitsComponents.SPECIMEN_SPECIES_ID)), "Legacy individualizer removed canonical specimen identity");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void legacyPerfectCatchBoostDoesNotRewriteCanonicalSize(TestContext helper) {
+        SpecimenData specimen = specimen();
+        ItemStack stack = new ItemStack(Items.COD);
+        CanonicalSpecimenStorage.write(stack, specimen);
+
+        double percentileBefore = stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0);
+        double lengthBefore = TideItemData.FISH_LENGTH.getOrDefault(stack, -1.0);
+        PerfectCatchTraitBoost.apply(List.of(stack));
+
+        helper.assertTrue(Double.compare(percentileBefore, stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0)) == 0, "Legacy Perfect Catch boost rewrote canonical percentile");
+        helper.assertTrue(Double.compare(lengthBefore, TideItemData.FISH_LENGTH.getOrDefault(stack, -1.0)) == 0, "Legacy Perfect Catch boost rewrote canonical length");
+        helper.assertTrue(Double.valueOf(specimen.finalLength()).equals(stack.get(TideTraitsComponents.SPECIMEN_FINAL_LENGTH)), "Legacy Perfect Catch boost changed canonical final length identity");
         helper.complete();
     }
 
