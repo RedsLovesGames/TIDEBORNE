@@ -1,0 +1,38 @@
+name: Repair reconstructed Java
+
+on:
+  push:
+    branches:
+      - reconstruct-1.3.57
+    paths:
+      - 'scripts/repair_reconstructed_java.py'
+      - '.github/workflows/repair-reconstructed-java.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out reconstruction branch
+        uses: actions/checkout@v4
+        with:
+          ref: reconstruct-1.3.57
+
+      - name: Repair mechanical decompiler artifacts
+        run: python3 scripts/repair_reconstructed_java.py
+
+      - name: Commit repairs
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No reconstruction repairs needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/main/java
+          git commit -m 'Normalize reconstructed Java source'
+          git push origin HEAD:reconstruct-1.3.57
