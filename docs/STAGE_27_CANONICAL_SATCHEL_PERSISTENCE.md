@@ -29,3 +29,9 @@ There are no calls from `AnglersSatchelStorage` to V2 generation, trait selectio
 2. A legacy-only fish is loaded directly from the pre-existing Tide `SATCHEL_CONTENTS` representation, read, and extracted. Legacy mutation, seed, percentile, Tide length, and custom name survive unchanged, while canonical reads remain empty before and after removal.
 
 These tests intentionally exercise the existing stack representation rather than a new serializer so future changes cannot silently fork Satchel persistence away from canonical stack persistence.
+
+## Validation
+
+Implementation commit `a077ff7dc6564e5666128c9c8f387dcc4c683f88` was validated by GitHub Actions run `33189345954`, attempt 2. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
+Attempt 1 reached successful main-source compilation but Maven Central returned HTTP 429 while resolving the existing JUnit test dependency. The unchanged commit was rerun after that transient repository error and passed completely.
