@@ -159,15 +159,15 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 ## Step 9 - FishScore V2
 
-- [ ] Implement raw score as Species + Specimen + Traits.
-- [ ] Implement species points 50/100/175/250/350 for 1 through 5 stars.
-- [ ] Implement specimen points `3 * finalPercentile`.
-- [ ] Implement frozen trait bonuses: Scarred +20, Parasite +35, Giant +40, Dwarf +40, Albino +70, Iridescent +100, Perfect +100.
-- [ ] Implement canonical linear normalization `round(1 + 2999 * normalized)` clamped to 1 through 3000.
-- [ ] Prove canonical minimum Incandescent Larva = 1.
-- [ ] Prove canonical maximum Dragon Fish at P100 with best compatible trait combination = 3000.
-- [ ] Prove intermediate FishScore mapping is linear.
-- [ ] Add deterministic scoring tests.
+- [x] Implement raw score as Species + Specimen + Traits.
+- [x] Implement species points 50/100/175/250/350 for 1 through 5 stars.
+- [x] Implement specimen points `3 * finalPercentile`.
+- [x] Implement frozen trait bonuses: Scarred +20, Parasite +35, Giant +40, Dwarf +40, Albino +70, Iridescent +100, Perfect +100.
+- [x] Implement canonical linear normalization `round(1 + 2999 * normalized)` clamped to 1 through 3000.
+- [x] Prove canonical minimum Incandescent Larva = 1.
+- [x] Prove canonical maximum Dragon Fish at P100 with best compatible trait combination = 3000.
+- [x] Prove intermediate FishScore mapping is linear.
+- [x] Add deterministic scoring tests.
 
 ## Migration, progression, compatibility, cleanup
 
