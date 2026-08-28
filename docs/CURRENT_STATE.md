@@ -113,7 +113,7 @@ The V2 Body Type implementation now covers probability selection, canonical phys
 Frozen behavior:
 
 - canonical values are `NORMAL`, `GIANT`, and `DWARF`
-- the Body Type event probability is exactly 5%; a failed event returns `NORMAL`
+- the Body Type base event probability is exactly 5%; canonical event chance now applies selected-species rarity compensation and then Trait Luck through `TraitProbabilityService`; a failed adjusted event returns `NORMAL`
 - the event and variant decisions use the reserved `TraitRandom.Salts.BODY_TYPE_EVENT` and `BODY_TYPE_VARIANT` streams
 - after an event, Giant probability is `0.25 + 0.50 * (naturalPercentile / 100.0)`
 - Giant therefore rises smoothly from 25% of Body Type events at P0 to 75% at P100, with 50% at P50
@@ -137,7 +137,7 @@ Frozen behavior:
 
 This interpretation of `finalPercentile` is explicit in `docs/FISHING_SYSTEM_2_SPEC.md`: the separate base and final size pairs exist so the natural specimen identity remains frozen while deterministic physical modifiers can change the final measured percentile without introducing a second random specimen roll.
 
-Deterministic tests cover exact 5% configuration, repeatability, approximately 5% sampled event frequency, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, independence from other trait streams, physical multiplier bounds, deterministic multiplier values, exact Normal identity, Giant/Dwarf size direction, preserved base percentile, size-adjusted final percentile, no-physical-size fallback, exactly one base-size quantile sample during complete generation, exact Normal/Giant/Dwarf fight multiplier comparisons for otherwise identical specimens, preserved percentile fight scaling, catch-zone recomputation, and unchanged behavior.
+Deterministic tests cover exact 5% base configuration, repeatability, approximately 5% one-star zero-Trait-Luck event frequency, shared-pipeline event rates across several rarity and Trait Luck combinations, exact shared-pipeline equality, the reserved future Body Type event multiplier, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, independence from other trait streams, physical multiplier bounds, deterministic multiplier values, exact Normal identity, Giant/Dwarf size direction, preserved base percentile, size-adjusted final percentile, no-physical-size fallback, exactly one base-size quantile sample during complete generation, exact Normal/Giant/Dwarf fight multiplier comparisons for otherwise identical specimens, preserved percentile fight scaling, catch-zone recomputation, and unchanged behavior.
 
 Body Type fight implementation is commit `72c98ea3d3f79161d97720a5833d47eb4e2f4a33`. Validation is green with GitHub Actions run `33163133061`: `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
@@ -296,18 +296,40 @@ Exact unit coverage verifies all five canonical rarity multipliers, all five com
 
 Implementation commit `abf75156f906a0ef2e40b813e5b20f6870372430` contains the code and tests. Full CI validation is recorded below once the documentation commit is validated.
 
+## Body Type trait probability integration is complete
+
+Stage 12 moves only the Body Type event probability onto the shared canonical trait probability pipeline.
+
+Frozen integration behavior:
+
+- Body Type keeps its exact 5% base event probability.
+- `BodyTypeGenerator` calls `TraitProbabilityService` with the selected canonical `SpeciesProfile`, so rarity compensation is applied first and Trait Luck is applied second before the final event bound.
+- canonical species rarity comes only from `SpeciesProfile.rarity()`; Body Type does not accept or derive a second independent rarity value.
+- `TideSpeciesSelectionBridge` passes the server-owned `FishingContext.traitLuck()` into `SpecimenGenerator`, which forwards it to the one canonical Body Type selection.
+- the Body Type event comparison still uses `TraitRandom.Salts.BODY_TYPE_EVENT`, and the conditional Giant/Dwarf decision still uses `TraitRandom.Salts.BODY_TYPE_VARIANT`; no deterministic salt changed.
+- Giant/Dwarf subtype selection remains entirely separate from event probability and still uses `giantProbability = 0.25 + 0.50 * (naturalPercentile / 100.0)` after an event triggers.
+- there are still no hard percentile thresholds, so Giant remains possible at low percentile and Dwarf remains possible at high percentile.
+- `SpecimenGenerator` and `BodyTypeGenerator` now accept an explicit Body Type event probability multiplier. Runtime supplies `1.0` in this stage. This reserves the API position needed for the later Perfect Catch 1.25x Body Type rule without implementing Perfect Catch behavior early.
+- the reserved Body Type event multiplier is applied after the canonical base, rarity, Trait Luck pipeline and is bounded to `[0, 1]`; it does not alter the Giant/Dwarf conditional split.
+- the old two-argument Body Type selector was not restored after stale tests exposed callers, preventing a rarity-free bypass path from remaining beside the canonical API.
+- Condition, Pigmentation, Specimen Quality, Momentum, and Perfect Catch reward behavior are unchanged by this stage.
+
+Statistical coverage samples Body Type events across multiple rarity and Trait Luck combinations, including 1-star T=-5, 1-star T=10, 3-star T=0, 4-star T=20, and 5-star T=10. Exact tests additionally prove all rarity/Trait Luck combinations route through `TraitProbabilityService`, the future multiplier is post-pipeline and bounded, deterministic Body Type salts remain stable, subtype bias remains separate, and natural specimen size is not rerolled.
+
+Implementation commit `149aa5b9d67ec59334dae4fb3810c27db586029a` introduced the canonical pipeline integration. Commit `ee5bc701feed9aa7fff2c9c4694ed45bfcba38cb` updated the remaining Body Type test callers to the species-aware canonical API after CI exposed the stale two-argument calls. GitHub Actions run `33168959022` is green: exact-dependency `./gradlew clean build --stacktrace`, unit and statistical tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. The pure Trait Luck probability calculation and canonical rarity-compensation probability path are complete as isolated services.
+Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. Trait Luck and rarity compensation are implemented canonically, and Body Type is now the first trait axis fully routed through that shared probability pipeline.
 
-Do not wire Trait Luck or rarity compensation into trait axes, implement Momentum, or begin later stages as part of this completed slice. Specimen Quality also remains incomplete. Continue only with the next explicitly queued stage.
+Do not wire Trait Luck or rarity compensation into Condition, Pigmentation, Specimen Quality, or other axes as part of this completed stage. Do not implement Momentum or the Perfect Catch redesign here. Specimen Quality also remains incomplete. Continue only with the next explicitly queued stage.
 
 ## Later frozen slices
 
 Execute in this order unless a later explicit queued stage narrows the work further:
 
 1. remaining independent Specimen Quality axis work
-2. Trait Luck plus rarity-compensation axis integration and per-species Momentum
+2. remaining Trait Luck plus rarity-compensation axis integration and per-species Momentum
 3. Perfect Catch redesign and percentile-based Perfect Specimen
 4. FishScore V2 with the canonical linear 1 to 3000 mapping
 5. deterministic migration and canonical `SpecimenData` adoption across persistence/UI/network systems
