@@ -13,8 +13,8 @@ import net.minecraft.nbt.NbtCompound;
 
 /**
  * Single canonical ItemStack persistence boundary for Fishing System 2.0 specimen identity.
- * Legacy Tide Traits components are write-only compatibility mirrors and are never consulted by
- * canonical reads.
+ * Current canonical payloads are read directly. Legacy-only and older-schema fish payloads are
+ * migrated exactly once at this boundary and immediately rewritten as current canonical data.
  */
 public final class CanonicalSpecimenStorage {
     public static final String PERCENTILE_DEFINITION = "size_adjusted_final_percentile";
@@ -75,7 +75,7 @@ public final class CanonicalSpecimenStorage {
         stack.set(TideTraitsComponents.SPECIMEN_PERFECT_CATCH, specimen.perfectCatch());
         setOptionalScores(stack, specimen);
 
-        // Compatibility mirrors only. Canonical readers never fall back to these values.
+        // Compatibility mirrors only. Current canonical reads never fall back to these values.
         stack.set(TideTraitsComponents.MUTATION_SEED, specimen.deterministicSeed());
         stack.set(TideTraitsComponents.SIZE_PERCENTILE, specimen.finalPercentile());
         stack.set(TideTraitsComponents.BODY_TYPE, bodyType);
@@ -86,14 +86,25 @@ public final class CanonicalSpecimenStorage {
     }
 
     /**
-     * Reads canonical components only. This method is side-effect free: it never migrates, mirrors,
-     * clamps, normalizes, regenerates, or rerolls specimen state.
+     * Reads the canonical specimen. Legacy-only and older-schema registered fish stacks are migrated
+     * once and rewritten only after a complete successful conversion. All other non-current states
+     * fail closed without modifying the stack.
      */
     public static Optional<SpecimenData> read(ItemStack stack) {
-        if (detectMigration(stack) != MigrationState.CANONICAL_CURRENT) {
+        MigrationState state = detectMigration(stack);
+        if (state == MigrationState.CANONICAL_CURRENT) {
+            return decode(new ComponentSource(stack));
+        }
+        if (state != MigrationState.LEGACY_ONLY && state != MigrationState.CANONICAL_OLDER_SCHEMA) {
             return Optional.empty();
         }
-        return decode(new ComponentSource(stack));
+
+        Optional<SpecimenData> migrated = LegacyItemStackMigration.migrate(stack, state);
+        if (migrated.isEmpty()) {
+            return Optional.empty();
+        }
+        write(stack, migrated.get());
+        return migrated;
     }
 
     /** Explicitly classifies whether a stack requires migration without modifying it. */
