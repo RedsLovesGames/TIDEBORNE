@@ -6,25 +6,25 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 - [x] Persist the complete Fishing System 2.0 specification.
 - [x] Record the current repository and reconstruction state.
-- [ ] Restore and verify the complete reconstructed 1.3.57 source, resources, tests, and Gradle wrapper.
+- [ ] Restore and verify the complete reconstructed 1.3.57 source, resources, baseline tests, and fixtures. The Gradle wrapper is now restored.
 - [ ] Run the untouched 1.3.57 baseline tests and `./gradlew build`.
-- [ ] Implement step 1: `FishingContext`, `SpeciesProfile`, and canonical rarity.
-- [ ] Add deterministic step 1 unit tests.
-- [ ] Commit step 1 as a logical slice.
-- [ ] Implement step 2: `SpeciesSelectionService` and rarity-aware Fishing Luck.
+- [x] Implement the step 1 pure domain layer: `FishingContext`, `SpeciesProfile`, and canonical rarity.
+- [x] Add deterministic step 1 unit tests.
+- [x] Commit step 1 as part of the bounded steps 1 through 4 domain slice.
+- [x] Implement the step 2 pure domain layer: `SpeciesSelectionService` and rarity-aware Fishing Luck.
 - [ ] Remove affected `selection_quality` selection behavior only after callers are migrated.
-- [ ] Add deterministic selection distribution and compatibility normalization tests.
-- [ ] Commit step 2 as a logical slice.
-- [ ] Implement step 3: canonical `SpecimenData`, seeded generation metadata, and direct lognormal CDF and quantile math.
-- [ ] Persist base percentile, base length, final length, and final percentile without rerolls.
-- [ ] Add deterministic percentile, length, round-trip, and serialization tests.
-- [ ] Commit step 3 as a logical slice.
-- [ ] Implement step 4: normalized Strength and Tempo, safe external clamps, initial catch-zone model, and size fight scaling.
+- [x] Add deterministic selection distribution, eligibility, and fight normalization tests.
+- [x] Commit step 2 as part of the bounded steps 1 through 4 domain slice.
+- [x] Implement the step 3 pure domain layer: canonical `SpecimenData`, seeded generation metadata, and direct lognormal CDF and quantile math.
+- [x] Preserve base percentile, base length, final length, and final percentile in immutable canonical specimen data without rerolls.
+- [ ] Add serialization and reconstructed 1.3.57 adapter round-trip tests after legacy formats are restored.
+- [x] Commit step 3 as part of the bounded steps 1 through 4 domain slice.
+- [x] Implement the step 4 pure domain layer: normalized Strength and Tempo, safe external clamps, initial catch-zone model, and size fight scaling.
 - [ ] Preserve Tide's existing marker, catch region, behavior, and center-zone Perfect Catch interaction.
-- [ ] Add normalization, target-value, boundary, and size-scaling tests.
-- [ ] Run the full test suite and `./gradlew build`, then repair every failure.
-- [ ] Update `docs/CURRENT_STATE.md` with verified results and the exact next action.
-- [ ] Commit the green step 4 slice and stop this run.
+- [x] Add normalization, target-value, boundary, and size-scaling tests.
+- [x] Run all currently available tests and the full repository `./gradlew clean build` successfully.
+- [x] Update `docs/CURRENT_STATE.md` with verified results and the exact next action.
+- [x] Commit the green steps 1 through 4 domain slice and stop this run.
 
 ## Next run
 
