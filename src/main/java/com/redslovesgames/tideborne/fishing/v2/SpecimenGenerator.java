@@ -38,17 +38,46 @@ public final class SpecimenGenerator {
     }
 
     /**
-     * Generates the complete canonical specimen state currently implemented through the independent
-     * Pigmentation axis. Natural percentile and base length are sampled exactly once. Body Type,
-     * Condition, and Pigmentation are each derived once from independent deterministic trait streams.
-     *
-     * <p>Each implemented notable-trait event uses the shared base -> rarity -> Trait Luck
-     * probability path. The explicit Body Type event multiplier is currently {@code 1.0}; it reserves
-     * the call shape needed by the later Perfect Catch Body Type multiplier without introducing
-     * another probability path. Conditional subtype selection remains axis-local and is not changed
-     * by rarity compensation or Trait Luck.
+     * Generates a complete canonical specimen without a Perfect Catch. This pure convenience path
+     * preserves the same two-phase ordering used by runtime: pre-fight identity first, then post-fight
+     * Condition and Pigmentation finalization.
      */
     public SpecimenData generate(
+            SpeciesProfile species,
+            long deterministicSeed,
+            SpecimenData.Provenance provenance,
+            double traitLuck,
+            double bodyTypeEventProbabilityMultiplier
+    ) {
+        SpecimenData preFight = generatePreFight(
+                species,
+                deterministicSeed,
+                provenance,
+                traitLuck,
+                bodyTypeEventProbabilityMultiplier
+        );
+        return finalizeAfterFight(species, preFight, traitLuck, false);
+    }
+
+    /**
+     * Generates the portion of canonical specimen identity required before Tide's minigame starts.
+     * Natural percentile/base length are sampled exactly once, then Body Type and its physical-size
+     * effect are finalized. Post-fight axes remain at their neutral values until Perfect Catch is known.
+     */
+    public SpecimenData generatePreFight(
+            SpeciesProfile species,
+            long deterministicSeed,
+            SpecimenData.Provenance provenance,
+            double traitLuck
+    ) {
+        return generatePreFight(species, deterministicSeed, provenance, traitLuck, 1.0);
+    }
+
+    /**
+     * Pre-fight generation with the explicit Body Type event multiplier reserved by the shared trait
+     * probability API. The multiplier remains 1.0 in the current runtime stage.
+     */
+    public SpecimenData generatePreFight(
             SpeciesProfile species,
             long deterministicSeed,
             SpecimenData.Provenance provenance,
@@ -63,8 +92,32 @@ public final class SpecimenGenerator {
                 traitLuck,
                 bodyTypeEventProbabilityMultiplier
         );
-        SpecimenData sizedSpecimen = bodyTypes.applyPhysicalSize(species, baseSpecimen, bodyType);
-        SpecimenData conditionedSpecimen = conditions.apply(species, sizedSpecimen, traitLuck);
+        return bodyTypes.applyPhysicalSize(species, baseSpecimen, bodyType);
+    }
+
+    /**
+     * Finalizes post-fight canonical state after Tide has resolved the center-zone skill check.
+     * Perfect Catch is copied into canonical specimen state before Condition or Pigmentation are
+     * generated, so later Perfect Catch probability rewards can use this lifecycle without moving the
+     * persistence boundary again. This stage intentionally does not change probability math yet.
+     *
+     * <p>The existing pre-fight species, deterministic seed, natural percentile, base length, Body
+     * Type, final physical length, and size-adjusted final percentile are preserved exactly.
+     */
+    public SpecimenData finalizeAfterFight(
+            SpeciesProfile species,
+            SpecimenData preFightSpecimen,
+            double traitLuck,
+            boolean perfectCatch
+    ) {
+        Objects.requireNonNull(species, "species");
+        Objects.requireNonNull(preFightSpecimen, "preFightSpecimen");
+        if (!species.speciesId().equals(preFightSpecimen.speciesId())) {
+            throw new IllegalArgumentException("species profile and specimen IDs must match");
+        }
+
+        SpecimenData skillCaptured = withPerfectCatch(preFightSpecimen, perfectCatch);
+        SpecimenData conditionedSpecimen = conditions.apply(species, skillCaptured, traitLuck);
         return pigmentations.apply(species, conditionedSpecimen, traitLuck);
     }
 
@@ -97,6 +150,27 @@ public final class SpecimenGenerator {
                 OptionalDouble.empty(),
                 OptionalInt.empty(),
                 provenance
+        );
+    }
+
+    private static SpecimenData withPerfectCatch(SpecimenData specimen, boolean perfectCatch) {
+        return new SpecimenData(
+                specimen.speciesId(),
+                specimen.schemaVersion(),
+                specimen.generationVersion(),
+                specimen.deterministicSeed(),
+                specimen.basePercentile(),
+                specimen.baseLength(),
+                specimen.finalLength(),
+                specimen.finalPercentile(),
+                specimen.bodyType(),
+                specimen.condition(),
+                specimen.pigmentation(),
+                specimen.specimenQuality(),
+                perfectCatch,
+                specimen.rawFishScore(),
+                specimen.fishScore(),
+                specimen.provenance()
         );
     }
 }

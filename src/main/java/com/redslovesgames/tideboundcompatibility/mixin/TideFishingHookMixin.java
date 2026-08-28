@@ -44,6 +44,8 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
    private boolean tidebound$leviathanFishSelected;
    @Unique
    private boolean tidebound$leviathanFishOnlyRoll;
+   @Unique
+   private boolean tidebound$canonicalPerfectCatchHandled;
 
    @Override
    public boolean tidebound$isLeviathanFishSelected() {
@@ -77,17 +79,34 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
    @Inject(method = "invalidateCatch", at = @At("HEAD"), remap = false)
    private void tidebound$clearLeviathanCatchOnFailure(CallbackInfo callback) {
       CanonicalCatchStateManager.clear((TideFishingHook)(Object)this);
+      this.tidebound$canonicalPerfectCatchHandled = false;
       this.tidebound$leviathanFishSelected = false;
       this.tidebound$leviathanFishOnlyRoll = false;
    }
 
+   /**
+    * Tide owns the center-zone Perfect Catch skill check and passes its server-side result into this
+    * method. Capture that result at method entry so V2 post-fight trait finalization and canonical item
+    * persistence happen before Tide continues into its delivery/retrieval work.
+    */
+   @Inject(method = "retrieve(Z)V", at = @At("HEAD"), remap = false)
+   private void tidebound$capturePerfectCatchBeforeDelivery(boolean perfectCatch, CallbackInfo callback) {
+      this.tidebound$canonicalPerfectCatchHandled = CanonicalCatchStateManager.capturePerfectCatch(
+         (TideFishingHook)(Object)this,
+         perfectCatch
+      );
+   }
+
    @Inject(method = "retrieve(Z)V", at = @At("RETURN"), remap = false)
    private void tidebound$clearLeviathanCatchOnRetrieve(boolean perfectCatch, CallbackInfo callback) {
-      if (perfectCatch) {
+      // Noncanonical/legacy catches retain the reconstructed 1.x late mutation behavior. Canonical V2
+      // catches were already finalized before delivery and must never run this second mutation path.
+      if (perfectCatch && !this.tidebound$canonicalPerfectCatchHandled) {
          PerfectCatchTraitBoost.apply(((TideFishingHook)(Object)this).getHookedItems());
       }
 
       CanonicalCatchStateManager.clear((TideFishingHook)(Object)this);
+      this.tidebound$canonicalPerfectCatchHandled = false;
       this.tidebound$leviathanFishSelected = false;
       this.tidebound$leviathanFishOnlyRoll = false;
    }

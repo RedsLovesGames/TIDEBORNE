@@ -26,7 +26,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-/** Server-authoritative bridge that owns V2 species selection and canonical specimen generation. */
+/** Server-authoritative bridge that owns V2 species selection and pre-fight specimen generation. */
 public final class TideSpeciesSelectionBridge {
     public static final TideSpeciesSelectionBridge INSTANCE = new TideSpeciesSelectionBridge();
 
@@ -80,7 +80,7 @@ public final class TideSpeciesSelectionBridge {
                 capturedTraitMomentum
         );
 
-        SpecimenData specimen = specimenGenerator.generate(
+        SpecimenData preFightSpecimen = specimenGenerator.generatePreFight(
                 selected,
                 CatchSeedDeriver.specimenSeed(catchSeed),
                 new SpecimenData.Provenance(
@@ -90,7 +90,7 @@ public final class TideSpeciesSelectionBridge {
                 ),
                 effectiveTraitLuck
         );
-        FightProfile fightProfile = fightProfiles.create(selected, specimen);
+        FightProfile fightProfile = fightProfiles.create(selected, preFightSpecimen);
 
         // Do not call FishData#getResult here. Tide's implementation performs its own
         // independent fish-length roll, which would violate the one-canonical-size rule.
@@ -99,7 +99,11 @@ public final class TideSpeciesSelectionBridge {
                 && data.bucket().isPresent()) {
             TideItemData.IS_BUCKETABLE.set(stack, true);
         }
-        CanonicalSpecimenStorage.write(stack, specimen);
+
+        // Persist the pre-fight canonical marker/identity so legacy downstream hooks cannot reroll it.
+        // Condition, Pigmentation, and Perfect Catch are finalized onto this same stack immediately
+        // after Tide supplies retrieve(perfectCatch) and before the delivery path proceeds.
+        CanonicalSpecimenStorage.write(stack, preFightSpecimen);
         CatchResult result = data.createResult(stack);
 
         if (hook != null) {
@@ -110,7 +114,7 @@ public final class TideSpeciesSelectionBridge {
                             context,
                             environment,
                             selected,
-                            specimen,
+                            preFightSpecimen,
                             fightProfile,
                             capturedTraitMomentum
                     )
