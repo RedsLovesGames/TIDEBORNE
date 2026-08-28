@@ -176,7 +176,8 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 ## Migration, progression, compatibility, cleanup
 
-- [ ] Implement deterministic, idempotent legacy migration and score recalculation.
+- [x] Implement the pure deterministic, idempotent legacy fish migration core, including trait mapping, legacy physical-size preservation, species-distribution percentile recovery, deterministic missing-seed derivation, schema-v2 write-once behavior, and canonical no-regeneration guarantees. Green run: `33191935530` on commit `1364c015722722fd943f04b894ff7a75827edef3`.
+- [ ] Wire the migration core into stored legacy fish persistence and recalculate FishScore only after canonical migration.
 - [ ] Make canonical `SpecimenData` authoritative across persistence, Satchel, Journal, records, history, teams, UI, and networking.
 - [ ] Integrate gear into the canonical context/fight pipeline.
 - [ ] Rework Leviathan Bait to fish-only catches, +15 Fishing Luck, substantial Trait Luck, Strength 1.15, Tempo 1.15, with old `selection_quality` behavior removed.
