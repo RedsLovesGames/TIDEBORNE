@@ -34,65 +34,67 @@ jobs:
         with:
           gradle-version: '8.12'
 
-      - name: Decode and verify authoritative Tideborne JAR
+      - name: Decode authoritative 1.3.57 content tree
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p reconstruction/work
+          mkdir -p reconstruction/work/tree
 
-          # The initial private reconstruction uses temporary text chunks so the
-          # authoritative binary does not remain in repository history as a JAR.
-          # Each Unicode symbol stores 14 bits in U+4E00..U+8DFF. The decoded
-          # bytes are an xz stream whose exact byte length is pinned below.
+          cat reconstruction/input/classes.tar.xz.b64.part-* \
+            | tr -d '\r\n' \
+            | base64 --decode \
+            > reconstruction/work/classes.tar.xz
+          cat reconstruction/input/resources.tar.xz.b64.part-* \
+            | tr -d '\r\n' \
+            | base64 --decode \
+            > reconstruction/work/resources.tar.xz
+
+          echo 'e7265ad9a6df36f79be098d47b5fcda570532e5488671e58a0047b6ad70f4ac6  reconstruction/work/classes.tar.xz' \
+            | sha256sum --check --strict
+          echo '708e728ee7cab817c3bacfdcf7d20592c0c644b6f951878783a4d318f2517264  reconstruction/work/resources.tar.xz' \
+            | sha256sum --check --strict
+
+          tar -xJf reconstruction/work/classes.tar.xz -C reconstruction/work/tree
+          tar -xJf reconstruction/work/resources.tar.xz -C reconstruction/work/tree
+
           python3 - <<'PY'
           from pathlib import Path
-          import lzma
+          import hashlib
+          import struct
 
-          input_dir = Path('reconstruction/input')
-          encoded = ''.join(
-              part.read_text(encoding='utf-8')
-              for part in sorted(input_dir.glob('tideborne-1.3.57.jar.xz.b16384.part-*'))
-          )
-          if not encoded:
-              raise SystemExit('No reconstruction input chunks found')
+          root = Path('reconstruction/work/tree')
+          files = sorted(path for path in root.rglob('*') if path.is_file())
+          digest = hashlib.sha256()
+          classes = 0
+          for path in files:
+              name = path.relative_to(root).as_posix()
+              data = path.read_bytes()
+              encoded = name.encode('utf-8')
+              digest.update(struct.pack('>I', len(encoded)))
+              digest.update(encoded)
+              digest.update(struct.pack('>Q', len(data)))
+              digest.update(data)
+              classes += name.endswith('.class')
 
-          expected_xz_length = 627968
-          acc = 0
-          bits = 0
-          decoded = bytearray()
-          for char in encoded:
-              value = ord(char) - 0x4E00
-              if not 0 <= value < 0x4000:
-                  raise SystemExit(f'Invalid reconstruction symbol U+{ord(char):04X}')
-              acc = (acc << 14) | value
-              bits += 14
-              while bits >= 8:
-                  bits -= 8
-                  decoded.append((acc >> bits) & 0xFF)
-                  acc &= (1 << bits) - 1 if bits else 0
-
-          compressed = bytes(decoded[:expected_xz_length])
-          if len(compressed) != expected_xz_length:
-              raise SystemExit(
-                  f'Expected {expected_xz_length} compressed bytes, got {len(compressed)}'
-              )
-
-          jar = lzma.decompress(compressed, format=lzma.FORMAT_XZ)
-          Path('reconstruction/work/Tideborne-1.3.57.jar').write_bytes(jar)
-          print(f'Decoded Tideborne JAR: {len(jar)} bytes')
+          actual = digest.hexdigest()
+          expected = '5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6'
+          print(f'Content files: {len(files)}; classes: {classes}; tree SHA-256: {actual}')
+          if len(files) != 442 or classes != 272 or actual != expected:
+              raise SystemExit('Authoritative content-tree verification failed')
           PY
 
-          echo '0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5  reconstruction/work/Tideborne-1.3.57.jar' \
-            | sha256sum --check --strict
+          jar --create --file reconstruction/work/Tideborne-1.3.57-repacked.jar \
+            --no-manifest -C reconstruction/work/tree .
 
       - name: Reconstruct named source and resources
         shell: bash
         run: |
           set +e
           python3 scripts/reconstruct_sources.py \
-            reconstruction/work/Tideborne-1.3.57.jar \
+            reconstruction/work/Tideborne-1.3.57-repacked.jar \
             --repo "$GITHUB_WORKSPACE" \
-            --force
+            --force \
+            --allow-repacked
           status=$?
           set -e
 
@@ -105,10 +107,10 @@ jobs:
       - name: Generate pinned Gradle wrapper
         run: gradle wrapper --gradle-version 8.12 --distribution-type bin
 
-      - name: Remove temporary encoded reconstruction input
+      - name: Remove temporary reconstruction payload
         run: rm -rf reconstruction/input reconstruction/work
 
-      - name: Commit reconstructed baseline
+      - name: Commit reconstructed baseline before compile repair
         shell: bash
         run: |
           set -euo pipefail
