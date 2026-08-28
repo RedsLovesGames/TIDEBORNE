@@ -426,6 +426,13 @@ public final class TeamProgressStore {
    }
 
    public static double tideborneFishScore(ItemStack var0) {
+      if (TraitAxesRuntime.isCanonicalV2(var0)) {
+         Integer canonicalScore = (Integer)var0.get(TideTraitsComponents.SPECIMEN_FISH_SCORE);
+         if (canonicalScore != null) {
+            return canonicalScore.doubleValue();
+         }
+      }
+
       int var1 = tideborneFishStars(var0);
       if (var1 <= 0) {
          return -1.0;
