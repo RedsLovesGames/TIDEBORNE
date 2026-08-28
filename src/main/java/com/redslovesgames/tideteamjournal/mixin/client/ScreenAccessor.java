@@ -14,9 +14,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(Screen.class)
 public interface ScreenAccessor {
-   @Invoker("addRenderableWidget")
+   @Invoker("addDrawableChild")
    <T extends Element & Drawable & Selectable> T tideTeamJournal$addRenderableWidget(T var1);
 
-   @Invoker("addWidget")
+   @Invoker("addSelectableChild")
    <T extends Element & Selectable> T tideTeamJournal$addWidget(T var1);
 }
