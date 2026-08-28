@@ -32,6 +32,19 @@ class SpecimenQualityServiceTest {
     }
 
     @Test
+    void belowP95RemainsImpossibleAfterTraitLuckAndPerfectCatch() {
+        assertEquals(0.0, service.probability(94.999, 250.0, false), EPSILON);
+        assertEquals(0.0, service.probability(94.999, 250.0, true), EPSILON);
+
+        for (long seed = 0; seed < 10_000; seed++) {
+            assertEquals(
+                    SpecimenData.SpecimenQuality.NORMAL,
+                    service.generate(seed, 94.999, 250.0, true)
+            );
+        }
+    }
+
+    @Test
     void firstSegmentInterpolatesLinearly() {
         assertEquals(0.05, service.baseProbability(96.25), EPSILON);
         assertEquals(0.032, service.baseProbability(95.5), EPSILON);
@@ -53,10 +66,64 @@ class SpecimenQualityServiceTest {
     }
 
     @Test
-    void probabilityIsCappedAtSixtyPercentFromP99Point9Upward() {
+    void probabilityIsCappedAtSixtyPercentFromP99Point9UpwardBeforeModifiers() {
         assertEquals(0.60, service.baseProbability(99.9), EPSILON);
         assertEquals(0.60, service.baseProbability(99.95), EPSILON);
         assertEquals(0.60, service.baseProbability(100.0), EPSILON);
+    }
+
+    @Test
+    void traitLuckUsesTheCanonicalProbabilityTransformAtEveryAnchor() {
+        TraitLuckProbabilityService luck = new TraitLuckProbabilityService();
+        double traitLuck = 10.0;
+
+        assertEquals(
+                luck.adjustProbability(0.02, traitLuck),
+                service.probability(95.0, traitLuck, false),
+                EPSILON
+        );
+        assertEquals(
+                luck.adjustProbability(0.08, traitLuck),
+                service.probability(97.5, traitLuck, false),
+                EPSILON
+        );
+        assertEquals(
+                luck.adjustProbability(0.25, traitLuck),
+                service.probability(99.0, traitLuck, false),
+                EPSILON
+        );
+        assertEquals(
+                luck.adjustProbability(0.60, traitLuck),
+                service.probability(99.9, traitLuck, false),
+                EPSILON
+        );
+    }
+
+    @Test
+    void perfectCatchAppliesASecondMissChanceAfterTraitLuck() {
+        assertEquals(0.25, service.probability(99.0, 0.0, false), EPSILON);
+        assertEquals(0.4375, service.probability(99.0, 0.0, true), EPSILON);
+
+        double withPerfectCatchTraitLuck = service.probability(99.9, 10.0, true);
+        assertEquals(0.9744, withPerfectCatchTraitLuck, EPSILON);
+        assertTrue(withPerfectCatchTraitLuck > service.probability(99.9, 10.0, false));
+        assertTrue(withPerfectCatchTraitLuck < 1.0);
+    }
+
+    @Test
+    void perfectCatchCanChangeTheOutcomeWithoutChangingTheDeterministicRoll() {
+        double normalProbability = service.probability(99.0, 0.0, false);
+        double perfectProbability = service.probability(99.0, 0.0, true);
+        long seed = findSeedBetween(normalProbability, perfectProbability);
+
+        assertEquals(
+                SpecimenData.SpecimenQuality.NORMAL,
+                service.generate(seed, 99.0, 0.0, false)
+        );
+        assertEquals(
+                SpecimenData.SpecimenQuality.PERFECT_SPECIMEN,
+                service.generate(seed, 99.0, 0.0, true)
+        );
     }
 
     @Test
@@ -90,7 +157,27 @@ class SpecimenQualityServiceTest {
     }
 
     @Test
-    void applyingQualityNeverRewritesSizeOrPercentiles() {
+    void perfectSpecimenStacksWithOtherAxesWithoutRewritingCanonicalSize() {
+        double totalPerfectCatchTraitLuck = 10.0;
+        double chance = service.probability(99.9, totalPerfectCatchTraitLuck, true);
+        long seed = findSeedBelow(chance);
+        SpecimenData specimen = specimen(seed, 42.0, 99.9, 18.5, 29.75);
+
+        SpecimenData result = service.apply(specimen, totalPerfectCatchTraitLuck, true);
+
+        assertEquals(SpecimenData.SpecimenQuality.PERFECT_SPECIMEN, result.specimenQuality());
+        assertEquals(SpecimenData.BodyType.GIANT, result.bodyType());
+        assertEquals(SpecimenData.Condition.SCARRED, result.condition());
+        assertEquals(SpecimenData.Pigmentation.IRIDESCENT, result.pigmentation());
+        assertTrue(result.perfectCatch());
+        assertEquals(specimen.basePercentile(), result.basePercentile(), EPSILON);
+        assertEquals(specimen.finalPercentile(), result.finalPercentile(), EPSILON);
+        assertEquals(specimen.baseLength(), result.baseLength(), EPSILON);
+        assertEquals(specimen.finalLength(), result.finalLength(), EPSILON);
+    }
+
+    @Test
+    void applyingQualityNeverRewritesIdentityOrOtherAxes() {
         long seed = findSeedBelow(0.60);
         SpecimenData specimen = specimen(seed, 42.0, 99.9, 18.5, 29.75);
 
@@ -110,10 +197,10 @@ class SpecimenQualityServiceTest {
     }
 
     @Test
-    void belowP95CanNeverBecomePerfectRegardlessOfRoll() {
-        for (long seed = 0; seed < 10_000; seed++) {
-            assertEquals(SpecimenData.SpecimenQuality.NORMAL, service.generate(seed, 94.999));
-        }
+    void directPerfectCatchBonusNeverGuaranteesPerfectSpecimen() {
+        double chance = service.probability(99.9, 10.0, true);
+        assertTrue(chance > service.probability(99.9, 10.0, false));
+        assertTrue(chance < 1.0);
     }
 
     private static long findSeedBelow(double threshold) {
@@ -123,6 +210,16 @@ class SpecimenQualityServiceTest {
             }
         }
         throw new AssertionError("expected to find deterministic seed below threshold");
+    }
+
+    private static long findSeedBetween(double lowerInclusive, double upperExclusive) {
+        for (long seed = 0; seed < 1_000_000; seed++) {
+            double roll = TraitRandom.unitDouble(seed, TraitRandom.Salts.PERFECT_SPECIMEN);
+            if (roll >= lowerInclusive && roll < upperExclusive) {
+                return seed;
+            }
+        }
+        throw new AssertionError("expected to find deterministic seed inside probability interval");
     }
 
     private static SpecimenData specimen(

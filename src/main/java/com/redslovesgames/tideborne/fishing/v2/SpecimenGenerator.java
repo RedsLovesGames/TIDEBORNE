@@ -107,9 +107,9 @@ public final class SpecimenGenerator {
      * captured per-species Momentum contribution. No persistent Trait Luck or Momentum state is modified
      * here. The Perfect Catch Body Type event order is base chance, Perfect Catch multiplier, rarity
      * compensation, total Trait Luck, final bound. The Giant/Dwarf subtype roll remains separate.
-     * Specimen Quality is then evaluated from the canonical final percentile using only its frozen base
-     * curve in this stage. Trait Luck and any direct Perfect Catch Quality bonus are intentionally not
-     * applied to Specimen Quality yet.
+     * Specimen Quality is evaluated from the canonical final percentile after Body Type size
+     * finalization. Its frozen order is percentile curve, total Trait Luck, then the direct Perfect
+     * Catch Quality bonus. The Quality-specific frozen rule does not apply rarity compensation.
      */
     public SpecimenData finalizeAfterFight(
             SpeciesProfile species,
@@ -141,7 +141,7 @@ public final class SpecimenGenerator {
         SpecimenData bodyFinalized = bodyTypes.applyPhysicalSize(species, skillCaptured, finalizedBodyType);
         SpecimenData conditionedSpecimen = conditions.apply(species, bodyFinalized, postFightTraitLuck);
         SpecimenData pigmentedSpecimen = pigmentations.apply(species, conditionedSpecimen, postFightTraitLuck);
-        return specimenQuality.apply(pigmentedSpecimen);
+        return specimenQuality.apply(pigmentedSpecimen, postFightTraitLuck, perfectCatch);
     }
 
     /** Generates only the natural percentile and base length exactly once. */
