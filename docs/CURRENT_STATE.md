@@ -430,17 +430,39 @@ Integration coverage in `CanonicalCatchStateManagerTest#perfectCatchReachesCanon
 
 Implementation commit `8a7f3bdc8bc4e16de926a50aff7b7e4efc7fffa0` is green in GitHub Actions run `33172897527`. The exact-dependency `./gradlew clean build --stacktrace`, unit/integration tests, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
 
+## Perfect Catch +10 temporary Trait Luck is complete
+
+Stage 17 implements only the Fishing System 2.0 Perfect Catch Trait Luck reward on the server-authoritative post-fight finalization path established in Stage 16.
+
+Frozen reward behavior:
+
+- `SpecimenGenerator.PERFECT_CATCH_TRAIT_LUCK_BONUS` is exactly `10.0`.
+- `CanonicalCatchStateManager.CatchState` continues to compose the server-owned catch Trait Luck from `FishingContext.traitLuck()` plus the selected species' frozen `capturedTraitMomentum` value before post-fight finalization.
+- when `perfectCatch` is true, `SpecimenGenerator.finalizeAfterFight` adds exactly +10 to that already-composed temporary Trait Luck value before generating Condition and Pigmentation.
+- when `perfectCatch` is false, post-fight Condition and Pigmentation continue to receive the ordinary gear/context Trait Luck plus captured Momentum value unchanged.
+- the +10 value is a local post-fight probability input only. It is not written back to `FishingContext`, `TraitMomentumStorage`, `CatchState.capturedTraitMomentum`, `SpecimenData`, item components, or any client-owned state.
+- species selection has already completed before Perfect Catch is known, so the +10 cannot affect Fishing Luck weighting or the selected species.
+- Body Type has already been generated and physical size finalized before the minigame, so Stage 17 does not reroll Body Type and does not retroactively apply +10 Trait Luck to Body Type probability.
+- natural percentile, base length, final length, and final percentile remain unchanged by the Perfect Catch Trait Luck bonus.
+- the existing deterministic trait salts remain unchanged; Perfect Catch alters only the probability threshold supplied to the independent post-fight Condition and Pigmentation event comparisons.
+- the existing one-shot canonical finalization guard remains authoritative, so a later repeated callback cannot remove or reapply the bonus to generate a different specimen.
+- the separate Perfect Catch Body Type x1.25 reward and Perfect Specimen bonus remain intentionally unimplemented for later dedicated stages.
+
+`CanonicalCatchStateManagerTest#identicalCatchGetsExactlyTenTemporaryTraitLuckWhenPerfect` compares two otherwise identical canonical catches using the same species, specimen seed, pre-fight specimen, fight profile, gear/context Trait Luck, and captured Momentum. The fixture uses gear/context Trait Luck 7 plus Momentum 5, giving ordinary T=12 and Perfect Catch T=22. Deterministic seed `78` stays `NORMAL` for Condition at T=12 but becomes `SCARRED` at T=22, proving the +10 reward changes the actual canonical trait probability decision rather than merely setting the Perfect Catch flag. The same test proves species, seed, natural/final size state, Body Type, context Trait Luck, and captured Momentum are unchanged.
+
+Implementation commit `a4bc250c614e53ef03694721fc044172165a52f5` is green in GitHub Actions run `33173824349`. The exact-dependency `./gradlew clean build --stacktrace`, unit/integration tests, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
 ## Current execution gate
 
-Stage 16 is complete. The canonical V2 lifecycle now captures Tide's server-owned Perfect Catch result before post-fight Condition/Pigmentation finalization and before fish delivery without rerolling species or the natural specimen sample and without applying a direct Perfect Catch length mutation.
+Stage 17 is complete. Perfect Catch now grants exactly +10 temporary Trait Luck at the server-authoritative post-fight canonical trait-generation boundary, stacking with the catch's gear/context Trait Luck and frozen per-species Momentum without modifying either source and without affecting species selection or already-finalized Body Type/size state.
 
-Do not extend this completed stage into Perfect Catch reward probability changes, Specimen Quality/Perfect Specimen probability, FishScore, migration, gear progression, or later slices. Continue only with the next explicitly queued stage.
+Do not extend this completed stage into the Perfect Catch Body Type x1.25 reward, Perfect Specimen probability/bonus, FishScore, migration, gear progression, or later slices. Continue only with the next explicitly queued stage.
 
 ## Later frozen slices
 
 Execute in this order unless a later explicit queued stage narrows the work further:
 
-1. apply the remaining Perfect Catch reward math at the new post-fight finalization boundary
+1. apply the remaining Perfect Catch rewards: Body Type event chance x1.25 and the later Perfect Specimen bonus
 2. remaining independent Specimen Quality / Perfect Specimen implementation
 3. remaining Trait Luck and rarity-compensation integration for later notable axes
 4. FishScore V2 with the canonical linear 1 to 3000 mapping
