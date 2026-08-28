@@ -5,18 +5,19 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.SplittableRandom;
 
-/** Deterministically generates one natural specimen sample, then finalizes Body Type and Condition. */
+/** Deterministically generates one natural specimen sample, then finalizes independent trait axes. */
 public final class SpecimenGenerator {
     public static final int SCHEMA_VERSION = 2;
     public static final int GENERATION_VERSION = 1;
 
     private final BodyTypeGenerator bodyTypes = new BodyTypeGenerator();
     private final ConditionGenerator conditions = new ConditionGenerator();
+    private final PigmentationGenerator pigmentations = new PigmentationGenerator();
 
     /**
      * Generates the complete canonical specimen state currently implemented through the independent
-     * Condition axis. Natural percentile and base length are sampled exactly once. Body Type and
-     * Condition are each derived once from their independent deterministic trait streams.
+     * Pigmentation axis. Natural percentile and base length are sampled exactly once. Body Type,
+     * Condition, and Pigmentation are each derived once from independent deterministic trait streams.
      */
     public SpecimenData generate(
             SpeciesProfile species,
@@ -29,7 +30,8 @@ public final class SpecimenGenerator {
                 baseSpecimen.basePercentile()
         );
         SpecimenData sizedSpecimen = bodyTypes.applyPhysicalSize(species, baseSpecimen, bodyType);
-        return conditions.apply(sizedSpecimen);
+        SpecimenData conditionedSpecimen = conditions.apply(sizedSpecimen);
+        return pigmentations.apply(conditionedSpecimen);
     }
 
     /** Generates only the natural percentile and base length exactly once. */
