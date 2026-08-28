@@ -131,11 +131,12 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Add exact and statistical Condition/Pigmentation coverage proving rarity increases notable-trait event probability, Trait Luck increases it further, and subtype ratios are not distorted.
 - [x] Prove full canonical generation forwards Trait Luck to all three implemented axes and preserves independent three-axis stacking.
 - [ ] Wire Trait Luck and rarity compensation into any remaining intended notable-trait axis only in its dedicated implementation slice.
-- [ ] Implement per-species persisted Trait Momentum, approximately +1 temporary Trait Luck after a fully normal catch, capped around 15, substantially reduced after notable traits.
+- [x] Implement server-authoritative per-player, per-species Trait Momentum storage and access using Tide's existing player-persistent NBT root, with a hard stored range of 0 through 15.
+- [ ] Apply Momentum progression to catch outcomes in a later dedicated slice: approximately +1 temporary Trait Luck after a fully normal catch and a substantial reduction after notable traits.
 - [x] Add pure probability tests for T=0 identity, monotonic positive Trait Luck, valid output range, known numerical cases, exact 0/1 endpoints, probability validation/clamping, and negative/extreme Trait Luck behavior.
 - [x] Add exact rarity multiplier tests for all five canonical rarities plus compensated zero-Trait-Luck and combined Trait Luck cases, including a test that freezes rarity-before-Trait-Luck ordering.
 - [x] Add Body Type statistical event-rate tests for several canonical rarity/Trait Luck combinations and exact tests proving the shared pipeline calculation is used.
-- [ ] Add Momentum cap, persistence, and species-isolation tests when Momentum is implemented.
+- [x] Add Momentum tests for separate species values, 0 through 15 cap enforcement, persistent NBT serialization/deserialization, default zero, and malformed/old-data handling.
 
 ## Step 8 - Perfect Catch and Perfect Specimen
 
