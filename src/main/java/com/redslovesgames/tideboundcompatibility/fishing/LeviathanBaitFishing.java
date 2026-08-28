@@ -1,0 +1,61 @@
+/*
+ * RECONSTRUCTED SOURCE BASELINE
+ * Recovered from Tideborne 1.3.57 bytecode.
+ * See docs/RECONSTRUCTION.md before changing behavior.
+ */
+package com.redslovesgames.tideboundcompatibility.fishing;
+
+import com.li64.tide.data.TideFishingManager;
+import com.li64.tide.data.fishing.CatchResult;
+import com.li64.tide.data.fishing.FishingContext;
+import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
+import com.li64.tide.util.BaitUtils;
+import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
+import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
+import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
+
+public final class LeviathanBaitFishing {
+   private LeviathanBaitFishing() {
+   }
+
+   public static CatchResult selectCatch(TideFishingManager manager, TideFishingHook hook, FishingContext context) {
+      TideboundConfig.Values config = TideboundConfig.get();
+      boolean fishOnly = isEnabledFor(hook, config);
+      CatchResult result = LeviathanBaitRules.selectCatch(
+         fishOnly,
+         () -> manager.selectCatch(context),
+         () -> manager.getFishSelector().getResult(withFishLuck(context, config.leviathanBaitFishSelectionLuckBonus))
+      );
+      if (!fishOnly) {
+         return result;
+      }
+
+      ((LeviathanBaitHook)hook).tidebound$setLeviathanFishSelected(result.isFish());
+      return result;
+   }
+
+   public static boolean isEnabledFor(TideFishingHook hook, TideboundConfig.Values config) {
+      return TideboundCompatibility.isMythsIntegrationActive()
+         && config.leviathanBaitFishOnly
+         && BaitUtils.hasBait(TideboundItems.LEVIATHAN_BAIT, hook.getRod());
+   }
+
+   public static FishingContext withFishLuck(FishingContext context, int bonus) {
+      return new FishingContext(
+         context.level(),
+         context.hook(),
+         context.rod(),
+         context.rng(),
+         context.pos(),
+         context.blockPos(),
+         LeviathanBaitRules.effectiveFishLuck(context.luck(), bonus),
+         context.medium(),
+         context.exactBiome(),
+         context.nearestBiome(),
+         context.dimension(),
+         context.temperature(),
+         context.moonPhase(),
+         context.season()
+      );
+   }
+}

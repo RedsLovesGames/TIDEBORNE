@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "tide:pike", "tide:largemouth_bass", "tide:smallmouth_bass", "tide:tuna", "tide:mahi_mahi",
+    "tide:sailfish", "tide:swordfish", "tide:great_white_shark", "tide:bull_shark",
+    "tide:sand_tiger_shark", "tide:shadow_shark", "tide:anglerfish", "tide:abyss_angler",
+    "tide:deep_grouper", "tide:chasm_eel", "tide:snook"
+  ]
+}

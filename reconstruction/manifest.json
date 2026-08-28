@@ -1,0 +1,39 @@
+{
+  "schema": 2,
+  "generated_at_utc": "2026-08-28T06:44:56.141539+00:00",
+  "baseline": {
+    "tideborne_version": "1.3.57",
+    "expected_release_sha256": "0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5",
+    "expected_content_tree_sha256": "5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6",
+    "verification_mode": "exact-release-jar",
+    "jar_sha256": "0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5",
+    "content_tree_sha256": "5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6",
+    "file_count": 442,
+    "class_count": 272
+  },
+  "tools": {
+    "vineflower": "1.12.0",
+    "yarn": "1.21.1+build.3"
+  },
+  "output": {
+    "java_files": 187,
+    "resources": 169,
+    "class_files": 272,
+    "intermediary_replacements": 6005,
+    "unresolved_intermediary_tokens": [
+      "class_1300",
+      "class_1793",
+      "class_1837",
+      "class_4134",
+      "class_4241",
+      "class_4598",
+      "class_4665",
+      "class_7874",
+      "class_8045",
+      "class_9037",
+      "class_9154",
+      "class_9222",
+      "class_9635"
+    ]
+  }
+}

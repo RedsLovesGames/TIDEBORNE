@@ -1,0 +1,5 @@
+Journal additions:
+- Left fish profile now shows normal model min/max size range from Tide SizeData.
+- Team largest/smallest record lines now append Pxx.x species-relative percentile.
+- Team record text is scaled to a 166px width so long usernames remain inside the right journal column.
+- Existing V3 item overlay changes preserved.

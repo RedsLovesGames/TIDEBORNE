@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "package": "com.redslovesgames.tideboundcompatibility.mixin.apex",
+  "plugin": "com.redslovesgames.tideboundcompatibility.mixin.OptionalCompatMixinPlugin",
+  "refmap": "tidebound_compatibility.refmap.json",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "GreatWhiteSharkMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

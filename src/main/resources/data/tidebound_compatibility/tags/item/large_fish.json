@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "tide:arapaima", "tide:sturgeon", "tide:tuna", "tide:mahi_mahi", "tide:sailfish",
+    "tide:swordfish", "tide:manta_ray", "tide:great_white_shark", "tide:bull_shark",
+    "tide:coelacanth", "tide:deep_grouper", "tide:chasm_eel", "tide:abyss_angler",
+    "tide:alpha_fish", "tide:volcano_tuna", "tide:voidseeker", "tide:dragon_fish"
+  ]
+}

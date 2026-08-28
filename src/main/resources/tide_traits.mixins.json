@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "com.redslovesgames.tidetraits.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AnglersSatchelRecipeMixin",
+    "ApplyFishEntityLengthFunctionMixin",
+    "BucketableMixin",
+    "MobBucketItemMixin",
+    "MobSpecimenMixin",
+    "TideFishingHookMixin",
+    "TideItemBucketMixin",
+    "TidePlayerDataMixin",
+    "TideTeamJournalServiceMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

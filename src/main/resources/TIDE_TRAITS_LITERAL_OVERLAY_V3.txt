@@ -1,0 +1,6 @@
+V3 item overlay tuning:
+- overlay front/back planes moved farther above item sprite: +/-0.58
+- scar masks redrawn to follow the common Tide fish diagonal orientation
+- parasite masks shifted upward one pixel
+- adds /function tide_traits:test_tuna_mutations
+  which gives one 100 cm tuna for each of the seven mutations.

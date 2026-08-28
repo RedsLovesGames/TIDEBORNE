@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "com.redslovesgames.tideboundcompatibility.mixin",
+  "refmap": "tidebound_compatibility.refmap.json",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AnglingTableLeaderMixin",
+    "CrateDataMixin",
+    "FishCatchMinigameMixin",
+    "FishDataMixin",
+    "TideFishingHookMixin"
+  ],
+  "client": [
+    "AnglingTableScreenLeaderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

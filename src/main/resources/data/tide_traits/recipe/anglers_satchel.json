@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": ["FFF","FSF","FFF"],
+  "key": {
+    "F": {"tag": "tide:fish"},
+    "S": {"item": "tide:fish_satchel"}
+  },
+  "result": {"id": "tide_traits:anglers_satchel", "count": 1},
+  "show_notification": true
+}

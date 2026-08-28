@@ -1,0 +1,19 @@
+{
+  "required": false,
+  "package": "com.redslovesgames.tidetraits.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "FishDisplayBlockEntityMixin",
+    "ItemRendererMutationTintMixin",
+    "ItemStackMutationTooltipMixin",
+    "LivingEntityRendererMixin",
+    "MinecraftMutationRenderingMixin",
+    "TideFishRendererMixin",
+    "TideFishProfileMixin",
+    "FishProfileSizeRangeMixin",
+    "TeamStatsPercentileMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "fabric:load_conditions":[{"condition":"fabric:all_mods_loaded","values":["apexwaters"]}],
+  "type":"minecraft:crafting_shaped",
+  "category":"misc",
+  "pattern":["FFF","FBF"," F "],
+  "key":{"F":{"tag":"tidebound_compatibility:shark_food"},"B":{"item":"minecraft:bucket"}},
+  "result":{"id":"tidebound_compatibility:chum_bucket","count":1}
+}

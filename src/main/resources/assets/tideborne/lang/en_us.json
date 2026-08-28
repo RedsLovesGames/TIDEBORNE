@@ -1,0 +1,15 @@
+{
+  "mod.tideborne.name": "Tideborne",
+  "config.tideborne.title": "Tideborne Settings",
+  "config.tideborne.traits": "Traits & Mutations",
+  "config.tideborne.satchel": "Angler's Satchel",
+  "config.tideborne.journal": "Journal & Teams",
+  "config.tideborne.client": "Client & Rendering",
+  "config.tideborne.fishing": "Fishing Gameplay",
+  "command.tideborne.help": "Tideborne commands",
+  "command.tideborne.reload": "Reload Tideborne configuration",
+  "command.tideborne.migrate_status": "Show Tideborne migration status",
+  "command.tideborne.debug_backend": "Show unified backend status",
+  "config.tideborne.records": "Records & Shared Ledger",
+  "config.tideborne.migration": "Migration & Compatibility"
+}

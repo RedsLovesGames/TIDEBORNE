@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "canonical_mod_id": "tideborne",
+  "canonical_command_root": "tideborne",
+  "canonical_config": "config/tideborne.json",
+  "legacy_compatibility_ids": [
+    "tide_traits",
+    "tide_team_journal",
+    "tidebound_compatibility"
+  ],
+  "policy": "Legacy serialized registry, packet and saved-data identifiers are retained as compatibility aliases so existing worlds do not lose data. New Tideborne-owned resources use the tideborne namespace."
+}

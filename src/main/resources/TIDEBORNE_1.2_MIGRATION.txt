@@ -1,0 +1,36 @@
+Tideborne 1.2.0 migration
+
+CANONICAL RUNTIME
+- Mod ID: tideborne
+- Common entrypoint: com.redslovesgames.tideborne.Tideborne
+- Client entrypoint: com.redslovesgames.tideborne.client.TideborneClient
+- ModMenu entrypoint: com.redslovesgames.tideborne.client.TideborneModMenu
+- Command root: /tideborne
+- Canonical config: config/tideborne.json
+- Unified service facade: com.redslovesgames.tideborne.backend.TideborneBackend
+
+CONFIG MIGRATION
+The first launch imports these legacy files into config/tideborne.json:
+- tide_traits.json
+- tide_team_journal-server.json
+- tide_team_journal-client.json
+- tidebound_compatibility.json
+- tidebound_compatibility-client.json
+One-time .tideborne-migrated.bak copies are created when the old files already exist.
+The legacy filenames remain generated compatibility mirrors because proven legacy subsystem parsers still consume them internally. tideborne.json is the canonical source.
+
+COMMANDS
+Canonical command tree:
+- /tideborne traits ...
+- /tideborne team ...
+- /tideborne journal ...
+- /tideborne fishing ...
+- /tideborne status
+- /tideborne reload
+Old roots remain available only for backwards compatibility with existing scripts/admin habits.
+
+BACKEND
+TideborneBackend is now the native API facade for personal discoveries, shared discoveries, team journal data and synchronization. Legacy storage implementations remain underneath so existing saved data is not destroyed.
+
+SAFE NAMESPACE MIGRATION
+New Tideborne-owned resources use tideborne: where safe. Existing serialized registry IDs, packet IDs, NBT/saved-data keys and legacy item/component IDs are deliberately not force-renamed. Those are migration aliases, not separate mods.

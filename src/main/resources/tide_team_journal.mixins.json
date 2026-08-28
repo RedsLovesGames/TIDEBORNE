@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "package": "com.redslovesgames.tideteamjournal.mixin",
+  "refmap": "tide_team_journal.refmap.json",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "TidePlayerDataMixin",
+    "TideUtilsMixin",
+    "TideFishingHookMixin"
+  ],
+  "client": [
+    "client.FishProfileMixin",
+    "client.FishingJournalMixin",
+    "client.GuiGraphicsMixin",
+    "client.ScreenAccessor",
+    "client.SyncPlayerDataMsgMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

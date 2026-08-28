@@ -1,0 +1,64 @@
+{
+  "mappings": {
+    "com/redslovesgames/tideteamjournal/mixin/TideFishingHookMixin": {
+      "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;IIFLnet/minecraft/world/item/ItemStack;)V": "Lcom/li64/tide/registries/entities/misc/fishing/TideFishingHook;<init>(Lnet/minecraft/class_1299;Lnet/minecraft/class_1657;Lnet/minecraft/class_1937;IIFLnet/minecraft/class_1799;)V"
+    },
+    "com/redslovesgames/tideteamjournal/mixin/TidePlayerDataMixin": {
+      "getOrCreate(Lnet/minecraft/server/level/ServerPlayer;)Lcom/li64/tide/data/player/TidePlayerData;": "Lcom/li64/tide/data/player/TidePlayerData;getOrCreate(Lnet/minecraft/class_3222;)Lcom/li64/tide/data/player/TidePlayerData;",
+      "logCatch": "Lcom/li64/tide/data/player/TidePlayerData;logCatch(Lnet/minecraft/class_1799;Lnet/minecraft/class_3222;Lnet/minecraft/class_1937;)V",
+      "syncTo": "Lcom/li64/tide/data/player/TidePlayerData;syncTo(Lnet/minecraft/class_3222;)V"
+    },
+    "com/redslovesgames/tideteamjournal/mixin/TideUtilsMixin": {
+      "tryLogCatch": "Lcom/li64/tide/util/TideUtils;tryLogCatch(Lnet/minecraft/class_1799;Lnet/minecraft/class_3222;)Z"
+    },
+    "com/redslovesgames/tideteamjournal/mixin/client/FishProfileMixin": {
+      "buildComponentsWithStats": "Lcom/li64/tide/client/gui/screens/journal/FishProfile;buildComponentsWithStats(Lnet/minecraft/class_1799;Lcom/li64/tide/data/fishing/FishData;)Ljava/util/ArrayList;"
+    },
+    "com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin": {
+      "init": "Lcom/li64/tide/client/gui/screens/journal/FishingJournal;method_25426()V",
+      "render": "Lcom/li64/tide/client/gui/screens/journal/FishingJournal;method_25394(Lnet/minecraft/class_332;IIF)V"
+    },
+    "com/redslovesgames/tideteamjournal/mixin/client/GuiGraphicsMixin": {
+      "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V": "Lnet/minecraft/class_332;method_51432(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V"
+    },
+    "com/redslovesgames/tideteamjournal/mixin/client/ScreenAccessor": {
+      "addRenderableWidget": "method_37063(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;",
+      "addWidget": "method_25429(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;"
+    },
+    "com/redslovesgames/tideteamjournal/mixin/client/SyncPlayerDataMsgMixin": {
+      "handle": "Lcom/li64/tide/network/messages/SyncPlayerDataMsg;handle(Lcom/li64/tide/network/messages/SyncPlayerDataMsg;Lnet/minecraft/class_1657;)V"
+    }
+  },
+  "data": {
+    "named:intermediary": {
+      "com/redslovesgames/tideteamjournal/mixin/TideFishingHookMixin": {
+        "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;IIFLnet/minecraft/world/item/ItemStack;)V": "Lcom/li64/tide/registries/entities/misc/fishing/TideFishingHook;<init>(Lnet/minecraft/class_1299;Lnet/minecraft/class_1657;Lnet/minecraft/class_1937;IIFLnet/minecraft/class_1799;)V"
+      },
+      "com/redslovesgames/tideteamjournal/mixin/TidePlayerDataMixin": {
+        "getOrCreate(Lnet/minecraft/server/level/ServerPlayer;)Lcom/li64/tide/data/player/TidePlayerData;": "Lcom/li64/tide/data/player/TidePlayerData;getOrCreate(Lnet/minecraft/class_3222;)Lcom/li64/tide/data/player/TidePlayerData;",
+        "logCatch": "Lcom/li64/tide/data/player/TidePlayerData;logCatch(Lnet/minecraft/class_1799;Lnet/minecraft/class_3222;Lnet/minecraft/class_1937;)V",
+        "syncTo": "Lcom/li64/tide/data/player/TidePlayerData;syncTo(Lnet/minecraft/class_3222;)V"
+      },
+      "com/redslovesgames/tideteamjournal/mixin/TideUtilsMixin": {
+        "tryLogCatch": "Lcom/li64/tide/util/TideUtils;tryLogCatch(Lnet/minecraft/class_1799;Lnet/minecraft/class_3222;)Z"
+      },
+      "com/redslovesgames/tideteamjournal/mixin/client/FishProfileMixin": {
+        "buildComponentsWithStats": "Lcom/li64/tide/client/gui/screens/journal/FishProfile;buildComponentsWithStats(Lnet/minecraft/class_1799;Lcom/li64/tide/data/fishing/FishData;)Ljava/util/ArrayList;"
+      },
+      "com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin": {
+        "init": "Lcom/li64/tide/client/gui/screens/journal/FishingJournal;method_25426()V",
+        "render": "Lcom/li64/tide/client/gui/screens/journal/FishingJournal;method_25394(Lnet/minecraft/class_332;IIF)V"
+      },
+      "com/redslovesgames/tideteamjournal/mixin/client/GuiGraphicsMixin": {
+        "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V": "Lnet/minecraft/class_332;method_51432(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V"
+      },
+      "com/redslovesgames/tideteamjournal/mixin/client/ScreenAccessor": {
+        "addRenderableWidget": "method_37063(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;",
+        "addWidget": "method_25429(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;"
+      },
+      "com/redslovesgames/tideteamjournal/mixin/client/SyncPlayerDataMsgMixin": {
+        "handle": "Lcom/li64/tide/network/messages/SyncPlayerDataMsg;handle(Lcom/li64/tide/network/messages/SyncPlayerDataMsg;Lnet/minecraft/class_1657;)V"
+      }
+    }
+  }
+}

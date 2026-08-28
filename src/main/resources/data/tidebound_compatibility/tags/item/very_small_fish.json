@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "tide:anchovy", "tide:guppy", "tide:iron_tetra", "tide:bedrock_tetra", "tide:gilded_minnow",
+    "tide:crystal_shrimp", "tide:incandescent_larva", "tide:devils_hole_pupfish",
+    "tide:pluto_snail", "tide:shooting_starfish", "tide:bedrock_bug"
+  ]
+}

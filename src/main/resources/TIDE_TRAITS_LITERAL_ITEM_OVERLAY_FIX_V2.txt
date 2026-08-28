@@ -1,0 +1,4 @@
+Fixes startup/runtime crash in the literal overlay build.
+Cause: called class_4588.method_22921(int), but on Minecraft 1.21.1 packed light is class_4588.method_60803(int).
+The two-int light method remains method_22921(int,int); overlay packed-int remains method_22922(int).
+This build keeps the literal PNG overlay render approach and corrects the light method mapping.

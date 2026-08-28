@@ -1,0 +1,7 @@
+{
+  "fabric:load_conditions":[{"condition":"fabric:all_mods_loaded","values":["myths_of_the_sea"]}],
+  "type":"minecraft:crafting_shapeless",
+  "category":"equipment",
+  "ingredients":[{"item":"myths_of_the_sea:hippocampus_eye"},{"item":"tide:fishing_hook"}],
+  "result":{"id":"tidebound_compatibility:seafarers_hook","count":1}
+}

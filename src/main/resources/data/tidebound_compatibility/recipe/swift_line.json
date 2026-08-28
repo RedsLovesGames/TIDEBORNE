@@ -1,0 +1,7 @@
+{
+  "fabric:load_conditions":[{"condition":"fabric:all_mods_loaded","values":["myths_of_the_sea"]}],
+  "type":"minecraft:crafting_shapeless",
+  "category":"equipment",
+  "ingredients":[{"item":"myths_of_the_sea:abaia_fin"},{"item":"tide:fishing_line"}],
+  "result":{"id":"tidebound_compatibility:swift_line","count":1}
+}

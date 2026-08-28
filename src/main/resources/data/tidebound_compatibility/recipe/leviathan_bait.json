@@ -1,0 +1,7 @@
+{
+  "fabric:load_conditions":[{"condition":"fabric:all_mods_loaded","values":["myths_of_the_sea"]}],
+  "type":"minecraft:crafting_shapeless",
+  "category":"misc",
+  "ingredients":[{"item":"myths_of_the_sea:leviathan_heart"}],
+  "result":{"id":"tidebound_compatibility:leviathan_bait","count":12}
+}

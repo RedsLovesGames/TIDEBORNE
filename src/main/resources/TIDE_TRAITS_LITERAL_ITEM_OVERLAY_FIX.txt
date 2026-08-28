@@ -1,0 +1,6 @@
+Literal item overlay patch:
+- replaces the previous BakedQuad mutation item mixin implementation
+- injects into ItemRenderer.renderItem (method_23179)
+- immediately after the base baked model render, draws the actual scar/parasite/sparkle PNG as a second textured quad
+- draws front and back faces so GUI, held, fixed and dropped/rotating items can display the mask
+- does not rely on renderBakedItemQuads locals or tinting
