@@ -87,13 +87,13 @@ public final class ServerConfig {
       return new BobberBonuses.Bonus(Math.max(0, Math.min(10, bonus.luck())), Math.max(0, Math.min(10, bonus.lureSpeed())));
    }
 
-   private static void tideborneEnsureFishScoreMetric(ServerConfig.Values var0) {
-      ArrayList var1 = new ArrayList<>(var0.visibleMetrics);
-      if (!var1.contains("fish_score")) {
-         var1.add("fish_score");
+   private static void tideborneEnsureFishScoreMetric(ServerConfig.Values config) {
+      ArrayList<String> metrics = new ArrayList<>(config.visibleMetrics);
+      if (!metrics.contains("fish_score")) {
+         metrics.add("fish_score");
       }
 
-      var0.visibleMetrics = var1;
+      config.visibleMetrics = metrics;
    }
 
    public static final class Values {
