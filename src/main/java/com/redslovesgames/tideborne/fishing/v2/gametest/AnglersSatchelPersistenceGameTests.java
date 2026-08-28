@@ -60,7 +60,7 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
     }
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
-    public void legacySatchelContentsRemainReadableWithoutCanonicalRegeneration(TestContext helper) {
+    public void legacySatchelContentsMigrateOnceAndRemainStable(TestContext helper) {
         ItemStack legacyFish = new ItemStack(Items.COD);
         legacyFish.set(TideTraitsComponents.MUTATION, "scarred");
         legacyFish.set(TideTraitsComponents.MUTATION_SEED, 0x1234ABCD5678EF90L);
@@ -68,26 +68,42 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
         TideItemData.FISH_LENGTH.set(legacyFish, 47.75);
         legacyFish.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Legacy Satchel Cod"));
 
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(legacyFish)
+                        == CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY,
+                "Legacy Satchel fixture was not classified as legacy-only before canonical read");
+
         ItemStack satchel = new ItemStack(SatchelRegistration.ANGLERS_SATCHEL);
         satchel.set(TideDataComponents.SATCHEL_CONTENTS, new SatchelContents(List.of(legacyFish)));
 
-        helper.assertTrue(CanonicalSpecimenStorage.read(legacyFish).isEmpty(),
-                "Legacy test fixture unexpectedly started canonical");
         helper.assertTrue(AnglersSatchelStorage.size(satchel) == 1, "Existing Tide SatchelContents were not readable");
         ItemStack stored = AnglersSatchelStorage.contents(satchel).getFirst();
-        assertLegacyMetadata(helper, stored, "while reading existing Satchel data");
-        helper.assertTrue(CanonicalSpecimenStorage.read(stored).isEmpty(),
-                "Reading old Satchel data silently generated canonical specimen state");
+        assertLegacyMetadata(helper, stored, "before migration while stored");
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stored)
+                        == CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY,
+                "Reading the Satchel container itself unexpectedly migrated specimen data");
+
+        SpecimenData migrated = CanonicalSpecimenStorage.read(stored).orElseThrow();
+        assertMigratedLegacyMetadata(helper, migrated, "while stored");
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stored)
+                        == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
+                "Successful Satchel legacy migration did not write the current canonical schema");
+        SpecimenData reread = CanonicalSpecimenStorage.read(stored).orElseThrow();
+        helper.assertTrue(migrated.equals(reread), "Second canonical read changed the migrated Satchel specimen");
+        assertLegacyMetadata(helper, stored, "after one-time migration while stored");
 
         AnglersSatchelStorage.ExtractionResult extraction = AnglersSatchelStorage.extractAt(satchel, 0, true);
         helper.assertTrue(extraction.status() == AnglersSatchelStorage.ExtractionStatus.SUCCESS,
-                "Legacy Satchel specimen extraction failed");
+                "Migrated Satchel specimen extraction failed");
         ItemStack extracted = extraction.item().orElseThrow();
+        SpecimenData extractedSpecimen = CanonicalSpecimenStorage.read(extracted).orElseThrow();
+        helper.assertTrue(migrated.equals(extractedSpecimen),
+                "Extracting the migrated legacy specimen changed canonical identity");
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(extracted)
+                        == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
+                "Extracted migrated specimen no longer had current canonical schema");
         assertLegacyMetadata(helper, extracted, "after extraction");
-        helper.assertTrue(CanonicalSpecimenStorage.read(extracted).isEmpty(),
-                "Extracting old Satchel data silently generated canonical specimen state");
         helper.assertTrue(AnglersSatchelStorage.size(satchel) == 0,
-                "Extracted legacy specimen remained duplicated in the Satchel");
+                "Extracted migrated specimen remained duplicated in the Satchel");
         helper.complete();
     }
 
@@ -110,6 +126,27 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
         helper.assertTrue(expected.perfectCatch() == actual.perfectCatch(), "Canonical Perfect Catch flag changed " + phase);
         helper.assertTrue(expected.rawFishScore().equals(actual.rawFishScore()), "Canonical raw FishScore changed " + phase);
         helper.assertTrue(expected.fishScore().equals(actual.fishScore()), "Canonical FishScore changed " + phase);
+    }
+
+    private static void assertMigratedLegacyMetadata(TestContext helper, SpecimenData actual, String phase) {
+        helper.assertTrue(actual.schemaVersion() == SpecimenGenerator.SCHEMA_VERSION,
+                "Migrated schema version was not current " + phase);
+        helper.assertTrue(actual.generationVersion() == SpecimenGenerator.GENERATION_VERSION,
+                "Migrated generation version was not current " + phase);
+        helper.assertTrue(actual.deterministicSeed() == 0x1234ABCD5678EF90L,
+                "Legacy deterministic seed was not preserved " + phase);
+        helper.assertTrue(Double.compare(actual.basePercentile(), 73.25) == 0,
+                "Legacy natural percentile was not preserved " + phase);
+        helper.assertTrue(Double.compare(actual.finalLength(), 47.75) == 0,
+                "Legacy physical length was not preserved " + phase);
+        helper.assertTrue(actual.bodyType() == SpecimenData.BodyType.NORMAL,
+                "Legacy specimen without size mutation did not remain Normal " + phase);
+        helper.assertTrue(actual.condition() == SpecimenData.Condition.SCARRED,
+                "Legacy Scarred mutation did not map to canonical Condition " + phase);
+        helper.assertTrue(actual.pigmentation() == SpecimenData.Pigmentation.NORMAL,
+                "Legacy Scarred mutation unexpectedly changed Pigmentation " + phase);
+        helper.assertTrue(actual.specimenQuality() == SpecimenData.SpecimenQuality.NORMAL,
+                "Legacy Scarred mutation unexpectedly changed Quality " + phase);
     }
 
     private static void assertOpaqueStackMetadata(TestContext helper, ItemStack stack, String phase) {
