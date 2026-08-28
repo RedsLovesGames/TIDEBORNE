@@ -12,27 +12,27 @@ public final class LeaderboardMetricFilter {
    private LeaderboardMetricFilter() {
    }
 
-   public static List<String> withoutFishScore(List<String> var0) {
-      ArrayList var1 = new ArrayList();
-      if (var0 != null) {
-         for (String var3 : var0) {
-            if (!"fish_score".equals(var3)) {
-               var1.add(var3);
+   public static List<String> withoutFishScore(List<String> metrics) {
+      ArrayList<String> filtered = new ArrayList<>();
+      if (metrics != null) {
+         for (String metric : metrics) {
+            if (!"fish_score".equals(metric)) {
+               filtered.add(metric);
             }
          }
       }
 
-      if (var1.isEmpty()) {
-         var1.add("catches");
-         var1.add("species");
-         var1.add("record_events");
-         var1.add("active_records");
+      if (filtered.isEmpty()) {
+         filtered.add("catches");
+         filtered.add("species");
+         filtered.add("record_events");
+         filtered.add("active_records");
       }
 
-      return var1;
+      return filtered;
    }
 
-   public static String normalizeDefault(String var0) {
-      return "fish_score".equals(var0) ? "catches" : var0;
+   public static String normalizeDefault(String metric) {
+      return "fish_score".equals(metric) ? "catches" : metric;
    }
 }
