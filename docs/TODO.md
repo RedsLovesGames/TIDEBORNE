@@ -132,11 +132,15 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Prove full canonical generation forwards Trait Luck to all three implemented axes and preserves independent three-axis stacking.
 - [ ] Wire Trait Luck and rarity compensation into any remaining intended notable-trait axis only in its dedicated implementation slice.
 - [x] Implement server-authoritative per-player, per-species Trait Momentum storage and access using Tide's existing player-persistent NBT root, with a hard stored range of 0 through 15.
-- [ ] Apply Momentum progression to catch outcomes in a later dedicated slice: approximately +1 temporary Trait Luck after a fully normal catch and a substantial reduction after notable traits.
+- [x] Capture only the selected species' current Momentum after species selection and before deterministic specimen generation, then add that frozen value to the server-owned Trait Luck used by canonical trait event rolls.
+- [x] Define a fully normal catch from canonical trait axes only: Body Type, Condition, Pigmentation, and Specimen Quality must all be `NORMAL`. Size/percentile and the Perfect Catch skill flag do not participate.
+- [x] Progress Momentum by +1 for a fully normal completed catch, bounded by the existing cap of 15, and reset that species' Momentum to 0 when any canonical trait axis is notable.
+- [x] Apply Momentum progression exactly once from the server-side completed-catch path using the transient canonical catch state as the one-shot guard. Invalidated/lost catches clear the state before completion, and item/entity/serialization callbacks never update Momentum.
+- [x] Keep species isolation: Momentum is read and changed only under the selected canonical species ID.
 - [x] Add pure probability tests for T=0 identity, monotonic positive Trait Luck, valid output range, known numerical cases, exact 0/1 endpoints, probability validation/clamping, and negative/extreme Trait Luck behavior.
 - [x] Add exact rarity multiplier tests for all five canonical rarities plus compensated zero-Trait-Luck and combined Trait Luck cases, including a test that freezes rarity-before-Trait-Luck ordering.
 - [x] Add Body Type statistical event-rate tests for several canonical rarity/Trait Luck combinations and exact tests proving the shared pipeline calculation is used.
-- [x] Add Momentum tests for separate species values, 0 through 15 cap enforcement, persistent NBT serialization/deserialization, default zero, and malformed/old-data handling.
+- [x] Add Momentum tests for separate species values, 0 through 15 persistence cap enforcement, serialization/deserialization, default zero, malformed/old data, repeated normal progression, notable reset, species isolation, additive temporary Trait Luck, canonical fully-normal classification, frozen captured Momentum, and exactly-once completion.
 
 ## Step 8 - Perfect Catch and Perfect Specimen
 

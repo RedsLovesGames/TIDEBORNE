@@ -348,30 +348,53 @@ Frozen storage behavior:
 - `TraitMomentumStorage` is the server-authoritative public facade and accepts `ServerPlayerEntity`, so client-only state cannot author Momentum values.
 - each player has an independent map keyed by canonical namespaced species ID; there is no global Momentum scalar and one species cannot overwrite another species' value.
 - stored Momentum is bounded to the inclusive range 0 through 15. Zero is the default and zero-valued entries are omitted from the serialized species map.
-- `get`, `set`, `add`, `clear`, and immutable `snapshot` access APIs are available for later progression slices without exposing mutable backing data.
+- `get`, `set`, `add`, `clear`, and immutable `snapshot` access APIs are available for progression without exposing mutable backing data.
 - the storage uses Tide's existing per-player `TidePlayer` persistent NBT root, matching the persistence pattern already used by Tideborne discovery data. This provides logout/restart persistence without putting Momentum into the team-shared Tide journal.
 - Momentum is serialized under the dedicated `FishingV2TraitMomentum` compound with `DataVersion = 1` and a `Species` compound containing integer values by species ID.
 - malformed non-compound roots, wrong value types, invalid species IDs, and negative values do not create Momentum. Oversized stored values are clamped to 15.
 - the decoder also accepts an unversioned direct species-to-int map as a legacy/early-data shape, allowing safe forward migration instead of failing or creating a global fallback value.
 - no fish item, entity, specimen, `SpecimenData`, or client packet owns the player's Momentum.
-- no Body Type, Condition, Pigmentation, Trait Luck probability, species selection, or catch-result code was modified in this stage. Momentum therefore has no gameplay effect yet.
 
 Unit coverage proves independent species values, cap/floor enforcement including overflow-safe additions, serialization/deserialization through the player-root shape, default zero for absent data, sanitization of malformed entries, and loading of the tolerated old unversioned format.
 
 Implementation commit `2727ad0ae3d6a35fcab047f93412220554ceb867` is green in GitHub Actions run `33170551133`. The exact-dependency build, all unit tests, Fabric GameTests, and built-JAR artifact upload completed successfully.
 
+## Trait Momentum progression is complete
+
+Stage 15 wires the stored per-player, per-species Momentum into canonical catch generation and completed-catch progression.
+
+Frozen progression behavior:
+
+- species selection remains unchanged and is still driven only by Fishing Luck and the canonical species selector.
+- after a species is selected, `TideSpeciesSelectionBridge` reads Momentum only for that selected species and captures the integer value before specimen generation.
+- the captured Momentum value is added to the server-owned `FishingContext.traitLuck()` as temporary Trait Luck for Body Type, Condition, and Pigmentation event probabilities. It does not participate in species selection.
+- the frozen captured value is stored only in transient `CanonicalCatchStateManager.CatchState`; it is not written into the fish item, entity, `SpecimenData`, provenance, or any client-owned state.
+- later changes to the player's stored Momentum cannot alter the deterministic specimen already generated for that catch because generation uses the captured value exactly once.
+- a fully normal catch is defined only by canonical trait axes: Body Type, Condition, Pigmentation, and Specimen Quality must all be `NORMAL`. Natural percentile, base/final size, and the Perfect Catch skill flag do not determine whether the specimen is fully normal.
+- a fully normal completed catch adds exactly +1 Momentum for that species.
+- any notable value on one of those canonical trait axes resets that species' Momentum to 0. This is the stage-15 interpretation of the specification's required substantial reduction.
+- the existing storage cap keeps Momentum bounded at 15.
+- progression occurs only from the server-side completed `TideFishingHook#retrieve(ItemStack, ServerWorld, PlayerEntity)` path. `CanonicalCatchStateManager` owns a synchronized one-shot guard, so duplicate completion callbacks for the same canonical catch cannot apply Momentum twice.
+- if the catch is invalidated or lost before completion, the canonical catch state is cleared first and there is no Momentum update.
+- item/entity conversion, serialization, bucket transfer, UI reads, legacy trait callbacks, and other representation callbacks do not update Momentum.
+- species isolation remains exact because both capture and progression use `SpecimenData.speciesId()` / selected `SpeciesProfile.speciesId()` as the only Momentum key.
+
+Focused tests prove repeated fully normal catches increase Momentum one point at a time, the 15 cap remains enforced, each notable canonical axis resets Momentum, other species remain unchanged, captured Momentum adds to temporary Trait Luck, fully-normal classification ignores non-axis size/Perfect Catch metadata, captured Momentum stays frozen in catch state, and the completion update callback can execute exactly once.
+
+Implementation commit `c2b7422d5a29325f25f1bab692f6526dc3780ebf` is green in GitHub Actions run `33171860987`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests, Fabric GameTests, and built-JAR artifact upload all completed successfully.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition and Pigmentation portions of Step 6 are complete with server-authoritative deterministic generation, canonical persistence, three-axis stacking, explicit transfer survival, and legacy mutation reroll isolation. Trait Luck and rarity compensation are implemented canonically and are routed through Body Type, Condition, and Pigmentation without changing their independent subtype streams. Per-player, per-species Trait Momentum storage is now implemented and persisted with a cap of 15, but Momentum gain, reduction, and probability effects remain intentionally unimplemented.
+Steps 1 through 5 are complete for the implemented V2 pipeline. The Body Type, Condition, and Pigmentation axes are server-authoritative and independently generated; rarity compensation and Trait Luck are routed through their event probabilities without disturbing subtype streams. Per-player, per-species Trait Momentum is persisted, contributes captured temporary Trait Luck for the selected species, progresses by +1 on fully normal completed catches, resets on notable canonical traits, remains capped at 15, and updates exactly once per successful completed catch.
 
-Do not extend this completed stage into Momentum catch effects, Specimen Quality, Perfect Catch rewards, Perfect Specimen, or FishScore. Continue only with the next explicitly queued stage.
+Do not extend this completed stage into the remaining Specimen Quality implementation, Perfect Catch reward redesign, Perfect Specimen probability, FishScore, migration, gear progression, or later slices. Continue only with the next explicitly queued stage.
 
 ## Later frozen slices
 
 Execute in this order unless a later explicit queued stage narrows the work further:
 
 1. remaining independent Specimen Quality axis work
-2. remaining Trait Luck plus rarity-compensation axis integration and Momentum catch behavior
+2. remaining Trait Luck and rarity-compensation integration for later notable axes
 3. Perfect Catch redesign and percentile-based Perfect Specimen
 4. FishScore V2 with the canonical linear 1 to 3000 mapping
 5. deterministic migration and canonical `SpecimenData` adoption across persistence/UI/network systems
