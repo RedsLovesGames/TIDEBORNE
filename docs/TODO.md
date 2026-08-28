@@ -2,47 +2,100 @@
 
 The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. This file tracks execution state only.
 
-## Current run
+## Phase 0 - authoritative 1.3.57 reconstruction
+
+- [x] Recover the exact Tideborne 1.3.57 release JAR.
+- [x] Verify release JAR SHA-256 `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`.
+- [x] Verify 442 actual files, 272 `.class` files, and canonical content-tree SHA-256 `5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6`.
+- [x] Reconstruct complete maintained Java source and resources from the authoritative JAR.
+- [x] Normalize mechanical Vineflower/Yarn reconstruction artifacts without changing gameplay behavior.
+- [x] Compile against exact Tide 2.1.1 and Apex Waters 1.1.1 dependencies.
+- [x] Run `./gradlew clean build --stacktrace` successfully. Green run: `33152569860`.
+- [x] Upload built JAR artifacts from the green reconstructed baseline.
+- [x] Fast-forward the reconstructed runtime onto `dev` without touching `main`.
+
+## Steps 1 through 4 - pure V2 domain layer
 
 - [x] Persist the complete Fishing System 2.0 specification.
-- [x] Record the current repository and reconstruction state.
-- [ ] Restore and verify the complete reconstructed 1.3.57 source, resources, baseline tests, and fixtures. The Gradle wrapper is restored, but the current staged class archive is corrupt and only yields 91 of 272 required classes.
-- [ ] Supply an authoritative reconstruction input: the exact 1.3.57 JAR, a content-identical 442-file tree, or corrected complete class and resource payloads.
-- [ ] Verify release JAR SHA-256 `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`, 442 actual files, 272 `.class` files, and canonical content-tree SHA-256 `5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6`.
-- [ ] Run the untouched reconstructed 1.3.57 baseline tests and `./gradlew clean build --stacktrace`.
-- [x] Implement the step 1 pure domain layer: `FishingContext`, `SpeciesProfile`, and canonical rarity.
-- [x] Add deterministic step 1 unit tests.
-- [x] Commit step 1 as part of the bounded steps 1 through 4 domain slice.
-- [x] Implement the step 2 pure domain layer: `SpeciesSelectionService` and rarity-aware Fishing Luck.
-- [ ] Integrate V2 species selection into the actual legacy catch flow after the reconstructed runtime exists.
-- [ ] Remove affected `selection_quality` selection behavior only after callers are migrated.
-- [x] Add deterministic selection distribution, eligibility, and fight normalization tests.
-- [x] Commit step 2 as part of the bounded steps 1 through 4 domain slice.
-- [x] Implement the step 3 pure domain layer: canonical `SpecimenData`, seeded generation metadata, and direct lognormal CDF and quantile math.
-- [x] Preserve base percentile, base length, final length, and final percentile in immutable canonical specimen data without rerolls.
-- [ ] Integrate V2 specimen generation into the actual catch flow and remove the old sampled percentile calculation after callers migrate.
-- [ ] Add serialization and reconstructed 1.3.57 adapter round-trip tests after legacy formats are restored.
-- [x] Commit step 3 as part of the bounded steps 1 through 4 domain slice.
-- [x] Implement the step 4 pure domain layer: normalized Strength and Tempo, safe external clamps, initial catch-zone model, and size fight scaling.
-- [ ] Integrate normalized Strength and Tempo into actual Tide minigame input construction.
-- [ ] Preserve Tide's existing marker, catch region, behavior, and center-zone Perfect Catch interaction.
-- [x] Add normalization, target-value, boundary, and size-scaling tests.
-- [x] Run all currently available tests and the maintained-source repository `./gradlew clean build --stacktrace` successfully.
-- [x] Recheck the reconstruction blocker against current Git history and prove the staged archive is corrupt, hash-mismatched, and historically unrecoverable from the truncated payload commit.
-- [x] Exhaust retained authoritative-input recovery across File Library, connected Drive, TIDEBORNE releases/history/Actions artifacts, and available local workspace files.
-- [x] Trace the Fish Wiki runtime provenance that loaded the exact 1.3.57 SHA and inspect its historical export ZIP. The export contains 1,056 entries but 0 JARs and 0 `.class` files, so it cannot recover the authoritative baseline.
-- [x] Update `docs/CURRENT_STATE.md` with the verified reconstruction evidence and exact external input required to proceed.
+- [x] Implement `FishingContext`, `SpeciesProfile`, canonical rarity, and compatibility-ready eligibility/environment boundaries.
+- [x] Implement `SpeciesSelectionService` and rarity-aware Fishing Luck.
+- [x] Implement canonical immutable `SpecimenData`, deterministic base generation, and direct lognormal percentile/quantile math.
+- [x] Implement normalized Strength/Tempo, catch-zone math, external clamps, and percentile fight scaling.
+- [x] Add deterministic unit tests for the pure V2 mechanics.
+- [x] Verify the existing V2 deterministic suite at 17 of 17 passing tests.
 
-## Blocked until Phase 0 and runtime integration are green
+## Current slice - runtime integrate steps 1 through 4
 
-- [ ] Step 5: Body Type.
-- [ ] Step 6: independent Condition and Pigmentation axes.
-- [ ] Step 7: Trait Luck, rarity compensation, and per-species Momentum.
-- [ ] Step 8: Perfect Catch rewards and percentile-based Perfect Specimen.
-- [ ] Step 9: FishScore V2 and frozen linear anchors.
-- [ ] Step 10: deterministic, idempotent legacy migration and score recalculation.
-- [ ] Step 11: persistence, Satchel, Journal, records, history, teams, UI, and network integration.
-- [ ] Step 12: gear and Leviathan Bait progression.
-- [ ] Step 13: compatibility SpeciesProfiles for every actually supported Tide/compatibility fish.
-- [ ] Step 14: remove dead legacy code after all callers and data are migrated.
-- [ ] Step 15: complete documentation, tests, runtime smoke checks, migration rebuild validation, optional-mod absence safety, and release validation.
+- [ ] Add a Tide-to-V2 species adapter that produces canonical `SpeciesProfile` data without inventing unsupported fish.
+- [ ] Build one server-owned canonical `FishingContext` for each catch attempt.
+- [ ] Integrate `SpeciesSelectionService` into the actual Tide fish-species pool while preserving Tide's overall fish/non-fish category probability.
+- [ ] Preserve current eligibility, location, biome, dimension, weather, time, bait, and compatibility restrictions while translating them into the V2 boundary.
+- [ ] Remove affected legacy `selection_quality` species-selection behavior only after V2 owns the migrated caller.
+- [ ] Generate the base canonical specimen once with `SpecimenGenerator` and prevent downstream natural percentile/length rerolls.
+- [ ] Persist/bridge canonical specimen identity into the reconstructed 1.3.57 item/component path.
+- [ ] Feed canonical percentile/size into the existing Tide minigame path.
+- [ ] Feed `FightProfileService` Strength, Tempo, catch-zone area, and behavior into the existing minigame without redesigning its interaction model.
+- [ ] Preserve the existing marker, catch region, behavior, center-zone Perfect Catch skill check, Steel Leader, bait, rod, and compatibility hooks unless the specification explicitly replaces them later.
+- [ ] Add deterministic adapter, integration, and serialization round-trip tests.
+- [ ] Run the relevant tests after each integration slice.
+- [ ] Run the full repository build after steps 1 through 4 are runtime-integrated.
+- [ ] Remove superseded legacy rarity, sampled percentile, size, and fight calculations after all callers migrate.
+
+## Step 5 - Body Type
+
+- [ ] Implement independent `Normal`, `Giant`, and `Dwarf` Body Type generation using the frozen 5% event model and percentile bias.
+- [ ] Implement Giant final-size multiplier 1.10 to 1.30 and Dwarf multiplier 0.60 to 0.82.
+- [ ] Apply Giant fight modifiers Strength 1.08 and Tempo 0.95.
+- [ ] Apply Dwarf fight modifiers Strength 0.92 and Tempo 1.08.
+- [ ] Ensure Body Type uses the canonical specimen seed and never rerolls natural percentile.
+- [ ] Add deterministic seeded Body Type tests.
+
+## Step 6 - independent trait axes
+
+- [ ] Separate Condition from Body Type.
+- [ ] Implement Condition event 5% with Scarred 65% and Parasite-Ridden 35%.
+- [ ] Add independent Pigmentation axis with event 1.5%, Albino 70%, Iridescent 30%.
+- [ ] Keep Specimen Quality independent from Body Type, Condition, and Pigmentation.
+- [ ] Prove compatible traits can stack and incompatible combinations are rejected deterministically.
+- [ ] Add deterministic seeded tests for every axis.
+
+## Step 7 - Trait Luck, rarity compensation, Momentum
+
+- [ ] Implement rarity trait compensation multipliers: 1★ 1.00, 2★ 1.15, 3★ 1.40, 4★ 1.80, 5★ 2.40.
+- [ ] Implement exact Trait Luck formula `P' = 1 - (1-P)^(1 + T/10)`.
+- [ ] Keep Fishing Luck and Trait Luck mechanically separate.
+- [ ] Implement per-species persisted Trait Momentum, approximately +1 temporary Trait Luck after a fully normal catch, capped around 15, substantially reduced after notable traits.
+- [ ] Add deterministic probability, cap, persistence, and species-isolation tests.
+
+## Step 8 - Perfect Catch and Perfect Specimen
+
+- [ ] Preserve the existing center-zone Perfect Catch skill check.
+- [ ] Remove the old post-fight percentile/length rewrite from `PerfectCatchTraitBoost` after callers migrate.
+- [ ] Make Perfect Catch grant +10 temporary Trait Luck.
+- [ ] Make Perfect Catch multiply Body Type event chance by 1.25.
+- [ ] Give Perfect Catch a substantial Perfect Specimen bonus without forcing it.
+- [ ] Implement Perfect Specimen percentile curve: below 95 = 0%, 95 = 2%, 97.5 = 8%, 99 = 25%, 99.9+ = 60%, smooth interpolation between anchors.
+- [ ] Add deterministic curve and Perfect Catch interaction tests.
+
+## Step 9 - FishScore V2
+
+- [ ] Implement raw score as Species + Specimen + Traits.
+- [ ] Implement species points 50/100/175/250/350 for 1 through 5 stars.
+- [ ] Implement specimen points `3 * finalPercentile`.
+- [ ] Implement frozen trait bonuses: Scarred +20, Parasite +35, Giant +40, Dwarf +40, Albino +70, Iridescent +100, Perfect +100.
+- [ ] Implement canonical linear normalization `round(1 + 2999 * normalized)` clamped to 1 through 3000.
+- [ ] Prove canonical minimum Incandescent Larva = 1.
+- [ ] Prove canonical maximum Dragon Fish at P100 with best compatible trait combination = 3000.
+- [ ] Prove intermediate mapping is linear.
+- [ ] Add deterministic scoring tests.
+
+## Migration, progression, compatibility, cleanup
+
+- [ ] Implement deterministic, idempotent legacy migration and score recalculation.
+- [ ] Make canonical `SpecimenData` authoritative across persistence, Satchel, Journal, records, history, teams, UI, and networking.
+- [ ] Integrate gear into the canonical context/fight pipeline.
+- [ ] Rework Leviathan Bait to fish-only catches, +15 Fishing Luck, substantial Trait Luck, Strength 1.15, Tempo 1.15, with old `selection_quality` behavior removed.
+- [ ] Build compatibility SpeciesProfiles for every actually supported Tide/compatibility fish.
+- [ ] Remove dead legacy code only after all callers and stored data are migrated.
+- [ ] Complete runtime smoke tests, migration rebuild validation, optional-mod absence safety, documentation, and release validation.
+- [ ] Finish with `./gradlew build` green.
