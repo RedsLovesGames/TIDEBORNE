@@ -95,7 +95,7 @@ A focused search of the migrated runtime path found no remaining duplicate speci
 
 ## Deterministic trait RNG splitting
 
-A stateless V2 `TraitRandom` utility is now defined inside the Fishing System 2.0 package for all future specimen trait axes.
+A stateless V2 `TraitRandom` utility is defined inside the Fishing System 2.0 package for specimen trait axes.
 
 The utility:
 
@@ -106,21 +106,35 @@ The utility:
 - keeps event and variant decisions on separate salts
 - guarantees that evaluating or adding an unrelated future salt does not consume state or shift existing outcomes
 
-Body Type itself is still not implemented in this slice.
+## Step 5 Body Type probability selection
+
+The pure V2 `BodyTypeGenerator` now implements only the Body Type probability-selection slice.
+
+Frozen behavior in this slice:
+
+- canonical values are `NORMAL`, `GIANT`, and `DWARF`
+- the Body Type event probability is exactly 5%; a failed event returns `NORMAL`
+- the event and variant decisions use the reserved `TraitRandom.Salts.BODY_TYPE_EVENT` and `BODY_TYPE_VARIANT` streams
+- after an event, Giant probability is `0.25 + 0.50 * (naturalPercentile / 100.0)`
+- Giant therefore rises smoothly from 25% of Body Type events at P0 to 75% at P100, with 50% at P50
+- there is no hard percentile threshold; Giant remains possible at low percentile and Dwarf remains possible at high percentile
+- Body Type selection does not consume or depend on Condition or Pigmentation random streams
+
+This slice intentionally does not apply Giant/Dwarf physical-size multipliers or fight modifiers and does not yet wire Body Type selection into downstream catch finalization.
+
+Deterministic tests cover exact 5% configuration, repeatability, approximately 5% sampled event frequency, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, and independence from other trait streams.
 
 ## Current execution gate
 
-Steps 1 through 4 are runtime-integrated and green, and deterministic trait RNG splitting is in place. Do not redo reconstruction or broaden cleanup before the next frozen slice.
+Steps 1 through 4 are runtime-integrated and green, deterministic trait RNG splitting is in place, and the isolated Body Type selection service is implemented.
 
-The exact next implementation slice is Step 5: Body Type, using `TraitRandom` and its reserved Body Type salts.
-
-Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 until the preceding frozen slices are complete.
+Do not begin Condition, Pigmentation, Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 in this slice. Giant/Dwarf physical-size and fight modifiers remain pending Step 5 work after this isolated probability-selection stage.
 
 ## Later frozen slices
 
 Execute in this order:
 
-1. Body Type
+1. finish Body Type physical-size/fight integration
 2. independent Condition and Pigmentation axes
 3. Trait Luck, rarity compensation, and per-species Momentum
 4. Perfect Catch redesign and percentile-based Perfect Specimen

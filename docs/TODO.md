@@ -58,16 +58,17 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Prove different salts produce independent deterministic values.
 - [x] Prove call order and unrelated future salts cannot shift existing outcomes.
 - [x] Prove generated unit doubles remain inside valid bounds.
-- [ ] Body Type itself remains intentionally unimplemented until the next slice.
+- [x] Implement the isolated Body Type probability-selection service using the reserved Body Type streams.
 
 ## Step 5 - Body Type
 
-- [ ] Implement independent `Normal`, `Giant`, and `Dwarf` Body Type generation using the frozen 5% event model and percentile bias.
+- [x] Implement independent `NORMAL`, `GIANT`, and `DWARF` Body Type selection using the frozen 5% event model and smooth percentile bias.
 - [ ] Implement Giant final-size multiplier 1.10 to 1.30 and Dwarf multiplier 0.60 to 0.82.
 - [ ] Apply Giant fight modifiers Strength 1.08 and Tempo 0.95.
 - [ ] Apply Dwarf fight modifiers Strength 0.92 and Tempo 1.08.
-- [ ] Ensure Body Type uses the canonical specimen seed and never rerolls natural percentile.
-- [ ] Add deterministic seeded Body Type tests.
+- [x] Ensure Body Type selection uses the canonical specimen seed and never rerolls natural percentile.
+- [x] Add deterministic seeded Body Type probability tests, including event rate, percentile bias, endpoint possibility, P50 balance, and trait-stream independence.
+- [ ] Wire selected Body Type into canonical specimen finalization when the physical-size/fight integration slice is implemented.
 
 ## Step 6 - independent trait axes
 
