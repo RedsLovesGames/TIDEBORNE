@@ -31,9 +31,24 @@ public final class TideSpeciesProfileAdapter {
             return Optional.empty();
         }
 
+        return Optional.of(new Candidate(data, profile(data, encounterWeight)));
+    }
+
+    /**
+     * Builds the stable species profile needed to migrate an already-existing fish stack.
+     * Migration deliberately ignores current biome, weather, bait, luck, and other encounter context.
+     */
+    public SpeciesProfile adaptForMigration(FishData data) {
+        if (data == null) {
+            throw new IllegalArgumentException("fish data is required for migration");
+        }
+        return profile(data, 1.0);
+    }
+
+    private static SpeciesProfile profile(FishData data, double encounterWeight) {
         Item fishItem = (Item) data.fish().value();
         String speciesId = Registries.ITEM.getId(fishItem).toString();
-        SpeciesProfile profile = new SpeciesProfile(
+        return new SpeciesProfile(
                 speciesId,
                 CanonicalRarity.fromStars(data.profile().rarity().getNumStars()),
                 encounterWeight,
@@ -46,7 +61,6 @@ public final class TideSpeciesProfileAdapter {
                 Set.of(),
                 Map.of()
         );
-        return Optional.of(new Candidate(data, profile));
     }
 
     /**
