@@ -201,6 +201,94 @@ def rewrite(path: Path, text: str) -> str:
             "   private static int inspect(ServerCommandSource source) throws CommandSyntaxException {",
             replacement,
         )
+        text = text.replace(
+            '''      ensureSeed(held, source);
+      lengthCm = TraitAxesRuntime.applyCurrentPhysicalEffects(held, lengthCm, CatchTraitService.INSTANCE.config());
+      TideItemData.FISH_LENGTH.set(held, lengthCm);
+      held.set(TideTraitsComponents.SIZE_PERCENTILE, actualPercent);
+''',
+            '''      ensureSeed(held, source);
+      lengthCm = TraitAxesRuntime.applyCurrentPhysicalEffects(held, lengthCm, CatchTraitService.INSTANCE.config());
+      final double physicalLengthCm = lengthCm;
+      TideItemData.FISH_LENGTH.set(held, physicalLengthCm);
+      held.set(TideTraitsComponents.SIZE_PERCENTILE, actualPercent);
+''',
+        )
+        text = text.replace(
+            '''               descriptor.canonicalSpeciesId(),
+               normalized,
+               lengthCm,
+               actualPercent,
+''',
+            '''               descriptor.canonicalSpeciesId(),
+               normalized,
+               physicalLengthCm,
+               actualPercent,
+''',
+        )
+        text = text.replace(
+            '''      applied = TraitAxesRuntime.finishAdminEdit(held, newMutation, clearing, applied, CatchTraitService.INSTANCE.config());
+      held.set(TideTraitsComponents.MUTATION, TraitAxesRuntime.conditionForEdit(held, newMutation, clearing));
+      held.set(TideTraitsComponents.MUTATION_SEED, seed);
+      if (applied.percentile().isPresent()) {
+         held.set(TideTraitsComponents.SIZE_PERCENTILE, applied.percentile().getAsDouble());
+      } else {
+         held.remove(TideTraitsComponents.SIZE_PERCENTILE);
+      }
+
+      if (Double.isFinite(applied.finalPhysicalLengthCm()) && applied.finalPhysicalLengthCm() > 0.0) {
+         TideItemData.FISH_LENGTH.set(held, applied.finalPhysicalLengthCm());
+      }
+
+      String verb = clearing ? "Cleared" : "Set";
+      source.sendFeedback(
+         () -> Text.literal(
+            String.format(
+               Locale.ROOT,
+               "%s %s trait to %s (identity seed %d, coherent length %.3f cm%s).",
+               verb,
+               descriptor.canonicalSpeciesId(),
+               newMutation.serializedName(),
+               seed,
+               applied.finalPhysicalLengthCm(),
+               applied.percentile().isPresent() ? String.format(Locale.ROOT, ", percentile %.4f%%", applied.percentile().getAsDouble()) : ", no Tide SizeData"
+            )
+         ),
+         false
+      );
+''',
+            '''      applied = TraitAxesRuntime.finishAdminEdit(held, newMutation, clearing, applied, CatchTraitService.INSTANCE.config());
+      final SpecimenSizeService.AppliedSize finalApplied = applied;
+      held.set(TideTraitsComponents.MUTATION, TraitAxesRuntime.conditionForEdit(held, newMutation, clearing));
+      held.set(TideTraitsComponents.MUTATION_SEED, seed);
+      if (finalApplied.percentile().isPresent()) {
+         held.set(TideTraitsComponents.SIZE_PERCENTILE, finalApplied.percentile().getAsDouble());
+      } else {
+         held.remove(TideTraitsComponents.SIZE_PERCENTILE);
+      }
+
+      if (Double.isFinite(finalApplied.finalPhysicalLengthCm()) && finalApplied.finalPhysicalLengthCm() > 0.0) {
+         TideItemData.FISH_LENGTH.set(held, finalApplied.finalPhysicalLengthCm());
+      }
+
+      String verb = clearing ? "Cleared" : "Set";
+      source.sendFeedback(
+         () -> Text.literal(
+            String.format(
+               Locale.ROOT,
+               "%s %s trait to %s (identity seed %d, coherent length %.3f cm%s).",
+               verb,
+               descriptor.canonicalSpeciesId(),
+               newMutation.serializedName(),
+               seed,
+               finalApplied.finalPhysicalLengthCm(),
+               finalApplied.percentile().isPresent() ? String.format(Locale.ROOT, ", percentile %.4f%%", finalApplied.percentile().getAsDouble()) : ", no Tide SizeData"
+            )
+         ),
+         false
+      );
+''',
+        )
 
     return text
 
