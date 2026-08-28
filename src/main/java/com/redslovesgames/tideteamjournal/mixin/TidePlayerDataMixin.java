@@ -36,7 +36,7 @@ abstract class TidePlayerDataMixin {
 
    @Inject(method = "syncTo", at = @At("HEAD"), cancellable = true)
    private void tideTeamJournal$saveTeamData(ServerPlayerEntity player, CallbackInfo callback) {
-      if (TeamJournalService.saveAndSync((TidePlayerData)this, player)) {
+      if (TeamJournalService.saveAndSync((TidePlayerData)(Object)this, player)) {
          callback.cancel();
       }
    }
@@ -44,13 +44,13 @@ abstract class TidePlayerDataMixin {
    @Inject(method = "logCatch", at = @At("HEAD"))
    private void tideTeamJournal$snapshotBeforeCatch(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo callback) {
       TeamProgressStore.tideborneBeginCatch(stack);
-      this.tideTeamJournal$beforeCatchData = new TidePlayerData(((TidePlayerData)this).getAsTag());
+      this.tideTeamJournal$beforeCatchData = new TidePlayerData(((TidePlayerData)(Object)this).getAsTag());
    }
 
    @Inject(method = "logCatch", at = @At("TAIL"))
    private void tideTeamJournal$captureRecordOwner(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo callback) {
       TeamJournalService.captureCatch(
-         this.tideTeamJournal$beforeCatchData == null ? new TidePlayerData() : this.tideTeamJournal$beforeCatchData, (TidePlayerData)this, player
+         this.tideTeamJournal$beforeCatchData == null ? new TidePlayerData() : this.tideTeamJournal$beforeCatchData, (TidePlayerData)(Object)this, player
       );
       this.tideTeamJournal$beforeCatchData = null;
       TeamProgressStore.tideborneClearCatch();

@@ -23,13 +23,13 @@ public record FishDescriptor(Identifier canonicalSpeciesId, Item item, FishData 
 
    public static FishDescriptor fromFishData(FishData data) {
       Objects.requireNonNull(data, "data");
-      FishData canonical = FishData.get((Item)data.fish().comp_349()).orElse(data);
+      FishData canonical = FishData.get((Item)data.fish().value()).orElse(data);
       return fromCanonicalData(canonical);
    }
 
    static FishDescriptor fromCanonicalData(FishData canonical) {
       Objects.requireNonNull(canonical, "canonical");
-      Item canonicalItem = (Item)canonical.fish().comp_349();
+      Item canonicalItem = (Item)canonical.fish().value();
       Identifier canonicalId = Registries.ITEM.getId(canonicalItem);
       return new FishDescriptor(canonicalId, canonicalItem, canonical, canonical.size());
    }

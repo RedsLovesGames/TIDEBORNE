@@ -256,7 +256,7 @@ public final class RecordHolderStore {
    }
 
    private static String key(RegistryEntry<Item> item) {
-      return Registries.ITEM.getId((Item)item.comp_349()).toString();
+      return Registries.ITEM.getId((Item)item.value()).toString();
    }
 
    private static void copyHolder(NbtCompound source, NbtCompound target, boolean largest, UUID fallbackId, String fallbackName) {

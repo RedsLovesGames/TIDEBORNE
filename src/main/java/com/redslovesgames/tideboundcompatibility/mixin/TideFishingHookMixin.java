@@ -63,7 +63,7 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
       remap = false
    )
    private CatchResult tidebound$selectLeviathanFishOnly(TideFishingManager manager, FishingContext context, ItemStack rod) {
-      TideFishingHook hook = (TideFishingHook)this;
+      TideFishingHook hook = (TideFishingHook)(Object)this;
       this.tidebound$leviathanFishOnlyRoll = LeviathanBaitFishing.isEnabledFor(hook, TideboundConfig.get());
       return LeviathanBaitFishing.selectCatch(manager, hook, context);
    }
@@ -82,7 +82,7 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
    @Inject(method = "retrieve(Z)V", at = @At("RETURN"), remap = false)
    private void tidebound$clearLeviathanCatchOnRetrieve(boolean perfectCatch, CallbackInfo callback) {
       if (perfectCatch) {
-         PerfectCatchTraitBoost.apply(((TideFishingHook)this).getHookedItems());
+         PerfectCatchTraitBoost.apply(((TideFishingHook)(Object)this).getHookedItems());
       }
 
       this.tidebound$leviathanFishSelected = false;
@@ -91,12 +91,12 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
 
    @Inject(method = "selectCatch", at = @At("RETURN"), remap = false)
    private void tidebound$createInitialFishingScent(ItemStack rod, CallbackInfo callback) {
-      SharkScentManager.onCatchSelected((TideFishingHook)this);
+      SharkScentManager.onCatchSelected((TideFishingHook)(Object)this);
    }
 
    @Inject(method = "tick", at = @At("TAIL"))
    private void tidebound$pulseFishingScent(CallbackInfo callback) {
-      TideFishingHook hook = (TideFishingHook)this;
+      TideFishingHook hook = (TideFishingHook)(Object)this;
       if (!hook.getWorld().isClient() && hook.age % 40 == 0) {
          SharkScentManager.pulseFishingHook(hook);
       }
@@ -104,7 +104,7 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
 
    @Inject(target = @Desc(value = "retrieve", ret = int.class, args = {ItemStack.class, ServerWorld.class, PlayerEntity.class}), at = @At("HEAD"), remap = false)
    private void tidebound$rollAbstractSharkCatchLoss(ItemStack rod, ServerWorld level, PlayerEntity player, CallbackInfoReturnable<Integer> callback) {
-      TideFishingHook hook = (TideFishingHook)this;
+      TideFishingHook hook = (TideFishingHook)(Object)this;
       TideboundConfig.Values config = TideboundConfig.get();
       if (TideboundCompatibility.isApexIntegrationActive()
          && config.enableSharkCatchLoss

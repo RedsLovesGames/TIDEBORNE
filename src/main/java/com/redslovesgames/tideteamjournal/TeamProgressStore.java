@@ -230,7 +230,7 @@ public final class TeamProgressStore {
 
       for (Entry<RegistryEntry<Item>, FishPlayerData> entry : journal.fishPlayerData.entrySet()) {
          FishPlayerData data = entry.getValue();
-         if (data.isUnlocked && FishData.get((Item)entry.getKey().comp_349()).<Boolean>map(FishData::hasJournalEntry).orElse(false)) {
+         if (data.isUnlocked && FishData.get((Item)entry.getKey().value()).<Boolean>map(FishData::hasJournalEntry).orElse(false)) {
             discovered++;
          }
 
@@ -385,7 +385,7 @@ public final class TeamProgressStore {
    }
 
    private static String key(RegistryEntry<Item> item) {
-      return Registries.ITEM.getId((Item)item.comp_349()).toString();
+      return Registries.ITEM.getId((Item)item.value()).toString();
    }
 
    private static int saturatedAdd(int first, int second) {

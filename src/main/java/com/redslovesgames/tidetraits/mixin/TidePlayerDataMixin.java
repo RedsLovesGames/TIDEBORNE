@@ -34,7 +34,7 @@ public abstract class TidePlayerDataMixin {
    @Inject(method = "logCatch", at = @At("HEAD"))
    private void tideTraits$finalizeBeforeNativeLog(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo ci) {
       CatchTraitService.INSTANCE.ensureAssignedBeforeLog(stack, player.getRandom());
-      TidePlayerData self = (TidePlayerData)this;
+      TidePlayerData self = (TidePlayerData)(Object)this;
       TIDE_TRAITS$CATCH_CONTEXT.set(PersonalTideJournal.prepareCatch(self, stack, player));
    }
 

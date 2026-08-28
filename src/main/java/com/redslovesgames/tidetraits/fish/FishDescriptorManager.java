@@ -41,7 +41,7 @@ public final class FishDescriptorManager {
       LinkedHashMap<Identifier, FishDescriptor> rebuilt = new LinkedHashMap<>();
 
       for (FishData canonical : SnapshotParentResolver.resolve(
-         entries, entry -> (Item)entry.fish().comp_349(), entry -> entry.parent().map(parent -> (Item)parent.comp_349())
+         entries, entry -> (Item)entry.fish().value(), entry -> entry.parent().map(parent -> (Item)parent.value())
       )) {
          FishDescriptor descriptor = FishDescriptor.fromCanonicalData(canonical);
          rebuilt.putIfAbsent(descriptor.canonicalSpeciesId(), descriptor);

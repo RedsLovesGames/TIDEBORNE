@@ -48,13 +48,13 @@ public abstract class TideFishingHookMixin {
 
    @Inject(method = "selectCatch", at = @At("TAIL"))
    private void tideTraits$assignSelectedCatch(ItemStack rod, CallbackInfo ci) {
-      TideFishingHook hook = (TideFishingHook)this;
+      TideFishingHook hook = (TideFishingHook)(Object)this;
       this.hookedItems = CatchTraitService.INSTANCE.individualizeNewCatches(hook.getHookedItems(), hook.getRandom());
    }
 
    @Inject(method = "replacePrimaryCatch", at = @At("TAIL"))
    private void tideTraits$assignReplacement(ItemStack stack, CallbackInfo ci) {
-      TideFishingHook hook = (TideFishingHook)this;
+      TideFishingHook hook = (TideFishingHook)(Object)this;
       this.hookedItems = CatchTraitService.INSTANCE.individualizeNewCatches(hook.getHookedItems(), hook.getRandom());
    }
 
@@ -70,7 +70,7 @@ public abstract class TideFishingHookMixin {
       at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z")
    )
    private boolean tideTraits$deferEligibleFishEntity(World level, Entity entity, Operation<Boolean> original) {
-      TideFishingHook hook = (TideFishingHook)this;
+      TideFishingHook hook = (TideFishingHook)(Object)this;
       PlayerEntity owner = hook.getPlayerOwner();
       if (entity instanceof ItemEntity itemEntity
          && owner instanceof ServerPlayerEntity

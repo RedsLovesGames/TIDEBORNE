@@ -28,7 +28,7 @@ abstract class FishingJournalMixin {
    private void tideTeamJournal$addTeamRecordsButton(CallbackInfo callbackInfo) {
       this.tideTeamJournal$teamRecordsButton = null;
       if (ClientConfig.get().showTeamRecordsButton) {
-         Screen screen = (Screen)this;
+         Screen screen = (Screen)(Object)this;
          int bookLeft = (screen.width - 400) / 2;
          int bookTop = (screen.height - 260) / 2;
          this.tideTeamJournal$teamRecordsButton = new TideJournalButton(

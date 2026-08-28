@@ -14,22 +14,22 @@ import net.minecraft.component.ComponentType;
 
 public final class TideTraitsComponents {
    public static final ComponentType<String> MUTATION = register(
-      "mutation", ComponentType.builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
+      "mutation", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
    );
    public static final ComponentType<Long> MUTATION_SEED = register(
-      "mutation_seed", ComponentType.builder().codec(Codec.LONG).packetCodec(PacketCodecs.VAR_LONG).build()
+      "mutation_seed", ComponentType.<Long>builder().codec(Codec.LONG).packetCodec(PacketCodecs.VAR_LONG).build()
    );
    public static final ComponentType<Double> SIZE_PERCENTILE = register(
-      "size_percentile", ComponentType.builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
+      "size_percentile", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
    );
    public static final ComponentType<Boolean> PROTECTED = register(
-      "protected", ComponentType.builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build()
+      "protected", ComponentType.<Boolean>builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build()
    );
    public static final ComponentType<String> BODY_TYPE = register(
-      "body_type", ComponentType.builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
+      "body_type", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
    );
    public static final ComponentType<Boolean> STEEL_LEADER_ATTACHED = register(
-      "steel_leader_attached", ComponentType.builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build()
+      "steel_leader_attached", ComponentType.<Boolean>builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build()
    );
 
    private TideTraitsComponents() {

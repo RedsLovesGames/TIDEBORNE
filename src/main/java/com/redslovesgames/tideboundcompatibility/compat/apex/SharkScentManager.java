@@ -123,7 +123,7 @@ public final class SharkScentManager {
          return 0.0;
       }
 
-      ItemStack stack = new ItemStack((ItemConvertible)data.fish().comp_349());
+      ItemStack stack = new ItemStack((ItemConvertible)data.fish().value());
       return Math.max(0.5, fishScent(stack));
    }
 

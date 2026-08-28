@@ -35,7 +35,7 @@ public abstract class ItemStackMutationTooltipMixin {
       require = 1
    )
    private void tideTraits$appendMutationTooltip(TooltipContext context, PlayerEntity player, TooltipType flag, CallbackInfoReturnable<List<Text>> callback) {
-      ItemStack var5 = (ItemStack)this;
+      ItemStack var5 = (ItemStack)(Object)this;
       double var6 = TeamProgressStore.tideborneFishScore(var5);
       if (var6 >= 0.0) {
          ArrayList var8 = new ArrayList((Collection)callback.getReturnValue());

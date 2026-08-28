@@ -27,7 +27,7 @@ public final class FishingModifiers {
          return original;
       }
 
-      ItemStack fish = new ItemStack((ItemConvertible)data.fish().comp_349());
+      ItemStack fish = new ItemStack((ItemConvertible)data.fish().value());
       double result = original;
       TideboundConfig.Values config = TideboundConfig.get();
       if (config.enableApexCompat && hook.getHook().isOf(TideboundItems.SHARK_TOOTH_HOOK)) {

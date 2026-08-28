@@ -132,7 +132,7 @@ public final class TeamJournalService {
          ItemStack held = player.getMainHandStack();
          TidePlayerData journal = new TidePlayerData(readJournal(context.effectiveTeam()));
          RegistryEntry<Item> fish = held.isEmpty() ? null : journalFish(held);
-         FishPlayerData fishData = fish == null ? null : (FishPlayerData)journal.getDataFor((Item)fish.comp_349()).orElse(null);
+         FishPlayerData fishData = fish == null ? null : (FishPlayerData)journal.getDataFor((Item)fish.value()).orElse(null);
          if (fishData != null
             && !fishData.stats.isEmpty()
             && !((FishStats)fishData.stats.orElseThrow()).isEmpty()
@@ -151,7 +151,7 @@ public final class TeamJournalService {
                      player.getGameProfile().getName(),
                      player.getUuid(),
                      player.getGameProfile().getName(),
-                     Registries.ITEM.getId((Item)fish.comp_349()),
+                     Registries.ITEM.getId((Item)fish.value()),
                      size,
                      player.getServerWorld().getTime(),
                      ServerConfig.get().historyLimit
@@ -205,7 +205,7 @@ public final class TeamJournalService {
                      player.getGameProfile().getName(),
                      target.getUuid(),
                      target.getGameProfile().getName(),
-                     Registries.ITEM.getId((Item)entry.getKey().comp_349()),
+                     Registries.ITEM.getId((Item)entry.getKey().value()),
                      stats.getLargestCatch(),
                      player.getServerWorld().getTime(),
                      ServerConfig.get().historyLimit
@@ -234,7 +234,7 @@ public final class TeamJournalService {
          ItemStack held = player.getMainHandStack();
          TidePlayerData journal = new TidePlayerData(readJournal(context.effectiveTeam()));
          RegistryEntry<Item> fish = held.isEmpty() ? null : journalFish(held);
-         if (fish != null && !journal.getDataFor((Item)fish.comp_349()).flatMap(data -> data.stats).isEmpty()) {
+         if (fish != null && !journal.getDataFor((Item)fish.value()).flatMap(data -> data.stats).isEmpty()) {
             RecordHolderStore.RecordNames names = RecordHolderStore.readRecord(getOrCreateRoot(context.effectiveTeam()), fish);
             syncToOnlineMembers(
                context.effectiveTeam(), player, RecordHolderStore.attachForClient(journal.getAsTag(), getOrCreateRoot(context.effectiveTeam()))
@@ -267,7 +267,7 @@ public final class TeamJournalService {
          ItemStack held = actor.getMainHandStack();
          TidePlayerData journal = new TidePlayerData(readJournal(context.effectiveTeam()));
          RegistryEntry<Item> fish = held.isEmpty() ? null : journalFish(held);
-         FishPlayerData data = fish == null ? null : (FishPlayerData)journal.getDataFor((Item)fish.comp_349()).orElse(null);
+         FishPlayerData data = fish == null ? null : (FishPlayerData)journal.getDataFor((Item)fish.value()).orElse(null);
          if (data != null && !data.stats.isEmpty() && !((FishStats)data.stats.orElseThrow()).isEmpty()) {
             NbtCompound root = getOrCreateRoot(context.effectiveTeam());
             RecordHolderStore.claim(root, fish, largest, target.getUuid(), target.getGameProfile().getName());
@@ -279,7 +279,7 @@ public final class TeamJournalService {
                   actor.getGameProfile().getName(),
                   target.getUuid(),
                   target.getGameProfile().getName(),
-                  Registries.ITEM.getId((Item)fish.comp_349()),
+                  Registries.ITEM.getId((Item)fish.value()),
                   size,
                   actor.getServerWorld().getTime(),
                   ServerConfig.get().historyLimit
@@ -293,7 +293,7 @@ public final class TeamJournalService {
                   "{} assigned {} {} record to {} on team {}",
                   new Object[]{
                      actor.getGameProfile().getName(),
-                     Registries.ITEM.getId((Item)fish.comp_349()),
+                     Registries.ITEM.getId((Item)fish.value()),
                      largest ? "largest" : "smallest",
                      target.getGameProfile().getName(),
                      context.effectiveTeam().getShortName()

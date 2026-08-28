@@ -68,7 +68,7 @@ public final class PersonalTideJournal {
       if (personalData != null && specimen != null && !specimen.isEmpty()) {
          try {
             return FishData.get(specimen)
-               .flatMap(fish -> personalData.getDataFor((Item)fish.fish().comp_349()))
+               .flatMap(fish -> personalData.getDataFor((Item)fish.fish().value()))
                .flatMap(value -> value.stats)
                .filter(stats -> !stats.isEmpty());
          } catch (RuntimeException | LinkageError failure) {

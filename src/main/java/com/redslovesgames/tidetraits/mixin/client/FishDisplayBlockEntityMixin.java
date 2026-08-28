@@ -22,7 +22,7 @@ public abstract class FishDisplayBlockEntityMixin {
    @Inject(method = "setRenderedEntity", at = @At("HEAD"), require = 0)
    private void tideTraits$copyDisplaySpecimen(Entity renderedEntity, CallbackInfo ci) {
       if (renderedEntity != null) {
-         ItemStack displayStack = ((FishDisplayBlockEntity)this).getDisplayStack();
+         ItemStack displayStack = ((FishDisplayBlockEntity)(Object)this).getDisplayStack();
          if (displayStack != null && !displayStack.isEmpty() && SpecimenTransfer.hasSpecimen(displayStack)) {
             SpecimenTransfer.stackToEntity(displayStack, renderedEntity);
             SpecimenTransfer.markDisplayPreview(renderedEntity);

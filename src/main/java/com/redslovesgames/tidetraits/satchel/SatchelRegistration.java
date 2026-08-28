@@ -21,7 +21,7 @@ public final class SatchelRegistration {
    public static final Identifier STATE_ID = id("satchel_state");
    public static final Identifier ANGLERS_SATCHEL_ID = id("anglers_satchel");
    public static final ComponentType<NbtCompound> SATCHEL_STATE = (ComponentType<NbtCompound>)Registry.register(
-      Registries.DATA_COMPONENT_TYPE, STATE_ID, ComponentType.builder().codec(NbtCompound.CODEC).packetCodec(PacketCodecs.NBT_COMPOUND).build()
+      Registries.DATA_COMPONENT_TYPE, STATE_ID, ComponentType.<NbtCompound>builder().codec(NbtCompound.CODEC).packetCodec(PacketCodecs.NBT_COMPOUND).build()
    );
    public static final Item ANGLERS_SATCHEL = (Item)Registry.register(
       Registries.ITEM,

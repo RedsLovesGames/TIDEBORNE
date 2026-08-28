@@ -24,7 +24,7 @@ public abstract class GuiGraphicsMixin {
       if (ClientConfig.get().showRecordBadges && ClientServerSettings.recordBadgesEnabled) {
          ClientRecordFishMarkers.Status status = ClientRecordFishMarkers.get(stack);
          if (status.isRecord()) {
-            DrawContext graphics = (DrawContext)this;
+            DrawContext graphics = (DrawContext)(Object)this;
             graphics.getMatrices().push();
             graphics.getMatrices().translate(0.0F, 0.0F, 300.0F);
             if (status.largest()) {

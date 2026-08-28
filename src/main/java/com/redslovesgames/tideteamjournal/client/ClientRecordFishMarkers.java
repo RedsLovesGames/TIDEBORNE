@@ -24,7 +24,7 @@ public final class ClientRecordFishMarkers {
          Double length = (Double)TideItemData.FISH_LENGTH.getOptional(stack).orElse(null);
          FishData fish = FishData.get(stack).or(() -> FishData.fromBucket(stack)).orElse(null);
          if (length != null && Double.isFinite(length) && !(length <= 0.0) && fish != null) {
-            FishPlayerData playerData = (FishPlayerData)TidePlayerData.CLIENT_DATA.getDataFor((Item)fish.fish().comp_349()).orElse(null);
+            FishPlayerData playerData = (FishPlayerData)TidePlayerData.CLIENT_DATA.getDataFor((Item)fish.fish().value()).orElse(null);
             FishStats stats = playerData == null ? null : (FishStats)playerData.stats.orElse(null);
             if (stats != null && !stats.isEmpty()) {
                double largest = stats.getLargestCatch();

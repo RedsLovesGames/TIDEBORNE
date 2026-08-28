@@ -46,13 +46,13 @@ public abstract class MobSpecimenMixin implements SpecimenEntity {
 
    @Override
    public NbtCompound tideTraits$getSpecimenTag() {
-      MobEntity self = (MobEntity)this;
+      MobEntity self = (MobEntity)(Object)this;
       return ((NbtCompound)self.getDataTracker().get(TIDE_TRAITS$SPECIMEN)).copy();
    }
 
    @Override
    public void tideTraits$setSpecimenTag(NbtCompound tag) {
-      MobEntity self = (MobEntity)this;
+      MobEntity self = (MobEntity)(Object)this;
       self.getDataTracker().set(TIDE_TRAITS$SPECIMEN, tag == null ? new NbtCompound() : tag.copy());
    }
 }

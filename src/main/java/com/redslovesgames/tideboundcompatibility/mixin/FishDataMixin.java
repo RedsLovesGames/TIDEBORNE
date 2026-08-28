@@ -17,6 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 abstract class FishDataMixin {
    @Inject(method = "weight", at = @At("RETURN"), cancellable = true, remap = false)
    private void tidebound$modifyFishWeight(FishingContext context, CallbackInfoReturnable<Double> callback) {
-      callback.setReturnValue(FishingModifiers.modifyFishWeight((FishData)this, context, (Double)callback.getReturnValue()));
+      callback.setReturnValue(FishingModifiers.modifyFishWeight((FishData)(Object)this, context, (Double)callback.getReturnValue()));
    }
 }
