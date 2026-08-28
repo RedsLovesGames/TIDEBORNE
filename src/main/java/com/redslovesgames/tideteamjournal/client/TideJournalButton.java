@@ -10,16 +10,16 @@ import net.minecraft.text.Text;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ButtonWidget.class_4241;
+import net.minecraft.client.gui.widget.ButtonWidget.PressAction;
 
 public final class TideJournalButton extends ButtonWidget {
    private final BooleanSupplier selected;
 
-   public TideJournalButton(int x, int y, int width, int height, Text message, class_4241 onPress) {
+   public TideJournalButton(int x, int y, int width, int height, Text message, PressAction onPress) {
       this(x, y, width, height, message, onPress, () -> false);
    }
 
-   public TideJournalButton(int x, int y, int width, int height, Text message, class_4241 onPress, BooleanSupplier selected) {
+   public TideJournalButton(int x, int y, int width, int height, Text message, PressAction onPress, BooleanSupplier selected) {
       super(x, y, width, height, message, onPress, DEFAULT_NARRATION_SUPPLIER);
       this.selected = selected;
    }

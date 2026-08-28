@@ -21,12 +21,12 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ClickType;
 import net.minecraft.inventory.StackReference;
-import net.minecraft.item.Item.class_1793;
+import net.minecraft.item.Item.Settings;
 
 public final class AnglersSatchelItem extends Item {
    private static volatile AnglersSatchelItem.ScreenOpener screenOpener = (player, hand, stack) -> false;
 
-   public AnglersSatchelItem(class_1793 properties) {
+   public AnglersSatchelItem(Settings properties) {
       super(properties);
    }
 

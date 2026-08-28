@@ -19,7 +19,7 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.util.math.MatrixStack.class_4665;
+import net.minecraft.client.util.math.MatrixStack.Entry;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,7 +48,7 @@ public abstract class ItemRendererMutationTintMixin {
       if (var11 != null) {
          int[] var12 = maskColor(var10);
          VertexConsumer var13 = var5.getBuffer(RenderLayer.getEntityTranslucent(var11));
-         class_4665 var14 = var4.peek();
+         Entry var14 = var4.peek();
          drawFace(var13, var14, 0.0F, 0.0F, 1.0F, 1.0F, 0.58F, var12, var6, var7, false);
          drawFace(var13, var14, 0.0F, 0.0F, 1.0F, 1.0F, -0.58F, var12, var6, var7, true);
       }
@@ -85,7 +85,7 @@ public abstract class ItemRendererMutationTintMixin {
    }
 
    private static void drawFace(
-      VertexConsumer var0, class_4665 var1, float var2, float var3, float var4, float var5, float var6, int[] var7, int var8, int var9, boolean var10
+      VertexConsumer var0, Entry var1, float var2, float var3, float var4, float var5, float var6, int[] var7, int var8, int var9, boolean var10
    ) {
       if (!var10) {
          vertex(var0, var1, var2, var5, var6, var7, 0.0F, 1.0F, var9, var8, 0.0F, 0.0F, 1.0F);
@@ -102,7 +102,7 @@ public abstract class ItemRendererMutationTintMixin {
 
    private static void vertex(
       VertexConsumer var0,
-      class_4665 var1,
+      Entry var1,
       float var2,
       float var3,
       float var4,

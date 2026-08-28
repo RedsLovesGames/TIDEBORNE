@@ -11,7 +11,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.DataTracker.class_9222;
+import net.minecraft.entity.data.DataTracker.Builder;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,7 +24,7 @@ public abstract class MobSpecimenMixin implements SpecimenEntity {
    private static final TrackedData<NbtCompound> TIDE_TRAITS$SPECIMEN = DataTracker.registerData(MobEntity.class, TrackedDataHandlerRegistry.NBT_COMPOUND);
 
    @Inject(method = "initDataTracker", at = @At("TAIL"))
-   private void tideTraits$defineSpecimenData(class_9222 builder, CallbackInfo ci) {
+   private void tideTraits$defineSpecimenData(Builder builder, CallbackInfo ci) {
       builder.add(TIDE_TRAITS$SPECIMEN, new NbtCompound());
    }
 

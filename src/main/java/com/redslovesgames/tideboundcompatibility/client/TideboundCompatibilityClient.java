@@ -24,7 +24,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
-import net.minecraft.client.toast.SystemToast.class_9037;
+import net.minecraft.client.toast.SystemToast.Type;
 
 public final class TideboundCompatibilityClient implements ClientModInitializer {
    private static final KeyBinding OPEN_GUIDE = KeyBindingHelper.registerKeyBinding(
@@ -46,7 +46,7 @@ public final class TideboundCompatibilityClient implements ClientModInitializer 
          SharkCatchLossPayload.TYPE,
          (payload, context) -> SystemToast.show(
             context.client().getToastManager(),
-            class_9037.PERIODIC_NOTIFICATION,
+            Type.PERIODIC_NOTIFICATION,
             Text.translatable("toast.tidebound_compatibility.catch_lost.title"),
             Text.translatable("toast.tidebound_compatibility.catch_lost.body")
          )

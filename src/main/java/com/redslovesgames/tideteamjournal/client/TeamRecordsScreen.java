@@ -31,7 +31,7 @@ import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.OrderedText;
 import net.minecraft.registry.Registries;
-import net.minecraft.client.gui.widget.ButtonWidget.class_4241;
+import net.minecraft.client.gui.widget.ButtonWidget.PressAction;
 
 public final class TeamRecordsScreen extends Screen {
    private static final int PANEL_WIDTH = 400;
@@ -135,11 +135,11 @@ public final class TeamRecordsScreen extends Screen {
       this.request();
    }
 
-   private TideJournalButton journalButton(int x, int y, int buttonWidth, Text message, class_4241 onPress) {
+   private TideJournalButton journalButton(int x, int y, int buttonWidth, Text message, PressAction onPress) {
       return new TideJournalButton(x, y, buttonWidth, 18, message, onPress);
    }
 
-   private TideJournalButton journalButton(int x, int y, int buttonWidth, Text message, class_4241 onPress, BooleanSupplier selected) {
+   private TideJournalButton journalButton(int x, int y, int buttonWidth, Text message, PressAction onPress, BooleanSupplier selected) {
       return new TideJournalButton(x, y, buttonWidth, 18, message, onPress, selected);
    }
 

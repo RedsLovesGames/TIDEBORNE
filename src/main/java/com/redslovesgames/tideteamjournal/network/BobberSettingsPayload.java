@@ -11,16 +11,16 @@ import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record BobberSettingsPayload(NbtCompound tag) implements CustomPayload {
-   public static final class_9154<BobberSettingsPayload> TYPE = new class_9154(Identifier.of("tide_team_journal", "bobber_settings"));
+   public static final Id<BobberSettingsPayload> TYPE = new Id(Identifier.of("tide_team_journal", "bobber_settings"));
    public static final PacketCodec<RegistryByteBuf, BobberSettingsPayload> CODEC = PacketCodec.ofStatic(
       (buffer, payload) -> buffer.writeNbt(payload.tag),
       buffer -> new BobberSettingsPayload(Objects.requireNonNullElseGet(buffer.readNbt(), NbtCompound::new))
    );
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

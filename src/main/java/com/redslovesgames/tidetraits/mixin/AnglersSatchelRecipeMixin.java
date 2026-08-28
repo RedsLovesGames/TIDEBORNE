@@ -10,7 +10,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.recipe.input.RecipeInput;
-import net.minecraft.registry.RegistryWrapper.class_7874;
+import net.minecraft.registry.RegistryWrapper.WrapperLookup;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -33,26 +33,26 @@ public abstract class AnglersSatchelRecipeMixin {
    }
 
    @Inject(
-      method = "craft(Lnet/minecraft/CraftingRecipeInput;Lnet/minecraft/RegistryWrapper$WrapperLookup;)Lnet/minecraft/ItemStack;",
+      method = "craft(Lnet/minecraft/CraftingRecipeInput;Lnet/minecraft/class_7225$class_7874;)Lnet/minecraft/ItemStack;",
       at = @At("RETURN"),
       cancellable = true,
       remap = false,
       require = 0
    )
-   private void tideborne$preserveSatchelContents(CraftingRecipeInput var1, class_7874 var2, CallbackInfoReturnable<ItemStack> var3) {
+   private void tideborne$preserveSatchelContents(CraftingRecipeInput var1, WrapperLookup var2, CallbackInfoReturnable<ItemStack> var3) {
       if (AnglersSatchelRecipeSupport.isAnglersSatchelRecipe(this) && AnglersSatchelRecipeSupport.validThreeStarRing(var1)) {
          var3.setReturnValue((ItemStack)AnglersSatchelRecipeSupport.convertedOutput(var1, var3.getReturnValue()));
       }
    }
 
    @Inject(
-      method = "craft(Lnet/minecraft/RecipeInput;Lnet/minecraft/RegistryWrapper$WrapperLookup;)Lnet/minecraft/ItemStack;",
+      method = "craft(Lnet/minecraft/RecipeInput;Lnet/minecraft/class_7225$class_7874;)Lnet/minecraft/ItemStack;",
       at = @At("RETURN"),
       cancellable = true,
       remap = false,
       require = 0
    )
-   private void tideborne$preserveSatchelContentsBridge(RecipeInput var1, class_7874 var2, CallbackInfoReturnable<ItemStack> var3) {
+   private void tideborne$preserveSatchelContentsBridge(RecipeInput var1, WrapperLookup var2, CallbackInfoReturnable<ItemStack> var3) {
       if (AnglersSatchelRecipeSupport.isAnglersSatchelRecipe(this) && AnglersSatchelRecipeSupport.validThreeStarRing(var1)) {
          var3.setReturnValue((ItemStack)AnglersSatchelRecipeSupport.convertedOutput(var1, var3.getReturnValue()));
       }

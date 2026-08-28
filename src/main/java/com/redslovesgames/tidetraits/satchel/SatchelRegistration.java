@@ -15,7 +15,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.registry.Registries;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.component.ComponentType;
-import net.minecraft.item.Item.class_1793;
+import net.minecraft.item.Item.Settings;
 
 public final class SatchelRegistration {
    public static final Identifier STATE_ID = id("satchel_state");
@@ -27,7 +27,7 @@ public final class SatchelRegistration {
       Registries.ITEM,
       ANGLERS_SATCHEL_ID,
       new AnglersSatchelItem(
-         new class_1793()
+         new Settings()
             .maxCount(1)
             .component(TideDataComponents.SATCHEL_CONTENTS, new SatchelContents())
             .component(TideDataComponents.FISH_SATCHEL_OPENED, false)

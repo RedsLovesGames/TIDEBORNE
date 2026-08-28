@@ -27,7 +27,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.VertexConsumerProvider.class_4598;
+import net.minecraft.client.render.VertexConsumerProvider.Immediate;
 import org.joml.Quaternionf;
 
 public final class TopFishScreen extends Screen {
@@ -153,7 +153,7 @@ public final class TopFishScreen extends Screen {
                         .rotateY((float)Math.toRadians(var6.yaw()));
                      var10.multiply(var14);
                      EntityRenderDispatcher var15 = var4.getEntityRenderDispatcher();
-                     class_4598 var16 = var4.getBufferBuilders().getEntityVertexConsumers();
+                     Immediate var16 = var4.getBufferBuilders().getEntityVertexConsumers();
                      var15.setRenderShadows(false);
                      var15.render(var8, 0.0, 0.0, 0.0, 0.0F, 0.0F, var10, var16, 15728880);
                      var16.draw();

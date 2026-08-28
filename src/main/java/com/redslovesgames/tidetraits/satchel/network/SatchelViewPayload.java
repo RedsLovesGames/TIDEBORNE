@@ -19,7 +19,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record SatchelViewPayload(SatchelView view) implements CustomPayload {
    private static final int MAX_ID_LENGTH = 32;
@@ -27,7 +27,7 @@ public record SatchelViewPayload(SatchelView view) implements CustomPayload {
    private static final int MAX_FEATURES = 16;
    private static final int MAX_CONTENTS = 512;
    private static final int MAX_PROTECTION_RULES = SatchelProtectionRule.values().length;
-   public static final class_9154<SatchelViewPayload> TYPE = new class_9154(Identifier.of("tide_traits", "anglers_satchel_view"));
+   public static final Id<SatchelViewPayload> TYPE = new Id(Identifier.of("tide_traits", "anglers_satchel_view"));
    public static final PacketCodec<RegistryByteBuf, SatchelViewPayload> STREAM_CODEC = new PacketCodec<RegistryByteBuf, SatchelViewPayload>() {
       public SatchelViewPayload decode(RegistryByteBuf buffer) {
          int protocol = buffer.readVarInt();
@@ -226,7 +226,7 @@ public record SatchelViewPayload(SatchelView view) implements CustomPayload {
       }
    }
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 

@@ -22,7 +22,7 @@ import net.minecraft.client.texture.TextureManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.math.ColorHelper.class_8045;
+import net.minecraft.util.math.ColorHelper.Abgr;
 
 @Environment(EnvType.CLIENT)
 final class MutationTextureCache {
@@ -195,13 +195,13 @@ final class MutationTextureCache {
       for (int y = 0; y < height; y++) {
          for (int x = 0; x < width; x++) {
             int sourcePixel = source.getColor(x, y);
-            int alpha = class_8045.getAlpha(sourcePixel);
+            int alpha = Abgr.getAlpha(sourcePixel);
             if (alpha == 0) {
                result.setColor(x, y, 0);
             } else {
-               int red = class_8045.getRed(sourcePixel);
-               int green = class_8045.getGreen(sourcePixel);
-               int blue = class_8045.getBlue(sourcePixel);
+               int red = Abgr.getRed(sourcePixel);
+               int green = Abgr.getGreen(sourcePixel);
+               int blue = Abgr.getBlue(sourcePixel);
                double maskOpacity = maskCoverage(mask, x, y, width, height, key.maskOffsetX(), key.maskOffsetY());
 
                int transformed = switch (key.mutation()) {
@@ -263,7 +263,7 @@ final class MutationTextureCache {
    }
 
    private static int color(int alpha, double red, double green, double blue) {
-      return class_8045.getAbgr(alpha, clamp(blue), clamp(green), clamp(red));
+      return Abgr.getAbgr(alpha, clamp(blue), clamp(green), clamp(red));
    }
 
    private static double maskCoverage(NativeImage mask, int x, int y, int width, int height, int offsetX, int offsetY) {
@@ -274,7 +274,7 @@ final class MutationTextureCache {
       int maskX = x * mask.getWidth() / width - offsetX;
       int maskY = y * mask.getHeight() / height - offsetY;
       return maskX >= 0 && maskX < mask.getWidth() && maskY >= 0 && maskY < mask.getHeight()
-         ? class_8045.getAlpha(mask.getColor(maskX, maskY)) / 255.0
+         ? Abgr.getAlpha(mask.getColor(maskX, maskY)) / 255.0
          : 0.0;
    }
 

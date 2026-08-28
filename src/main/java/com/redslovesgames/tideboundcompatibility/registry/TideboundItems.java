@@ -17,18 +17,18 @@ import net.minecraft.item.Item;
 import net.minecraft.registry.Registry;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
-import net.minecraft.item.Item.class_1793;
+import net.minecraft.item.Item.Settings;
 
 public final class TideboundItems {
-   public static final Item TENTACLE_LINE = new FishingLineItem(new class_1793().maxCount(1), "item.tidebound_compatibility.tentacle_line.desc");
-   public static final Item SEAFARERS_HOOK = new FishingHookItem(new class_1793().maxCount(1), "item.tidebound_compatibility.seafarers_hook.desc");
-   public static final Item SWIFT_LINE = new FishingLineItem(new class_1793().maxCount(1), "item.tidebound_compatibility.swift_line.desc");
-   public static final TideFishingRodItem KUJIRA_BONE_FISHING_ROD = new KujiraBoneFishingRodItem(3, 512.0, new class_1793());
-   public static final Item LEVIATHAN_BAIT = new Item(new class_1793());
-   public static final Item CHUM_BUCKET = new ChumBucketItem(new class_1793().maxCount(1));
-   public static final Item STEEL_LEADER = new FishingLineItem(new class_1793().maxCount(1), "item.tidebound_compatibility.steel_leader.desc");
-   public static final Item SHARK_TOOTH = new Item(new class_1793());
-   public static final Item SHARK_TOOTH_HOOK = new FishingHookItem(new class_1793().maxCount(1), "item.tidebound_compatibility.shark_tooth_hook.desc");
+   public static final Item TENTACLE_LINE = new FishingLineItem(new Settings().maxCount(1), "item.tidebound_compatibility.tentacle_line.desc");
+   public static final Item SEAFARERS_HOOK = new FishingHookItem(new Settings().maxCount(1), "item.tidebound_compatibility.seafarers_hook.desc");
+   public static final Item SWIFT_LINE = new FishingLineItem(new Settings().maxCount(1), "item.tidebound_compatibility.swift_line.desc");
+   public static final TideFishingRodItem KUJIRA_BONE_FISHING_ROD = new KujiraBoneFishingRodItem(3, 512.0, new Settings());
+   public static final Item LEVIATHAN_BAIT = new Item(new Settings());
+   public static final Item CHUM_BUCKET = new ChumBucketItem(new Settings().maxCount(1));
+   public static final Item STEEL_LEADER = new FishingLineItem(new Settings().maxCount(1), "item.tidebound_compatibility.steel_leader.desc");
+   public static final Item SHARK_TOOTH = new Item(new Settings());
+   public static final Item SHARK_TOOTH_HOOK = new FishingHookItem(new Settings().maxCount(1), "item.tidebound_compatibility.shark_tooth_hook.desc");
 
    private TideboundItems() {
    }

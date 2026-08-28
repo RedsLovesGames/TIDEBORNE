@@ -16,7 +16,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record SatchelRequestPayload(
    int protocolVersion,
@@ -31,7 +31,7 @@ public record SatchelRequestPayload(
    public static final int PROTOCOL_VERSION = 2;
    public static final int MAX_SORT_RULES = 6;
    private static final int MAX_ID_LENGTH = 32;
-   public static final class_9154<SatchelRequestPayload> TYPE = new class_9154(Identifier.of("tide_traits", "anglers_satchel_request"));
+   public static final Id<SatchelRequestPayload> TYPE = new Id(Identifier.of("tide_traits", "anglers_satchel_request"));
    public static final PacketCodec<RegistryByteBuf, SatchelRequestPayload> STREAM_CODEC = new PacketCodec<RegistryByteBuf, SatchelRequestPayload>() {
       public SatchelRequestPayload decode(RegistryByteBuf buffer) {
          int protocol = buffer.readVarInt();
@@ -97,7 +97,7 @@ public record SatchelRequestPayload(
       return new SatchelRequestPayload(2, SatchelRequestPayload.RequestAction.SORT, hand, token, 0, false, "", rules);
    }
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 

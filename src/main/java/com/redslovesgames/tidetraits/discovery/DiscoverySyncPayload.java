@@ -12,10 +12,10 @@ import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record DiscoverySyncPayload(DiscoverySnapshot snapshot) implements CustomPayload {
-   public static final class_9154<DiscoverySyncPayload> TYPE = new class_9154(Identifier.of("tide_traits", "discovery_sync"));
+   public static final Id<DiscoverySyncPayload> TYPE = new Id(Identifier.of("tide_traits", "discovery_sync"));
    private static final PacketCodec<RegistryByteBuf, NbtCompound> TAG_CODEC = PacketCodecs.NBT_COMPOUND.cast();
    public static final PacketCodec<RegistryByteBuf, DiscoverySyncPayload> STREAM_CODEC = PacketCodec.tuple(
       TAG_CODEC, payload -> DiscoveryNbt.encodeSnapshot(payload.snapshot), tag -> new DiscoverySyncPayload(DiscoveryNbt.decodeSnapshot(tag))
@@ -25,7 +25,7 @@ public record DiscoverySyncPayload(DiscoverySnapshot snapshot) implements Custom
       Objects.requireNonNull(snapshot, "snapshot");
    }
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

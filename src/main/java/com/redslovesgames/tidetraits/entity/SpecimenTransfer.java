@@ -16,7 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.registry.RegistryWrapper.class_7874;
+import net.minecraft.registry.RegistryWrapper.WrapperLookup;
 
 public final class SpecimenTransfer {
    public static final String ENTITY_KEY = "TideTraits";
@@ -69,7 +69,7 @@ public final class SpecimenTransfer {
       }
    }
 
-   public static NbtCompound fromStack(ItemStack stack, class_7874 registries) {
+   public static NbtCompound fromStack(ItemStack stack, WrapperLookup registries) {
       NbtCompound tag = fromStack(stack);
       if (!tag.isEmpty() && registries != null) {
          try {
@@ -118,7 +118,7 @@ public final class SpecimenTransfer {
       }
    }
 
-   public static void toStack(NbtCompound source, ItemStack stack, class_7874 registries) {
+   public static void toStack(NbtCompound source, ItemStack stack, WrapperLookup registries) {
       if (source != null && stack != null && !stack.isEmpty()) {
          if (registries != null && source.contains("SourceStack", 10)) {
             try {
@@ -185,7 +185,7 @@ public final class SpecimenTransfer {
       }
    }
 
-   public static void stackToBucket(ItemStack fish, ItemStack bucket, class_7874 registries) {
+   public static void stackToBucket(ItemStack fish, ItemStack bucket, WrapperLookup registries) {
       NbtCompound specimen = fromStack(fish, registries);
       if (!specimen.isEmpty()) {
          NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, bucket, bucketTag -> bucketTag.put("TideTraits", specimen.copy()));

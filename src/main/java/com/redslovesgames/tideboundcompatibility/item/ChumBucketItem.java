@@ -25,10 +25,10 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.registry.tag.BiomeTags;
-import net.minecraft.item.Item.class_1793;
+import net.minecraft.item.Item.Settings;
 
 public final class ChumBucketItem extends Item {
-   public ChumBucketItem(class_1793 properties) {
+   public ChumBucketItem(Settings properties) {
       super(properties);
    }
 

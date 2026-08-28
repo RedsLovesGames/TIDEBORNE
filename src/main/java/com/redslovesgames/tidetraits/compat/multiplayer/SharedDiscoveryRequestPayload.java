@@ -9,11 +9,11 @@ import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record SharedDiscoveryRequestPayload(int protocolVersion) implements CustomPayload {
    public static final int CURRENT_PROTOCOL = 1;
-   public static final class_9154<SharedDiscoveryRequestPayload> TYPE = new class_9154(Identifier.of("tide_traits", "shared_discovery_request"));
+   public static final Id<SharedDiscoveryRequestPayload> TYPE = new Id(Identifier.of("tide_traits", "shared_discovery_request"));
    public static final PacketCodec<RegistryByteBuf, SharedDiscoveryRequestPayload> STREAM_CODEC = new PacketCodec<RegistryByteBuf, SharedDiscoveryRequestPayload>() {
       public SharedDiscoveryRequestPayload decode(RegistryByteBuf buffer) {
          return new SharedDiscoveryRequestPayload(buffer.readVarInt());
@@ -28,7 +28,7 @@ public record SharedDiscoveryRequestPayload(int protocolVersion) implements Cust
       return new SharedDiscoveryRequestPayload(1);
    }
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

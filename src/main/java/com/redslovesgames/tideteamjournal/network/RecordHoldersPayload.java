@@ -10,10 +10,10 @@ import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record RecordHoldersPayload(NbtCompound tag) implements CustomPayload {
-   public static final class_9154<RecordHoldersPayload> TYPE = new class_9154(Identifier.of("tide_team_journal", "record_holders"));
+   public static final Id<RecordHoldersPayload> TYPE = new Id(Identifier.of("tide_team_journal", "record_holders"));
    public static final PacketCodec<RegistryByteBuf, RecordHoldersPayload> CODEC = PacketCodec.ofStatic(
       (buffer, payload) -> buffer.writeNbt(payload.tag), buffer -> {
          NbtCompound tag = buffer.readNbt();
@@ -21,7 +21,7 @@ public record RecordHoldersPayload(NbtCompound tag) implements CustomPayload {
       }
    );
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

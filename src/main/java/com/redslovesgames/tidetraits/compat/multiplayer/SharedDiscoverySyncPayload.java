@@ -12,10 +12,10 @@ import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record SharedDiscoverySyncPayload(SharedDiscoverySnapshot snapshot) implements CustomPayload {
-   public static final class_9154<SharedDiscoverySyncPayload> TYPE = new class_9154(Identifier.of("tide_traits", "shared_discovery_sync"));
+   public static final Id<SharedDiscoverySyncPayload> TYPE = new Id(Identifier.of("tide_traits", "shared_discovery_sync"));
    private static final PacketCodec<RegistryByteBuf, NbtCompound> TAG_CODEC = PacketCodecs.NBT_COMPOUND.cast();
    public static final PacketCodec<RegistryByteBuf, SharedDiscoverySyncPayload> STREAM_CODEC = PacketCodec.tuple(
       TAG_CODEC, payload -> SharedDiscoveryNbt.encodePacket(payload.snapshot), tag -> new SharedDiscoverySyncPayload(SharedDiscoveryNbt.decodePacket(tag))
@@ -25,7 +25,7 @@ public record SharedDiscoverySyncPayload(SharedDiscoverySnapshot snapshot) imple
       Objects.requireNonNull(snapshot, "snapshot");
    }
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

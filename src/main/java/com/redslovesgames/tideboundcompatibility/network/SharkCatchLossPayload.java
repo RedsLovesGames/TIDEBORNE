@@ -9,13 +9,13 @@ import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record SharkCatchLossPayload() implements CustomPayload {
-   public static final class_9154<SharkCatchLossPayload> TYPE = new class_9154(TideboundCompatibility.id("shark_catch_loss"));
+   public static final Id<SharkCatchLossPayload> TYPE = new Id(TideboundCompatibility.id("shark_catch_loss"));
    public static final PacketCodec<RegistryByteBuf, SharkCatchLossPayload> CODEC = PacketCodec.unit(new SharkCatchLossPayload());
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

@@ -9,16 +9,16 @@ import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record TideboundSettingsResultPayload(boolean success, String message) implements CustomPayload {
-   public static final class_9154<TideboundSettingsResultPayload> TYPE = new class_9154(TideboundCompatibility.id("settings_result"));
+   public static final Id<TideboundSettingsResultPayload> TYPE = new Id(TideboundCompatibility.id("settings_result"));
    public static final PacketCodec<RegistryByteBuf, TideboundSettingsResultPayload> CODEC = PacketCodec.ofStatic((buffer, payload) -> {
       buffer.writeBoolean(payload.success);
       buffer.writeString(payload.message, 1024);
    }, buffer -> new TideboundSettingsResultPayload(buffer.readBoolean(), buffer.readString(1024)));
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

@@ -9,13 +9,13 @@ import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload.class_9154;
+import net.minecraft.network.packet.CustomPayload.Id;
 
 public record OpenTeamRecordsPayload() implements CustomPayload {
-   public static final class_9154<OpenTeamRecordsPayload> TYPE = new class_9154(Identifier.of("tide_team_journal", "open_team_records"));
+   public static final Id<OpenTeamRecordsPayload> TYPE = new Id(Identifier.of("tide_team_journal", "open_team_records"));
    public static final PacketCodec<RegistryByteBuf, OpenTeamRecordsPayload> CODEC = PacketCodec.unit(new OpenTeamRecordsPayload());
 
-   public class_9154<? extends CustomPayload> getId() {
+   public Id<? extends CustomPayload> getId() {
       return TYPE;
    }
 }

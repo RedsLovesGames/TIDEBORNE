@@ -8,12 +8,12 @@ package com.redslovesgames.tideboundcompatibility.item;
 import com.li64.tide.registries.items.TideFishingRodItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
-import net.minecraft.item.Item.class_1793;
+import net.minecraft.item.Item.Settings;
 
 public final class KujiraBoneFishingRodItem extends TideFishingRodItem {
    private static final Identifier KUJIRA_BONE = Identifier.of("myths_of_the_sea", "bake_kujira_bone");
 
-   public KujiraBoneFishingRodItem(int baitSlots, double durability, class_1793 properties) {
+   public KujiraBoneFishingRodItem(int baitSlots, double durability, Settings properties) {
       super(baitSlots, durability, properties);
    }
 

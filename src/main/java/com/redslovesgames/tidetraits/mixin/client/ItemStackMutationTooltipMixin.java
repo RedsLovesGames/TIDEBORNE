@@ -19,7 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.text.MutableText;
-import net.minecraft.item.Item.class_9635;
+import net.minecraft.item.Item.TooltipContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,12 +29,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ItemStack.class)
 public abstract class ItemStackMutationTooltipMixin {
    @Inject(
-      method = "getTooltip(Lnet/minecraft/Item$TooltipContext;Lnet/minecraft/PlayerEntity;Lnet/minecraft/TooltipType;)Ljava/util/List;",
+      method = "getTooltip(Lnet/minecraft/class_1792$class_9635;Lnet/minecraft/PlayerEntity;Lnet/minecraft/TooltipType;)Ljava/util/List;",
       at = @At("RETURN"),
       cancellable = true,
       require = 1
    )
-   private void tideTraits$appendMutationTooltip(class_9635 context, PlayerEntity player, TooltipType flag, CallbackInfoReturnable<List<Text>> callback) {
+   private void tideTraits$appendMutationTooltip(TooltipContext context, PlayerEntity player, TooltipType flag, CallbackInfoReturnable<List<Text>> callback) {
       ItemStack var5 = (ItemStack)this;
       double var6 = TeamProgressStore.tideborneFishScore(var5);
       if (var6 >= 0.0) {

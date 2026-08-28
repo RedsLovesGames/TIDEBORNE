@@ -42,8 +42,8 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.item.Item.class_9635;
-import net.minecraft.item.tooltip.TooltipType.class_1837;
+import net.minecraft.item.Item.TooltipContext;
+import net.minecraft.item.tooltip.TooltipType.Default;
 
 @Environment(EnvType.CLIENT)
 public final class AnglersSatchelScreen extends Screen {
@@ -510,7 +510,7 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private void renderSpecimenTooltip(DrawContext graphics, ItemStack stack, int mouseX, int mouseY) {
-      List<Text> lines = new ArrayList<>(stack.getTooltip(class_9635.DEFAULT, MinecraftClient.getInstance().player, class_1837.BASIC));
+      List<Text> lines = new ArrayList<>(stack.getTooltip(TooltipContext.DEFAULT, MinecraftClient.getInstance().player, Default.BASIC));
       graphics.drawOrderedTooltip(this.textRenderer, lines.stream().map(Text::asOrderedText).toList(), mouseX, mouseY);
    }
 

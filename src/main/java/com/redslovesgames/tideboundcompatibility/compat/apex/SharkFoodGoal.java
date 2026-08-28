@@ -20,7 +20,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.entity.ai.goal.Goal.class_4134;
+import net.minecraft.entity.ai.goal.Goal.Control;
 
 public final class SharkFoodGoal extends Goal {
    private final GreatWhiteSharkEntity shark;
@@ -30,7 +30,7 @@ public final class SharkFoodGoal extends Goal {
 
    public SharkFoodGoal(GreatWhiteSharkEntity shark) {
       this.shark = shark;
-      this.setControls(EnumSet.of(class_4134.MOVE, class_4134.LOOK));
+      this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
    }
 
    public boolean canStart() {

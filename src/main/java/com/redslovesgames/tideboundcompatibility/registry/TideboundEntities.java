@@ -11,13 +11,13 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.Registries;
-import net.minecraft.entity.EntityType.class_1300;
+import net.minecraft.entity.EntityType.Builder;
 
 public final class TideboundEntities {
    public static final EntityType<ChumProjectileEntity> CHUM_PROJECTILE = (EntityType<ChumProjectileEntity>)Registry.register(
       Registries.ENTITY_TYPE,
       TideboundCompatibility.id("chum_projectile"),
-      class_1300.create(ChumProjectileEntity::new, SpawnGroup.MISC).dimensions(0.25F, 0.25F).maxTrackingRange(4).trackingTickInterval(10).build()
+      Builder.create(ChumProjectileEntity::new, SpawnGroup.MISC).dimensions(0.25F, 0.25F).maxTrackingRange(4).trackingTickInterval(10).build()
    );
 
    private TideboundEntities() {
