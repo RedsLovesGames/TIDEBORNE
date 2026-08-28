@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ItemStack.class)
 public abstract class ItemStackMutationTooltipMixin {
    @Inject(
-      method = "getTooltip(Lnet/minecraft/class_1792$class_9635;Lnet/minecraft/PlayerEntity;Lnet/minecraft/TooltipType;)Ljava/util/List;",
+      method = "getTooltip(Lnet/minecraft/item/Item$TooltipContext;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/item/tooltip/TooltipType;)Ljava/util/List;",
       at = @At("RETURN"),
       cancellable = true,
       require = 1
