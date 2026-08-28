@@ -3,6 +3,7 @@ name: Build Tideborne
 on:
   push:
     branches:
+      - dev
       - main
       - reconstruct-1.3.57
     paths:
