@@ -267,10 +267,21 @@ INTERMEDIARY_TOKEN = re.compile(r"\b(?:class|method|field)_\d+(?:\$\w+)?\b")
 def remap_java_text(text: str, mappings: MappingSet) -> tuple[str, int]:
     replacements = 0
 
+    # Remap both ordinary Java fully-qualified names and JVM internal/slash names.
+    # Mixin descriptors and @At targets embed class names in the latter form, and
+    # leaving those as net/minecraft/class_XXXX before simple-token replacement
+    # produces invalid shortened paths such as net/minecraft/ItemStack.
     for old, new in sorted(mappings.class_fq.items(), key=lambda item: len(item[0]), reverse=True):
         count = text.count(old)
         if count:
             text = text.replace(old, new)
+            replacements += count
+
+        old_slash = old.replace(".", "/")
+        new_slash = new.replace(".", "/")
+        count = text.count(old_slash)
+        if count:
+            text = text.replace(old_slash, new_slash)
             replacements += count
 
     token_map: dict[str, str] = {}
