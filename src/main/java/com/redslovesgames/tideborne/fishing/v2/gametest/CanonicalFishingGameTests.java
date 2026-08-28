@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.CodEntity;
 import net.minecraft.item.ItemStack;
@@ -42,6 +44,8 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         helper.assertTrue(Double.valueOf(specimen.finalLength()).equals(restored.get(TideTraitsComponents.SPECIMEN_FINAL_LENGTH)), "Final length did not survive representation transfer");
         helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.SPECIMEN_BODY_TYPE)), "Canonical Body Type did not survive representation transfer");
         helper.assertTrue("scarred".equals(restored.get(TideTraitsComponents.SPECIMEN_CONDITION)), "Canonical Condition did not survive representation transfer");
+        helper.assertTrue(Double.valueOf(specimen.rawFishScore().orElseThrow()).equals(restored.get(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE)), "Canonical raw FishScore did not survive representation transfer");
+        helper.assertTrue(Integer.valueOf(specimen.fishScore().orElseThrow()).equals(restored.get(TideTraitsComponents.SPECIMEN_FISH_SCORE)), "Canonical normalized FishScore did not survive representation transfer");
         helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.BODY_TYPE)), "Legacy Body Type mirror did not survive representation transfer");
         helper.assertTrue("scarred".equals(restored.get(TideTraitsComponents.MUTATION)), "Legacy Condition mirror did not survive representation transfer");
         helper.assertTrue(Long.valueOf(specimen.deterministicSeed()).equals(restored.get(TideTraitsComponents.MUTATION_SEED)), "Compatibility seed did not survive representation transfer");
@@ -50,19 +54,49 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
     }
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void canonicalFishScoreSurvivesBucketRepresentationRoundTrip(TestContext helper) {
+        SpecimenData specimen = specimen();
+        ItemStack original = new ItemStack(Items.COD);
+        CanonicalSpecimenStorage.write(original, specimen);
+
+        CodEntity first = (CodEntity) helper.spawnEntity(EntityType.COD, new BlockPos(1, 2, 1));
+        SpecimenTransfer.stackToEntity(original, first);
+        ItemStack bucket = new ItemStack(Items.COD_BUCKET);
+        SpecimenTransfer.entityToBucket(first, bucket);
+        NbtComponent bucketData = bucket.get(DataComponentTypes.BUCKET_ENTITY_DATA);
+        helper.assertTrue(bucketData != null, "Canonical specimen bucket data was not written");
+
+        CodEntity second = (CodEntity) helper.spawnEntity(EntityType.COD, new BlockPos(2, 2, 1));
+        SpecimenTransfer.bucketTagToEntity(bucketData.copyNbt(), second);
+        ItemStack restored = new ItemStack(Items.COD);
+        SpecimenTransfer.entityToStack(second, restored);
+
+        helper.assertTrue(Double.valueOf(specimen.rawFishScore().orElseThrow()).equals(restored.get(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE)), "Canonical raw FishScore did not survive bucket transfer");
+        helper.assertTrue(Integer.valueOf(specimen.fishScore().orElseThrow()).equals(restored.get(TideTraitsComponents.SPECIMEN_FISH_SCORE)), "Canonical normalized FishScore did not survive bucket transfer");
+        helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.SPECIMEN_BODY_TYPE)), "Canonical Body Type changed during FishScore bucket transfer");
+        helper.assertTrue("scarred".equals(restored.get(TideTraitsComponents.SPECIMEN_CONDITION)), "Canonical Condition changed during FishScore bucket transfer");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void canonicalBodyTypeSurvivesTransferNbtWithoutReroll(TestContext helper) {
         ItemStack original = new ItemStack(Items.COD);
-        CanonicalSpecimenStorage.write(original, specimen());
+        SpecimenData specimen = specimen();
+        CanonicalSpecimenStorage.write(original, specimen);
 
         NbtCompound transfer = SpecimenTransfer.fromStack(original);
         helper.assertTrue("dwarf".equals(transfer.getString(SpecimenTransfer.CANONICAL_BODY_TYPE_KEY)), "Transfer NBT did not persist canonical Body Type");
         helper.assertTrue("scarred".equals(transfer.getString(SpecimenTransfer.MUTATION_KEY)), "Transfer NBT did not preserve the Condition compatibility mirror");
+        helper.assertTrue(Double.compare(specimen.rawFishScore().orElseThrow(), transfer.getDouble(SpecimenTransfer.CANONICAL_RAW_FISH_SCORE_KEY)) == 0, "Transfer NBT did not persist canonical raw FishScore");
+        helper.assertTrue(specimen.fishScore().orElseThrow() == transfer.getInt(SpecimenTransfer.CANONICAL_FISH_SCORE_KEY), "Transfer NBT did not persist canonical normalized FishScore");
 
         ItemStack restored = new ItemStack(Items.COD);
         SpecimenTransfer.toStack(transfer, restored);
         helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.SPECIMEN_BODY_TYPE)), "Transfer NBT changed canonical Body Type");
         helper.assertTrue("dwarf".equals(restored.get(TideTraitsComponents.BODY_TYPE)), "Transfer NBT did not mirror canonical Body Type for compatibility");
         helper.assertTrue("scarred".equals(restored.get(TideTraitsComponents.MUTATION)), "Transfer NBT changed the Condition compatibility mirror");
+        helper.assertTrue(Double.valueOf(specimen.rawFishScore().orElseThrow()).equals(restored.get(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE)), "Transfer NBT changed canonical raw FishScore");
+        helper.assertTrue(Integer.valueOf(specimen.fishScore().orElseThrow()).equals(restored.get(TideTraitsComponents.SPECIMEN_FISH_SCORE)), "Transfer NBT changed canonical normalized FishScore");
         helper.complete();
     }
 
@@ -124,8 +158,8 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
                 SpecimenData.Pigmentation.NORMAL,
                 SpecimenData.SpecimenQuality.NORMAL,
                 false,
-                OptionalDouble.empty(),
-                OptionalInt.empty(),
+                OptionalDouble.of(587.25),
+                OptionalInt.of(1842),
                 SpecimenData.Provenance.generated()
         );
     }
