@@ -5,10 +5,14 @@
  */
 package com.redslovesgames.tideboundcompatibility.fishing;
 
+import com.li64.tide.Tide;
 import com.li64.tide.data.TideTags.Items;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.fishing.FishingContext;
+import com.li64.tide.registries.TideItems;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
+import com.redslovesgames.tideborne.fishing.v2.FightProfileService;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundTags;
@@ -18,6 +22,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.registry.tag.BiomeTags;
 
 public final class FishingModifiers {
+   private static final FightProfileService CANONICAL_FIGHTS = new FightProfileService();
+
    private FishingModifiers() {
    }
 
@@ -61,6 +67,23 @@ public final class FishingModifiers {
    }
 
    public static FishingModifiers.MinigameValues modifyMinigame(TideFishingHook hook, byte behavior, float area, float speed) {
+      var canonical = CanonicalCatchStateManager.get(hook);
+      if (canonical.isPresent()) {
+         double strength = canonical.get().fightProfile().strength();
+         double tempo = canonical.get().fightProfile().tempo();
+         ItemStack tideLine = hook.getLine();
+         if (tideLine.isOf(TideItems.COPPER_LINE)) tempo *= 0.9;
+         if (tideLine.isOf(TideItems.IRON_LINE)) strength *= 0.86;
+         if (tideLine.isOf(TideItems.GOLDEN_LINE)) tempo *= 0.95;
+         if (tideLine.isOf(TideItems.DIAMOND_LINE)) strength *= 0.75;
+
+         area = (float)CANONICAL_FIGHTS.catchZoneArea(strength);
+         speed = (float)Math.max(
+            FightProfileService.MIN_FINAL_TEMPO,
+            tempo * Tide.SERVER_CONFIG.minigame.minigameDifficultyMultiplier
+         );
+      }
+
       TideboundConfig.Values config = TideboundConfig.get();
       ItemStack line = hook.getLine();
       if (config.enableMythsCompat && line.isOf(TideboundItems.TENTACLE_LINE)) {

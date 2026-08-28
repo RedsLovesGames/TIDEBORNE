@@ -10,6 +10,7 @@ import com.li64.tide.data.fishing.CatchResult;
 import com.li64.tide.data.fishing.FishingContext;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook.CatchType;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
 import com.redslovesgames.tideboundcompatibility.compat.apex.SharkScentManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
@@ -75,6 +76,7 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
 
    @Inject(method = "invalidateCatch", at = @At("HEAD"), remap = false)
    private void tidebound$clearLeviathanCatchOnFailure(CallbackInfo callback) {
+      CanonicalCatchStateManager.clear((TideFishingHook)(Object)this);
       this.tidebound$leviathanFishSelected = false;
       this.tidebound$leviathanFishOnlyRoll = false;
    }
@@ -85,6 +87,7 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
          PerfectCatchTraitBoost.apply(((TideFishingHook)(Object)this).getHookedItems());
       }
 
+      CanonicalCatchStateManager.clear((TideFishingHook)(Object)this);
       this.tidebound$leviathanFishSelected = false;
       this.tidebound$leviathanFishOnlyRoll = false;
    }

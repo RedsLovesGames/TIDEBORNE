@@ -32,6 +32,37 @@ public final class TideTraitsComponents {
       "steel_leader_attached", ComponentType.<Boolean>builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build()
    );
 
+   public static final ComponentType<String> SPECIMEN_SPECIES_ID = register(
+      "specimen_species_id", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
+   );
+   public static final ComponentType<Integer> SPECIMEN_SCHEMA_VERSION = register(
+      "specimen_schema_version", ComponentType.<Integer>builder().codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).build()
+   );
+   public static final ComponentType<Integer> SPECIMEN_GENERATION_VERSION = register(
+      "specimen_generation_version", ComponentType.<Integer>builder().codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).build()
+   );
+   public static final ComponentType<Double> SPECIMEN_BASE_PERCENTILE = register(
+      "specimen_base_percentile", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
+   );
+   public static final ComponentType<Double> SPECIMEN_BASE_LENGTH = register(
+      "specimen_base_length", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
+   );
+   public static final ComponentType<Double> SPECIMEN_FINAL_LENGTH = register(
+      "specimen_final_length", ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build()
+   );
+   public static final ComponentType<String> SPECIMEN_CONDITION = register(
+      "specimen_condition", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
+   );
+   public static final ComponentType<String> SPECIMEN_PIGMENTATION = register(
+      "specimen_pigmentation", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
+   );
+   public static final ComponentType<String> SPECIMEN_QUALITY = register(
+      "specimen_quality", ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build()
+   );
+   public static final ComponentType<Boolean> SPECIMEN_PERFECT_CATCH = register(
+      "specimen_perfect_catch", ComponentType.<Boolean>builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build()
+   );
+
    private TideTraitsComponents() {
    }
 
