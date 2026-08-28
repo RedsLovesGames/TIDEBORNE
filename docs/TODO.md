@@ -63,7 +63,12 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 ## Step 5 - Body Type
 
-- [x] Implement independent `NORMAL`, `GIANT`, and `DWARF` Body Type selection using the frozen 5% event model and smooth percentile bias.
+- [x] Implement independent `NORMAL`, `GIANT`, and `DWARF` Body Type selection using the frozen 5% base event model and smooth percentile bias.
+- [x] Route canonical Body Type event probability through `TraitProbabilityService` in the fixed order: 5% base, species rarity compensation, Trait Luck, final bound.
+- [x] Pass the server-owned `FishingContext.traitLuck()` into canonical specimen generation for Body Type selection.
+- [x] Preserve the existing Body Type event and variant RNG salts and keep Giant/Dwarf percentile bias separate from event probability.
+- [x] Reserve an explicit post-pipeline Body Type event multiplier parameter for the later Perfect Catch 1.25x rule without activating Perfect Catch behavior in this stage.
+- [x] Add statistical Body Type event-rate coverage across multiple rarity and Trait Luck combinations, plus exact shared-pipeline and future-multiplier tests.
 - [x] Implement Giant final-size multiplier 1.10 to 1.30 and Dwarf multiplier 0.60 to 0.82.
 - [x] Apply Giant fight modifiers Strength 1.08 and Tempo 0.95.
 - [x] Apply Dwarf fight modifiers Strength 0.92 and Tempo 1.08.
@@ -116,11 +121,13 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Centralize canonical trait-event probability calculation in `TraitProbabilityService` with fixed order: base probability, canonical species rarity compensation, Trait Luck transform, final bound.
 - [x] Read rarity compensation only from the selected canonical `SpeciesProfile.rarity()` and keep the existing Fishing Luck coefficients separate and unchanged.
 - [x] Keep Fishing Luck and Trait Luck mechanically separate, including a seeded species-selection regression proving Trait Luck does not affect species selection.
-- [x] Keep deterministic trait RNG selection separate from Trait Luck probability calculation; no axis is wired to the service in this slice.
-- [ ] Wire Trait Luck and rarity compensation into the intended trait axes only in its dedicated integration slice.
+- [x] Keep deterministic trait RNG selection separate from Trait Luck probability calculation.
+- [x] Wire Body Type to the shared canonical probability pipeline while leaving its Giant/Dwarf conditional subtype bias and deterministic RNG streams unchanged.
+- [ ] Wire Trait Luck and rarity compensation into the remaining intended trait axes only in their dedicated integration slices.
 - [ ] Implement per-species persisted Trait Momentum, approximately +1 temporary Trait Luck after a fully normal catch, capped around 15, substantially reduced after notable traits.
 - [x] Add pure probability tests for T=0 identity, monotonic positive Trait Luck, valid output range, known numerical cases, exact 0/1 endpoints, probability validation/clamping, and negative/extreme Trait Luck behavior.
 - [x] Add exact rarity multiplier tests for all five canonical rarities plus compensated zero-Trait-Luck and combined Trait Luck cases, including a test that freezes rarity-before-Trait-Luck ordering.
+- [x] Add Body Type statistical event-rate tests for several canonical rarity/Trait Luck combinations and exact tests proving the shared pipeline calculation is used.
 - [ ] Add Momentum cap, persistence, and species-isolation tests when Momentum is implemented.
 
 ## Step 8 - Perfect Catch and Perfect Specimen
