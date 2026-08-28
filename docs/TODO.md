@@ -64,11 +64,11 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 ## Step 5 - Body Type
 
 - [x] Implement independent `NORMAL`, `GIANT`, and `DWARF` Body Type selection using the frozen 5% base event model and smooth percentile bias.
-- [x] Route canonical Body Type event probability through `TraitProbabilityService` in the fixed order: 5% base, species rarity compensation, Trait Luck, final bound.
+- [x] Route canonical Body Type event probability through `TraitProbabilityService` in the fixed order: 5% base, optional axis event multiplier, species rarity compensation, Trait Luck, final bound.
 - [x] Pass the server-owned `FishingContext.traitLuck()` into canonical specimen generation for Body Type selection.
 - [x] Preserve the existing Body Type event and variant RNG salts and keep Giant/Dwarf percentile bias separate from event probability.
-- [x] Reserve an explicit post-pipeline Body Type event multiplier parameter for the later Perfect Catch 1.25x rule without activating Perfect Catch behavior in this stage.
-- [x] Add statistical Body Type event-rate coverage across multiple rarity and Trait Luck combinations, plus exact shared-pipeline and future-multiplier tests.
+- [x] Use the explicit Body Type event multiplier parameter for the Perfect Catch 1.25x rule before rarity compensation and Trait Luck.
+- [x] Add statistical Body Type event-rate coverage across multiple rarity and Trait Luck combinations, plus exact shared-pipeline and multiplier-order tests.
 - [x] Implement Giant final-size multiplier 1.10 to 1.30 and Dwarf multiplier 0.60 to 0.82.
 - [x] Apply Giant fight modifiers Strength 1.08 and Tempo 0.95.
 - [x] Apply Dwarf fight modifiers Strength 0.92 and Tempo 1.08.
@@ -104,7 +104,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Allow Body Type, Condition, and Pigmentation to stack without legacy mutation exclusivity; seed `29894` proves `GIANT + PARASITE_RIDDEN + IRIDESCENT` in full canonical generation.
 - [x] Persist exactly one canonical Pigmentation value and prove legacy catch individualization cannot reroll it.
 - [x] Verify canonical Pigmentation survives item/entity/item representation transfer. Green Pigmentation run: `33165703632` on commit `7fd6181c09ca0e49dd598adf5fbb39d992eb29e3`.
-- [x] Keep runtime generation split explicitly: pre-fight base specimen, Body Type, final physical size, and FightProfile; post-fight Perfect Catch capture, Condition, Pigmentation, then final persistence before delivery.
+- [x] Keep runtime generation split explicitly: pre-fight base specimen, Body Type, final physical size, and FightProfile; post-fight Perfect Catch capture, deterministic Body Type reevaluation when required by Perfect Catch rewards, Condition, Pigmentation, then final persistence before delivery.
 - [x] Keep Body Type, Condition, and Pigmentation server-authoritative in one canonical `SpecimenData`; legacy `CatchTraitService` and `TraitAxesRuntime` remain guarded compatibility fallbacks and do not regenerate canonical axes.
 - [x] Preserve all three canonical axes explicitly in specimen transfer NBT, including snapshot-free fallback restoration, while mirroring Body Type and Condition only to their existing legacy compatibility components.
 - [x] Add GameTests for stacked `GIANT + PARASITE_RIDDEN + IRIDESCENT` specimens through legacy handling and item/entity/bucket/entity/item plus explicit transfer-NBT round trips.
@@ -122,7 +122,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Implement rarity trait compensation multipliers: 1★ 1.00, 2★ 1.15, 3★ 1.40, 4★ 1.80, 5★ 2.40.
 - [x] Implement exact Trait Luck formula `P' = 1 - (1-P)^(1 + T/10)` as the pure `TraitLuckProbabilityService`.
 - [x] Clamp numeric probability inputs to `[0,1]`, reject `NaN` probability, floor Trait Luck at `-10`, treat `NaN` Trait Luck as zero, and safely saturate extreme positive Trait Luck.
-- [x] Centralize canonical trait-event probability calculation in `TraitProbabilityService` with fixed order: base probability, canonical species rarity compensation, Trait Luck transform, final bound.
+- [x] Centralize canonical trait-event probability calculation in `TraitProbabilityService` with fixed order: base probability, optional axis-specific event multiplier, canonical species rarity compensation, Trait Luck transform, final bound.
 - [x] Read rarity compensation only from the selected canonical `SpeciesProfile.rarity()` and keep the existing Fishing Luck coefficients separate and unchanged.
 - [x] Keep Fishing Luck and Trait Luck mechanically separate, including a seeded species-selection regression proving Trait Luck does not affect species selection.
 - [x] Keep deterministic trait RNG selection separate from Trait Luck probability calculation.
@@ -145,14 +145,14 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 ## Step 8 - Perfect Catch and Perfect Specimen
 
 - [x] Preserve Tide's existing center-zone Perfect Catch skill check and consume its server-side `retrieve(perfectCatch)` result without replacing the minigame check.
-- [x] Split canonical runtime generation at the fight boundary: pre-fight identity/Body Type/physical size remain frozen, then Perfect Catch is captured before post-fight Condition and Pigmentation finalization and item delivery.
+- [x] Split canonical runtime generation at the fight boundary: pre-fight Body Type and physical size drive the fight, then Perfect Catch is captured before final canonical Body Type reward evaluation, Condition, Pigmentation, and item delivery.
 - [x] Store `perfectCatch` in transient canonical catch state and finalized `SpecimenData`, then persist `SPECIMEN_PERFECT_CATCH` onto the selected item before Tide's delivery path continues.
-- [x] Preserve selected species, deterministic specimen seed, natural percentile, base length, Body Type, final length, and final percentile across Perfect Catch capture; no second species or natural-size sample is taken and Perfect Catch alone does not alter length.
+- [x] Preserve selected species, deterministic specimen seed, natural percentile, and base length across Perfect Catch capture with no second species or natural-size sample. Final Body Type and derived physical size may change only when the Perfect Catch Body Type probability reward changes the deterministic event result.
 - [x] Bypass the reconstructed late `PerfectCatchTraitBoost` mutation for canonical V2 catches while retaining it for noncanonical/legacy catches.
 - [x] Add integration coverage proving the Perfect Catch flag reaches canonical post-fight specimen generation before the persistence callback, with repeated finalization unable to overwrite the captured result.
-- [ ] Implement the V2 Perfect Catch reward math on the new pre-persistence finalization path.
+- [ ] Implement the remaining V2 Perfect Catch reward math on the new pre-persistence finalization path.
 - [x] Make Perfect Catch grant +10 temporary Trait Luck.
-- [ ] Make Perfect Catch multiply Body Type event chance by 1.25.
+- [x] Make Perfect Catch multiply Body Type event chance by 1.25 before rarity compensation and total Trait Luck, without changing Giant/Dwarf subtype bias.
 - [ ] Give Perfect Catch a substantial Perfect Specimen bonus without forcing it.
 - [ ] Implement Perfect Specimen percentile curve: below 95 = 0%, 95 = 2%, 97.5 = 8%, 99 = 25%, 99.9+ = 60%, smooth interpolation between anchors.
 - [ ] Add deterministic curve and Perfect Catch interaction tests.
