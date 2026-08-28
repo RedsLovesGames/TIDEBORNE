@@ -15,21 +15,23 @@ public final class CanonicalSpecimenStorage {
             return;
         }
 
+        String bodyType = specimen.bodyType().name().toLowerCase();
         stack.set(TideTraitsComponents.SPECIMEN_SPECIES_ID, specimen.speciesId());
         stack.set(TideTraitsComponents.SPECIMEN_SCHEMA_VERSION, specimen.schemaVersion());
         stack.set(TideTraitsComponents.SPECIMEN_GENERATION_VERSION, specimen.generationVersion());
         stack.set(TideTraitsComponents.SPECIMEN_BASE_PERCENTILE, specimen.basePercentile());
         stack.set(TideTraitsComponents.SPECIMEN_BASE_LENGTH, specimen.baseLength());
         stack.set(TideTraitsComponents.SPECIMEN_FINAL_LENGTH, specimen.finalLength());
+        stack.set(TideTraitsComponents.SPECIMEN_BODY_TYPE, bodyType);
         stack.set(TideTraitsComponents.SPECIMEN_CONDITION, specimen.condition().name().toLowerCase());
         stack.set(TideTraitsComponents.SPECIMEN_PIGMENTATION, specimen.pigmentation().name().toLowerCase());
         stack.set(TideTraitsComponents.SPECIMEN_QUALITY, specimen.specimenQuality().name().toLowerCase());
         stack.set(TideTraitsComponents.SPECIMEN_PERFECT_CATCH, specimen.perfectCatch());
 
-        // Compatibility mirrors. Existing 1.x consumers see a normal specimen rather than rerolling it.
+        // Compatibility mirrors only. Canonical V2 consumers must read the specimen components above.
         stack.set(TideTraitsComponents.MUTATION_SEED, specimen.deterministicSeed());
         stack.set(TideTraitsComponents.SIZE_PERCENTILE, specimen.finalPercentile());
-        stack.set(TideTraitsComponents.BODY_TYPE, specimen.bodyType().name().toLowerCase());
+        stack.set(TideTraitsComponents.BODY_TYPE, bodyType);
         stack.set(TideTraitsComponents.MUTATION, specimen.condition().name().toLowerCase());
 
         if (Double.isFinite(specimen.finalLength()) && specimen.finalLength() > 0.0) {
