@@ -63,7 +63,7 @@ Implementation root:
 src/main/java/com/redslovesgames/tideborne/fishing/v2/
 ```
 
-The deterministic pure V2 suite remains 17 of 17 passing tests.
+The original deterministic pure V2 suite remains green, with additional Body Type and Condition coverage layered on top.
 
 ## Steps 1 through 4 runtime integration is green
 
@@ -172,17 +172,43 @@ The runtime GameTest fixture deliberately uses a P99.25 canonical Dwarf while co
 
 Stage 6 implementation plus TODO state at commit `faeb4d3c102a976740749cb5af6017bbba76b38d` is green in GitHub Actions run `33164107173`. The exact-dependency clean Gradle build, unit tests included by the build, Fabric GameTests, and built-JAR artifact upload all completed successfully.
 
+## Step 6 Condition axis is complete
+
+The Condition portion of the independent trait-axis step is implemented without introducing Trait Luck, rarity compensation, Pigmentation generation, or any second mutation authority.
+
+Frozen Condition behavior:
+
+- canonical values are `NORMAL`, `SCARRED`, and `PARASITE_RIDDEN`
+- the base Condition event probability is exactly 5%; a failed event returns `NORMAL`
+- when the event triggers, Scarred is exactly 65% of the conditional split and Parasite-Ridden is exactly 35%
+- event and subtype selection use the reserved `TraitRandom.Salts.CONDITION_EVENT` and `CONDITION_VARIANT` streams
+- Condition does not consume Body Type event, variant, or size streams and Body Type does not consume Condition streams
+- Body Type and Condition have no mutual exclusion; both notable values can exist on the same canonical specimen
+- `SpecimenData.condition` is one required enum-valued field, so each canonical specimen has exactly one Condition state rather than a collection that could represent incompatible simultaneous conditions
+- `SpecimenGenerator.generate` now samples the natural specimen once, finalizes Body Type physical size, then applies one deterministic Condition derived from the same canonical specimen seed through the independent Condition salts
+- Condition application preserves species identity, natural percentile, base length, final physical size, Body Type, Pigmentation, Quality, Perfect Catch state, score fields, and provenance
+- `CanonicalSpecimenStorage` persists the enum value to `SPECIMEN_CONDITION` and mirrors that exact value to legacy `MUTATION` only for compatibility
+- `CatchTraitService.assignIfAbsent` now detects canonical V2 specimen identity before the legacy mutation selector can run; it repairs a missing/stale legacy mutation mirror from `SPECIMEN_CONDITION` and returns without consuming legacy RNG
+- UI and compatibility code therefore do not own Condition generation; the canonical server-generated specimen value is persisted before those consumers run
+- no Trait Luck or rarity compensation is applied in this slice, so the frozen 5% and 65/35 base probabilities are used directly
+
+Deterministic Condition tests cover exact probability constants, repeatability, approximately 5% event frequency, approximately 65/35 triggered subtype frequency, independence from Body Type streams, a fixed seed that produces Body Type plus Condition simultaneously, repeated Condition application without accumulation, and full canonical generation preserving the one natural specimen sample.
+
+The runtime GameTest fixture now carries canonical `DWARF` plus `SCARRED`. Item/entity/item transfer proves canonical Condition survives representation transfer, and the legacy-individualizer test deletes the `MUTATION` compatibility mirror before invocation. The test then proves `SCARRED` remains canonical and the compatibility mirror is restored to `scarred` without changing the canonical seed, percentile, Body Type, or Condition.
+
+Condition implementation commit `023c9a01918f525c8a726862d7cd800bc587d9f3` is green in GitHub Actions run `33165044512`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
 ## Current execution gate
 
-Steps 1 through 5 are complete for the implemented V2 pipeline, including server-authoritative Body Type generation, persistence, compatibility mirroring, transfer survival, and legacy reroll isolation.
+Steps 1 through 5 are complete for the implemented V2 pipeline, and the Condition portion of Step 6 is complete with server-authoritative deterministic generation, canonical persistence, Body Type stacking, transfer survival, and legacy mutation reroll isolation.
 
-Do not begin Trait Luck, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next Step 6 slice is the independent Condition and Pigmentation axes.
+Do not begin Trait Luck, rarity compensation, Perfect Catch redesign, Perfect Specimen, or FishScore V2 ahead of their queued slices. The next incomplete independent-axis work is Pigmentation; it is not implemented by the Condition slice.
 
 ## Later frozen slices
 
 Execute in this order:
 
-1. independent Condition and Pigmentation axes
+1. remaining independent Pigmentation and Specimen Quality axis work
 2. Trait Luck, rarity compensation, and per-species Momentum
 3. Perfect Catch redesign and percentile-based Perfect Specimen
 4. FishScore V2 with the canonical linear 1 to 3000 mapping

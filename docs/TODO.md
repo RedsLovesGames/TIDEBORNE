@@ -86,12 +86,18 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 ## Step 6 - independent trait axes
 
-- [ ] Separate Condition from Body Type.
-- [ ] Implement Condition event 5% with Scarred 65% and Parasite-Ridden 35%.
+- [x] Separate Condition from Body Type.
+- [x] Implement Condition event 5% with Scarred 65% and Parasite-Ridden 35%.
+- [x] Derive Condition deterministically from the reserved independent `CONDITION_EVENT` and `CONDITION_VARIANT` specimen-seed salts.
+- [x] Allow Body Type and Condition to stack with no mutual exclusion.
+- [x] Persist exactly one canonical Condition per specimen and mirror it to legacy mutation state only for compatibility.
+- [x] Prevent legacy mutation selection from rerolling Condition for canonical V2 specimens, including when the compatibility mirror is missing.
+- [x] Add deterministic Condition tests for repeatability, approximately 5% event rate, approximately 65/35 subtype split, Body Type stacking, and scalar one-Condition state.
+- [x] Verify canonical Condition survives the current item/entity/item transfer path and legacy catch handling. Green Condition run: `33165044512` on commit `023c9a01918f525c8a726862d7cd800bc587d9f3`.
 - [ ] Add independent Pigmentation axis with event 1.5%, Albino 70%, Iridescent 30%.
 - [ ] Keep Specimen Quality independent from Body Type, Condition, and Pigmentation.
-- [ ] Prove compatible traits can stack and incompatible combinations are rejected deterministically.
-- [ ] Add deterministic seeded tests for every axis.
+- [ ] Prove all intended compatible trait combinations can stack and incompatible combinations are rejected deterministically.
+- [ ] Add deterministic seeded tests for every remaining independent axis.
 
 ## Step 7 - Trait Luck, rarity compensation, Momentum
 
