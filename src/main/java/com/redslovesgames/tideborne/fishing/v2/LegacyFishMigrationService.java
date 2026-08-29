@@ -101,7 +101,7 @@ public final class LegacyFishMigrationService {
             attributes.put("legacyBodyType", legacyBodyType);
         }
 
-        SpecimenData migrated = new SpecimenData(
+        SpecimenData migratedIdentity = new SpecimenData(
                 species.speciesId(),
                 SpecimenGenerator.SCHEMA_VERSION,
                 SpecimenGenerator.GENERATION_VERSION,
@@ -119,7 +119,29 @@ public final class LegacyFishMigrationService {
                 OptionalInt.empty(),
                 new SpecimenData.Provenance("legacy-migration", "fishing-system-2-migration", attributes)
         );
-        return new MigrationResult(migrated, true);
+        return new MigrationResult(withCanonicalFishScore(species.rarity(), migratedIdentity), true);
+    }
+
+    private static SpecimenData withCanonicalFishScore(CanonicalRarity rarity, SpecimenData specimen) {
+        FishScoreV2Service.Result score = new FishScoreV2Service().calculate(rarity, specimen);
+        return new SpecimenData(
+                specimen.speciesId(),
+                specimen.schemaVersion(),
+                specimen.generationVersion(),
+                specimen.deterministicSeed(),
+                specimen.basePercentile(),
+                specimen.baseLength(),
+                specimen.finalLength(),
+                specimen.finalPercentile(),
+                specimen.bodyType(),
+                specimen.condition(),
+                specimen.pigmentation(),
+                specimen.specimenQuality(),
+                specimen.perfectCatch(),
+                OptionalDouble.of(score.rawScore()),
+                OptionalInt.of(score.fishScore()),
+                specimen.provenance()
+        );
     }
 
     private static SpecimenData.BodyType mapBodyType(String legacyBodyType, String mutation) {
