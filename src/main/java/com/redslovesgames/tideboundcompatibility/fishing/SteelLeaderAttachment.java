@@ -5,7 +5,9 @@
  */
 package com.redslovesgames.tideboundcompatibility.fishing;
 
+import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import java.lang.reflect.Method;
+import net.minecraft.item.ItemStack;
 
 public final class SteelLeaderAttachment {
    private SteelLeaderAttachment() {
@@ -25,6 +27,10 @@ public final class SteelLeaderAttachment {
          return false;
       }
 
+      if (var0 instanceof ItemStack stack) {
+         return Boolean.TRUE.equals(stack.get(TideTraitsComponents.STEEL_LEADER_ATTACHED));
+      }
+
       Object var1 = component();
       if (var1 == null) {
          return false;
@@ -39,17 +45,28 @@ public final class SteelLeaderAttachment {
    }
 
    public static void set(Object var0, boolean var1) {
-      if (var0 != null) {
-         Object var2 = component();
-         if (var2 != null) {
-            try {
-               if (var1) {
-                  invoke(var0, "set", var2, Boolean.TRUE);
-               } else {
-                  invoke(var0, "remove", var2);
-               }
-            } catch (Throwable var4) {
+      if (var0 == null) {
+         return;
+      }
+
+      if (var0 instanceof ItemStack stack) {
+         if (var1) {
+            stack.set(TideTraitsComponents.STEEL_LEADER_ATTACHED, Boolean.TRUE);
+         } else {
+            stack.remove(TideTraitsComponents.STEEL_LEADER_ATTACHED);
+         }
+         return;
+      }
+
+      Object var2 = component();
+      if (var2 != null) {
+         try {
+            if (var1) {
+               invoke(var0, "set", var2, Boolean.TRUE);
+            } else {
+               invoke(var0, "remove", var2);
             }
+         } catch (Throwable var4) {
          }
       }
    }
