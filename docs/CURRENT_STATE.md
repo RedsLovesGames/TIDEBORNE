@@ -670,6 +670,10 @@ specimen-free entities no longer generate canonical state from an ordinary Tide 
 export, and the first migration read now returns the normalized persisted representation seen
 by subsequent reads rather than non-persisted transient provenance.
 
+The dedicated smoke harness detects readiness and the client connection from the kernel socket
+state because Gradle buffers redirected JavaExec logs; after clean shutdown it still requires the
+server's completed join message and rejects client-class, entrypoint, initializer, or mixin errors.
+
 There are no known Fishing System 2.0 blockers. A two-graphical-client interaction is not
 automated; multi-recipient consistency is instead covered by server-side projection and
 broadcast tests, while the runtime smoke proves an actual client can join the dedicated

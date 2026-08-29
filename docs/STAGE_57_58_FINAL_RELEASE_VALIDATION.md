@@ -65,6 +65,12 @@ returned transient provenance that the ItemStack schema intentionally does not p
 entity tags now remain specimen-free, and migration returns the same normalized persisted
 representation as every subsequent read.
 
+The first dedicated-server harness also exposed that Gradle buffers redirected JavaExec output,
+so polling the log delayed detection even though the server had reached `Done`. The smoke harness
+now detects the real listening and established sockets through the Linux kernel, then verifies
+the flushed server log after clean shutdown to prove the client completed login and no client-only
+classloading or mixin failure occurred.
+
 ## Complete release gate
 
 `.github/workflows/build.yml` performs the following against the release commit:
