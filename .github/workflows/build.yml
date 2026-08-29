@@ -108,6 +108,83 @@ jobs:
           echo "CERBON API 1.3.0 SHA-256: $(sha256sum dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar | awk '{print $1}')"
           echo "GeckoLib 4.9.2 SHA-256: $(sha256sum dev/libs/geckolib-fabric-1.21.1-4.9.2.jar | awk '{print $1}')"
 
+          # Loom 1.10 validates the producer Loom version for jars that request
+          # static mixin remapping. The exact Myths stack was published by newer
+          # Loom, but its intermediary bytecode/class tweakers still need Loom's
+          # normal remapper for this named GameTest runtime. After verifying the
+          # exact upstream artifacts above, remove only the producer-version
+          # manifest attribute in ephemeral CI copies. Every non-manifest entry
+          # remains byte-for-byte identical and the static-remap request remains.
+          python3 - <<'PY'
+          import hashlib
+          import os
+          import re
+          import zipfile
+          from pathlib import Path
+
+          jars = [
+              Path('dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar'),
+              Path('dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar'),
+              Path('dev/libs/geckolib-fabric-1.21.1-4.9.2.jar'),
+          ]
+          supported = (1, 10)
+
+          for jar in jars:
+              with zipfile.ZipFile(jar, 'r') as zin:
+                  infos = zin.infolist()
+                  payloads = {info.filename: zin.read(info.filename) for info in infos}
+
+              manifest_name = 'META-INF/MANIFEST.MF'
+              manifest = payloads.get(manifest_name)
+              if manifest is None:
+                  print(f'{jar}: no manifest, no Loom metadata sanitization needed')
+                  continue
+
+              text = manifest.decode('utf-8')
+              loom_match = re.search(r'(?im)^Fabric-Loom-Version:\s*([^\r\n]+)', text)
+              remap_match = re.search(r'(?im)^Fabric-Loom-Mixin-Remap-Type:\s*([^\r\n]+)', text)
+              if not loom_match or not remap_match or remap_match.group(1).strip().lower() != 'static':
+                  print(f'{jar}: no newer static-remap Loom metadata to sanitize')
+                  continue
+
+              version = loom_match.group(1).strip()
+              numeric = tuple(int(part) for part in version.split('.')[:2])
+              if numeric <= supported:
+                  print(f'{jar}: producer Loom {version} is compatible with Loom 1.10')
+                  continue
+
+              rewritten = re.sub(
+                  r'(?im)^Fabric-Loom-Version:[^\r\n]*(?:\r\n|\n|\r)?',
+                  '',
+                  text,
+                  count=1,
+              ).encode('utf-8')
+              payloads[manifest_name] = rewritten
+              original_non_manifest = {
+                  name: hashlib.sha256(data).digest()
+                  for name, data in payloads.items()
+                  if name != manifest_name
+              }
+
+              tmp = jar.with_suffix(jar.suffix + '.tmp')
+              with zipfile.ZipFile(tmp, 'w') as zout:
+                  for info in infos:
+                      zout.writestr(info, payloads[info.filename])
+              os.replace(tmp, jar)
+
+              with zipfile.ZipFile(jar, 'r') as check:
+                  for name, digest in original_non_manifest.items():
+                      if hashlib.sha256(check.read(name)).digest() != digest:
+                          raise RuntimeError(f'{jar}: non-manifest entry changed: {name}')
+                  check_manifest = check.read(manifest_name).decode('utf-8')
+                  if re.search(r'(?im)^Fabric-Loom-Version:', check_manifest):
+                      raise RuntimeError(f'{jar}: Fabric-Loom-Version was not removed')
+                  if not re.search(r'(?im)^Fabric-Loom-Mixin-Remap-Type:\s*static\s*$', check_manifest):
+                      raise RuntimeError(f'{jar}: static mixin remap request was not preserved')
+
+              print(f'{jar}: sanitized producer Loom {version} metadata for Loom 1.10 QA remapping')
+          PY
+
       - name: Validate reconstruction identifiers
         shell: bash
         run: |
