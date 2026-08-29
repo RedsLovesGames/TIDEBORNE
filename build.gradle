@@ -21,7 +21,14 @@ repositories {
 
 def exactTideJar = file('dev/libs/tide-fabric-1.21.1-2.1.1.jar')
 def apexJar = file('dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar')
+def mythsJar = file('dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar')
+def cerbonsApiJar = file('dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar')
+def geckolibJar = file('dev/libs/geckolib-fabric-1.21.1-4.9.2.jar')
 def includeApexRuntime = project.findProperty('includeApexRuntime') == 'true'
+def includeMythsRuntime = project.findProperty('includeMythsRuntime') == 'true'
+def optionalRuntimeLabel = includeApexRuntime && includeMythsRuntime
+        ? 'apex-myths'
+        : includeApexRuntime ? 'apex' : includeMythsRuntime ? 'myths' : 'none'
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
@@ -53,11 +60,22 @@ dependencies {
         modCompileOnly files(apexJar)
         logger.lifecycle('Tideborne: Apex Waters remapped compile-only compatibility enabled')
         if (includeApexRuntime) {
-            // Stage 40 uses this opt-in runtime edge only for compatibility boot validation.
-            // Normal development/GameTest runs intentionally keep Apex absent.
             modRuntimeOnly files(apexJar)
             logger.lifecycle('Tideborne: Apex Waters runtime compatibility validation enabled')
         }
+    }
+
+    if (includeMythsRuntime) {
+        if (!mythsJar.exists() || !cerbonsApiJar.exists() || !geckolibJar.exists()) {
+            throw new GradleException('Myths of the Sea runtime validation requires exact Myths, CERBON API, and GeckoLib JARs in dev/libs')
+        }
+        // Tideborne's Myths compatibility is identifier/config based and intentionally
+        // has no compile-time Myths class edge. Runtime-only remapped jars are used here
+        // solely to prove the optional mod can be present without changing that boundary.
+        modRuntimeOnly files(cerbonsApiJar)
+        modRuntimeOnly files(geckolibJar)
+        modRuntimeOnly files(mythsJar)
+        logger.lifecycle('Tideborne: Myths of the Sea runtime compatibility validation enabled')
     }
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
@@ -79,8 +97,10 @@ loom {
         gametest {
             server()
             name 'Tideborne GameTest'
-            runDir includeApexRuntime ? 'run/gametest-apex' : 'run/gametest'
+            runDir "run/gametest-${optionalRuntimeLabel}"
             vmArg '-Dfabric-api.gametest'
+            systemProperty 'tideborne.expectedApexRuntime', includeApexRuntime.toString()
+            systemProperty 'tideborne.expectedMythsRuntime', includeMythsRuntime.toString()
         }
     }
 }
@@ -134,5 +154,7 @@ tasks.register('printBuildBaseline') {
         println "Exact Tide local JAR present: ${exactTideJar.exists()}"
         println "Apex Waters local JAR present: ${apexJar.exists()}"
         println "Apex Waters runtime validation enabled: ${includeApexRuntime}"
+        println "Myths of the Sea local JAR present: ${mythsJar.exists()}"
+        println "Myths of the Sea runtime validation enabled: ${includeMythsRuntime}"
     }
 }
