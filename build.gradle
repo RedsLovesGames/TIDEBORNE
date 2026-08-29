@@ -69,12 +69,13 @@ dependencies {
         if (!mythsJar.exists() || !cerbonsApiJar.exists() || !geckolibJar.exists()) {
             throw new GradleException('Myths of the Sea runtime validation requires exact Myths, CERBON API, and GeckoLib JARs in dev/libs')
         }
-        // Tideborne's Myths compatibility is identifier/config based and intentionally
-        // has no compile-time Myths class edge. Runtime-only remapped jars are used here
-        // solely to prove the optional mod can be present without changing that boundary.
-        modRuntimeOnly files(cerbonsApiJar)
-        modRuntimeOnly files(geckolibJar)
-        modRuntimeOnly files(mythsJar)
+        // These exact published jars were produced with newer Loom metadata than this
+        // maintained 1.21.1 project uses. Keep them off Loom's dependency remapper so
+        // Fabric Loader's development runtime remapper can process the optional mods at
+        // launch without forcing a project-wide Loom upgrade just for compatibility QA.
+        runtimeOnly files(cerbonsApiJar)
+        runtimeOnly files(geckolibJar)
+        runtimeOnly files(mythsJar)
         logger.lifecycle('Tideborne: Myths of the Sea runtime compatibility validation enabled')
     }
 
