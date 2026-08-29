@@ -30,7 +30,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Build one server-owned canonical `FishingContext` for each catch attempt.
 - [x] Integrate `SpeciesSelectionService` only into Tide `FishSelector#getResult`, leaving the top-level Tide catch-category selector unchanged.
 - [x] Verify Tide `FishSelector.weight(context) = 85` remains unchanged, preserving ordinary Tide fish versus junk/crate/treasure category probability.
-- [x] Preserve Tide `shouldKeep` eligibility plus current location, biome, dimension, weather, time, bait, rod, and compatibility restrictions at the V2 boundary.
+- [x] Preserve Tide `shouldKeep` eligibility plus current location, biome, dimension, weather, time, bait, and compatibility restrictions at the V2 boundary.
 - [x] Preserve existing fishing and compatibility weight modifiers while removing affected legacy `selection_quality` behavior from the canonical species-selection path.
 - [x] Generate one catch seed, select one species, and call `SpecimenGenerator.generateBase` once for the canonical catch.
 - [x] Generate one canonical natural percentile and one canonical final size for the current Steps 1 through 4 specimen model.
