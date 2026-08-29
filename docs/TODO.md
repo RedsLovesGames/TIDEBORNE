@@ -188,3 +188,10 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [ ] Remove dead legacy code only after all callers and stored data are migrated.
 - [ ] Complete runtime smoke tests, migration rebuild validation, optional-mod absence safety, documentation, and release validation.
 - [ ] Finish with `./gradlew build` green.
+
+## Stage 33 - canonical gear modifiers
+
+- [x] Add one immutable, composable server-side `FishingGearModifiers` model for Fishing Luck, Trait Luck, Strength, Tempo, category/catch-pool restrictions, Body Type chance modifiers, and named canonical additive/multiplicative modifiers.
+- [x] Make modifier composition deterministic and input-order-independent, with canonical sorted identifier collections and explicit restriction stacking.
+- [x] Add pure composition tests for neutral identity, numeric stacking, restrictions, deterministic ordering, immutability, and invalid values. Green Stage 33 run: `33241656395` on commit `d0737e6043f5ddd3900dc9ed75207b4f48e9e29a`.
+- [x] Keep Stage 33 representation-only: no runtime gear behavior migration and no UI dependency.
