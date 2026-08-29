@@ -31,11 +31,18 @@ jobs:
         with:
           gradle-version: '8.12'
 
-      - name: Fetch exact Tide 2.1.1 dependency
+      - name: Install release validation tools
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
+
+      - name: Fetch exact compile dependencies
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p dev/libs
+
           tide_json="$(curl -fsSLG \
             --data-urlencode 'game_versions=["1.21.1"]' \
             --data-urlencode 'loaders=["fabric"]' \
@@ -45,6 +52,12 @@ jobs:
           test -n "$tide_url"
           curl -fsSL "$tide_url" -o dev/libs/tide-fabric-1.21.1-2.1.1.jar
           test "$(unzip -p dev/libs/tide-fabric-1.21.1-2.1.1.jar fabric.mod.json | jq -r '.version')" = '2.1.1'
+
+          curl -fsSL \
+            'https://github.com/acorsicanfrog/apexwaters/releases/download/1.1.1/apexwaters-1.21.1-fabric-1.1.1.jar' \
+            -o dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar
+          echo '00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37  dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar' \
+            | sha256sum --check --strict
 
       - name: Validate repository metadata
         run: ./scripts/validate_repository.sh
