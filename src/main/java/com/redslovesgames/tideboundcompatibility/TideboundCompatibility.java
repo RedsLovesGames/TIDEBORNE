@@ -6,8 +6,13 @@
 package com.redslovesgames.tideboundcompatibility;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.redslovesgames.tideborne.command.FishingInspectCommand;
+import com.redslovesgames.tideborne.command.FishingReproduceCommand;
 import com.redslovesgames.tideboundcompatibility.compat.apex.ApexCompat;
 import com.redslovesgames.tideboundcompatibility.compat.apex.SharkScentManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
@@ -17,6 +22,7 @@ import com.redslovesgames.tideboundcompatibility.network.TideboundSettingsResult
 import com.redslovesgames.tideboundcompatibility.network.TideboundSettingsUpdatePayload;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundEntities;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
+import java.util.OptionalDouble;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -122,6 +128,7 @@ public final class TideboundCompatibility implements ModInitializer {
                .requires(source -> source.hasPermissionLevel(2))
                .executes(context -> FishingInspectCommand.run(context.getSource()))
          )
+         .then(reproduceCommand())
          .then(
             CommandManager.literal("reload")
                .requires(source -> source.hasPermissionLevel(2))
@@ -137,6 +144,67 @@ public final class TideboundCompatibility implements ModInitializer {
                })
          );
       dispatcher.register(root);
+   }
+
+   private static LiteralArgumentBuilder<ServerCommandSource> reproduceCommand() {
+      return CommandManager.literal("reproduce")
+         .requires(source -> source.hasPermissionLevel(2))
+         .then(
+            CommandManager.argument("species", StringArgumentType.word())
+               .then(
+                  CommandManager.argument("seed", LongArgumentType.longArg())
+                     .executes(context -> FishingReproduceCommand.run(
+                        context.getSource(),
+                        StringArgumentType.getString(context, "species"),
+                        LongArgumentType.getLong(context, "seed"),
+                        0.0,
+                        0.0,
+                        false,
+                        OptionalDouble.empty()
+                     ))
+                     .then(
+                        CommandManager.argument("fishingLuck", DoubleArgumentType.doubleArg())
+                           .then(
+                              CommandManager.argument("traitLuck", DoubleArgumentType.doubleArg())
+                                 .executes(context -> FishingReproduceCommand.run(
+                                    context.getSource(),
+                                    StringArgumentType.getString(context, "species"),
+                                    LongArgumentType.getLong(context, "seed"),
+                                    DoubleArgumentType.getDouble(context, "fishingLuck"),
+                                    DoubleArgumentType.getDouble(context, "traitLuck"),
+                                    false,
+                                    OptionalDouble.empty()
+                                 ))
+                                 .then(
+                                    CommandManager.argument("perfectCatch", BoolArgumentType.bool())
+                                       .executes(context -> FishingReproduceCommand.run(
+                                          context.getSource(),
+                                          StringArgumentType.getString(context, "species"),
+                                          LongArgumentType.getLong(context, "seed"),
+                                          DoubleArgumentType.getDouble(context, "fishingLuck"),
+                                          DoubleArgumentType.getDouble(context, "traitLuck"),
+                                          BoolArgumentType.getBool(context, "perfectCatch"),
+                                          OptionalDouble.empty()
+                                       ))
+                                       .then(
+                                          CommandManager.argument(
+                                             "forcedPercentile",
+                                             DoubleArgumentType.doubleArg(0.0, 99.999999999)
+                                          ).executes(context -> FishingReproduceCommand.run(
+                                             context.getSource(),
+                                             StringArgumentType.getString(context, "species"),
+                                             LongArgumentType.getLong(context, "seed"),
+                                             DoubleArgumentType.getDouble(context, "fishingLuck"),
+                                             DoubleArgumentType.getDouble(context, "traitLuck"),
+                                             BoolArgumentType.getBool(context, "perfectCatch"),
+                                             OptionalDouble.of(DoubleArgumentType.getDouble(context, "forcedPercentile"))
+                                          ))
+                                       )
+                                 )
+                           )
+                     )
+               )
+         );
    }
 
    private static int status(ServerCommandSource source) {

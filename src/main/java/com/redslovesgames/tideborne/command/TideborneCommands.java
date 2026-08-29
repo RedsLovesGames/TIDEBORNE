@@ -80,7 +80,7 @@ public final class TideborneCommands {
       send(var0, "Tideborne commands (press Tab at any point for valid choices):");
       send(var0, "/tideborne traits <inspect|setmutation|clearmutation|percentile|dumpfish>");
       send(var0, "/tideborne journal <open|status|merge|claim|assign|claimall|leaderboard|history|member>");
-      send(var0, "/tideborne fishing <status|inspect|reload>");
+      send(var0, "/tideborne fishing <status|inspect|reproduce|reload>");
       send(var0, "/tideborne status  |  /tideborne reload  |  /tideborne migrate status");
       send(var0, "/tideborne badges backfillhistory  - backfill per-world discovery badges from retained event history");
       return 1;
