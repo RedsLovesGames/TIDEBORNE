@@ -22,8 +22,8 @@
       "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V": "Lnet/minecraft/class_332;method_51432(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V"
     },
     "com/redslovesgames/tideteamjournal/mixin/client/ScreenAccessor": {
-      "addRenderableWidget": "method_37063(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;",
-      "addWidget": "method_25429(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;"
+      "addDrawableChild": "method_37063(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;",
+      "addSelectableChild": "method_25429(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;"
     },
     "com/redslovesgames/tideteamjournal/mixin/client/SyncPlayerDataMsgMixin": {
       "handle": "Lcom/li64/tide/network/messages/SyncPlayerDataMsg;handle(Lcom/li64/tide/network/messages/SyncPlayerDataMsg;Lnet/minecraft/class_1657;)V"
@@ -53,8 +53,8 @@
         "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V": "Lnet/minecraft/class_332;method_51432(Lnet/minecraft/class_327;Lnet/minecraft/class_1799;IILjava/lang/String;)V"
       },
       "com/redslovesgames/tideteamjournal/mixin/client/ScreenAccessor": {
-        "addRenderableWidget": "method_37063(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;",
-        "addWidget": "method_25429(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;"
+        "addDrawableChild": "method_37063(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;",
+        "addSelectableChild": "method_25429(Lnet/minecraft/class_364;)Lnet/minecraft/class_364;"
       },
       "com/redslovesgames/tideteamjournal/mixin/client/SyncPlayerDataMsgMixin": {
         "handle": "Lcom/li64/tide/network/messages/SyncPlayerDataMsg;handle(Lcom/li64/tide/network/messages/SyncPlayerDataMsg;Lnet/minecraft/class_1657;)V"
