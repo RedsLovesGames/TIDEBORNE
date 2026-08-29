@@ -6,7 +6,6 @@
 package com.redslovesgames.tideboundcompatibility.fishing;
 
 import com.li64.tide.Tide;
-import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.fishing.FishingContext;
 import com.li64.tide.data.fishing.MinigameBehavior;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
@@ -16,17 +15,12 @@ import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.TideFishingLineModifiers;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
-import net.minecraft.util.math.MathHelper;
 
+/** Compatibility adapters around the canonical Fishing System 2.0 modifier/fight services. */
 public final class FishingModifiers {
    private static final FightProfileService CANONICAL_FIGHTS = new FightProfileService();
 
    private FishingModifiers() {
-   }
-
-   public static double modifyFishWeight(FishData data, FishingContext context, double original) {
-      FishingGearModifiers gear = TideborneFishingGearModifiers.forFishWeight(data, context, TideboundConfig.get());
-      return original * FishingGearEffects.fishWeightMultiplier(gear);
    }
 
    public static double modifyCrateWeight(FishingContext context, double original) {
@@ -35,28 +29,31 @@ public final class FishingModifiers {
    }
 
    public static FishingModifiers.MinigameValues modifyMinigame(TideFishingHook hook, byte behavior, float area, float speed) {
+      FishingGearModifiers compatibilityGear = TideborneFishingGearModifiers.forMinigame(hook, TideboundConfig.get());
+      FightProfileService.MinigameProjection projection;
       var canonical = CanonicalCatchStateManager.get(hook);
       if (canonical.isPresent()) {
          var fightProfile = canonical.get().fightProfile();
-         FishingGearModifiers tideLineGear = TideFishingLineModifiers.forLine(hook.getLine());
-         double strength = fightProfile.strength() * tideLineGear.strengthMultiplier();
-         double tempo = fightProfile.tempo() * tideLineGear.tempoMultiplier();
-         behavior = canonicalBehavior(fightProfile.behavior(), behavior);
-
-         area = (float)CANONICAL_FIGHTS.catchZoneArea(strength);
-         speed = (float)Math.max(
-            FightProfileService.MIN_FINAL_TEMPO,
-            tempo * Tide.SERVER_CONFIG.minigame.minigameDifficultyMultiplier
+         FishingGearModifiers allMinigameGear = FishingGearModifiers.compose(
+            TideFishingLineModifiers.forLine(hook.getLine()),
+            compatibilityGear
          );
+         projection = CANONICAL_FIGHTS.projectMinigame(
+            fightProfile,
+            allMinigameGear,
+            Tide.SERVER_CONFIG.minigame.minigameDifficultyMultiplier
+         );
+         behavior = canonicalBehavior(fightProfile.behavior(), behavior);
+      } else {
+         // Compatibility fallback only. Tide already computed the fight values, so retain them and
+         // apply only the named addon gear effects rather than reconstructing species/fight math.
+         projection = CANONICAL_FIGHTS.projectCompatibilityMinigame(area, speed, compatibilityGear);
       }
 
-      FishingGearModifiers customGear = TideborneFishingGearModifiers.forMinigame(hook, TideboundConfig.get());
-      area *= (float)FishingGearEffects.catchZoneAreaMultiplier(customGear);
-      speed *= (float)FishingGearEffects.minigameSpeedMultiplier(customGear);
       return new FishingModifiers.MinigameValues(
          behavior,
-         MathHelper.clamp(area, 0.05F, 1.0F),
-         Math.max(0.05F, speed)
+         (float)projection.catchZoneArea(),
+         (float)projection.speed()
       );
    }
 

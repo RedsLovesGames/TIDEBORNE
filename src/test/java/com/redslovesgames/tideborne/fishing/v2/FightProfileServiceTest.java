@@ -93,6 +93,47 @@ class FightProfileServiceTest {
         assertEquals(expectedTempo, normal.tempo(), 1.0e-12);
     }
 
+    @Test
+    void minigameProjectionAppliesComposedGearExactlyOnce() {
+        FightProfile base = new FightProfile(0.8, 0.08, service.catchZoneArea(0.8), "steady");
+        FishingGearModifiers gear = FishingGearModifiers.builder()
+                .strengthMultiplier(0.75)
+                .tempoMultiplier(0.90)
+                .namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, 1.25)
+                .namedMultiplierModifier(FishingGearEffects.MINIGAME_SPEED_MULTIPLIER, 1.10)
+                .build();
+
+        FightProfileService.MinigameProjection projection = service.projectMinigame(base, gear, 1.20);
+
+        assertEquals(service.catchZoneArea(0.8 * 0.75) * 1.25, projection.catchZoneArea(), 1.0e-12);
+        assertEquals(0.08 * 0.90 * 1.20 * 1.10, projection.speed(), 1.0e-12);
+    }
+
+    @Test
+    void compatibilityProjectionDoesNotRegenerateFightValues() {
+        FishingGearModifiers gear = FishingGearModifiers.builder()
+                .namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, 0.75)
+                .namedMultiplierModifier(FishingGearEffects.MINIGAME_SPEED_MULTIPLIER, 0.80)
+                .build();
+
+        FightProfileService.MinigameProjection projection = service.projectCompatibilityMinigame(0.40, 0.08, gear);
+
+        assertEquals(0.30, projection.catchZoneArea(), 1.0e-12);
+        assertEquals(0.064, projection.speed(), 1.0e-12);
+    }
+
+    @Test
+    void neutralCompatibilityProjectionLeavesTideValuesUnchanged() {
+        FightProfileService.MinigameProjection projection = service.projectCompatibilityMinigame(
+                0.42,
+                0.09,
+                FishingGearModifiers.neutral()
+        );
+
+        assertEquals(0.42, projection.catchZoneArea(), 0.0);
+        assertEquals(0.09, projection.speed(), 0.0);
+    }
+
     private static SpeciesProfile profile(double strength, double tempo) {
         return new SpeciesProfile(
                 "tide:test_fish",

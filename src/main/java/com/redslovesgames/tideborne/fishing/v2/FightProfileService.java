@@ -10,6 +10,9 @@ public final class FightProfileService {
     public static final double MAX_CATCH_ZONE_AREA = 0.78;
     public static final double MIN_FINAL_TEMPO = 0.035;
     public static final double MAX_FINAL_TEMPO = 0.16;
+    public static final double MIN_MINIGAME_CATCH_ZONE_AREA = 0.05;
+    public static final double MAX_MINIGAME_CATCH_ZONE_AREA = 1.0;
+    public static final double MIN_MINIGAME_SPEED = 0.05;
     public static final double GIANT_STRENGTH_MULTIPLIER = 1.08;
     public static final double GIANT_TEMPO_MULTIPLIER = 0.95;
     public static final double DWARF_STRENGTH_MULTIPLIER = 0.92;
@@ -50,6 +53,47 @@ public final class FightProfileService {
                 MAX_FINAL_TEMPO
         );
         return new FightProfile(strength, tempo, catchZoneArea(strength), profile.behavior());
+    }
+
+    /**
+     * Projects the one canonical fight profile into Tide's minigame values.
+     *
+     * <p>Line strength/tempo, compatibility catch-zone/speed modifiers, and the Tide difficulty
+     * multiplier are intentionally resolved here so runtime adapters never duplicate fight math.
+     */
+    public MinigameProjection projectMinigame(
+            FightProfile profile,
+            FishingGearModifiers modifiers,
+            double difficultyMultiplier
+    ) {
+        Objects.requireNonNull(profile, "profile");
+        Objects.requireNonNull(modifiers, "modifiers");
+        requireFinite("difficultyMultiplier", difficultyMultiplier);
+        if (difficultyMultiplier < 0.0) {
+            throw new IllegalArgumentException("difficultyMultiplier must be nonnegative");
+        }
+
+        double strength = profile.strength() * modifiers.strengthMultiplier();
+        double tempo = profile.tempo() * modifiers.tempoMultiplier();
+        double area = catchZoneArea(strength);
+        double speed = Math.max(MIN_FINAL_TEMPO, tempo * difficultyMultiplier);
+        return finishMinigameProjection(area, speed, modifiers);
+    }
+
+    /**
+     * Compatibility-only projection for a non-V2 Tide minigame. No species, strength, tempo, or
+     * catch-zone formula is regenerated; only retained named gear modifiers are applied to Tide's
+     * already-computed values.
+     */
+    public MinigameProjection projectCompatibilityMinigame(
+            double tideCatchZoneArea,
+            double tideSpeed,
+            FishingGearModifiers modifiers
+    ) {
+        requireFinite("tideCatchZoneArea", tideCatchZoneArea);
+        requireFinite("tideSpeed", tideSpeed);
+        Objects.requireNonNull(modifiers, "modifiers");
+        return finishMinigameProjection(tideCatchZoneArea, tideSpeed, modifiers);
     }
 
     public double normalizeTempo(double externalTempo) {
@@ -106,6 +150,19 @@ public final class FightProfileService {
         return new FightProfile(strength, tempo, catchZoneArea(strength), profile.behavior());
     }
 
+    private MinigameProjection finishMinigameProjection(
+            double catchZoneArea,
+            double speed,
+            FishingGearModifiers modifiers
+    ) {
+        double adjustedArea = catchZoneArea * FishingGearEffects.catchZoneAreaMultiplier(modifiers);
+        double adjustedSpeed = speed * FishingGearEffects.minigameSpeedMultiplier(modifiers);
+        return new MinigameProjection(
+                clamp(adjustedArea, MIN_MINIGAME_CATCH_ZONE_AREA, MAX_MINIGAME_CATCH_ZONE_AREA),
+                Math.max(MIN_MINIGAME_SPEED, adjustedSpeed)
+        );
+    }
+
     private static double normalizedPercentileOffset(double percentile) {
         if (!Double.isFinite(percentile) || percentile < 0.0 || percentile > 100.0) {
             throw new IllegalArgumentException("percentile must be between 0 and 100");
@@ -120,6 +177,19 @@ public final class FightProfileService {
     private static void requireFinite(String name, double value) {
         if (!Double.isFinite(value)) {
             throw new IllegalArgumentException(name + " must be finite");
+        }
+    }
+
+    public record MinigameProjection(double catchZoneArea, double speed) {
+        public MinigameProjection {
+            if (!Double.isFinite(catchZoneArea)
+                    || catchZoneArea < MIN_MINIGAME_CATCH_ZONE_AREA
+                    || catchZoneArea > MAX_MINIGAME_CATCH_ZONE_AREA) {
+                throw new IllegalArgumentException("catchZoneArea must be within the Tide minigame bounds");
+            }
+            if (!Double.isFinite(speed) || speed < MIN_MINIGAME_SPEED) {
+                throw new IllegalArgumentException("speed must be finite and at least the Tide minigame floor");
+            }
         }
     }
 }

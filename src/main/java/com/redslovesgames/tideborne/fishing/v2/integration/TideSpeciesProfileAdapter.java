@@ -4,12 +4,15 @@ import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.fishing.SizeData;
 import com.li64.tide.data.fishing.modifiers.FishingModifier;
 import com.redslovesgames.tideborne.fishing.v2.CanonicalRarity;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearEffects;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.LogNormalSizeDistribution;
 import com.redslovesgames.tideborne.fishing.v2.NoPhysicalSizeDistribution;
 import com.redslovesgames.tideborne.fishing.v2.SizeDistribution;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesEligibility;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
-import com.redslovesgames.tideboundcompatibility.fishing.FishingModifiers;
+import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
+import com.redslovesgames.tideboundcompatibility.fishing.TideborneFishingGearModifiers;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -82,8 +85,9 @@ public final class TideSpeciesProfileAdapter {
     }
 
     /**
-     * Preserves Tide environmental/compatibility modifiers but intentionally omits selection_quality.
-     * Fishing System 2.0 applies Fishing Luck once through CanonicalRarity after this boundary.
+     * Preserves Tide environmental modifiers and retained addon species-weight compatibility effects,
+     * but intentionally omits Tide's legacy selection_quality path. Fishing System 2.0 applies
+     * Fishing Luck once through CanonicalRarity after this boundary.
      */
     static double contextWeightWithoutLegacyQuality(
             FishData data,
@@ -99,7 +103,13 @@ public final class TideSpeciesProfileAdapter {
                 return 0.0;
             }
         }
-        return FishingModifiers.modifyFishWeight(data, context, weight);
+
+        FishingGearModifiers compatibilityGear = TideborneFishingGearModifiers.forFishWeight(
+                data,
+                context,
+                TideboundConfig.get()
+        );
+        return weight * FishingGearEffects.fishWeightMultiplier(compatibilityGear);
     }
 
     static LogNormalSizeDistribution sizeDistribution(SizeData size) {

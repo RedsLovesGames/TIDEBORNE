@@ -7,7 +7,6 @@
     "AnglingTableLeaderMixin",
     "CrateDataMixin",
     "FishCatchMinigameMixin",
-    "FishDataMixin",
     "FishSelectorMixin",
     "TideFishingHookMixin"
   ],
