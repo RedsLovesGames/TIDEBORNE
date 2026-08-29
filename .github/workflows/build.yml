@@ -28,7 +28,7 @@ on:
       - '.github/workflows/build.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -195,6 +195,9 @@ jobs:
             fi
           fi
 
+      - name: Validate repository structure and release metadata
+        run: ./scripts/validate_repository.sh
+
       - name: Build
         run: |
           if [ -x ./gradlew ]; then
@@ -235,6 +238,33 @@ jobs:
             gradle runGametest -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
           fi
 
+      - name: Run dedicated-server and client-connect smoke test
+        env:
+          CONNECT_CLIENT: 'true'
+        run: ./scripts/dedicated_server_smoke.sh
+
+      - name: Validate production release artifact
+        run: ./scripts/validate_release_artifact.sh build/libs/tideborne-2.0.0.jar
+
+      - name: Report final validation counts
+        shell: bash
+        run: |
+          unit_count="$(python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ET
+
+          total = 0
+          for path in glob.glob('build/test-results/test/*.xml'):
+              total += int(ET.parse(path).getroot().attrib.get('tests', 0))
+          print(total)
+          PY
+          )"
+          gametest_count="$(grep -R -h -c '^[[:space:]]*@GameTest' src/main/java | awk '{sum += $1} END {print sum + 0}')"
+          test "$unit_count" -gt 0
+          test "$gametest_count" -gt 0
+          echo "UNIT_TEST_COUNT=$unit_count"
+          echo "GAME_TEST_COUNT=$gametest_count"
+
       - name: Upload built JARs
         if: success()
         uses: actions/upload-artifact@v4
@@ -242,3 +272,21 @@ jobs:
           name: tideborne-${{ github.sha }}
           path: build/libs/*.jar
           if-no-files-found: error
+
+      - name: Publish TIDEBORN-2.0.0 release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          tag='TIDEBORN-2.0.0'
+          artifact='build/libs/tideborne-2.0.0.jar'
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$artifact" --clobber
+            gh release edit "$tag" --target "$GITHUB_SHA" --title "$tag"
+          else
+            gh release create "$tag" "$artifact" \
+              --target "$GITHUB_SHA" \
+              --title "$tag" \
+              --generate-notes
+          fi

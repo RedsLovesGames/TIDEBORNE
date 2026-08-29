@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "tideborne",
-  "version": "2.0.0",
+  "version": "${version}",
   "name": "Tideborne",
   "description": "Tideborne Native Integration with independent Body Type and Condition traits, size-extreme Giant and Dwarf specimens, Perfect Specimen quality, Fish Score, Angler's Satchel, shared team records, journal badges, and legacy migration.",
   "authors": [
@@ -32,7 +32,12 @@
       "com.redslovesgames.tideborne.fishing.v2.gametest.FishDisplayPersistenceGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.AnglersSatchelPersistenceGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.OptionalCompatibilityRegressionGameTests",
-      "com.redslovesgames.tideborne.fishing.v2.FreshWorldRegressionGameTests"
+      "com.redslovesgames.tideborne.fishing.v2.gametest.PigmentationGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.FreshWorldRegressionGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.integration.CanonicalEntityTransferGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorageGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.integration.LegacyEntityBucketMigrationGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.integration.LegacyJournalPersistenceGameTests"
     ]
   },
   "mixins": [

@@ -1,7 +1,14 @@
 package com.redslovesgames.tideborne.fishing.v2.gametest;
 
 import com.li64.tide.data.item.TideItemData;
+import com.li64.tide.data.fishing.CatchResult;
+import com.li64.tide.data.fishing.selector.FishSelector;
+import com.li64.tide.registries.TideEntityTypes;
+import com.li64.tide.registries.TideItems;
+import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.TraitMomentumStorage;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.redslovesgames.tidetraits.catching.CatchTraitService;
 import com.redslovesgames.tidetraits.catching.PerfectCatchTraitBoost;
@@ -19,12 +26,56 @@ import net.minecraft.entity.passive.CodEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 
 public final class CanonicalFishingGameTests implements FabricGameTest {
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void normalServerFishingCreatesServerOwnedCanonicalState(TestContext helper) {
+        ServerPlayerEntity player = helper.createMockCreativeServerPlayerInWorld();
+        ItemStack rod = new ItemStack(TideItems.STONE_FISHING_ROD);
+        TideFishingHook hook = new TideFishingHook(
+                TideEntityTypes.FISHING_BOBBER,
+                player,
+                helper.getWorld(),
+                0,
+                0,
+                0.0F,
+                rod
+        );
+
+        CatchResult result = new FishSelector().getResult(hook.getContext());
+        helper.assertTrue(result.isPresent() && result.isFish(),
+                "Normal server fishing did not select a Tide fish through the canonical path");
+        helper.assertTrue(!result.items().isEmpty(),
+                "Normal server fishing returned no canonical fish ItemStack");
+
+        ItemStack caught = result.items().getFirst();
+        SpecimenData authoritative = CanonicalSpecimenStorage.read(caught).orElseThrow();
+        CanonicalCatchStateManager.CatchState serverState = CanonicalCatchStateManager.get(hook).orElseThrow();
+        helper.assertTrue(authoritative.equals(serverState.specimen()),
+                "Server catch state and persisted canonical specimen diverged");
+        helper.assertTrue(authoritative.provenance().attributes().get("authority").equals("server"),
+                "Canonical specimen provenance did not identify server authority");
+
+        caught.set(TideTraitsComponents.BODY_TYPE, "giant");
+        caught.set(TideTraitsComponents.MUTATION, "parasite_ridden");
+        helper.assertTrue(authoritative.equals(CanonicalSpecimenStorage.read(caught).orElseThrow()),
+                "Compatibility/client-facing mirrors overwrote canonical specimen state");
+
+        TraitMomentumStorage.set(player, authoritative.speciesId(), 7);
+        caught.set(TideTraitsComponents.SIZE_PERCENTILE, 0.0);
+        helper.assertTrue(TraitMomentumStorage.get(player, authoritative.speciesId()) == 7,
+                "Item or client-facing specimen state modified server-owned Momentum");
+
+        TraitMomentumStorage.clear(player, authoritative.speciesId());
+        CanonicalCatchStateManager.clear(hook);
+        helper.complete();
+    }
+
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void canonicalSpecimenSurvivesEntityRepresentationRoundTrip(TestContext helper) {
         SpecimenData specimen = specimen();

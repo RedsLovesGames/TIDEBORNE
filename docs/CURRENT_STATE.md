@@ -633,3 +633,45 @@ Detailed Stage 55 behavior and validation are documented in `docs/STAGE_55_1_3_5
 ## Current execution gate after Stage 55
 
 Stage 55 is complete. Tideborne 1.3.57 real fish migrate without loss, repeated migration, trait rerolls, or size rerolls and receive deterministic canonical score from the final preserved specimen. Old aggregate-only historical data remains loadable and non-synthetic. Do not begin a later numbered stage unless explicitly queued.
+
+## Stages 57-58 Fishing System 2.0 final validation is complete
+
+This section supersedes the older execution-gate text above for the current repository state.
+
+Tideborne is versioned as 2.0.0 for Minecraft 1.21.1, Java 21, and Tide 2.1.1. The final
+release workflow validates the exact `dev` release commit and publishes only after the full
+gate succeeds.
+
+The final validation includes:
+
+- repository structure, mixin, entrypoint, GameTest registration, intermediary-name, and
+  common-entrypoint client-class checks;
+- a clean build and the complete JUnit suite;
+- the complete Fabric GameTest suite in four runtime matrices: no optional mods, Apex Waters
+  only, Myths of the Sea only, and both optional mods;
+- a real dedicated-server boot plus a separately launched client connection;
+- normal server fishing through the canonical bridge, equality between persisted specimen
+  data and server-owned catch state, immutable canonical state when compatibility mirrors are
+  edited, and server-owned per-player Momentum;
+- client-to-server payload boundary checks plus the existing team Journal, shared discovery,
+  record-holder, leaderboard, event, Satchel, transfer, migration, and canonical networking
+  tests;
+- production artifact verification for `build/libs/tideborne-2.0.0.jar` followed by release
+  publication as `TIDEBORN-2.0.0` from the exact successful commit.
+
+Final inspection corrected five previously unregistered GameTest classes and stale 1.3.57
+release metadata. All 12 GameTest classes are now registered. Canonical Fishing System 2.0
+selection, specimen, trait, score, persistence, networking, Journal, record, and gear paths
+are authoritative. Legacy paths remain only as guarded migration, representation, or
+noncanonical compatibility fallbacks and cannot reroll or overwrite canonical V2 catches.
+
+There are no known Fishing System 2.0 blockers. A two-graphical-client interaction is not
+automated; multi-recipient consistency is instead covered by server-side projection and
+broadcast tests, while the runtime smoke proves an actual client can join the dedicated
+server. Detailed validation is documented in
+`docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`.
+
+## Current execution gate after Stages 57-58
+
+Fishing System 2.0 implementation and final validation are complete. `dev` is the release
+candidate for merge into `main`; this stage does not merge, rebase, or modify `main`.

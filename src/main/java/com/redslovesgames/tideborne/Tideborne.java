@@ -20,7 +20,7 @@ public final class Tideborne implements ModInitializer {
    public void onInitialize() {
       if (!initialized) {
          initialized = true;
-         System.out.println("[Tideborne] Starting 1.3.13 Native Integration...");
+         System.out.println("[Tideborne] Starting 2.0.0 Fishing System 2.0 Integration...");
          TideborneMigrationManager.migrate();
          TideborneConfigBackend.beforeSubsystems();
          new TideTraits().onInitialize();

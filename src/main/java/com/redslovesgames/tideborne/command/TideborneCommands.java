@@ -87,7 +87,7 @@ public final class TideborneCommands {
    }
 
    private static int status(ServerCommandSource var0) {
-      send(var0, "Tideborne 1.3.13 — unified commands active.");
+      send(var0, "Tideborne 2.0.0 - Fishing System 2.0 and unified commands active.");
       send(var0, TideborneMigrationManager.status());
       send(var0, "Use /tideborne help for grouped commands, or press Tab to explore a group.");
       return 1;
