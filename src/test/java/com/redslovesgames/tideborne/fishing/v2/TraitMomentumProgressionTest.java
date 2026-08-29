@@ -2,6 +2,7 @@ package com.redslovesgames.tideborne.fishing.v2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.OptionalDouble;
@@ -34,6 +35,23 @@ class TraitMomentumProgressionTest {
         }
 
         assertEquals(TraitMomentumStorage.MAX_MOMENTUM, state.get("tide:trout"));
+    }
+
+    @Test
+    void pureNextMomentumMatchesCanonicalRuntimeTransition() {
+        SpecimenData normal = specimen("tide:trout", SpecimenData.BodyType.NORMAL,
+                SpecimenData.Condition.NORMAL, SpecimenData.Pigmentation.NORMAL,
+                SpecimenData.SpecimenQuality.NORMAL, false);
+        SpecimenData notable = specimen("tide:trout", SpecimenData.BodyType.NORMAL,
+                SpecimenData.Condition.SCARRED, SpecimenData.Pigmentation.NORMAL,
+                SpecimenData.SpecimenQuality.NORMAL, false);
+
+        assertEquals(1, TraitMomentumProgression.nextMomentum(0, normal));
+        assertEquals(13, TraitMomentumProgression.nextMomentum(12, normal));
+        assertEquals(TraitMomentumStorage.MAX_MOMENTUM,
+                TraitMomentumProgression.nextMomentum(TraitMomentumStorage.MAX_MOMENTUM, normal));
+        assertEquals(0, TraitMomentumProgression.nextMomentum(12, notable));
+        assertThrows(IllegalArgumentException.class, () -> TraitMomentumProgression.nextMomentum(-1, normal));
     }
 
     @Test
