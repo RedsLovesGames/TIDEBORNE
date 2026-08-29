@@ -9,6 +9,7 @@ import com.redslovesgames.tideborne.fishing.v2.LegacyFishMigrationService;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Map.Entry;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
@@ -107,6 +108,15 @@ public final class JournalSpecimenStore {
             return Optional.empty();
         }
         return CanonicalSpecimenStorage.readTransferData(species.getCompound(recordKind));
+    }
+
+    /**
+     * Reads only the FishScore persisted in the canonical specimen snapshot.
+     * Legacy aggregate journal data has no recoverable score, so a missing score stays missing.
+     */
+    public static OptionalInt readFishScore(NbtCompound journalRoot, String speciesId, String recordKind) {
+        Optional<SpecimenData> specimen = read(journalRoot, speciesId, recordKind);
+        return specimen.isPresent() ? specimen.get().fishScore() : OptionalInt.empty();
     }
 
     static boolean migrateLegacyRecord(NbtCompound journalRoot, SpeciesProfile species, String recordKind, double length) {

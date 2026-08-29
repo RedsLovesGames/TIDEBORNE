@@ -25,6 +25,31 @@ class JournalSpecimenStoreTest {
     }
 
     @Test
+    void personalAndTeamJournalScoreConsumersReadPersistedCanonicalScoreExactly() {
+        NbtCompound personalRoot = new NbtCompound();
+        personalRoot.put("TidePlayerData", new NbtCompound());
+        NbtCompound teamRoot = new NbtCompound();
+        teamRoot.put("journal", new NbtCompound());
+        SpecimenData intentionallyInconsistentWithOldFormula = specimen("tide:cod", 99.9, 88.0, 37);
+
+        JournalSpecimenStore.capture(personalRoot, intentionallyInconsistentWithOldFormula, true, true);
+        JournalSpecimenStore.capture(teamRoot, intentionallyInconsistentWithOldFormula, true, true);
+
+        assertEquals(37, JournalSpecimenStore.readFishScore(personalRoot, "tide:cod", JournalSpecimenStore.LARGEST).orElseThrow());
+        assertEquals(37, JournalSpecimenStore.readFishScore(teamRoot, "tide:cod", JournalSpecimenStore.LARGEST).orElseThrow());
+    }
+
+    @Test
+    void scorelessCanonicalJournalRecordStaysScorelessInsteadOfBeingRecalculated() {
+        NbtCompound root = new NbtCompound();
+        SpecimenData scoreless = scorelessSpecimen("tide:cod", 100.0, 95.0);
+
+        JournalSpecimenStore.capture(root, scoreless, true, false);
+
+        assertTrue(JournalSpecimenStore.readFishScore(root, "tide:cod", JournalSpecimenStore.LARGEST).isEmpty());
+    }
+
+    @Test
     void laterCatchRefreshesLatestWithoutOverwritingUnwonRecords() {
         NbtCompound root = new NbtCompound();
         SpecimenData record = specimen("tide:cod", 99.0, 50.0, 2900);
@@ -90,6 +115,27 @@ class JournalSpecimenStoreTest {
                 true,
                 OptionalDouble.of(score / 3.0),
                 OptionalInt.of(score),
+                SpecimenData.Provenance.generated()
+        );
+    }
+
+    private static SpecimenData scorelessSpecimen(String species, double percentile, double length) {
+        return new SpecimenData(
+                species,
+                SpecimenGenerator.SCHEMA_VERSION,
+                SpecimenGenerator.GENERATION_VERSION,
+                0x5C0E_1E55L,
+                percentile,
+                length,
+                length,
+                percentile,
+                SpecimenData.BodyType.GIANT,
+                SpecimenData.Condition.SCARRED,
+                SpecimenData.Pigmentation.IRIDESCENT,
+                SpecimenData.SpecimenQuality.PERFECT_SPECIMEN,
+                true,
+                OptionalDouble.empty(),
+                OptionalInt.empty(),
                 SpecimenData.Provenance.generated()
         );
     }

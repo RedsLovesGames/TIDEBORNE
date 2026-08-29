@@ -2,12 +2,15 @@ package com.redslovesgames.tideteamjournal.mixin;
 
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
+import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
 import com.redslovesgames.tideteamjournal.TeamCanonicalJournalCapture;
 import com.redslovesgames.tideteamjournal.TeamProgressStore;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -22,6 +25,94 @@ abstract class TeamProgressCanonicalJournalMixin {
                     ? (double) specimen.fishScore().getAsInt()
                     : -1.0);
         }
+    }
+
+    /**
+     * Leaderboard capture must never fall through to TeamProgressStore's reconstructed V1 formula.
+     * A catch without a persisted canonical V2 score simply has no score for this consumer.
+     */
+    @Redirect(
+            method = "tideborneBeginCatch",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/redslovesgames/tideteamjournal/TeamProgressStore;tideborneFishScore(Lnet/minecraft/item/ItemStack;)D"
+            )
+    )
+    private static double tideborne$storedLeaderboardScore(ItemStack stack) {
+        Integer score = stack.get(com.redslovesgames.tidetraits.component.TideTraitsComponents.SPECIMEN_FISH_SCORE);
+        return score == null || score <= 0 ? -1.0 : score.doubleValue();
+    }
+
+    @Inject(method = "ensureInitialized", at = @At("RETURN"), cancellable = true)
+    private static void tideborne$migrateStoredScores(NbtCompound root, CallbackInfoReturnable<Boolean> callback) {
+        if (StoredFishScoreStorage.migrateRoot(root) && !Boolean.TRUE.equals(callback.getReturnValue())) {
+            callback.setReturnValue(true);
+        }
+    }
+
+    @Inject(method = "mergeTrackedDataOnce", at = @At("HEAD"))
+    private static void tideborne$prepareStoredScoreMerge(
+            NbtCompound targetRoot,
+            NbtCompound sourceRoot,
+            int historyLimit,
+            CallbackInfo callback
+    ) {
+        StoredFishScoreStorage.migrateRoot(targetRoot);
+        StoredFishScoreStorage.migrateRoot(sourceRoot);
+    }
+
+    @Inject(method = "mergeTrackedDataOnce", at = @At("RETURN"))
+    private static void tideborne$finishStoredScoreMerge(
+            NbtCompound targetRoot,
+            NbtCompound sourceRoot,
+            int historyLimit,
+            CallbackInfo callback
+    ) {
+        StoredFishScoreStorage.acceptCompatibilityWrites(targetRoot);
+    }
+
+    @Inject(method = "readHistory", at = @At("HEAD"))
+    private static void tideborne$migrateHistoryScores(NbtCompound root, CallbackInfoReturnable<?> callback) {
+        StoredFishScoreStorage.migrateRoot(root);
+    }
+
+    @Inject(method = "writeHistory", at = @At("RETURN"))
+    private static void tideborne$persistHistoryScores(NbtCompound root, java.util.List<?> events, int limit, CallbackInfo callback) {
+        StoredFishScoreStorage.acceptCompatibilityWrites(root);
+    }
+
+    @Inject(method = "tideborneRegisterContributorFishScore", at = @At("HEAD"))
+    private static void tideborne$canonicalizeContributorRead(java.util.UUID id, NbtCompound tag, CallbackInfo callback) {
+        StoredFishScoreStorage.migrateLegacyScore(tag);
+        StoredFishScoreStorage.syncCompatibilityMirror(tag);
+    }
+
+    @Inject(method = "tideborneUpdateContributorFishScore", at = @At("HEAD"))
+    private static void tideborne$prepareContributorWrite(NbtCompound tag, CallbackInfo callback) {
+        StoredFishScoreStorage.migrateLegacyScore(tag);
+        StoredFishScoreStorage.syncCompatibilityMirror(tag);
+    }
+
+    @Inject(method = "tideborneUpdateContributorFishScore", at = @At("RETURN"))
+    private static void tideborne$persistContributorWrite(NbtCompound tag, CallbackInfo callback) {
+        StoredFishScoreStorage.acceptCompatibilityWrite(tag);
+        StoredFishScoreStorage.syncCompatibilityMirror(tag);
+    }
+
+    @Inject(method = "tideborneRegisterEventMeta", at = @At("HEAD"))
+    private static void tideborne$canonicalizeEventRead(TeamProgressStore.RecordEvent event, NbtCompound tag, CallbackInfo callback) {
+        StoredFishScoreStorage.migrateLegacyScore(tag);
+        StoredFishScoreStorage.syncCompatibilityMirror(tag);
+    }
+
+    @Inject(method = "tideborneRecordCurrentTopFish", at = @At("HEAD"))
+    private static void tideborne$prepareTopFishOrdering(NbtCompound root, java.util.UUID id, String name, CallbackInfo callback) {
+        StoredFishScoreStorage.migrateRoot(root);
+    }
+
+    @Inject(method = "tideborneRecordCurrentTopFish", at = @At("RETURN"))
+    private static void tideborne$persistTopFishScores(NbtCompound root, java.util.UUID id, String name, CallbackInfo callback) {
+        StoredFishScoreStorage.acceptCompatibilityWrites(root);
     }
 
     @Inject(method = "tideborneBeginCatch", at = @At("HEAD"))
