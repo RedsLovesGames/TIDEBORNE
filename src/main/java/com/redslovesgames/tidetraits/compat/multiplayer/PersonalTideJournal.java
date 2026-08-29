@@ -60,7 +60,9 @@ public final class PersonalTideJournal {
       }
 
       try {
-         return Optional.of(TidePlayerData.getOrCreate(Tide.PLATFORM.getPlayerData(player)));
+         NbtCompound root = Tide.PLATFORM.getPlayerData(player);
+         JournalSpecimenStore.migrateLegacyJournal(root);
+         return Optional.of(TidePlayerData.getOrCreate(root));
       } catch (RuntimeException | LinkageError failure) {
          warn(player, "load personal Tide journal", failure);
          return Optional.empty();
