@@ -611,3 +611,25 @@ Detailed Stage 54 validation is documented in `docs/STAGE_54_FRESH_WORLD_REGRESS
 ## Current execution gate after Stage 54
 
 Stage 54 is complete. The new-world regression gate is green, the only defect found by this pass was the fresh Steel Leader attachment-state bug, and that defect is fixed. Do not begin a later numbered stage from this state unless explicitly queued.
+
+## Stage 55 Tideborne 1.3.57 old-world compatibility is complete
+
+This section supersedes the older execution-gate text above for the current queued repository state.
+
+Stage 55 focused exclusively on saved Tideborne 1.3.57 data. Real reconstructable legacy fish now migrate exactly once to canonical V2 state and receive deterministic canonical FishScore from the final migrated specimen through `FishScoreV2Service`. The migration adds no RNG, does not call specimen trait generation, preserves valid legacy percentile/physical size, and cannot reroll traits or size.
+
+Three compatibility defects were fixed during the pass:
+
+- pre-V2 real fish could reach canonical specimen state without a canonical FishScore after legacy cached-score fallback removal;
+- older partial canonical ItemStacks could restore preserved canonical fields after a missing score had already been calculated, so missing score calculation now occurs only after the final preserved specimen is known while an existing saved score remains authoritative;
+- aggregate-only Journal record reconstruction briefly inherited real-fish scoring, so aggregate historical snapshots now deliberately keep score absent rather than inventing a historical specimen score from incomplete identity.
+
+The regression matrix covers old fish ItemStacks, entities, bucket payloads, displays, Angler's Satchel entries, personal Journal, team Journal, event-history score persistence, contributor/leaderboard score persistence, and top-fish/record data. Real migrated fish are required to retain deterministic seed, natural percentile, physical length, mapped traits, and exact score across repeated reads/transfers. Aggregate-only historical structures preserve their existing semantics and ordering instead of being reinterpreted into a synthetic specimen.
+
+Stage 55 implementation/test head `6fbddf5ca4116273f9ad06c086a735d8e678e9fb` is green in GitHub Actions run `33268651496`. The Java 21 workflow completed exact dependency/reconstruction validation, `./gradlew clean build --stacktrace` with all unit tests, Fabric GameTests without Apex Waters, Fabric GameTests with exact Apex Waters 1.1.1, and built-JAR artifact upload successfully.
+
+Detailed Stage 55 behavior and validation are documented in `docs/STAGE_55_1_3_57_COMPATIBILITY.md`.
+
+## Current execution gate after Stage 55
+
+Stage 55 is complete. Tideborne 1.3.57 real fish migrate without loss, repeated migration, trait rerolls, or size rerolls and receive deterministic canonical score from the final preserved specimen. Old aggregate-only historical data remains loadable and non-synthetic. Do not begin a later numbered stage unless explicitly queued.
