@@ -25,6 +25,7 @@ on:
       - 'gradle/**'
       - 'gradlew'
       - 'gradlew.bat'
+      - '.github/workflows/build.yml'
 
 permissions:
   contents: read
@@ -54,6 +55,18 @@ jobs:
           set -euo pipefail
           mkdir -p dev/libs
 
+          fetch_modrinth_primary() {
+            local project_id="$1"
+            local version_id="$2"
+            local output="$3"
+            local json url
+            json="$(curl -fsSL "https://api.modrinth.com/v2/version/${version_id}")"
+            test "$(printf '%s' "$json" | jq -r '.project_id')" = "$project_id"
+            url="$(printf '%s' "$json" | jq -r '.files[] | select(.primary == true) | .url' | head -n1)"
+            test -n "$url"
+            curl -fsSL "$url" -o "$output"
+          }
+
           # Tide 2.1.1 Fabric for Minecraft 1.21.1. Resolve the exact published
           # Modrinth version by name/platform rather than compiling against 2.1.
           tide_json="$(curl -fsSLG \
@@ -79,6 +92,22 @@ jobs:
           echo '00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37  dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar' \
             | sha256sum --check --strict
 
+          # Myths of the Sea 1.3.0 Fabric 1.21.1 and the exact compatible dependency
+          # versions frozen for the optional-mod regression matrix.
+          fetch_modrinth_primary 'WaCchT6K' '3UawtEXr' \
+            dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar
+          test "$(unzip -p dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar fabric.mod.json | jq -r '.id')" = 'myths_of_the_sea'
+          test "$(unzip -p dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar fabric.mod.json | jq -r '.version')" = '1.3.0'
+
+          fetch_modrinth_primary 'GkIc6rRo' 'kxmVyCru' \
+            dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar
+          fetch_modrinth_primary '8BmcQJ2H' 'dnJdtm0u' \
+            dev/libs/geckolib-fabric-1.21.1-4.9.2.jar
+
+          echo "Myths of the Sea 1.3.0 SHA-256: $(sha256sum dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar | awk '{print $1}')"
+          echo "CERBON API 1.3.0 SHA-256: $(sha256sum dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar | awk '{print $1}')"
+          echo "GeckoLib 4.9.2 SHA-256: $(sha256sum dev/libs/geckolib-fabric-1.21.1-4.9.2.jar | awk '{print $1}')"
+
       - name: Validate reconstruction identifiers
         shell: bash
         run: |
@@ -97,7 +126,7 @@ jobs:
             gradle clean build --stacktrace
           fi
 
-      - name: Run GameTests without Apex Waters
+      - name: Run GameTests with no optional compatibility mods
         run: |
           if [ -x ./gradlew ]; then
             ./gradlew runGametest --stacktrace
@@ -105,12 +134,28 @@ jobs:
             gradle runGametest --stacktrace
           fi
 
-      - name: Run GameTests with Apex Waters 1.1.1
+      - name: Run GameTests with Apex Waters 1.1.1 only
         run: |
           if [ -x ./gradlew ]; then
             ./gradlew runGametest -PincludeApexRuntime=true --stacktrace
           else
             gradle runGametest -PincludeApexRuntime=true --stacktrace
+          fi
+
+      - name: Run GameTests with Myths of the Sea 1.3.0 only
+        run: |
+          if [ -x ./gradlew ]; then
+            ./gradlew runGametest -PincludeMythsRuntime=true --stacktrace
+          else
+            gradle runGametest -PincludeMythsRuntime=true --stacktrace
+          fi
+
+      - name: Run GameTests with Apex Waters and Myths of the Sea
+        run: |
+          if [ -x ./gradlew ]; then
+            ./gradlew runGametest -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
+          else
+            gradle runGametest -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
           fi
 
       - name: Upload built JARs
