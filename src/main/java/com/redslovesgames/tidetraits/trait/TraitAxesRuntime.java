@@ -8,12 +8,9 @@ package com.redslovesgames.tidetraits.trait;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import com.redslovesgames.tidetraits.config.TideTraitsConfig;
 import com.redslovesgames.tidetraits.fish.SpecimenSizeService;
-import java.util.OptionalDouble;
 import net.minecraft.item.ItemStack;
 
 public final class TraitAxesRuntime {
-   private static final long BODY_TYPE_SALT = 6462270825544434135L;
-   private static final long PERFECT_CONDITION_SALT = 1488113962597754897L;
    private static final long BODY_SIZE_SALT = 8583800735156012005L;
    private static final long PARASITE_SIZE_SALT = -6626703657320631856L;
 
@@ -92,77 +89,15 @@ public final class TraitAxesRuntime {
       }
    }
 
-   public static SpecimenSizeService.AppliedSize normalizeNew(ItemStack var0, SpecimenSizeService.AppliedSize var1, TideTraitsConfig var2) {
-      // Canonical V2 catches already own Body Type and final physical size. Never run the legacy
-      // P97/P3 gates or legacy body-size multiplier on them.
-      if (isCanonicalV2(var0)) {
-         mirrorCanonicalBodyType(var0);
-         return var1;
-      }
-
-      SpecimenData var3 = var1.specimen();
-      long var4 = var3.identitySeed();
-      FishMutation var6 = var3.mutation();
-      double var7 = var1.finalPhysicalLengthCm();
-      OptionalDouble var9 = var3.physicalSizePercentile();
-      double var10 = var9.isPresent() ? var9.getAsDouble() : -1.0;
-      String var12 = "normal";
-      if (var6 == FishMutation.GIANT || var6 == FishMutation.DWARF) {
-         var12 = var6.serializedName();
-         var6 = FishMutation.NORMAL;
-      }
-
-      double var13 = 95.0;
-      double var15 = 100.0;
-
-      try {
-         var13 = clamp(var2.perfectSpecimenNormalPercentile().minInclusive(), 0.0, 100.0);
-         var15 = clamp(var2.perfectSpecimenNormalPercentile().maxInclusive(), var13, 100.0);
-         if (Math.abs(var13 - 75.0) < 1.0E-9 && Math.abs(var15 - 95.0) < 1.0E-9) {
-            var13 = 95.0;
-            var15 = 100.0;
-         }
-      } catch (RuntimeException var22) {
-      }
-
-      boolean var17 = var10 >= var13 && var10 <= var15;
-      if (var6 == FishMutation.PERFECT_SPECIMEN && !var17) {
-         var6 = FishMutation.NORMAL;
-      }
-
-      if (var6 == FishMutation.NORMAL && var17) {
-         double var18 = Math.max(1.0E-4, (var15 - var13) / 100.0);
-         double var20 = Math.min(1.0, safeProbability(var2, FishMutation.PERFECT_SPECIMEN) / var18);
-         if (DeterministicValues.unitDouble(var4, 1488113962597754897L) < var20) {
-            var6 = FishMutation.PERFECT_SPECIMEN;
-         }
-      }
-
-      if ("normal".equals(var12) && var10 >= 97.0) {
-         double var24 = Math.min(1.0, safeProbability(var2, FishMutation.GIANT) / 0.03);
-         if (DeterministicValues.unitDouble(var4, 6462270825544434135L) < var24) {
-            var12 = "giant";
-         }
-      } else if ("normal".equals(var12) && var10 >= 0.0 && var10 <= 3.0) {
-         double var23 = Math.min(1.0, safeProbability(var2, FishMutation.DWARF) / 0.03);
-         if (DeterministicValues.unitDouble(var4, 6462270825544434135L) < var23) {
-            var12 = "dwarf";
-         }
-      }
-
-      if (Double.isFinite(var7) && var7 > 0.0) {
-         var7 *= bodyMultiplier(var12, var4, var2);
-      }
-
-      var0.set(TideTraitsComponents.BODY_TYPE, var12);
-      var0.set(TideTraitsComponents.MUTATION, var6.serializedName());
-      SpecimenData var25 = var9.isPresent() ? SpecimenData.classified(var4, var6, var10) : SpecimenData.unclassified(var4, var6);
-      return new SpecimenSizeService.AppliedSize(var25, var7);
-   }
+   /*
+    * The old normalizeNew path was removed in Stage 50. It contained the P97 Giant/P3 Dwarf gates,
+    * legacy Perfect Specimen percentile gate, and a second body-size multiplier. New catches are
+    * canonical V2 before legacy hooks run, and old-world migration uses persisted values instead.
+    */
 
    public static double bodyMultiplier(String var0, long var1, TideTraitsConfig var3) {
       if (var0 != null && var3 != null) {
-         double var4 = DeterministicValues.unitDouble(var1, 8583800735156012005L);
+         double var4 = DeterministicValues.unitDouble(var1, BODY_SIZE_SALT);
          if ("giant".equalsIgnoreCase(var0)) {
             double var10 = var3.giantLengthMultiplier().minInclusive();
             double var11 = var3.giantLengthMultiplier().maxInclusive();
@@ -198,7 +133,7 @@ public final class TraitAxesRuntime {
          return 1.0;
       }
 
-      double var4 = DeterministicValues.unitDouble(var1, -6626703657320631856L);
+      double var4 = DeterministicValues.unitDouble(var1, PARASITE_SIZE_SALT);
       double var6 = var3.parasiteLengthMultiplier().minInclusive();
       double var8 = var3.parasiteLengthMultiplier().maxInclusive();
       return var6 + (var8 - var6) * var4;

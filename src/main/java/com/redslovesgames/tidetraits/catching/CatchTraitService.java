@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.function.Predicate;
 import java.util.random.RandomGenerator;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
@@ -48,7 +47,8 @@ public final class CatchTraitService {
    private static final TagKey<Item> ALL_EXCLUDED = itemTag("mutation_excluded");
    private final FishDescriptorManager descriptors = new FishDescriptorManager();
    private final FishPercentileService percentiles = new FishPercentileService();
-   private final SpecimenSizeService sizes = new SpecimenSizeService(this.percentiles);
+   // Retained only for classifying already-saved legacy physical lengths during migration.
+   private final SpecimenSizeService legacyMigrationSizes = new SpecimenSizeService(this.percentiles);
    private final MutationSelector selector = new MutationSelector();
    private volatile TideTraitsConfig config = TideTraitsConfig.defaults();
 
@@ -71,6 +71,7 @@ public final class CatchTraitService {
       return this.descriptors;
    }
 
+   /** Legacy percentile baselines remain readable for migration/compatibility only. */
    public FishPercentileService percentiles() {
       return this.percentiles;
    }
@@ -100,8 +101,9 @@ public final class CatchTraitService {
    }
 
    public boolean assignIfAbsent(ItemStack stack, Random random) {
-      // Canonical V2 specimens already own their Condition. The legacy mutation selector is only a
-      // compatibility fallback for noncanonical catches and must never reroll a canonical specimen.
+      // Canonical V2 specimens already own their one natural percentile, final size, Body Type,
+      // Condition, and seed. This legacy hook is still injected after Tide selects/replaces catches,
+      // so its canonical branch is deliberately mirror/migration-only and consumes no size RNG.
       if (TraitAxesRuntime.isCanonicalV2(stack)) {
          String canonicalCondition = (String)stack.get(TideTraitsComponents.SPECIMEN_CONDITION);
          if (canonicalCondition != null && !canonicalCondition.isBlank()) {
@@ -119,26 +121,24 @@ public final class CatchTraitService {
 
       String existingId = (String)stack.get(TideTraitsComponents.MUTATION);
       if (existingId != null && !existingId.isBlank()) {
+         // Existing saved legacy fish may still need deterministic migration from their persisted
+         // physical length. That compatibility read is intentionally separate from new generation.
          this.migrateExistingClassification(stack, fishData.get(), random);
          return false;
       }
 
       FishDescriptor descriptor = FishDescriptor.fromFishData(fishData.get());
       RandomGenerator oneDraw = random::nextLong;
-      Predicate<FishMutation> eligibility = mutation -> this.isEligible(stack, descriptor, mutation);
+      Predicate<FishMutation> eligibility = mutation -> this.isEligible(stack, mutation);
       SpecimenData selected = this.selector.assignOrKeep(Optional.empty(), oneDraw, this.config, eligibility);
-      double normalLength = (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
-      if ((!Double.isFinite(normalLength) || normalLength <= 0.0) && descriptor.sizeData().isPresent()) {
-         normalLength = descriptor.fishData().getRandomLength(random);
-      }
 
-      SpecimenSizeService.AppliedSize applied = this.sizes.applyNew(selected, normalLength, descriptor, this.config);
-      applied = TraitAxesRuntime.normalizeNew(stack, applied, this.config);
-      writeSpecimen(stack, applied.specimen());
-      if (Double.isFinite(applied.finalPhysicalLengthCm()) && applied.finalPhysicalLengthCm() > 0.0) {
-         TideItemData.FISH_LENGTH.set(stack, applied.finalPhysicalLengthCm());
-      }
-
+      // Fishing System 2.0 permanently supersedes legacy size generation here. Do not call
+      // FishData#getRandomLength, SpecimenSizeService#applyNew, or TraitAxesRuntime#normalizeNew.
+      // A noncanonical compatibility catch may receive its old identity/Condition marker, but its
+      // physical length and percentile are left untouched for the canonical/migration boundaries.
+      stack.set(TideTraitsComponents.MUTATION, selected.mutation().serializedName());
+      stack.set(TideTraitsComponents.MUTATION_SEED, selected.identitySeed());
+      stack.remove(TideTraitsComponents.SIZE_PERCENTILE);
       return true;
    }
 
@@ -186,6 +186,10 @@ public final class CatchTraitService {
       }
    }
 
+   /**
+    * Compatibility-only old-world migration. This may infer a percentile from an already-persisted
+    * final physical length, but it never samples a new length and is not reachable for canonical V2.
+    */
    private void migrateExistingClassification(ItemStack stack, FishData data, Random random) {
       TraitAxesRuntime.migrateLegacy(stack);
       String mutationId = (String)stack.get(TideTraitsComponents.MUTATION);
@@ -206,7 +210,7 @@ public final class CatchTraitService {
             double finalLength = (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
             FishDescriptor descriptor = FishDescriptor.fromFishData(data);
             SpecimenData specimen = SpecimenData.unclassified(seed, mutation.get());
-            SpecimenSizeService.AppliedSize classified = this.sizes
+            SpecimenSizeService.AppliedSize classified = this.legacyMigrationSizes
                .classifyExistingFinalLength(
                   specimen,
                   TraitAxesRuntime.recoverCurrentNormalLength(stack, finalLength, this.config),
@@ -218,30 +222,12 @@ public final class CatchTraitService {
       }
    }
 
-   private boolean isEligible(ItemStack stack, FishDescriptor descriptor, FishMutation mutation) {
+   private boolean isEligible(ItemStack stack, FishMutation mutation) {
+      // Giant, Dwarf, and Perfect Specimen are canonical V2 axes now, never legacy new-catch rolls.
       if (mutation == FishMutation.DWARF || mutation == FishMutation.GIANT || mutation == FishMutation.PERFECT_SPECIMEN) {
          return false;
       }
-
-      if (!stack.isIn(ALL_EXCLUDED) && !stack.isIn(itemTag(mutation.serializedName() + "_excluded"))) {
-         return switch (mutation) {
-            case DWARF, GIANT, PERFECT_SPECIMEN -> descriptor.supportsPhysicalLength();
-            default -> true;
-         };
-      } else {
-         return false;
-      }
-   }
-
-   private static void writeSpecimen(ItemStack stack, SpecimenData specimen) {
-      stack.set(TideTraitsComponents.MUTATION, specimen.mutation().serializedName());
-      stack.set(TideTraitsComponents.MUTATION_SEED, specimen.identitySeed());
-      OptionalDouble percentile = specimen.physicalSizePercentile();
-      if (percentile.isPresent()) {
-         stack.set(TideTraitsComponents.SIZE_PERCENTILE, percentile.getAsDouble());
-      } else {
-         stack.remove(TideTraitsComponents.SIZE_PERCENTILE);
-      }
+      return !stack.isIn(ALL_EXCLUDED) && !stack.isIn(itemTag(mutation.serializedName() + "_excluded"));
    }
 
    private static TagKey<Item> itemTag(String path) {
