@@ -77,30 +77,38 @@ public final class OptionalCompatibilityRegressionGameTests implements FabricGam
     }
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
-    public void nativeTideProfileAndSpecimenGenerationRemainStableWithOptionalMods(TestContext helper) {
-        FishData nativeFish = TideData.FISH.get().values().stream()
-                .filter(data -> !isOptionalNamespace(speciesId(data)))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No native Tide FishData was available for Stage 56 validation"));
-
+    public void everyLiveTideProfileAndSpecimenRemainStableWithOptionalMods(TestContext helper) {
         TideSpeciesProfileAdapter adapter = new TideSpeciesProfileAdapter();
-        SpeciesProfile profile = adapter.adaptForMigration(nativeFish);
         SpecimenGenerator generator = new SpecimenGenerator();
-        SpecimenData first = generator.generate(profile, SPECIMEN_SEED, SpecimenData.Provenance.generated());
-        SpecimenData second = generator.generate(profile, SPECIMEN_SEED, SpecimenData.Provenance.generated());
+        int validated = 0;
 
-        helper.assertTrue(profile.speciesId().equals(speciesId(nativeFish)),
-                "Optional runtime changed the canonical species ID produced from Tide FishData");
-        helper.assertTrue(first.equals(second),
-                "Optional runtime changed deterministic canonical specimen generation");
-        helper.assertTrue(first.speciesId().equals(profile.speciesId()),
-                "Generated specimen did not retain the adapted Tide species ID");
-        helper.assertTrue(Double.isFinite(first.baseLength()) && first.baseLength() > 0.0,
-                "Generated specimen did not retain a valid canonical base size");
-        helper.assertTrue(Double.isFinite(first.finalLength()) && first.finalLength() > 0.0,
-                "Generated specimen did not retain a valid canonical final size");
-        helper.assertTrue(first.fishScore().isPresent(),
-                "Generated specimen did not receive canonical FishScore under optional runtime validation");
+        for (FishData fish : TideData.FISH.get().values()) {
+            String expectedSpeciesId = speciesId(fish);
+            helper.assertTrue(!isOptionalNamespace(expectedSpeciesId),
+                    "Optional runtime unexpectedly entered the Tide fish eligibility pool: " + expectedSpeciesId);
+
+            SpeciesProfile profile = adapter.adaptForMigration(fish);
+            helper.assertTrue(profile.speciesId().equals(expectedSpeciesId),
+                    "Optional runtime changed the canonical species ID for " + expectedSpeciesId);
+
+            long seed = SPECIMEN_SEED ^ expectedSpeciesId.hashCode();
+            SpecimenData first = generator.generate(profile, seed, SpecimenData.Provenance.generated());
+            SpecimenData second = generator.generate(profile, seed, SpecimenData.Provenance.generated());
+
+            helper.assertTrue(first.equals(second),
+                    "Optional runtime changed deterministic canonical specimen generation for " + expectedSpeciesId);
+            helper.assertTrue(first.speciesId().equals(profile.speciesId()),
+                    "Generated specimen did not retain the adapted Tide species ID for " + expectedSpeciesId);
+            helper.assertTrue(Double.isFinite(first.baseLength()) && first.baseLength() > 0.0,
+                    "Generated specimen did not retain a valid canonical base size for " + expectedSpeciesId);
+            helper.assertTrue(Double.isFinite(first.finalLength()) && first.finalLength() > 0.0,
+                    "Generated specimen did not retain a valid canonical final size for " + expectedSpeciesId);
+            helper.assertTrue(first.fishScore().isPresent(),
+                    "Generated specimen did not receive canonical FishScore for " + expectedSpeciesId);
+            validated++;
+        }
+
+        helper.assertTrue(validated > 0, "No Tide fish profiles were available for Stage 56 validation");
         helper.complete();
     }
 
