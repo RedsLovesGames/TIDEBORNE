@@ -93,5 +93,7 @@ public final class LegacyEntityBucketMigrationGameTests implements FabricGameTes
                 "Legacy entity physical length changed during migration");
         helper.assertTrue(actual.bodyType() == bodyType, "Legacy entity Body Type changed during migration");
         helper.assertTrue(actual.condition() == condition, "Legacy entity Condition changed during migration");
+        helper.assertTrue(actual.rawFishScore().isPresent(), "Migrated entity is missing canonical raw FishScore");
+        helper.assertTrue(actual.fishScore().isPresent(), "Migrated entity is missing canonical FishScore");
     }
 }
