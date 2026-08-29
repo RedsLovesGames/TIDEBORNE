@@ -14,8 +14,10 @@ import net.minecraft.item.ItemConvertible;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.tag.BiomeTags;
 
-/** Resolves currently active Tideborne rods, hooks, and lines into canonical fishing gear modifiers. */
+/** Resolves currently active Tideborne rods, hooks, lines, and bait into canonical fishing gear modifiers. */
 public final class TideborneFishingGearModifiers {
+    public static final String FISH_CATCH_CATEGORY = "fish";
+
     private TideborneFishingGearModifiers() {
     }
 
@@ -90,6 +92,16 @@ public final class TideborneFishingGearModifiers {
                 context.exactBiome().isIn(BiomeTags.IS_OCEAN),
                 config
         );
+    }
+
+    /** Leviathan Bait replaces the eligible catch categories with the normal Tide fish category only. */
+    public static FishingGearModifiers leviathanBaitCatchPool(boolean active) {
+        if (!active) {
+            return FishingGearModifiers.neutral();
+        }
+        return FishingGearModifiers.builder()
+                .restrictCategoriesTo(FISH_CATCH_CATEGORY)
+                .build();
     }
 
     public static FishingGearModifiers tentacleLine(TideboundConfig.Values config) {

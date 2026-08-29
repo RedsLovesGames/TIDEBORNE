@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideboundcompatibility.fishing;
 
+import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
+import java.util.Objects;
 import java.util.function.Supplier;
 import net.minecraft.util.math.MathHelper;
 
@@ -16,10 +18,6 @@ public final class LeviathanBaitRules {
       return Math.addExact(normalLuck, bonus);
    }
 
-   public static double selectionWeight(double baseWeight, double selectionQuality, int effectiveLuck) {
-      return Math.max(0.0, baseWeight + selectionQuality * effectiveLuck);
-   }
-
    public static float catchZone(float normalArea, double multiplier) {
       return MathHelper.clamp(normalArea * (float)multiplier, 0.05F, 1.0F);
    }
@@ -28,7 +26,21 @@ public final class LeviathanBaitRules {
       return Math.max(0.05F, normalSpeed * (float)multiplier);
    }
 
-   public static <T> T selectCatch(boolean fishOnly, Supplier<T> normalSelector, Supplier<T> fishSelector) {
-      return (fishOnly ? fishSelector : normalSelector).get();
+   public static boolean isFishOnlyCatchPool(FishingGearModifiers modifiers) {
+      Objects.requireNonNull(modifiers, "modifiers");
+      FishingGearModifiers.IdRestriction categories = modifiers.categoryRestriction();
+      return categories.allowListActive()
+         && categories.allowedIds().size() == 1
+         && categories.allows(TideborneFishingGearModifiers.FISH_CATCH_CATEGORY);
+   }
+
+   public static <T> T selectCatch(
+      FishingGearModifiers modifiers,
+      Supplier<T> normalSelector,
+      Supplier<T> fishSelector
+   ) {
+      Objects.requireNonNull(normalSelector, "normalSelector");
+      Objects.requireNonNull(fishSelector, "fishSelector");
+      return (isFishOnlyCatchPool(modifiers) ? fishSelector : normalSelector).get();
    }
 }

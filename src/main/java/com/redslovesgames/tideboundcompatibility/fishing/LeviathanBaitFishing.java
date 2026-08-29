@@ -10,6 +10,7 @@ import com.li64.tide.data.fishing.CatchResult;
 import com.li64.tide.data.fishing.FishingContext;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.li64.tide.util.BaitUtils;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
@@ -20,9 +21,10 @@ public final class LeviathanBaitFishing {
 
    public static CatchResult selectCatch(TideFishingManager manager, TideFishingHook hook, FishingContext context) {
       TideboundConfig.Values config = TideboundConfig.get();
-      boolean fishOnly = isEnabledFor(hook, config);
+      FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBaitCatchPool(isEnabledFor(hook, config));
+      boolean fishOnly = LeviathanBaitRules.isFishOnlyCatchPool(modifiers);
       CatchResult result = LeviathanBaitRules.selectCatch(
-         fishOnly,
+         modifiers,
          () -> manager.selectCatch(context),
          () -> manager.getFishSelector().getResult(withFishLuck(context, config.leviathanBaitFishSelectionLuckBonus))
       );
