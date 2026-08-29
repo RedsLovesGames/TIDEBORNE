@@ -64,6 +64,10 @@ public final class FishDisplayPersistenceGameTests implements FabricGameTest {
                 "Legacy display was not rewritten to the current canonical schema");
         helper.assertTrue(Double.compare(legacyLength, migrated.finalLength()) == 0,
                 "Legacy display migration did not preserve physical length");
+        helper.assertTrue(migrated.rawFishScore().isPresent(),
+                "Legacy display migration did not persist canonical raw FishScore");
+        helper.assertTrue(migrated.fishScore().isPresent(),
+                "Legacy display migration did not persist canonical FishScore");
         long seed = migrated.deterministicSeed();
 
         ItemStack removed = display.takeDisplayStack();
@@ -72,6 +76,8 @@ public final class FishDisplayPersistenceGameTests implements FabricGameTest {
                 "Legacy display was migrated a second time with a different deterministic seed");
         helper.assertTrue(Double.compare(legacyLength, restored.finalLength()) == 0,
                 "Legacy display removal changed migrated physical length");
+        helper.assertTrue(migrated.equals(restored),
+                "Legacy display removal changed migrated traits, size, or FishScore");
         helper.assertTrue(CanonicalSpecimenStorage.detectMigration(removed)
                         == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
                 "Removed legacy display did not remain canonical");
