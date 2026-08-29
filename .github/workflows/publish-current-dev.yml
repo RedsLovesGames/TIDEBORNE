@@ -1,3 +1,4 @@
+# One-time requested release publisher for the current dev candidate.
 name: Publish Current Dev Build
 
 on:
