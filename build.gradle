@@ -99,8 +99,8 @@ loom {
             name 'Tideborne GameTest'
             runDir "run/gametest-${optionalRuntimeLabel}"
             vmArg '-Dfabric-api.gametest'
-            systemProperty 'tideborne.expectedApexRuntime', includeApexRuntime.toString()
-            systemProperty 'tideborne.expectedMythsRuntime', includeMythsRuntime.toString()
+            vmArg "-Dtideborne.expectedApexRuntime=${includeApexRuntime}"
+            vmArg "-Dtideborne.expectedMythsRuntime=${includeMythsRuntime}"
         }
     }
 }
