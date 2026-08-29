@@ -210,3 +210,12 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Preserve strict `roll < chance` behavior and legacy protection RNG consumption semantics.
 - [x] Add ordinary-catch, canonical-composition, disabled-Apex, chance-boundary, and RNG-count tests. Green Stage 35 run: `33243653492` on implementation commit `b2198af9109769eb9d8abe88d8453e4934618160`.
 - [x] Document Stage 35 in `docs/STAGE_35_STEEL_LEADER_MIGRATION.md`.
+
+## Stage 54 - new-world regression pass
+
+- [x] Add focused empty-world GameTests for fresh Trait Momentum state, canonical specimen generation/persistence, current Steel Leader attachment state, and canonical Leviathan Bait modifiers.
+- [x] Validate the requested new-world matrix through the focused Stage 54 tests plus the existing full unit/GameTest suite: normal fishing, species eligibility, percentile/size, Body Type, Condition, Pigmentation, Perfect Catch, Perfect Specimen, Strength/Tempo, Tide lines, rods, Steel Leader, Leviathan Bait, buckets, displays, Satchel, Journal, and leaderboard/record consumers.
+- [x] Fix the fresh Steel Leader regression where a newly attached ItemStack could fail to expose its current attachment component to the live canonical gear path. Production fix commit: `b087f3e6a386d006afd672533e5c175156dff7db`.
+- [x] Preserve the regression-only scope. No balance constants or unrelated runtime behavior were changed.
+- [x] Run the full Java 21 CI validation, including clean Gradle build/unit tests, Fabric GameTests without Apex Waters, Fabric GameTests with Apex Waters 1.1.1, and artifact upload. Green run: `33263857714`.
+- [x] Document the Stage 54 validation in `docs/STAGE_54_FRESH_WORLD_REGRESSION.md` and `docs/CURRENT_STATE.md`.
