@@ -97,12 +97,20 @@ jobs:
             gradle clean build --stacktrace
           fi
 
-      - name: Run GameTests
+      - name: Run GameTests without Apex Waters
         run: |
           if [ -x ./gradlew ]; then
             ./gradlew runGametest --stacktrace
           else
             gradle runGametest --stacktrace
+          fi
+
+      - name: Run GameTests with Apex Waters 1.1.1
+        run: |
+          if [ -x ./gradlew ]; then
+            ./gradlew runGametest -PincludeApexRuntime=true --stacktrace
+          else
+            gradle runGametest -PincludeApexRuntime=true --stacktrace
           fi
 
       - name: Upload built JARs

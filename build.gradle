@@ -21,6 +21,7 @@ repositories {
 
 def exactTideJar = file('dev/libs/tide-fabric-1.21.1-2.1.1.jar')
 def apexJar = file('dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar')
+def includeApexRuntime = project.findProperty('includeApexRuntime') == 'true'
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
@@ -51,6 +52,12 @@ dependencies {
         // Mixin annotation processing, which keeps target hierarchy/member names valid.
         modCompileOnly files(apexJar)
         logger.lifecycle('Tideborne: Apex Waters remapped compile-only compatibility enabled')
+        if (includeApexRuntime) {
+            // Stage 40 uses this opt-in runtime edge only for compatibility boot validation.
+            // Normal development/GameTest runs intentionally keep Apex absent.
+            modRuntimeOnly files(apexJar)
+            logger.lifecycle('Tideborne: Apex Waters runtime compatibility validation enabled')
+        }
     }
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
@@ -72,7 +79,7 @@ loom {
         gametest {
             server()
             name 'Tideborne GameTest'
-            runDir 'run/gametest'
+            runDir includeApexRuntime ? 'run/gametest-apex' : 'run/gametest'
             vmArg '-Dfabric-api.gametest'
         }
     }
@@ -126,5 +133,6 @@ tasks.register('printBuildBaseline') {
         println "Tide runtime target ${tide_runtime_version}"
         println "Exact Tide local JAR present: ${exactTideJar.exists()}"
         println "Apex Waters local JAR present: ${apexJar.exists()}"
+        println "Apex Waters runtime validation enabled: ${includeApexRuntime}"
     }
 }
