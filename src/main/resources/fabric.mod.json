@@ -31,6 +31,7 @@
       "com.redslovesgames.tideborne.fishing.v2.gametest.CanonicalFishingGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.FishDisplayPersistenceGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.AnglersSatchelPersistenceGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.gametest.OptionalCompatibilityRegressionGameTests",
       "com.redslovesgames.tideborne.fishing.v2.FreshWorldRegressionGameTests"
     ]
   },
