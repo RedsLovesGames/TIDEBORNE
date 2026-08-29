@@ -10,6 +10,7 @@ import com.redslovesgames.tideborne.fishing.v2.SizeDistribution;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesEligibility;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tideboundcompatibility.fishing.FishingModifiers;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -59,7 +60,9 @@ public final class TideSpeciesProfileAdapter {
                 SpeciesEligibility.always(),
                 data.strength(),
                 data.speed(),
-                data.behavior().getSerializedName(),
+                // Tide's serialized behavior contract is the enum name lowercased with Locale.ROOT.
+                // Use that contract directly so Mojang/Yarn remapping cannot rename the interface method.
+                data.behavior().name().toLowerCase(Locale.ROOT),
                 data.size().<SizeDistribution>map(TideSpeciesProfileAdapter::sizeDistribution)
                         .orElse(NoPhysicalSizeDistribution.INSTANCE),
                 Set.of(),
