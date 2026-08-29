@@ -17,10 +17,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Inspect published Tide 2.1.1 Angling Table API
+      - name: Inspect published Tide 2.1.1 Steel Leader API
         shell: bash
         run: |
           set -euo pipefail
+          echo '=== Tideborne SteelLeaderAttachment call sites ==='
+          grep -R -n 'SteelLeaderAttachment\.' src/main/java || true
           tide_json="$(curl -fsSLG \
             --data-urlencode 'game_versions=["1.21.1"]' \
             --data-urlencode 'loaders=["fabric"]' \
@@ -29,12 +31,5 @@ jobs:
           tide_url="$(printf '%s' "$tide_json" | jq -r '[.[] | select(.name == "Tide 2.1.1 (Fabric 1.21.1)")][0].files[] | select(.primary == true) | .url' | head -n1)"
           test -n "$tide_url"
           curl -fsSL "$tide_url" -o tide.jar
-          for cls in \
-            com.li64.tide.client.gui.menus.AnglingTableMenu \
-            com.li64.tide.client.gui.screens.AnglingTableScreen \
-            com.li64.tide.data.rods.CustomRodManager \
-            com.li64.tide.data.TideTags\$Items \
-            com.li64.tide.registries.entities.misc.fishing.TideFishingHook; do
-            echo "=== ${cls} ==="
-            javap -classpath tide.jar -p -s "$cls"
-          done
+          echo '=== CustomRodManager bytecode ==='
+          javap -classpath tide.jar -p -c com.li64.tide.data.rods.CustomRodManager
