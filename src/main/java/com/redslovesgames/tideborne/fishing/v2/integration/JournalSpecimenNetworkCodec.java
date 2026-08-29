@@ -7,13 +7,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import net.minecraft.nbt.NbtCompound;
 
-/**
- * Server-to-client projection for canonical Journal specimens.
- *
- * <p>This is intentionally not a specimen persistence codec. It exposes only values a client may
- * display and omits deterministic seed, natural/base size state, generation provenance, and every
- * other input that could be mistaken for client-owned specimen authority.</p>
- */
+/** Server-to-client projection for canonical Journal specimens. */
 public final class JournalSpecimenNetworkCodec {
     public static final String CLIENT_KEY = "tide_team_journal_canonical_specimens";
     public static final String RECORD_HOLDERS_KEY = "tide_team_journal_record_holders";
@@ -39,10 +33,14 @@ public final class JournalSpecimenNetworkCodec {
     private JournalSpecimenNetworkCodec() {
     }
 
-    /** Builds a side-effect-free client projection from server-owned Journal persistence. */
+    /** Builds display data after any one-time server-side legacy journal record backfill. */
     public static NbtCompound buildDisplayData(NbtCompound journalRoot) {
         NbtCompound display = new NbtCompound();
-        if (journalRoot == null || !journalRoot.contains(JournalSpecimenStore.ROOT_KEY, 10)) {
+        if (journalRoot == null) {
+            return display;
+        }
+        JournalSpecimenStore.migrateLegacyJournal(journalRoot);
+        if (!journalRoot.contains(JournalSpecimenStore.ROOT_KEY, 10)) {
             return display;
         }
 
@@ -60,7 +58,6 @@ public final class JournalSpecimenNetworkCodec {
         return display;
     }
 
-    /** Adds the optional canonical display sidecar without changing legacy journal fields. */
     public static void attachDisplayData(NbtCompound packetTag, NbtCompound journalRoot) {
         if (packetTag == null) {
             return;
@@ -73,10 +70,6 @@ public final class JournalSpecimenNetworkCodec {
         }
     }
 
-    /**
-     * Reduces the dedicated record-holder payload to display metadata only. The Tide journal itself
-     * is synchronized through Tide's existing server-to-client message and is not duplicated here.
-     */
     public static NbtCompound sanitizeRecordHoldersPayload(NbtCompound source) {
         NbtCompound result = new NbtCompound();
         if (source == null) {
@@ -91,7 +84,6 @@ public final class JournalSpecimenNetworkCodec {
         return result;
     }
 
-    /** Reads one optional client display snapshot. Missing/old/incomplete data stays absent. */
     public static Optional<DisplaySpecimen> readDisplay(NbtCompound packetTag, String speciesId, String recordKind) {
         if (packetTag == null || speciesId == null || speciesId.isBlank() || recordKind == null || recordKind.isBlank()) {
             return Optional.empty();

@@ -6,16 +6,20 @@
 package com.redslovesgames.tidetraits.entity;
 
 import com.li64.tide.data.FishLengthHolder;
+import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.item.TideItemData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
+import com.redslovesgames.tideborne.fishing.v2.integration.LegacyPersistenceMigration;
 import com.redslovesgames.tidetraits.TideTraits;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
+import net.minecraft.entity.Bucketable;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper.WrapperLookup;
@@ -48,24 +52,24 @@ public final class SpecimenTransfer {
          return true;
       }
       String mutation = stack == null ? null : stack.get(TideTraitsComponents.MUTATION);
-      return mutation != null && !mutation.isBlank();
+      if (mutation != null && !mutation.isBlank()) {
+         return true;
+      }
+      return stack != null && !stack.isEmpty() && TideItemData.FISH_LENGTH.isPresent(stack);
    }
 
    public static NbtCompound fromStack(ItemStack stack) {
       NbtCompound tag = new NbtCompound();
-      CanonicalSpecimenStorage.MigrationState state = CanonicalSpecimenStorage.detectMigration(stack);
-      if (state == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT) {
-         Optional<SpecimenData> canonical = CanonicalSpecimenStorage.read(stack);
-         if (canonical.isEmpty()) {
-            return tag;
-         }
+      CanonicalSpecimenStorage.MigrationState originalState = CanonicalSpecimenStorage.detectMigration(stack);
+      Optional<SpecimenData> canonical = LegacyPersistenceMigration.migrateStack(stack);
+      if (canonical.isPresent()) {
          SpecimenData specimen = canonical.get();
          tag.putInt(VERSION_KEY, DATA_VERSION);
          CanonicalSpecimenStorage.writeTransferData(tag, specimen);
          writeCompatibilityMirrors(tag, specimen);
          return tag;
       }
-      if (state != CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY) {
+      if (originalState != CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY) {
          return tag;
       }
 
@@ -117,6 +121,7 @@ public final class SpecimenTransfer {
          return;
       }
       restoreLegacyTransfer(source, stack);
+      LegacyPersistenceMigration.migrateStack(stack);
    }
 
    public static void toStack(NbtCompound source, ItemStack stack, WrapperLookup registries) {
@@ -147,6 +152,7 @@ public final class SpecimenTransfer {
    }
 
    public static void entityToStack(Entity entity, ItemStack stack) {
+      migrateEntitySpecimen(entity);
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound tag = specimenEntity.tideTraits$getSpecimenTag();
          syncLegacyLengthFromEntity(tag, entity);
@@ -155,6 +161,7 @@ public final class SpecimenTransfer {
    }
 
    public static void entityToBucket(Entity entity, ItemStack bucket) {
+      migrateEntitySpecimen(entity);
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound specimen = specimenEntity.tideTraits$getSpecimenTag();
          if (!specimen.isEmpty()) {
@@ -169,7 +176,8 @@ public final class SpecimenTransfer {
          NbtCompound specimen = bucketTag.getCompound(ENTITY_KEY).copy();
          if (!specimen.isEmpty()) {
             specimenEntity.tideTraits$setSpecimenTag(specimen);
-            applyLengthToEntity(specimen, entity);
+            migrateEntitySpecimen(entity);
+            applyLengthToEntity(specimenEntity.tideTraits$getSpecimenTag(), entity);
          }
       }
    }
@@ -178,6 +186,44 @@ public final class SpecimenTransfer {
       NbtCompound specimen = fromStack(fish, registries);
       if (!specimen.isEmpty()) {
          NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, bucket, bucketTag -> bucketTag.put(ENTITY_KEY, specimen.copy()));
+      }
+   }
+
+   /**
+    * Upgrades legacy entity or bucket specimen NBT in place when the entity can identify its fish
+    * species through the normal Bucketable bucket mapping. Invalid canonical transfer payloads never
+    * fall back to legacy fields. Non-bucketable legacy mobs remain readable and migrate when exported
+    * through a species-specific ItemStack instead.
+    */
+   public static boolean migrateEntitySpecimen(Entity entity) {
+      if (!(entity instanceof SpecimenEntity specimenEntity)) {
+         return false;
+      }
+      NbtCompound source = specimenEntity.tideTraits$getSpecimenTag();
+      if (source.isEmpty() || CanonicalSpecimenStorage.hasTransferPayload(source)) {
+         return false;
+      }
+
+      try {
+         ItemStack migrationStack = legacyMigrationStack(entity);
+         if (migrationStack.isEmpty()) {
+            return false;
+         }
+         restoreLegacyTransfer(source, migrationStack);
+         SpecimenData specimen = LegacyPersistenceMigration.migrateStack(migrationStack).orElse(null);
+         if (specimen == null) {
+            return false;
+         }
+
+         NbtCompound migrated = source.copy();
+         migrated.putInt(VERSION_KEY, DATA_VERSION);
+         CanonicalSpecimenStorage.writeTransferData(migrated, specimen);
+         writeCompatibilityMirrors(migrated, specimen);
+         specimenEntity.tideTraits$setSpecimenTag(migrated);
+         applyLengthToEntity(migrated, entity);
+         return true;
+      } catch (RuntimeException exception) {
+         return false;
       }
    }
 
@@ -193,6 +239,14 @@ public final class SpecimenTransfer {
 
    public static boolean isDisplayPreview(Entity entity) {
       return entity instanceof SpecimenEntity specimenEntity && specimenEntity.tideTraits$getSpecimenTag().getBoolean(DISPLAY_PREVIEW_KEY);
+   }
+
+   private static ItemStack legacyMigrationStack(Entity entity) {
+      if (!(entity instanceof Bucketable bucketable)) {
+         return ItemStack.EMPTY;
+      }
+      FishData data = FishData.fromBucket(bucketable.getBucketItem()).orElse(null);
+      return data == null ? ItemStack.EMPTY : new ItemStack((Item)data.fish().value());
    }
 
    private static void writeCompatibilityMirrors(NbtCompound tag, SpecimenData specimen) {

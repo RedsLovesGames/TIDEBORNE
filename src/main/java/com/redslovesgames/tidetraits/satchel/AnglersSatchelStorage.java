@@ -8,6 +8,8 @@ package com.redslovesgames.tidetraits.satchel;
 import com.li64.tide.data.item.SatchelContents;
 import com.li64.tide.data.item.TideDataComponents;
 import com.li64.tide.registries.items.FishSatchelItem;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
+import com.redslovesgames.tideborne.fishing.v2.integration.LegacyPersistenceMigration;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,11 +45,13 @@ public final class AnglersSatchelStorage {
 
    public static List<ItemStack> contents(ItemStack satchel) {
       requireSatchel(satchel);
+      migrateStoredContents(satchel);
       return storedContents(satchel).items().stream().<ItemStack>map(ItemStack::copy).toList();
    }
 
    public static int size(ItemStack satchel) {
       requireSatchel(satchel);
+      migrateStoredContents(satchel);
       return storedContents(satchel).size();
    }
 
@@ -65,7 +69,9 @@ public final class AnglersSatchelStorage {
          List<ItemStack> incoming = new ArrayList<>(offered.getCount());
 
          for (int index = 0; index < offered.getCount(); index++) {
-            incoming.add(offered.copyWithCount(1));
+            ItemStack incomingStack = offered.copyWithCount(1);
+            LegacyPersistenceMigration.migrateStack(incomingStack);
+            incoming.add(incomingStack);
          }
 
          SatchelInsertionPlan<ItemStack> plan = SatchelInsertionPlan.create(current, incoming, capacity(satchel));
@@ -205,6 +211,28 @@ public final class AnglersSatchelStorage {
       return commitContentsAndState(satchel, updated, beforeState, afterState)
          ? AnglersSatchelStorage.SortStatus.SUCCESS
          : AnglersSatchelStorage.SortStatus.COMMIT_FAILED;
+   }
+
+   private static void migrateStoredContents(ItemStack satchel) {
+      SatchelContents stored = storedContents(satchel);
+      List<ItemStack> migrated = new ArrayList<>(stored.size());
+      boolean changed = false;
+      for (ItemStack original : stored.items()) {
+         ItemStack copy = original.copy();
+         CanonicalSpecimenStorage.MigrationState before = CanonicalSpecimenStorage.detectMigration(copy);
+         LegacyPersistenceMigration.migrateStack(copy);
+         CanonicalSpecimenStorage.MigrationState after = CanonicalSpecimenStorage.detectMigration(copy);
+         changed |= before != CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT
+            && after == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT;
+         migrated.add(copy);
+      }
+      if (changed) {
+         try {
+            writeContents(satchel, migrated);
+         } catch (RuntimeException ignored) {
+            // Keep the original SatchelContents intact if a one-time migration commit cannot be written.
+         }
+      }
    }
 
    private static boolean commitContentsAndState(ItemStack satchel, List<ItemStack> contents, SatchelState beforeState, SatchelState afterState) {

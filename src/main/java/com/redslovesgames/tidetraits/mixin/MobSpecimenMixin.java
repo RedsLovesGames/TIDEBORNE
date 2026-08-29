@@ -6,6 +6,7 @@
 package com.redslovesgames.tidetraits.mixin;
 
 import com.redslovesgames.tidetraits.entity.SpecimenEntity;
+import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.entity.data.TrackedData;
@@ -41,6 +42,7 @@ public abstract class MobSpecimenMixin implements SpecimenEntity {
    private void tideTraits$loadSpecimen(NbtCompound entityTag, CallbackInfo ci) {
       if (entityTag.contains("TideTraits")) {
          this.tideTraits$setSpecimenTag(entityTag.getCompound("TideTraits"));
+         SpecimenTransfer.migrateEntitySpecimen((MobEntity)(Object)this);
       }
    }
 
