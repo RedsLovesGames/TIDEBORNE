@@ -5,6 +5,7 @@
  */
 package com.redslovesgames.tideborne.command;
 
+import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,93 +19,100 @@ public final class HistoryBadgeMeta {
    private HistoryBadgeMeta() {
    }
 
-   public static void capture(NbtCompound var0) {
-      if (var0 != null) {
-         CURRENT.set(extract(var0));
+   public static void capture(NbtCompound tag) {
+      if (tag != null) {
+         CURRENT.set(extract(tag));
       }
    }
 
    public static void finish() {
-      NbtCompound var0 = CURRENT.get();
-      if (var0 != null) {
-         LAST.set(var0);
+      NbtCompound current = CURRENT.get();
+      if (current != null) {
+         LAST.set(current);
       }
-
       CURRENT.remove();
    }
 
-   public static void bindCurrent(UUID var0, String var1) {
-      if (!"REPAIR".equals(var1)) {
-         if (var0 != null && !EVENT_META.containsKey(var0)) {
-            NbtCompound var2 = CURRENT.get();
-            if (var2 == null) {
-               var2 = LAST.get();
-            }
-
-            if (var2 != null) {
-               EVENT_META.put(var0, var2);
-            }
+   public static void bindCurrent(UUID id, String eventType) {
+      if (!"REPAIR".equals(eventType) && id != null && !EVENT_META.containsKey(id)) {
+         NbtCompound meta = CURRENT.get();
+         if (meta == null) {
+            meta = LAST.get();
+         }
+         if (meta != null) {
+            EVENT_META.put(id, meta);
          }
       }
    }
 
-   public static void register(UUID var0, NbtCompound var1) {
-      if (var0 != null && var1 != null) {
-         if (hasAny(var1)) {
-            EVENT_META.put(var0, extract(var1));
-         }
+   public static void register(UUID id, NbtCompound tag) {
+      if (id != null && tag != null && hasAny(tag)) {
+         EVENT_META.put(id, extract(tag));
       }
    }
 
-   public static void write(UUID var0, NbtCompound var1) {
-      if (var0 != null && var1 != null) {
-         NbtCompound var2 = EVENT_META.get(var0);
-         if (var2 != null) {
-            String var3 = var2.getString("condition");
-            String var4 = var2.getString("body_type");
-            if (!var3.isEmpty()) {
-               var1.putString("condition", var3);
-               var1.putString("mutation", var3);
-            }
-
-            if (!var4.isEmpty()) {
-               var1.putString("body_type", var4);
-            }
-
-            if (var2.contains("percentile", 6)) {
-               var1.putDouble("percentile", var2.getDouble("percentile"));
-            }
-         }
+   public static void write(UUID id, NbtCompound target) {
+      if (id == null || target == null) {
+         return;
       }
+      NbtCompound meta = EVENT_META.get(id);
+      if (meta == null) {
+         return;
+      }
+
+      copyString(meta, target, "condition");
+      if (!target.getString("condition").isEmpty()) {
+         target.putString("mutation", target.getString("condition"));
+      }
+      copyString(meta, target, "body_type");
+      copyString(meta, target, "pigmentation");
+      copyString(meta, target, "quality");
+      if (meta.contains("percentile", 99)) {
+         target.putDouble("percentile", meta.getDouble("percentile"));
+      }
+      if (meta.contains("length", 99)) {
+         target.putDouble("length", meta.getDouble("length"));
+      }
+      StoredFishScoreStorage.readCanonical(meta).ifPresent(score -> StoredFishScoreStorage.writeCanonical(target, score));
    }
 
-   private static boolean hasAny(NbtCompound var0) {
-      return !var0.getString("condition").isEmpty()
-         || !var0.getString("mutation").isEmpty()
-         || !var0.getString("body_type").isEmpty()
-         || var0.contains("percentile", 6);
+   private static boolean hasAny(NbtCompound tag) {
+      return !tag.getString("condition").isEmpty()
+         || !tag.getString("mutation").isEmpty()
+         || !tag.getString("body_type").isEmpty()
+         || !tag.getString("pigmentation").isEmpty()
+         || !tag.getString("quality").isEmpty()
+         || tag.contains("percentile", 99)
+         || tag.contains("length", 99)
+         || StoredFishScoreStorage.readCanonical(tag).isPresent();
    }
 
-   private static NbtCompound extract(NbtCompound var0) {
-      NbtCompound var1 = new NbtCompound();
-      String var2 = var0.getString("condition");
-      if (var2.isEmpty()) {
-         var2 = var0.getString("mutation");
+   private static NbtCompound extract(NbtCompound source) {
+      NbtCompound result = new NbtCompound();
+      String condition = source.getString("condition");
+      if (condition.isEmpty()) {
+         condition = source.getString("mutation");
       }
-
-      String var3 = var0.getString("body_type");
-      if (!var2.isEmpty()) {
-         var1.putString("condition", var2);
+      if (!condition.isEmpty()) {
+         result.putString("condition", condition);
       }
-
-      if (!var3.isEmpty()) {
-         var1.putString("body_type", var3);
+      copyString(source, result, "body_type");
+      copyString(source, result, "pigmentation");
+      copyString(source, result, "quality");
+      if (source.contains("percentile", 99)) {
+         result.putDouble("percentile", source.getDouble("percentile"));
       }
-
-      if (var0.contains("percentile", 6)) {
-         var1.putDouble("percentile", var0.getDouble("percentile"));
+      if (source.contains("length", 99)) {
+         result.putDouble("length", source.getDouble("length"));
       }
+      StoredFishScoreStorage.readCanonical(source).ifPresent(score -> StoredFishScoreStorage.writeCanonical(result, score));
+      return result;
+   }
 
-      return var1;
+   private static void copyString(NbtCompound source, NbtCompound target, String key) {
+      String value = source.getString(key);
+      if (!value.isEmpty()) {
+         target.putString(key, value);
+      }
    }
 }

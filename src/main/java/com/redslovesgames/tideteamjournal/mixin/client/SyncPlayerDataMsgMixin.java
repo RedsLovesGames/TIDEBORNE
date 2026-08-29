@@ -6,6 +6,7 @@
 package com.redslovesgames.tideteamjournal.mixin.client;
 
 import com.li64.tide.network.messages.SyncPlayerDataMsg;
+import com.redslovesgames.tideteamjournal.client.ClientJournalSpecimens;
 import com.redslovesgames.tideteamjournal.client.ClientRecordHolders;
 import net.minecraft.entity.player.PlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,7 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(SyncPlayerDataMsg.class)
 abstract class SyncPlayerDataMsgMixin {
    @Inject(method = "handle", at = @At("HEAD"))
-   private static void tideTeamJournal$readRecordHolders(SyncPlayerDataMsg message, PlayerEntity player, CallbackInfo callback) {
+   private static void tideTeamJournal$readDisplayMetadata(SyncPlayerDataMsg message, PlayerEntity player, CallbackInfo callback) {
       ClientRecordHolders.update(message.tag());
+      ClientJournalSpecimens.update(message.tag());
    }
 }

@@ -8,31 +8,33 @@ package com.redslovesgames.tideborne.client;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Keeps configured leaderboard metrics while ensuring canonical FishScore remains available. */
 public final class LeaderboardMetricFilter {
    private LeaderboardMetricFilter() {
    }
 
+   /** Historical method name retained for binary/source compatibility. FishScore is no longer filtered out. */
    public static List<String> withoutFishScore(List<String> metrics) {
-      ArrayList<String> filtered = new ArrayList<>();
+      ArrayList<String> result = new ArrayList<>();
       if (metrics != null) {
          for (String metric : metrics) {
-            if (!"fish_score".equals(metric)) {
-               filtered.add(metric);
+            if (metric != null && !metric.isBlank() && !result.contains(metric)) {
+               result.add(metric);
             }
          }
       }
 
-      if (filtered.isEmpty()) {
-         filtered.add("catches");
-         filtered.add("species");
-         filtered.add("record_events");
-         filtered.add("active_records");
+      if (result.isEmpty()) {
+         result.add("catches");
+         result.add("species");
+         result.add("record_events");
+         result.add("active_records");
+         result.add("fish_score");
       }
-
-      return filtered;
+      return List.copyOf(result);
    }
 
    public static String normalizeDefault(String metric) {
-      return "fish_score".equals(metric) ? "catches" : metric;
+      return metric == null || metric.isBlank() ? "catches" : metric;
    }
 }

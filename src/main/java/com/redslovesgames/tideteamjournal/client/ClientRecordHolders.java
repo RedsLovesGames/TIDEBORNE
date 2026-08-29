@@ -29,6 +29,7 @@ public final class ClientRecordHolders {
       }
 
       records = Map.copyOf(next);
+      ClientJournalSpecimens.update(packetTag);
    }
 
    public static RecordHolderStore.RecordNames get(Identifier fish) {

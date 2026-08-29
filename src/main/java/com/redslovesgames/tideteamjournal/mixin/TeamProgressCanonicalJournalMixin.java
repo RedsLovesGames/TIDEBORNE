@@ -1,13 +1,17 @@
 package com.redslovesgames.tideteamjournal.mixin;
 
+import com.redslovesgames.tideborne.command.HistoryBadgeMeta;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
 import com.redslovesgames.tideteamjournal.TeamCanonicalJournalCapture;
 import com.redslovesgames.tideteamjournal.TeamProgressStore;
+import java.util.Locale;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -17,6 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /** Keeps team journal score/catch capture on the finalized server canonical specimen. */
 @Mixin(value = TeamProgressStore.class, remap = false)
 abstract class TeamProgressCanonicalJournalMixin {
+    @Shadow @Final private static ThreadLocal TIDEBORNE_CURRENT_FISH;
+
     /**
      * Shared FishScore consumer boundary used by Satchel/profile/item display code.
      * Canonical storage may migrate a readable legacy specimen once; an unreadable or scoreless
@@ -122,8 +128,35 @@ abstract class TeamProgressCanonicalJournalMixin {
         TeamCanonicalJournalCapture.begin(stack);
     }
 
+    /**
+     * Enriches the existing server-owned temporary top-fish/history display tag from the finalized
+     * canonical specimen. No client or UI code derives these values.
+     */
+    @Inject(method = "tideborneBeginCatch", at = @At("TAIL"))
+    private static void tideborne$projectCanonicalRecordMetadata(ItemStack stack, CallbackInfo callback) {
+        SpecimenData specimen = CanonicalSpecimenStorage.read(stack).orElse(null);
+        Object current = TIDEBORNE_CURRENT_FISH.get();
+        if (specimen == null || !(current instanceof NbtCompound tag)) {
+            return;
+        }
+
+        tag.putDouble("length", specimen.finalLength());
+        tag.putDouble("percentile", specimen.finalPercentile());
+        tag.putString("body_type", serialized(specimen.bodyType()));
+        tag.putString("condition", serialized(specimen.condition()));
+        tag.putString("mutation", serialized(specimen.condition()));
+        tag.putString("pigmentation", serialized(specimen.pigmentation()));
+        tag.putString("quality", serialized(specimen.specimenQuality()));
+        specimen.fishScore().ifPresent(score -> StoredFishScoreStorage.writeCanonical(tag, score));
+        HistoryBadgeMeta.capture(tag);
+    }
+
     @Inject(method = "tideborneClearCatch", at = @At("TAIL"))
     private static void tideborne$clearCanonicalJournalCatch(CallbackInfo callback) {
         TeamCanonicalJournalCapture.clear();
+    }
+
+    private static String serialized(Enum<?> value) {
+        return value.name().toLowerCase(Locale.ROOT);
     }
 }
