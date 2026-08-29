@@ -22,13 +22,6 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.text.Text;
 
-/**
- * Persistence contract between Fishing System 2.0 and the Angler's Satchel.
- *
- * <p>The Satchel deliberately treats each fish as an opaque ItemStack. Canonical specimen state is
- * therefore carried by {@link CanonicalSpecimenStorage}'s existing stack components rather than by
- * a second Satchel-specific specimen serializer.</p>
- */
 public final class AnglersSatchelPersistenceGameTests implements FabricGameTest {
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void canonicalSpecimenSurvivesInsertReadExtractRoundTrip(TestContext helper) {
@@ -60,7 +53,7 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
     }
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
-    public void legacySatchelContentsMigrateOnceAndRemainStable(TestContext helper) {
+    public void legacySatchelContentsMigrateCommitOnceAndRemainStable(TestContext helper) {
         ItemStack legacyFish = new ItemStack(Items.COD);
         legacyFish.set(TideTraitsComponents.MUTATION, "scarred");
         legacyFish.set(TideTraitsComponents.MUTATION_SEED, 0x1234ABCD5678EF90L);
@@ -70,34 +63,35 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
 
         helper.assertTrue(CanonicalSpecimenStorage.detectMigration(legacyFish)
                         == CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY,
-                "Legacy Satchel fixture was not classified as legacy-only before canonical read");
+                "Legacy Satchel fixture was not classified as legacy-only before runtime migration");
 
         ItemStack satchel = new ItemStack(SatchelRegistration.ANGLERS_SATCHEL);
         satchel.set(TideDataComponents.SATCHEL_CONTENTS, new SatchelContents(List.of(legacyFish)));
 
-        helper.assertTrue(AnglersSatchelStorage.size(satchel) == 1, "Existing Tide SatchelContents were not readable");
         ItemStack stored = AnglersSatchelStorage.contents(satchel).getFirst();
-        assertLegacyMetadata(helper, stored, "before migration while stored");
-        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stored)
-                        == CanonicalSpecimenStorage.MigrationState.LEGACY_ONLY,
-                "Reading the Satchel container itself unexpectedly migrated specimen data");
-
         SpecimenData migrated = CanonicalSpecimenStorage.read(stored).orElseThrow();
         assertMigratedLegacyMetadata(helper, migrated, "while stored");
         helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stored)
                         == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
-                "Successful Satchel legacy migration did not write the current canonical schema");
-        assertCanonicalMetadata(helper, migrated, stored, "on repeated canonical read");
-        assertLegacyCustomName(helper, stored, "after one-time migration while stored");
+                "Reading old Satchel contents did not migrate the specimen");
+        assertLegacyCustomName(helper, stored, "after one-time Satchel migration");
+
+        SatchelContents persistedContents = satchel.getOrDefault(TideDataComponents.SATCHEL_CONTENTS, new SatchelContents());
+        ItemStack persisted = persistedContents.items().getFirst();
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(persisted)
+                        == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
+                "Satchel migration was not committed back to persisted SatchelContents");
+
+        SpecimenData repeated = CanonicalSpecimenStorage.read(AnglersSatchelStorage.contents(satchel).getFirst()).orElseThrow();
+        helper.assertTrue(migrated.equals(repeated),
+                "Repeated Satchel reads reinterpreted or regenerated the migrated specimen");
 
         AnglersSatchelStorage.ExtractionResult extraction = AnglersSatchelStorage.extractAt(satchel, 0, true);
         helper.assertTrue(extraction.status() == AnglersSatchelStorage.ExtractionStatus.SUCCESS,
                 "Migrated Satchel specimen extraction failed");
         ItemStack extracted = extraction.item().orElseThrow();
-        assertCanonicalMetadata(helper, migrated, extracted, "after migrated extraction");
-        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(extracted)
-                        == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
-                "Extracted migrated specimen no longer had current canonical schema");
+        helper.assertTrue(migrated.equals(CanonicalSpecimenStorage.read(extracted).orElseThrow()),
+                "Extracted Satchel specimen changed after migration");
         assertLegacyCustomName(helper, extracted, "after extraction");
         helper.assertTrue(AnglersSatchelStorage.size(satchel) == 0,
                 "Extracted migrated specimen remained duplicated in the Satchel");
@@ -151,17 +145,6 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
         NbtComponent addonData = stack.get(DataComponentTypes.CUSTOM_DATA);
         helper.assertTrue(addonData != null && "silver_spots".equals(addonData.copyNbt().getString("ExampleAddonVariant")),
                 "Unrelated custom stack data changed " + phase);
-    }
-
-    private static void assertLegacyMetadata(TestContext helper, ItemStack stack, String phase) {
-        helper.assertTrue("scarred".equals(stack.get(TideTraitsComponents.MUTATION)), "Legacy mutation changed " + phase);
-        helper.assertTrue(Long.valueOf(0x1234ABCD5678EF90L).equals(stack.get(TideTraitsComponents.MUTATION_SEED)),
-                "Legacy mutation seed changed " + phase);
-        helper.assertTrue(Double.valueOf(73.25).equals(stack.get(TideTraitsComponents.SIZE_PERCENTILE)),
-                "Legacy percentile changed " + phase);
-        helper.assertTrue(Double.compare(47.75, TideItemData.FISH_LENGTH.getOrDefault(stack, -1.0)) == 0,
-                "Legacy Tide fish length changed " + phase);
-        assertLegacyCustomName(helper, stack, phase);
     }
 
     private static void assertLegacyCustomName(TestContext helper, ItemStack stack, String phase) {

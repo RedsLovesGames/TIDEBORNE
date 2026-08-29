@@ -22,7 +22,6 @@ public final class FishDisplayPersistenceGameTests implements FabricGameTest {
         ItemStack fish = new ItemStack(Items.COD);
         CanonicalSpecimenStorage.write(fish, expected);
 
-        // Deliberately stale compatibility size proves the display reads canonical finalLength.
         TideItemData.FISH_LENGTH.set(fish, expected.finalLength() + 100.0);
 
         FishDisplayBlockEntity display = new FishDisplayBlockEntity(
@@ -44,24 +43,38 @@ public final class FishDisplayPersistenceGameTests implements FabricGameTest {
     }
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
-    public void legacyDisplayKeepsTideLengthAndDoesNotGenerateCanonicalSpecimen(TestContext helper) {
+    public void legacyLengthOnlyDisplayMigratesOnceAndPreservesSavedSize(TestContext helper) {
         ItemStack legacyFish = new ItemStack(Items.COD);
         double legacyLength = 61.25;
         TideItemData.FISH_LENGTH.set(legacyFish, legacyLength);
+
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(legacyFish)
+                        == CanonicalSpecimenStorage.MigrationState.NONE,
+                "Length-only legacy display fixture unexpectedly carried a canonical or trait marker");
 
         FishDisplayBlockEntity display = new FishDisplayBlockEntity(
                 BlockPos.ORIGIN, TideBlocks.FISH_DISPLAY.getDefaultState());
         helper.assertTrue(display.setDisplayStack(legacyFish), "Tide rejected a legacy fish display stack");
         helper.assertTrue(Double.compare(legacyLength, display.getFishLength()) == 0,
-                "Legacy fish display length fallback changed");
-        helper.assertTrue(CanonicalSpecimenStorage.read(display.getDisplayStack()).isEmpty(),
-                "Placing a legacy display silently generated a canonical specimen");
+                "Legacy display migration changed the saved Tide fish length");
+
+        ItemStack stored = display.getDisplayStack();
+        SpecimenData migrated = CanonicalSpecimenStorage.read(stored).orElseThrow();
+        helper.assertTrue(migrated.schemaVersion() == SpecimenGenerator.SCHEMA_VERSION,
+                "Legacy display was not rewritten to the current canonical schema");
+        helper.assertTrue(Double.compare(legacyLength, migrated.finalLength()) == 0,
+                "Legacy display migration did not preserve physical length");
+        long seed = migrated.deterministicSeed();
 
         ItemStack removed = display.takeDisplayStack();
-        helper.assertTrue(CanonicalSpecimenStorage.read(removed).isEmpty(),
-                "Removing a legacy display silently generated a canonical specimen");
-        helper.assertTrue(Double.compare(legacyLength, TideItemData.FISH_LENGTH.getOrDefault(removed, -1.0)) == 0,
-                "Legacy display removal changed the saved Tide fish length");
+        SpecimenData restored = CanonicalSpecimenStorage.read(removed).orElseThrow();
+        helper.assertTrue(restored.deterministicSeed() == seed,
+                "Legacy display was migrated a second time with a different deterministic seed");
+        helper.assertTrue(Double.compare(legacyLength, restored.finalLength()) == 0,
+                "Legacy display removal changed migrated physical length");
+        helper.assertTrue(CanonicalSpecimenStorage.detectMigration(removed)
+                        == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
+                "Removed legacy display did not remain canonical");
         helper.complete();
     }
 
