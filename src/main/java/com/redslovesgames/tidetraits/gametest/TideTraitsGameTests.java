@@ -12,6 +12,8 @@ import com.li64.tide.data.player.FishStats;
 import com.li64.tide.data.player.TidePlayerData;
 import com.li64.tide.registries.TideItems;
 import com.li64.tide.registries.items.FishSatchelItem;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.redslovesgames.tidetraits.catching.CatchTraitService;
 import com.redslovesgames.tidetraits.compat.multiplayer.PersonalTideJournal;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
@@ -72,13 +74,19 @@ public final class TideTraitsGameTests implements FabricGameTest {
       SpecimenTransfer.bucketTagToEntity(bucketTag, second);
       ItemStack restored = new ItemStack(Items.COD);
       SpecimenTransfer.entityToStack(second, restored);
-      helper.assertTrue("scarred".equals(restored.get(TideTraitsComponents.MUTATION)), "Mutation did not survive the representation round trip");
+      SpecimenData canonical = CanonicalSpecimenStorage.read(restored).orElseThrow();
+      helper.assertTrue(canonical.condition() == SpecimenData.Condition.SCARRED,
+         "Legacy Scarred mutation did not survive as canonical Condition");
       helper.assertTrue(
-         Long.valueOf(81985529216486895L).equals(restored.get(TideTraitsComponents.MUTATION_SEED)),
+         canonical.deterministicSeed() == 81985529216486895L,
          "Mutation seed did not survive the representation round trip"
       );
       helper.assertTrue(
-         Double.valueOf(91.4).equals(restored.get(TideTraitsComponents.SIZE_PERCENTILE)), "Percentile did not survive the representation round trip"
+         Double.compare(canonical.basePercentile(), 91.4) == 0,
+         "Natural percentile did not survive canonical migration and the representation round trip"
+      );
+      helper.assertTrue(
+         Math.abs(canonical.finalLength() - 171.2) < 1.0E-9, "Canonical final length did not survive the representation round trip"
       );
       helper.assertTrue(
          Math.abs((Double)TideItemData.FISH_LENGTH.getOrDefault(restored, 0.0) - 171.2) < 1.0E-9, "Tide length did not survive the representation round trip"
@@ -152,7 +160,7 @@ public final class TideTraitsGameTests implements FabricGameTest {
 
       satchel.set(TideDataComponents.SATCHEL_CONTENTS, new SatchelContents(existing));
       ItemStack source = specimenStack().copyWithCount(3);
-      source.set(TideTraitsComponents.MUTATION, "manual_deposit");
+      source.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Manual Deposit"));
       helper.assertTrue(FishSatchelItem.canPutInSatchel(source), "GameTest fish must be recognized by Tide");
       SimpleInventory fishContainer = new SimpleInventory(new ItemStack[]{source});
       Slot fishSlot = new Slot(fishContainer, 0, 0, 0);
@@ -167,7 +175,13 @@ public final class TideTraitsGameTests implements FabricGameTest {
       helper.assertTrue(AnglersSatchelStorage.size(satchel) == capacity, "Manual insertion did not use exactly the available capacity");
       ItemStack nested = AnglersSatchelStorage.contents(satchel).getLast();
       helper.assertTrue(nested.getCount() == 1, "Manual insertion did not store the specimen individually");
-      helper.assertTrue("manual_deposit".equals(nested.get(TideTraitsComponents.MUTATION)), "Manual insertion lost specimen component data");
+      SpecimenData nestedCanonical = CanonicalSpecimenStorage.read(nested).orElseThrow();
+      helper.assertTrue(nestedCanonical.condition() == SpecimenData.Condition.SCARRED,
+         "Manual insertion lost the migrated canonical Condition");
+      helper.assertTrue(nestedCanonical.deterministicSeed() == 81985529216486895L,
+         "Manual insertion lost the migrated specimen identity seed");
+      helper.assertTrue("Manual Deposit".equals(nested.getName().getString()),
+         "Manual insertion lost unrelated ItemStack metadata");
       helper.assertTrue(AnglersSatchelStorage.isProtected(satchel, capacity - 1), "Manual insertion did not apply the enabled mutated-fish Trophy Lock rule");
       ItemStack secondSatchel = new ItemStack(SatchelRegistration.ANGLERS_SATCHEL);
       SimpleInventory satchelContainer = new SimpleInventory(new ItemStack[]{secondSatchel});
@@ -185,9 +199,9 @@ public final class TideTraitsGameTests implements FabricGameTest {
       PlayerEntity player = helper.createMockCreativeServerPlayerInWorld();
       ItemStack satchel = new ItemStack(SatchelRegistration.ANGLERS_SATCHEL);
       ItemStack protectedFish = specimenStack();
-      protectedFish.set(TideTraitsComponents.MUTATION, "protected_specimen");
+      protectedFish.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Protected Specimen"));
       ItemStack unprotectedFish = specimenStack();
-      unprotectedFish.set(TideTraitsComponents.MUTATION, "unprotected_specimen");
+      unprotectedFish.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Unprotected Specimen"));
       satchel.set(TideDataComponents.SATCHEL_CONTENTS, new SatchelContents(List.of(protectedFish, unprotectedFish)));
       AnglersSatchelStorage.setState(satchel, AnglersSatchelStorage.state(satchel).withFeatureUnlocked(SatchelFeature.TROPHY_LOCK));
       helper.assertTrue(AnglersSatchelStorage.setProtected(satchel, 0, true), "Test setup could not protect the first specimen");
@@ -198,7 +212,7 @@ public final class TideTraitsGameTests implements FabricGameTest {
       boolean handled = satchel.getItem().onClicked(satchel, carried.get(), satchelSlot, ClickType.RIGHT, player, carriedAccess);
       helper.assertTrue(handled, "Empty-cursor extraction did not find an unprotected specimen");
       helper.assertTrue(
-         "unprotected_specimen".equals(carried.get().get(TideTraitsComponents.MUTATION)), "Empty-cursor extraction removed the protected specimen"
+         "Unprotected Specimen".equals(carried.get().getName().getString()), "Empty-cursor extraction removed the protected specimen"
       );
       helper.assertTrue(
          AnglersSatchelStorage.size(satchel) == 1 && AnglersSatchelStorage.isProtected(satchel, 0), "Protected specimen or its protection marker was changed"
