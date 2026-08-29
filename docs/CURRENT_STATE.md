@@ -528,3 +528,36 @@ Detailed behavior is documented in `docs/STAGE_33_CANONICAL_GEAR_MODIFIERS.md`.
 ## Current execution gate after Stage 33
 
 Stage 33 is complete. The canonical gear modifier representation now exists, but no runtime behavior migration has occurred. Do not integrate gear into the canonical context/fight pipeline or begin Leviathan Bait or other progression work unless a later numbered stage explicitly authorizes it.
+
+## Stage 34 Tide line modifier migration is complete
+
+Stage 34 moves Tide 2.1.1 Copper, Iron, Golden, and Diamond line fight values under the canonical `FishingGearModifiers` representation while retaining Tide's existing line identity checks and minigame ordering.
+
+Frozen Stage 34 values are Copper Tempo x0.90, Iron Strength x0.86, Golden Tempo x0.95, and Diamond Strength x0.75. `FishCatchMinigameLineModifierMixin` replaces Tide's four hard-coded constructor constants with the canonical model values at the same execution point, so each line effect remains single-application behavior rather than a second post-processing layer.
+
+Implementation commit `c96917c76ddf93c5f99789aab4675416a6e2e34d` is green in GitHub Actions run `33243058422`. Detailed behavior is documented in `docs/STAGE_34_LEGACY_FISHING_LINE_MIGRATION.md`.
+
+## Stage 35 Steel Leader migration is complete
+
+Stage 35 moves Steel Leader gameplay interpretation behind one canonical gear adapter without changing its persisted attachment representation or Angling Table compatibility.
+
+Frozen Stage 35 contracts:
+
+- `SteelLeaderGearModifiers` is the one runtime adapter from current attached-component or legacy custom-line Steel Leader state into `FishingGearModifiers`.
+- `FishingGearEffects` defines canonical named effects for catch-zone area, minigame speed, catch-loss prevention chance, and protection-source count.
+- default Steel Leader behavior remains catch-zone x0.90, minigame speed x1.05, and 90% shark catch-loss prevention.
+- the minigame consumer and shark-loss retrieve consumer no longer call `SteelLeaderAttachment.hasOnHook` directly or read Steel Leader balance values directly.
+- the existing Tentacle Line and Swift Line minigame precedence is preserved, so Steel Leader is not newly stacked on top of those active Myths line branches.
+- shark theft remains server-authoritative. The server determines the theft event, resolves the canonical protection modifier, consumes world RNG, invalidates lost catches, and sends feedback/payloads.
+- strict legacy `roll < chance` behavior is preserved. No leader consumes no protection roll; a present leader consumes one protection roll when a shark-loss event occurs, including when configured prevention is zero.
+- `SteelLeaderAttachment` and Angling Table Steel Leader identity checks remain only for storage/representation compatibility, not duplicate gameplay behavior.
+
+`SteelLeaderGearModifiersTest` covers exact default values, ordinary catches with no leader, disabled Apex behavior, canonical modifier composition, strict shark-protection chance boundaries, and protection RNG consumption semantics.
+
+Implementation commit `b2198af9109769eb9d8abe88d8453e4934618160` is green in GitHub Actions run `33243653492`: exact dependency fetch, reconstruction validation, `./gradlew clean build --stacktrace`, unit tests, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all passed.
+
+Detailed behavior is documented in `docs/STAGE_35_STEEL_LEADER_MIGRATION.md`.
+
+## Current execution gate after Stage 35
+
+Stage 35 is complete. Tide's built-in line values and Steel Leader are now partially migrated into the canonical gear/modifier architecture, but the broader gear/context pipeline and other compatibility gear remain intentionally unmigrated. Do not begin Tentacle Line, Swift Line, Leviathan Bait, or later gear slices unless a new numbered stage explicitly authorizes them.
