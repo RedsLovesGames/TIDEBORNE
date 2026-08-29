@@ -3,6 +3,7 @@ package com.redslovesgames.tideborne.fishing.v2.integration;
 import com.li64.tide.data.TideData;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.item.TideItemData;
+import com.redslovesgames.tideborne.fishing.v2.FishScoreV2Service;
 import com.redslovesgames.tideborne.fishing.v2.LegacyFishMigrationService;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
@@ -19,6 +20,7 @@ import net.minecraft.item.ItemStack;
 final class LegacyItemStackMigration {
     private static final LegacyFishMigrationService MIGRATION = new LegacyFishMigrationService();
     private static final TideSpeciesProfileAdapter PROFILE_ADAPTER = new TideSpeciesProfileAdapter();
+    private static final FishScoreV2Service FISH_SCORE = new FishScoreV2Service();
 
     private LegacyItemStackMigration() {
     }
@@ -75,7 +77,8 @@ final class LegacyItemStackMigration {
                     null
             );
             SpecimenData migrated = MIGRATION.migrate(species, legacy).specimen();
-            return Optional.of(preserveOlderCanonicalValues(stack, state, migrated));
+            SpecimenData preserved = preserveOlderCanonicalValues(stack, state, migrated);
+            return Optional.of(scoreFinalPreservedSpecimenIfAbsent(stack, species, preserved));
         } catch (IllegalArgumentException | NullPointerException exception) {
             return Optional.empty();
         }
@@ -131,9 +134,44 @@ final class LegacyItemStackMigration {
                 enumOrDefault(SpecimenData.SpecimenQuality.class,
                         stack.get(TideTraitsComponents.SPECIMEN_QUALITY), migrated.specimenQuality()),
                 firstNonNull(stack.get(TideTraitsComponents.SPECIMEN_PERFECT_CATCH), migrated.perfectCatch()),
-                optionalFinite(stack.get(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE), migrated.rawFishScore()),
-                optionalInt(stack.get(TideTraitsComponents.SPECIMEN_FISH_SCORE), migrated.fishScore()),
+                optionalFinite(stack.get(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE), OptionalDouble.empty()),
+                optionalInt(stack.get(TideTraitsComponents.SPECIMEN_FISH_SCORE), OptionalInt.empty()),
                 migrated.provenance()
+        );
+    }
+
+    private static SpecimenData scoreFinalPreservedSpecimenIfAbsent(
+            ItemStack stack,
+            SpeciesProfile species,
+            SpecimenData specimen
+    ) {
+        Double savedRaw = stack.get(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE);
+        Integer savedScore = stack.get(TideTraitsComponents.SPECIMEN_FISH_SCORE);
+        if ((savedRaw != null && Double.isFinite(savedRaw)) || savedScore != null) {
+            return specimen;
+        }
+        if (specimen.rawFishScore().isPresent() || specimen.fishScore().isPresent()) {
+            return specimen;
+        }
+
+        FishScoreV2Service.Result score = FISH_SCORE.calculate(species.rarity(), specimen);
+        return new SpecimenData(
+                specimen.speciesId(),
+                specimen.schemaVersion(),
+                specimen.generationVersion(),
+                specimen.deterministicSeed(),
+                specimen.basePercentile(),
+                specimen.baseLength(),
+                specimen.finalLength(),
+                specimen.finalPercentile(),
+                specimen.bodyType(),
+                specimen.condition(),
+                specimen.pigmentation(),
+                specimen.specimenQuality(),
+                specimen.perfectCatch(),
+                OptionalDouble.of(score.rawScore()),
+                OptionalInt.of(score.fishScore()),
+                specimen.provenance()
         );
     }
 
