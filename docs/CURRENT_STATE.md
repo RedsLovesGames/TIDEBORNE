@@ -1,6 +1,6 @@
 # Current development state
 
-Updated: 2026-08-28
+Updated: 2026-08-29
 
 ## Baseline and branch
 
@@ -473,3 +473,34 @@ Execute in this order unless a later explicit queued stage narrows the work furt
 9. final build, migration, optional-mod, and runtime validation
 
 See `docs/TODO.md` for checkbox-level execution state and `docs/FISHING_SYSTEM_2_SPEC.md` for frozen formulas and compatibility contracts.
+
+## Stage 32 runtime legacy migration coverage is complete
+
+This section supersedes the older execution-gate text above for the current queued repository state.
+
+Stage 32 finishes runtime migration coverage for old saved fish data across entities, buckets, displays, the Angler's Satchel, personal Journal roots, team Journal record snapshots, and relevant record-holder/network projection boundaries.
+
+Frozen migration contracts:
+
+- `LegacyFishMigrationService` remains the one canonical interpreter of legacy fish state. No persistence subsystem owns a separate trait mapping, percentile calculation, size inference, or seed derivation.
+- `LegacyPersistenceMigration` only bridges registered length-only Tide fish that lack enough legacy markers for the Stage 31 ItemStack classifier. Successful conversion still delegates to `LegacyFishMigrationService` and writes through `CanonicalSpecimenStorage`.
+- invalid current or partially canonical payloads fail closed and never fall back to length-only reinterpretation.
+- entity and bucket transfer paths migrate legacy transfer NBT before exporting or applying it, while preserving the existing transfer container and generic source-stack snapshot.
+- legacy bucketable entities identify species through Tide's normal bucket mapping. Entity reload migration is idempotent because a successful transfer payload becomes canonical immediately.
+- displays migrate their stored fish at the existing `setDisplayStack` boundary and use canonical `finalLength` without changing Tide's block-entity save format, model selection, orientation, placement, or removal behavior.
+- Angler's Satchel reads migrate nested stored fish and commit the upgraded copies back to the existing `SatchelContents` only when migration succeeds. Failed write-back leaves the original contents intact.
+- personal Journal loading performs one-time reconstructable record backfill on the persisted player root.
+- team Journal canonical reads, record update paths, and display/network projections use the same journal backfill before consuming canonical record snapshots.
+- old Tide journals contain aggregate largest/smallest lengths rather than complete historical specimen identity. Only those reconstructable record snapshots are backfilled. Historical latest specimen identity, missing trait axes, Perfect Catch state, and FishScore are not fabricated.
+- record-holder ownership, leaderboard, and history structures that do not contain recoverable specimen identity remain unchanged. They are not reinterpreted into a second inferred specimen.
+- all outer old-world save shapes remain loadable. Successful migration is write-once canonical state on the next read, so repeated reads do not reroll or regenerate specimen data.
+
+Stage 32 integration coverage includes legacy entity/bucket round trips, length-only display migration, persisted Satchel migration and extraction, deterministic personal/team Journal record backfill, preservation of unrelated record-holder metadata, and repeated-migration stability.
+
+The implementation/test head `0fd0301b13864b130d373b0e8e89ae4ab0e12383` is green in GitHub Actions run `33240339974`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, Fabric GameTests, and built-JAR artifact upload all completed successfully.
+
+Detailed Stage 32 behavior is documented in `docs/STAGE_32_RUNTIME_LEGACY_MIGRATION.md`.
+
+## Current execution gate after Stage 32
+
+Stage 32 is complete. Do not begin later queued work from this state unless a new numbered stage explicitly authorizes it. Remaining unchecked migration and progression work is tracked in `docs/TODO.md`.
