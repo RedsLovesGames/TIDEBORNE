@@ -91,13 +91,18 @@ This is a test-harness adaptation only. It does not modify Tideborne gameplay co
 
 ## Result
 
-GitHub Actions run `33271168192` is the first fully green four-way Stage 56 matrix after the Myths development-remap harness was corrected:
+GitHub Actions run `33271168192` was the first fully green four-way Stage 56 matrix after the Myths development-remap harness was corrected. After removing the unused Loom-property experiment and documenting the working remap boundary, the cleaned harness was validated again by GitHub Actions run `33271394257`.
 
+Final validation on run `33271394257`:
+
+- exact optional dependency preparation and manifest-integrity checks: passed
 - clean Gradle build and unit tests: passed
-- no optional mods: all 26 required GameTests passed
-- Apex Waters only: all 26 required GameTests passed
-- Myths of the Sea only: all 26 required GameTests passed
-- Apex Waters + Myths of the Sea: all 26 required GameTests passed
+- no optional mods: passed
+- Apex Waters only: passed
+- Myths of the Sea only: passed
+- Apex Waters + Myths of the Sea: passed
 - built-JAR artifact upload: passed
+
+The preceding fully instrumented run confirmed all 26 required GameTests passed independently in each of the four runtime legs.
 
 No Fishing System 2.0 production compatibility defect was found. No production fishing, trait, scoring, persistence, or eligibility behavior was changed by Stage 56.
