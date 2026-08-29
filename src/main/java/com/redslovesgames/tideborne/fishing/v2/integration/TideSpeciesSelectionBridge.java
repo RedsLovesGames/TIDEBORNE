@@ -45,6 +45,11 @@ public final class TideSpeciesSelectionBridge {
 
     public CatchResult select(com.li64.tide.data.fishing.FishingContext tideContext) {
         TideFishingHook hook = tideContext.hook();
+        if (hook == null || hook.getWorld().isClient() || !(hook.getPlayerOwner() instanceof ServerPlayerEntity serverPlayer)) {
+            clearHookState(hook);
+            return CatchResult.empty();
+        }
+
         FishingGearModifiers leviathanBait = TideborneFishingGearModifiers.leviathanBait(
                 LeviathanBaitFishing.isEnabledFor(hook, TideboundConfig.get())
         );
@@ -83,10 +88,7 @@ public final class TideSpeciesSelectionBridge {
             return CatchResult.empty();
         }
 
-        int capturedTraitMomentum = 0;
-        if (hook != null && hook.getPlayerOwner() instanceof ServerPlayerEntity serverPlayer) {
-            capturedTraitMomentum = TraitMomentumStorage.get(serverPlayer, selected.speciesId());
-        }
+        int capturedTraitMomentum = TraitMomentumStorage.get(serverPlayer, selected.speciesId());
         double effectiveTraitLuck = TraitMomentumProgression.effectiveTraitLuck(
                 context.traitLuck(),
                 capturedTraitMomentum
@@ -121,21 +123,19 @@ public final class TideSpeciesSelectionBridge {
         CanonicalSpecimenStorage.write(stack, preFightSpecimen);
         CatchResult result = data.createResult(stack);
 
-        if (hook != null) {
-            CanonicalCatchStateManager.put(
-                    hook,
-                    new CanonicalCatchStateManager.CatchState(
-                            catchSeed,
-                            context,
-                            environment,
-                            selected,
-                            preFightSpecimen,
-                            fightProfile,
-                            capturedTraitMomentum,
-                            eligibleSpecies
-                    )
-            );
-        }
+        CanonicalCatchStateManager.put(
+                hook,
+                new CanonicalCatchStateManager.CatchState(
+                        catchSeed,
+                        context,
+                        environment,
+                        selected,
+                        preFightSpecimen,
+                        fightProfile,
+                        capturedTraitMomentum,
+                        eligibleSpecies
+                )
+        );
         return result;
     }
 
