@@ -29,7 +29,12 @@ jobs:
           tide_url="$(printf '%s' "$tide_json" | jq -r '[.[] | select(.name == "Tide 2.1.1 (Fabric 1.21.1)")][0].files[] | select(.primary == true) | .url' | head -n1)"
           test -n "$tide_url"
           curl -fsSL "$tide_url" -o tide.jar
-          echo '=== AnglingTableMenu ==='
-          javap -classpath tide.jar -p -s com.li64.tide.client.gui.menus.AnglingTableMenu
-          echo '=== AnglingTableScreen ==='
-          javap -classpath tide.jar -p -s com.li64.tide.client.gui.screens.AnglingTableScreen
+          for cls in \
+            com.li64.tide.client.gui.menus.AnglingTableMenu \
+            com.li64.tide.client.gui.screens.AnglingTableScreen \
+            com.li64.tide.data.rods.CustomRodManager \
+            com.li64.tide.data.TideTags\$Items \
+            com.li64.tide.registries.entities.misc.fishing.TideFishingHook; do
+            echo "=== ${cls} ==="
+            javap -classpath tide.jar -p -s "$cls"
+          done
