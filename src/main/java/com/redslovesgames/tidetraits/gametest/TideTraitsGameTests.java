@@ -28,7 +28,6 @@ import com.redslovesgames.tidetraits.satchel.SatchelService;
 import com.redslovesgames.tidetraits.satchel.SatchelState;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.loader.api.FabricLoader;
@@ -104,21 +103,21 @@ public final class TideTraitsGameTests implements FabricGameTest {
    }
 
    @GameTest(templateName = "fabric-gametest-api-v1:empty")
-   public void multiCountCatchBecomesDistinctPermanentSpecimens(TestContext helper) {
+   public void multiCountCatchSplitsWithoutLegacyTraitGeneration(TestContext helper) {
       ItemStack threeFish = new ItemStack(Items.COD, 3);
-      List<ItemStack> individualized = CatchTraitService.INSTANCE.individualizeNewCatches(List.of(threeFish), Random.create(1592639710L));
-      helper.assertTrue(individualized.size() == 3, "Three caught fish were not represented by three specimen entries");
+      Random observed = Random.create(1592639710L);
+      Random control = Random.create(1592639710L);
+      List<ItemStack> individualized = CatchTraitService.INSTANCE.individualizeNewCatches(List.of(threeFish), observed);
+      helper.assertTrue(individualized.size() == 3, "Three caught fish were not represented by three compatibility entries");
       helper.assertTrue(individualized.stream().allMatch(stack -> stack.getCount() == 1), "An individualized catch retained a multi-item count");
-      helper.assertTrue(individualized.stream().allMatch(stack -> {
-         String mutation = (String)stack.get(TideTraitsComponents.MUTATION);
-         return mutation != null && !mutation.isBlank();
-      }), "An individualized catch did not receive an explicit permanent mutation marker");
-      long distinctSeeds = individualized.stream()
-         .map(stack -> (Long)stack.get(TideTraitsComponents.MUTATION_SEED))
-         .filter(Objects::nonNull)
-         .distinct()
-         .count();
-      helper.assertTrue(distinctSeeds == 3L, "Individual catches did not receive three distinct permanent identity seeds");
+      helper.assertTrue(individualized.stream().allMatch(stack -> stack.get(TideTraitsComponents.MUTATION) == null),
+         "Compatibility splitting generated a superseded mutually exclusive mutation");
+      helper.assertTrue(individualized.stream().allMatch(stack -> stack.get(TideTraitsComponents.MUTATION_SEED) == null),
+         "Compatibility splitting generated superseded legacy identity seeds");
+      helper.assertTrue(individualized.stream().allMatch(stack -> stack.get(TideTraitsComponents.SIZE_PERCENTILE) == null),
+         "Compatibility splitting generated superseded legacy percentiles");
+      helper.assertTrue(observed.nextLong() == control.nextLong(),
+         "Compatibility splitting consumed RNG after legacy trait generation was removed");
       helper.complete();
    }
 
