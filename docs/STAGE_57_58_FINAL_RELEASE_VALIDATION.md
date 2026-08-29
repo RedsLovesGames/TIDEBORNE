@@ -58,6 +58,13 @@ missing GameTest registrations, missing mixin/entrypoint sources, unresolved int
 identifiers, client-only common-entrypoint imports, wrong version metadata, or a dev/source
 artifact fail the release gate.
 
+Activating the omitted tests exposed and fixed two persistence defects. An entity with no
+specimen tag could synthesize a canonical specimen when exported because its ordinary Tide
+length was treated as legacy specimen evidence, and the first read after legacy migration
+returned transient provenance that the ItemStack schema intentionally does not persist. Empty
+entity tags now remain specimen-free, and migration returns the same normalized persisted
+representation as every subsequent read.
+
 ## Complete release gate
 
 `.github/workflows/build.yml` performs the following against the release commit:

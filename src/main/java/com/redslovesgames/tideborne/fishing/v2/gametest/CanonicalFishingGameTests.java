@@ -56,9 +56,9 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         ItemStack caught = result.items().getFirst();
         SpecimenData authoritative = CanonicalSpecimenStorage.read(caught).orElseThrow();
         CanonicalCatchStateManager.CatchState serverState = CanonicalCatchStateManager.get(hook).orElseThrow();
-        helper.assertTrue(authoritative.equals(serverState.specimen()),
+        helper.assertTrue(samePersistedState(authoritative, serverState.specimen()),
                 "Server catch state and persisted canonical specimen diverged");
-        helper.assertTrue(authoritative.provenance().attributes().get("authority").equals("server"),
+        helper.assertTrue("server".equals(serverState.specimen().provenance().attributes().get("authority")),
                 "Canonical specimen provenance did not identify server authority");
 
         caught.set(TideTraitsComponents.BODY_TYPE, "giant");
@@ -74,6 +74,24 @@ public final class CanonicalFishingGameTests implements FabricGameTest {
         TraitMomentumStorage.clear(player, authoritative.speciesId());
         CanonicalCatchStateManager.clear(hook);
         helper.complete();
+    }
+
+    private static boolean samePersistedState(SpecimenData persisted, SpecimenData serverOwned) {
+        return persisted.speciesId().equals(serverOwned.speciesId())
+                && persisted.schemaVersion() == serverOwned.schemaVersion()
+                && persisted.generationVersion() == serverOwned.generationVersion()
+                && persisted.deterministicSeed() == serverOwned.deterministicSeed()
+                && persisted.basePercentile() == serverOwned.basePercentile()
+                && persisted.baseLength() == serverOwned.baseLength()
+                && persisted.finalLength() == serverOwned.finalLength()
+                && persisted.finalPercentile() == serverOwned.finalPercentile()
+                && persisted.bodyType() == serverOwned.bodyType()
+                && persisted.condition() == serverOwned.condition()
+                && persisted.pigmentation() == serverOwned.pigmentation()
+                && persisted.specimenQuality() == serverOwned.specimenQuality()
+                && persisted.perfectCatch() == serverOwned.perfectCatch()
+                && persisted.rawFishScore().equals(serverOwned.rawFishScore())
+                && persisted.fishScore().equals(serverOwned.fishScore());
     }
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")

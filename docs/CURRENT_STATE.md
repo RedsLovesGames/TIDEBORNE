@@ -665,6 +665,11 @@ selection, specimen, trait, score, persistence, networking, Journal, record, and
 are authoritative. Legacy paths remain only as guarded migration, representation, or
 noncanonical compatibility fallbacks and cannot reroll or overwrite canonical V2 catches.
 
+Running the newly registered coverage found and fixed two hidden transfer/idempotence defects:
+specimen-free entities no longer generate canonical state from an ordinary Tide length during
+export, and the first migration read now returns the normalized persisted representation seen
+by subsequent reads rather than non-persisted transient provenance.
+
 There are no known Fishing System 2.0 blockers. A two-graphical-client interaction is not
 automated; multi-recipient consistency is instead covered by server-side projection and
 broadcast tests, while the runtime smoke proves an actual client can join the dedicated

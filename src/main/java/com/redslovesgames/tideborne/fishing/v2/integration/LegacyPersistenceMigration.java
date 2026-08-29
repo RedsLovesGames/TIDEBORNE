@@ -65,7 +65,7 @@ public final class LegacyPersistenceMigration {
             );
             SpecimenData migrated = MIGRATION.migrate(species, legacy).specimen();
             CanonicalSpecimenStorage.write(stack, migrated);
-            return Optional.of(migrated);
+            return CanonicalSpecimenStorage.read(stack);
         } catch (IllegalArgumentException | NullPointerException exception) {
             return Optional.empty();
         }

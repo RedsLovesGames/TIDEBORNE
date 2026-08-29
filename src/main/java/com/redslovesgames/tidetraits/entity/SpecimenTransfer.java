@@ -155,6 +155,9 @@ public final class SpecimenTransfer {
       migrateEntitySpecimen(entity);
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound tag = specimenEntity.tideTraits$getSpecimenTag();
+         if (tag.isEmpty()) {
+            return;
+         }
          syncLegacyLengthFromEntity(tag, entity);
          toStack(tag, stack, entity.getRegistryManager());
       }
