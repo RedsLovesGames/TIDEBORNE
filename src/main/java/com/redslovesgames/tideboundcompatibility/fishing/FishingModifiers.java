@@ -13,6 +13,8 @@ import com.li64.tide.data.fishing.MinigameBehavior;
 import com.li64.tide.registries.TideItems;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.redslovesgames.tideborne.fishing.v2.FightProfileService;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearEffects;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
@@ -95,9 +97,10 @@ public final class FishingModifiers {
       } else if (config.enableMythsCompat && line.isOf(TideboundItems.SWIFT_LINE)) {
          area *= (float)config.swiftCatchZoneMultiplier;
          speed *= (float)config.swiftFishSpeedMultiplier;
-      } else if (config.enableApexCompat && SteelLeaderAttachment.hasOnHook(hook)) {
-         area *= (float)config.steelLeaderCatchZoneMultiplier;
-         speed *= (float)config.steelLeaderFishSpeedMultiplier;
+      } else {
+         FishingGearModifiers gear = SteelLeaderGearModifiers.forHook(hook, config);
+         area *= (float)FishingGearEffects.catchZoneAreaMultiplier(gear);
+         speed *= (float)FishingGearEffects.minigameSpeedMultiplier(gear);
       }
 
       if (hook instanceof LeviathanBaitHook leviathan && leviathan.tidebound$isLeviathanFishSelected()) {

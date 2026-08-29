@@ -10,6 +10,8 @@ import com.li64.tide.data.fishing.CatchResult;
 import com.li64.tide.data.fishing.FishingContext;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook.CatchType;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearEffects;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
 import com.redslovesgames.tideboundcompatibility.compat.apex.SharkScentManager;
@@ -17,7 +19,7 @@ import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
 import com.redslovesgames.tideboundcompatibility.fishing.LeviathanBaitFishing;
 import com.redslovesgames.tideboundcompatibility.fishing.LeviathanBaitHook;
 import com.redslovesgames.tideboundcompatibility.fishing.SharkCatchLoss;
-import com.redslovesgames.tideboundcompatibility.fishing.SteelLeaderAttachment;
+import com.redslovesgames.tideboundcompatibility.fishing.SteelLeaderGearModifiers;
 import com.redslovesgames.tideboundcompatibility.network.SharkCatchLossPayload;
 import com.redslovesgames.tidetraits.catching.PerfectCatchTraitBoost;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -146,7 +148,8 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
          && hook.hasHookedItem()) {
          double chance = hook.getHookedItems().stream().mapToDouble(SharkCatchLoss::probability).max().orElse(0.0);
          if (!(chance <= 0.0) && !(level.random.nextDouble() >= chance)) {
-            if (SteelLeaderAttachment.hasOnHook(hook) && level.random.nextDouble() < config.steelLeaderCatchLossPreventionChance) {
+            FishingGearModifiers gear = SteelLeaderGearModifiers.forHook(hook, config);
+            if (FishingGearEffects.preventsCatchLoss(gear, level.random::nextDouble)) {
                serverPlayer.sendMessage(Text.translatable("message.tidebound_compatibility.steel_leader_saved"), true);
                level.playSound(null, hook.getBlockPos(), SoundEvents.BLOCK_TRIPWIRE_ATTACH, SoundCategory.PLAYERS, 0.7F, 1.4F);
             } else {
