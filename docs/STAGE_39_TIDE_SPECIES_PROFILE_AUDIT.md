@@ -19,7 +19,7 @@ For every resolved Tide fish considered by Tide fishing:
 - environment restrictions remain authoritative in Tide through `FishData.shouldKeep(context)` before a candidate profile is created;
 - Strength maps directly from `FishData.strength()`;
 - Tempo maps directly from Tide `FishData.speed()`;
-- behavior uses `MinigameBehavior.getSerializedName()`, preserving Tide's canonical serialized IDs such as `linear_wrap` rather than depending on Java enum formatting;
+- behavior follows Tide's codec contract exactly: `MinigameBehavior.name()` lowercased with `Locale.ROOT`, preserving serialized IDs such as `linear_wrap` without depending on a Mojang/Yarn mapping-sensitive interface method;
 - physical size uses Tide `typical_low_cm` and `typical_high_cm` as the P10 and P90 anchors of the canonical log-normal distribution;
 - fish with no Tide physical size use `NoPhysicalSizeDistribution`;
 - bucket, display, journal, parent, and other Tide-only metadata remain attached to the authoritative `FishData` carried by `TideSpeciesProfileAdapter.Candidate` rather than being duplicated into `SpeciesProfile`;
@@ -51,16 +51,16 @@ This keeps the split explicit:
 The audit found two adapter canonicalization defects:
 
 1. migration profiles replaced Tide's authoritative base `selection_weight` with `1.0`; `adaptForMigration` now preserves `FishData.weight()`;
-2. behavior used enum `toString()`; the adapter now uses Tide's serialized behavior ID through `getSerializedName()`.
+2. behavior used enum `toString()`; the adapter now derives Tide's exact serialized behavior ID from the enum name with `Locale.ROOT` lowercasing.
 
 No other species-field mapping required a behavior change.
 
 ## Targeted tests
 
-`TideSpeciesProfileAdapterTest` now covers:
+`TideSpeciesProfileAdapterTest` keeps its pure-JUnit coverage bootstrap-free and now covers:
 
-- namespaced species ID, rarity, base weight, Strength, Tempo, serialized behavior, and size mapping on one authoritative `FishData` shape;
-- proof that changing Tide `selection_quality` does not change the canonical base encounter weight;
+- the migration encounter-weight seam preserving Tide `selection_weight` directly, with no `selection_quality` input;
+- Tide's serialized behavior naming contract, including `LINEAR_WRAP` to `linear_wrap`;
 - exact P10/P90 size fitting and percentile inversion.
 
-The runtime `shouldKeep(context)` gate and authoritative Tide metadata retention remain in the adapter/bridge boundary rather than being duplicated into the pure profile model.
+The direct species ID, rarity, Strength, Tempo, `shouldKeep(context)` eligibility gate, and authoritative Tide metadata retention are structural adapter/bridge mappings that remain runtime-owned. They are validated by the exact Tide 2.1.1 compile/runtime integration path rather than by constructing `FishData` in plain JUnit, because Tide's `FishData` static codec initialization requires Minecraft registry bootstrap state.

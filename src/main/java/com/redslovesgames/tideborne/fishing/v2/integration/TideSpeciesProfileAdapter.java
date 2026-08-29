@@ -46,7 +46,7 @@ public final class TideSpeciesProfileAdapter {
         if (data == null) {
             throw new IllegalArgumentException("fish data is required for migration");
         }
-        return profile(data, data.weight());
+        return profile(data, migrationEncounterWeight(data.weight()));
     }
 
     private static SpeciesProfile profile(FishData data, double encounterWeight) {
@@ -60,14 +60,25 @@ public final class TideSpeciesProfileAdapter {
                 SpeciesEligibility.always(),
                 data.strength(),
                 data.speed(),
-                // Tide's serialized behavior contract is the enum name lowercased with Locale.ROOT.
-                // Use that contract directly so Mojang/Yarn remapping cannot rename the interface method.
-                data.behavior().name().toLowerCase(Locale.ROOT),
+                serializedBehaviorId(data.behavior().name()),
                 data.size().<SizeDistribution>map(TideSpeciesProfileAdapter::sizeDistribution)
                         .orElse(NoPhysicalSizeDistribution.INSTANCE),
                 Set.of(),
                 Map.of()
         );
+    }
+
+    /** Tide migration profiles keep the exact selection_weight and never fold selection_quality into it. */
+    static double migrationEncounterWeight(double selectionWeight) {
+        return selectionWeight;
+    }
+
+    /**
+     * Tide serializes MinigameBehavior as the enum name lowercased with Locale.ROOT.
+     * Derive the ID from that stable contract instead of a mapping-sensitive interface method.
+     */
+    static String serializedBehaviorId(String enumName) {
+        return enumName.toLowerCase(Locale.ROOT);
     }
 
     /**
