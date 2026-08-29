@@ -11,12 +11,16 @@ import com.redslovesgames.tideborne.fishing.v2.FightProfile;
 import com.redslovesgames.tideborne.fishing.v2.FightProfileService;
 import com.redslovesgames.tideborne.fishing.v2.FishingContext;
 import com.redslovesgames.tideborne.fishing.v2.FishingEnvironment;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesSelectionService;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
 import com.redslovesgames.tideborne.fishing.v2.TraitMomentumProgression;
 import com.redslovesgames.tideborne.fishing.v2.TraitMomentumStorage;
+import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
+import com.redslovesgames.tideboundcompatibility.fishing.LeviathanBaitFishing;
+import com.redslovesgames.tideboundcompatibility.fishing.TideborneFishingGearModifiers;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +44,11 @@ public final class TideSpeciesSelectionBridge {
     }
 
     public CatchResult select(com.li64.tide.data.fishing.FishingContext tideContext) {
-        FishingContext context = contextAdapter.context(tideContext);
+        TideFishingHook hook = tideContext.hook();
+        FishingGearModifiers leviathanBait = TideborneFishingGearModifiers.leviathanBait(
+                LeviathanBaitFishing.isEnabledFor(hook, TideboundConfig.get())
+        );
+        FishingContext context = contextAdapter.context(tideContext).withGearModifiers(leviathanBait);
         FishingEnvironment environment = contextAdapter.environment(tideContext);
         List<SpeciesProfile> profiles = new ArrayList<>();
         Map<String, FishData> dataBySpecies = new HashMap<>();
@@ -53,7 +61,7 @@ public final class TideSpeciesSelectionBridge {
         }
 
         if (profiles.isEmpty()) {
-            clearHookState(tideContext.hook());
+            clearHookState(hook);
             return CatchResult.empty();
         }
 
@@ -66,11 +74,10 @@ public final class TideSpeciesSelectionBridge {
         );
         FishData data = dataBySpecies.get(selected.speciesId());
         if (data == null) {
-            clearHookState(tideContext.hook());
+            clearHookState(hook);
             return CatchResult.empty();
         }
 
-        TideFishingHook hook = tideContext.hook();
         int capturedTraitMomentum = 0;
         if (hook != null && hook.getPlayerOwner() instanceof ServerPlayerEntity serverPlayer) {
             capturedTraitMomentum = TraitMomentumStorage.get(serverPlayer, selected.speciesId());
@@ -90,7 +97,10 @@ public final class TideSpeciesSelectionBridge {
                 ),
                 effectiveTraitLuck
         );
-        FightProfile fightProfile = fightProfiles.create(selected, preFightSpecimen);
+        FightProfile fightProfile = fightProfiles.applyGearModifiers(
+                fightProfiles.create(selected, preFightSpecimen),
+                leviathanBait
+        );
 
         // Do not call FishData#getResult here. Tide's implementation performs its own
         // independent fish-length roll, which would violate the one-canonical-size rule.

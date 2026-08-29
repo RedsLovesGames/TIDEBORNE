@@ -2,6 +2,7 @@ package com.redslovesgames.tideborne.fishing.v2;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /** Immutable server-owned inputs for one catch attempt. */
@@ -24,6 +25,19 @@ public record FishingContext(
 
     public static FishingContext neutral() {
         return new FishingContext(0.0, 0.0, 0.0, Map.of(), Map.of(), Map.of());
+    }
+
+    /** Adds the first-class luck axes supplied by one canonical gear modifier set. */
+    public FishingContext withGearModifiers(FishingGearModifiers modifiers) {
+        Objects.requireNonNull(modifiers, "modifiers");
+        return new FishingContext(
+                biteSpeed,
+                fishingLuck + modifiers.fishingLuck(),
+                traitLuck + modifiers.traitLuck(),
+                equipmentModifiers,
+                baitModifiers,
+                environmentModifiers
+        );
     }
 
     /** Returns the additive total for one named modifier across all sources. */
@@ -59,4 +73,3 @@ public record FishingContext(
         }
     }
 }
-

@@ -50,18 +50,14 @@ public final class FishingModifiers {
          );
       }
 
-      TideboundConfig.Values config = TideboundConfig.get();
-      FishingGearModifiers customGear = TideborneFishingGearModifiers.forMinigame(hook, config);
+      FishingGearModifiers customGear = TideborneFishingGearModifiers.forMinigame(hook, TideboundConfig.get());
       area *= (float)FishingGearEffects.catchZoneAreaMultiplier(customGear);
       speed *= (float)FishingGearEffects.minigameSpeedMultiplier(customGear);
-
-      if (hook instanceof LeviathanBaitHook leviathan && leviathan.tidebound$isLeviathanFishSelected()) {
-         area = LeviathanBaitRules.catchZone(area, config.leviathanBaitCatchZoneMultiplier);
-         speed = LeviathanBaitRules.fishSpeed(speed, config.leviathanBaitMinigameSpeedMultiplier);
-         return new FishingModifiers.MinigameValues(behavior, area, speed);
-      } else {
-         return new FishingModifiers.MinigameValues(behavior, MathHelper.clamp(area, 0.05F, 1.0F), Math.max(0.05F, speed));
-      }
+      return new FishingModifiers.MinigameValues(
+         behavior,
+         MathHelper.clamp(area, 0.05F, 1.0F),
+         Math.max(0.05F, speed)
+      );
    }
 
    private static byte canonicalBehavior(String behavior, byte fallback) {

@@ -2,7 +2,7 @@ package com.redslovesgames.tideborne.fishing.v2;
 
 import java.util.Objects;
 
-/** Normalizes species fight inputs, then applies bounded specimen size and Body Type effects. */
+/** Normalizes species fight inputs, then applies bounded specimen size, Body Type, and canonical gear effects. */
 public final class FightProfileService {
     public static final double MAX_EXTERNAL_TEMPO = 2.2;
     public static final double MAX_CANONICAL_STRENGTH = 1.1;
@@ -37,6 +37,19 @@ public final class FightProfileService {
                 species.behavior()
         );
         return applyBodyType(percentileScaled, specimen.bodyType());
+    }
+
+    /** Applies first-class canonical gear/bait fight multipliers after species, size, and Body Type scaling. */
+    public FightProfile applyGearModifiers(FightProfile profile, FishingGearModifiers modifiers) {
+        Objects.requireNonNull(profile, "profile");
+        Objects.requireNonNull(modifiers, "modifiers");
+        double strength = profile.strength() * modifiers.strengthMultiplier();
+        double tempo = clamp(
+                profile.tempo() * modifiers.tempoMultiplier(),
+                MIN_FINAL_TEMPO,
+                MAX_FINAL_TEMPO
+        );
+        return new FightProfile(strength, tempo, catchZoneArea(strength), profile.behavior());
     }
 
     public double normalizeTempo(double externalTempo) {

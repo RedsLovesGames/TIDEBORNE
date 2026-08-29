@@ -21,12 +21,12 @@ public final class LeviathanBaitFishing {
 
    public static CatchResult selectCatch(TideFishingManager manager, TideFishingHook hook, FishingContext context) {
       TideboundConfig.Values config = TideboundConfig.get();
-      FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBaitCatchPool(isEnabledFor(hook, config));
+      FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBait(isEnabledFor(hook, config));
       boolean fishOnly = LeviathanBaitRules.isFishOnlyCatchPool(modifiers);
       CatchResult result = LeviathanBaitRules.selectCatch(
          modifiers,
          () -> manager.selectCatch(context),
-         () -> manager.getFishSelector().getResult(withFishLuck(context, config.leviathanBaitFishSelectionLuckBonus))
+         () -> manager.getFishSelector().getResult(context)
       );
       if (!fishOnly) {
          return result;
@@ -40,24 +40,5 @@ public final class LeviathanBaitFishing {
       return TideboundCompatibility.isMythsIntegrationActive()
          && config.leviathanBaitFishOnly
          && BaitUtils.hasBait(TideboundItems.LEVIATHAN_BAIT, hook.getRod());
-   }
-
-   public static FishingContext withFishLuck(FishingContext context, int bonus) {
-      return new FishingContext(
-         context.level(),
-         context.hook(),
-         context.rod(),
-         context.rng(),
-         context.pos(),
-         context.blockPos(),
-         LeviathanBaitRules.effectiveFishLuck(context.luck(), bonus),
-         context.medium(),
-         context.exactBiome(),
-         context.nearestBiome(),
-         context.dimension(),
-         context.temperature(),
-         context.moonPhase(),
-         context.season()
-      );
    }
 }

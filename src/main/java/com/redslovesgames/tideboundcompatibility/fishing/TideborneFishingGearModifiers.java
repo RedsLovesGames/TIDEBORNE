@@ -17,6 +17,10 @@ import net.minecraft.registry.tag.BiomeTags;
 /** Resolves currently active Tideborne rods, hooks, lines, and bait into canonical fishing gear modifiers. */
 public final class TideborneFishingGearModifiers {
     public static final String FISH_CATCH_CATEGORY = "fish";
+    public static final double LEVIATHAN_FISHING_LUCK_BONUS = 15.0D;
+    public static final double LEVIATHAN_TRAIT_LUCK_BONUS = 8.0D;
+    public static final double LEVIATHAN_STRENGTH_MULTIPLIER = 1.15D;
+    public static final double LEVIATHAN_TEMPO_MULTIPLIER = 1.15D;
 
     private TideborneFishingGearModifiers() {
     }
@@ -94,14 +98,23 @@ public final class TideborneFishingGearModifiers {
         );
     }
 
-    /** Leviathan Bait replaces the eligible catch categories with the normal Tide fish category only. */
-    public static FishingGearModifiers leviathanBaitCatchPool(boolean active) {
+    /** Canonical Fishing System 2.0 Leviathan Bait modifier set. */
+    public static FishingGearModifiers leviathanBait(boolean active) {
         if (!active) {
             return FishingGearModifiers.neutral();
         }
         return FishingGearModifiers.builder()
+                .fishingLuck(LEVIATHAN_FISHING_LUCK_BONUS)
+                .traitLuck(LEVIATHAN_TRAIT_LUCK_BONUS)
+                .strengthMultiplier(LEVIATHAN_STRENGTH_MULTIPLIER)
+                .tempoMultiplier(LEVIATHAN_TEMPO_MULTIPLIER)
                 .restrictCategoriesTo(FISH_CATCH_CATEGORY)
                 .build();
+    }
+
+    /** Compatibility name retained for Stage 37 callers/tests; now returns the complete V2 bait modifier set. */
+    public static FishingGearModifiers leviathanBaitCatchPool(boolean active) {
+        return leviathanBait(active);
     }
 
     public static FishingGearModifiers tentacleLine(TideboundConfig.Values config) {

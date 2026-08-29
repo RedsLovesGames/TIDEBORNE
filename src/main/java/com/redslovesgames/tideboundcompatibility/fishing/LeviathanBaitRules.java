@@ -8,22 +8,9 @@ package com.redslovesgames.tideboundcompatibility.fishing;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import java.util.Objects;
 import java.util.function.Supplier;
-import net.minecraft.util.math.MathHelper;
 
 public final class LeviathanBaitRules {
    private LeviathanBaitRules() {
-   }
-
-   public static int effectiveFishLuck(int normalLuck, int bonus) {
-      return Math.addExact(normalLuck, bonus);
-   }
-
-   public static float catchZone(float normalArea, double multiplier) {
-      return MathHelper.clamp(normalArea * (float)multiplier, 0.05F, 1.0F);
-   }
-
-   public static float fishSpeed(float normalSpeed, double multiplier) {
-      return Math.max(0.05F, normalSpeed * (float)multiplier);
    }
 
    public static boolean isFishOnlyCatchPool(FishingGearModifiers modifiers) {
