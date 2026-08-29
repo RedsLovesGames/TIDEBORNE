@@ -3,8 +3,10 @@ package com.redslovesgames.tideborne.fishing.v2.integration;
 import com.li64.tide.data.TideData;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.item.TideItemData;
+import com.redslovesgames.tideborne.fishing.v2.FishScoreV2Service;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
+import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
 import java.util.OptionalDouble;
@@ -69,6 +71,8 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
         helper.assertTrue(first.deterministicSeed() == 42L, "Legacy deterministic seed was not preserved");
         helper.assertTrue(first.basePercentile() == 73.0, "Legacy percentile was not preserved");
         helper.assertTrue(first.finalLength() == 51.25, "Legacy physical length was not preserved");
+        helper.assertTrue(first.rawFishScore().isPresent(), "Migrated legacy fish is missing canonical raw FishScore");
+        helper.assertTrue(first.fishScore().isPresent(), "Migrated legacy fish is missing canonical FishScore");
         helper.assertTrue(CanonicalSpecimenStorage.detectMigration(stack) == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
                 "Migrated stack was not rewritten as current canonical data");
         stack.set(TideTraitsComponents.BODY_TYPE, "dwarf");
@@ -76,6 +80,7 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
         SpecimenData second = CanonicalSpecimenStorage.read(stack).orElseThrow();
         helper.assertTrue(second.bodyType() == SpecimenData.BodyType.GIANT, "Current canonical stack was migrated a second time from legacy mirrors");
         helper.assertTrue(second.condition() == SpecimenData.Condition.SCARRED, "Current canonical condition changed on repeated read");
+        helper.assertTrue(first.equals(second), "Repeated legacy-stack read changed canonical specimen identity or FishScore");
         helper.complete();
     }
 
@@ -114,6 +119,8 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
         stack.set(TideTraitsComponents.SPECIMEN_BASE_PERCENTILE, preservedPercentile);
         stack.set(TideTraitsComponents.SPECIMEN_FINAL_LENGTH, preservedLength);
         stack.set(TideTraitsComponents.SPECIMEN_CONDITION, "parasite_ridden");
+        stack.remove(TideTraitsComponents.SPECIMEN_RAW_FISH_SCORE);
+        stack.remove(TideTraitsComponents.SPECIMEN_FISH_SCORE);
         stack.set(TideTraitsComponents.MUTATION_SEED, -4L);
         stack.set(TideTraitsComponents.SIZE_PERCENTILE, 1.0);
         stack.set(TideTraitsComponents.MUTATION, "albino");
@@ -122,6 +129,13 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
         helper.assertTrue(migrated.basePercentile() == preservedPercentile, "Older canonical base percentile was not preferred");
         helper.assertTrue(migrated.finalLength() == preservedLength, "Older canonical final length was not preserved");
         helper.assertTrue(migrated.condition() == SpecimenData.Condition.PARASITE_RIDDEN, "Usable older canonical orthogonal trait was not preserved");
+        FishScoreV2Service.Result expected = new FishScoreV2Service().calculate(migrationProfile(stack).rarity(), migrated);
+        helper.assertTrue(migrated.rawFishScore().isPresent(), "Older canonical fish without a saved raw score was not rescored");
+        helper.assertTrue(migrated.fishScore().isPresent(), "Older canonical fish without a saved FishScore was not rescored");
+        helper.assertTrue(migrated.rawFishScore().orElseThrow() == expected.rawScore(), "Rescore did not use the final preserved specimen fields");
+        helper.assertTrue(migrated.fishScore().orElseThrow() == expected.fishScore(), "Canonical FishScore does not match final preserved specimen fields");
+        SpecimenData reread = CanonicalSpecimenStorage.read(stack).orElseThrow();
+        helper.assertTrue(migrated.equals(reread), "Older-schema migration changed on repeated canonical read");
         helper.complete();
     }
 
@@ -181,6 +195,14 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Tide sized-fish registry is empty during GameTest"));
         return new ItemStack((Item) data.fish().value());
+    }
+
+    private static SpeciesProfile migrationProfile(ItemStack stack) {
+        FishData data = TideData.FISH.get().values().stream()
+                .filter(fish -> fish.fish().value() == stack.getItem())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Migrated fish is not present in Tide registry"));
+        return new TideSpeciesProfileAdapter().adaptForMigration(data);
     }
 
     private static SpecimenData specimen() {
