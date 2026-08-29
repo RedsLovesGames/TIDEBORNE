@@ -583,3 +583,31 @@ Detailed behavior is documented in `docs/STAGE_40_APEX_WATERS_SPECIES_PROFILE_AU
 ## Current execution gate after Stage 40
 
 Stage 40 is complete. The next compatibility mod to process is **Myths of the Sea 1.3.0**. Do not process Myths of the Sea or another compatibility mod in this Stage 40 slice; continue only when the next explicitly queued stage authorizes it.
+
+## Stage 54 new-world regression pass is complete
+
+This section supersedes the older execution-gate text above for the current queued repository state.
+
+Stage 54 performed a focused regression pass from fresh state after the later Fishing System 2.0 migration and legacy-calculation cleanup work. The pass exercised the canonical new-world path together with the repository's existing unit and Fabric GameTest coverage for normal fishing, species eligibility, percentile/size, Body Type, Condition, Pigmentation, Perfect Catch, Perfect Specimen, canonical Strength/Tempo, Tide lines, rods, Steel Leader, Leviathan Bait, buckets, displays, the Angler's Satchel, Journal persistence, and leaderboard/record consumers.
+
+Focused Stage 54 GameTests add direct fresh-state coverage for:
+
+- empty per-species Trait Momentum state and current-format persistence;
+- canonical specimen generation with current schema/generation, one natural percentile/base-size pair, finalized size/traits, canonical FishScore, and direct ItemStack persistence without legacy migration;
+- a brand-new rod with no Steel Leader state, current Steel Leader attachment add/remove behavior, and canonical catch-zone, minigame-speed, and catch-loss-protection effects;
+- canonical Leviathan Bait modifiers, including fish-only catch restriction, +15 Fishing Luck, +8 Trait Luck, Strength x1.15, and Tempo x1.15.
+
+The regression pass exposed one production defect: `SteelLeaderAttachment` could miss the current `STEEL_LEADER_ATTACHED` component when given a fresh `ItemStack`, because the compatibility reflection path did not represent the actual new-stack component access. The Stage 54 production fix makes `ItemStack` reads and writes use `TideTraitsComponents.STEEL_LEADER_ATTACHED` directly while retaining the existing compatibility reflection fallback for other supported objects. No balance constants or unrelated runtime behavior changed.
+
+Stage 54 commits:
+
+- `908db40bfd6897d863a07725d4f52afb9b186239` adds the focused fresh-world regression GameTests and `docs/STAGE_54_FRESH_WORLD_REGRESSION.md`;
+- `b087f3e6a386d006afd672533e5c175156dff7db` fixes fresh Steel Leader attachment state.
+
+GitHub Actions run `33263857714` is green for the production-fix head. The Java 21 workflow completed exact dependency/reconstruction validation, `./gradlew clean build --stacktrace` with unit tests, Fabric GameTests without Apex Waters, Fabric GameTests with the exact Apex Waters 1.1.1 artifact, and built-JAR artifact upload successfully.
+
+Detailed Stage 54 validation is documented in `docs/STAGE_54_FRESH_WORLD_REGRESSION.md`.
+
+## Current execution gate after Stage 54
+
+Stage 54 is complete. The new-world regression gate is green, the only defect found by this pass was the fresh Steel Leader attachment-state bug, and that defect is fixed. Do not begin a later numbered stage from this state unless explicitly queued.
