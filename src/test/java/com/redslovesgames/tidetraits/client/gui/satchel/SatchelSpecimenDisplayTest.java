@@ -1,0 +1,73 @@
+package com.redslovesgames.tidetraits.client.gui.satchel;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import org.junit.jupiter.api.Test;
+
+class SatchelSpecimenDisplayTest {
+   @Test
+   void projectsCanonicalSpecimenFieldsExactlyWithoutRecalculation() {
+      SpecimenData specimen = specimen(OptionalInt.of(2711));
+      SatchelSpecimenDisplay display = SatchelSpecimenDisplay.fromCanonical(specimen, 5);
+
+      assertEquals(specimen.finalLength(), display.length());
+      assertEquals(specimen.finalPercentile(), display.percentile());
+      assertEquals(SpecimenData.BodyType.GIANT, display.bodyType());
+      assertEquals(SpecimenData.Condition.SCARRED, display.condition());
+      assertEquals(SpecimenData.Pigmentation.IRIDESCENT, display.pigmentation());
+      assertEquals(SpecimenData.SpecimenQuality.PERFECT_SPECIMEN, display.quality());
+      assertTrue(display.perfectCatch());
+      assertEquals(OptionalInt.of(2711), display.fishScore());
+      assertEquals(2711, display.scoreOrMissing());
+      assertEquals("2711", display.scoreLabel());
+      assertEquals("★★★★★", display.rarityStarsLabel());
+   }
+
+   @Test
+   void displayLabelsComeOnlyFromCanonicalAxisValues() {
+      SatchelSpecimenDisplay display = SatchelSpecimenDisplay.fromCanonical(specimen(OptionalInt.of(2711)), 4);
+
+      assertEquals("Giant", display.bodyTypeLabel());
+      assertEquals("Scarred", display.conditionLabel());
+      assertEquals("Iridescent", display.pigmentationLabel());
+      assertEquals("Perfect Specimen", display.qualityLabel());
+      assertEquals("★★★★", display.rarityStarsLabel());
+   }
+
+   @Test
+   void scorelessCanonicalSpecimenRemainsScoreless() {
+      SatchelSpecimenDisplay display = SatchelSpecimenDisplay.fromCanonical(specimen(OptionalInt.empty()), 0);
+
+      assertFalse(display.fishScore().isPresent());
+      assertEquals(-1, display.scoreOrMissing());
+      assertEquals("--", display.scoreLabel());
+      assertEquals("?", display.rarityStarsLabel());
+   }
+
+   private static SpecimenData specimen(OptionalInt score) {
+      return new SpecimenData(
+         "tide:stage_44_test",
+         SpecimenGenerator.SCHEMA_VERSION,
+         SpecimenGenerator.GENERATION_VERSION,
+         0x44AAL,
+         97.25,
+         38.5,
+         47.75,
+         99.125,
+         SpecimenData.BodyType.GIANT,
+         SpecimenData.Condition.SCARRED,
+         SpecimenData.Pigmentation.IRIDESCENT,
+         SpecimenData.SpecimenQuality.PERFECT_SPECIMEN,
+         true,
+         OptionalDouble.of(812.375),
+         score,
+         SpecimenData.Provenance.generated()
+      );
+   }
+}

@@ -5,17 +5,12 @@
  */
 package com.redslovesgames.tidetraits.client.gui.satchel;
 
-import com.li64.tide.data.fishing.FishData;
-import com.li64.tide.data.item.TideItemData;
-import com.redslovesgames.tideteamjournal.TeamProgressStore;
 import com.redslovesgames.tidetraits.compat.multiplayer.MultiplayerDiscoveryClient;
 import com.redslovesgames.tidetraits.compat.multiplayer.SharedDiscoveryAvailability;
 import com.redslovesgames.tidetraits.compat.multiplayer.SharedDiscoverySnapshot;
-import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import com.redslovesgames.tidetraits.discovery.DiscoveryClient;
 import com.redslovesgames.tidetraits.discovery.DiscoverySnapshot;
 import com.redslovesgames.tidetraits.discovery.DiscoveryTotals;
-import com.redslovesgames.tidetraits.fish.FishSizeClass;
 import com.redslovesgames.tidetraits.satchel.SatchelFeature;
 import com.redslovesgames.tidetraits.satchel.SatchelProtectionRule;
 import com.redslovesgames.tidetraits.satchel.SatchelSortKey;
@@ -244,45 +239,41 @@ public final class AnglersSatchelScreen extends Screen {
       graphics.drawText(this.textRenderer, "Specimen", x, y, -12965349, false);
       if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          ItemStack stack = this.contents.get(this.selectedSlot);
+         Optional<SatchelSpecimenDisplay> canonical = SatchelSpecimenDisplay.from(stack);
          String name = this.textRenderer.trimToWidth(stack.getName().getString(), 100);
-         graphics.drawText(this.textRenderer, scannerRarityStars(stack), x, y + 13, -12965349, false);
+         graphics.drawText(this.textRenderer, canonical.map(SatchelSpecimenDisplay::rarityStarsLabel).orElse("?"), x, y + 13, -12965349, false);
          graphics.drawText(this.textRenderer, name, x + 42, y + 13, -12965349, false);
          graphics.drawText(this.textRenderer, "Slot " + (this.selectedSlot + 1), x, y + 24, -9282236, false);
          SatchelFeatureView scanner = this.view.feature(SatchelFeature.TRAIT_SCANNER.id());
          boolean scannerEnabled = scanner != null && scanner.unlocked() && scanner.enabled();
          if (scannerEnabled) {
-            Optional<FishData> fishData = safeFishData(stack);
-            double length = (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
-            String rarity = fishData.<String>map(data -> TraitAxesRuntime.titleCase(data.profile().rarity().toString())).orElse("Unknown");
-            String mutation = TraitAxesRuntime.traitSummary(stack);
-            double percentile = (Double)stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0);
-            boolean classified = Double.isFinite(percentile) && percentile >= 0.0 && percentile <= 100.0;
-            String sizeClass = classified ? TraitAxesRuntime.titleCase(FishSizeClass.fromPercentile(percentile).serializedName()) : "Unclassified";
-            graphics.drawText(this.textRenderer, String.format(Locale.ROOT, "Length %.2f", length), x, y + 38, -12965349, false);
-            graphics.drawText(this.textRenderer, "Size " + sizeClass, x, y + 49, -12965349, false);
-            graphics.drawText(this.textRenderer, this.textRenderer.trimToWidth("Traits " + mutation, 122), x, y + 60, -12965349, false);
-            graphics.drawText(this.textRenderer, "Rarity " + rarity, x, y + 71, -12965349, false);
-            graphics.drawText(
-               this.textRenderer,
-               classified ? String.format(Locale.ROOT, "Percentile %.1f", percentile) : "Percentile unclassified",
-               x,
-               y + 82,
-               -12965349,
-               false
-            );
+            if (canonical.isPresent()) {
+               SatchelSpecimenDisplay specimen = canonical.get();
+               graphics.drawText(this.textRenderer, String.format(Locale.ROOT, "Length %.2f", specimen.length()), x, y + 38, -12965349, false);
+               graphics.drawText(this.textRenderer, String.format(Locale.ROOT, "Percentile %.1f", specimen.percentile()), x, y + 48, -12965349, false);
+               graphics.drawText(this.textRenderer, "Body " + specimen.bodyTypeLabel(), x, y + 58, -12965349, false);
+               graphics.drawText(this.textRenderer, "Condition " + specimen.conditionLabel(), x, y + 68, -12965349, false);
+               graphics.drawText(this.textRenderer, "Pigment " + specimen.pigmentationLabel(), x, y + 78, -12965349, false);
+               graphics.drawText(this.textRenderer, "Quality " + specimen.qualityLabel(), x, y + 88, -12965349, false);
+               graphics.drawText(this.textRenderer, "Score " + specimen.scoreLabel(), x, y + 98, -12965349, false);
+            } else {
+               graphics.drawTextWrapped(
+                  this.textRenderer, Text.literal("Canonical specimen data is unavailable for this stored fish."), x, y + 40, 120, -9282236
+               );
+            }
          } else {
             graphics.drawTextWrapped(
                this.textRenderer, Text.literal("Trait Scanner locked/off. Enable it to reveal specimen details."), x, y + 40, 120, -9282236
             );
          }
 
+         this.renderPersonalRecordSummary(graphics, x, y + 110, this.selectedSlot);
          if (this.view.isProtected(this.selectedSlot)) {
-            blit(graphics, statusIcon("protected"), x, y + 105, 7, 7);
-            graphics.drawText(this.textRenderer, "Trophy protected", x + 10, y + 105, -6671571, false);
+            blit(graphics, statusIcon("protected"), x, y + 121, 7, 7);
+            graphics.drawText(this.textRenderer, "Trophy protected", x + 10, y + 121, -6671571, false);
          }
 
-         this.renderPersonalRecordSummary(graphics, x, y + 95, this.selectedSlot);
-         int extractY = top + 192;
+         int extractY = top + 202;
          drawButton(graphics, x, extractY, "Take", !this.view.isProtected(this.selectedSlot), mouseX, mouseY);
          SatchelFeatureView lock = this.view.feature(SatchelFeature.TROPHY_LOCK.id());
          boolean canChangeProtection = lock != null && lock.unlocked() && (this.view.isProtected(this.selectedSlot) || lock.enabled());
@@ -443,13 +434,12 @@ public final class AnglersSatchelScreen extends Screen {
          );
          drawButton(graphics, left + 30, top + 134, "Upgrades", true, mouseX, mouseY);
       } else {
-         AnglersSatchelScreen.RecordSummary summary = this.summarizeRecords();
          int listX = left + 38;
          int lengthX = listX + 154;
          graphics.drawText(
             this.textRenderer, "Leaderboard", (400 - MinecraftClient.getInstance().textRenderer.getWidth("Leaderboard")) / 2 + left, top + 69, -12965349, false
          );
-         List sorted = this.contents.stream().sorted(Comparator.comparingDouble(AnglersSatchelScreen::recordScoreValue).reversed()).toList();
+         List<ItemStack> sorted = this.contents.stream().sorted(Comparator.comparingInt(AnglersSatchelScreen::recordScoreValue).reversed()).toList();
          byte visible = 16;
 
          for (int index = 0; index < visible; index++) {
@@ -458,23 +448,22 @@ public final class AnglersSatchelScreen extends Screen {
                break;
             }
 
-            ItemStack stack = (ItemStack)sorted.get(actual);
+            ItemStack stack = sorted.get(actual);
             int rowY = top + 83 + index % 8 * 16;
             graphics.drawItem(stack, listX + index / 8 * 174, rowY - 4);
             graphics.drawText(
                this.textRenderer, this.textRenderer.trimToWidth(stack.getName().getString(), 100), listX + index / 8 * 174 + 19, rowY, -12965349, false
             );
-            TextRenderer var10001 = this.textRenderer;
-            String var10002 = String.format(Locale.ROOT, "%.0f", recordScoreValue(stack));
+            String score = recordScoreLabel(stack);
             graphics.drawText(
-               var10001, var10002, lengthX + index / 8 * 174 - MinecraftClient.getInstance().textRenderer.getWidth(var10002), rowY, -9282236, false
+               this.textRenderer, score, lengthX + index / 8 * 174 - MinecraftClient.getInstance().textRenderer.getWidth(score), rowY, -9282236, false
             );
          }
 
          graphics.drawText(
             this.textRenderer,
-            "Score = pct + rarity + species + size + body + condition",
-            (400 - MinecraftClient.getInstance().textRenderer.getWidth("Score = pct + rarity + species + size + body + condition")) / 2 + left,
+            "Canonical V2 FishScore",
+            (400 - MinecraftClient.getInstance().textRenderer.getWidth("Canonical V2 FishScore")) / 2 + left,
             top + 211,
             -9282236,
             false
@@ -654,7 +643,7 @@ public final class AnglersSatchelScreen extends Screen {
    private void renderContentsControlTooltip(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
       if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          int x = left + 258;
-         int y = top + 192;
+         int y = top + 202;
          if (inside(mouseX, mouseY, x, y, 48, 16)) {
             this.showTooltip(
                graphics,
@@ -770,7 +759,7 @@ public final class AnglersSatchelScreen extends Screen {
          );
          case TRAIT_SCANNER -> List.of(
             Text.literal("Trait Scanner"),
-            Text.literal("Reveals length, percentile, body type, condition, rarity, and region."),
+            Text.literal("Reveals canonical percentile, Body Type, Condition, Pigmentation, Quality, and FishScore."),
             Text.literal("Select a specimen in Contents to inspect it.")
          );
          case TROPHY_LOCK -> List.of(
@@ -876,7 +865,7 @@ public final class AnglersSatchelScreen extends Screen {
          return true;
       } else if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          int x = left + 258;
-         int buttonY = top + 192;
+         int buttonY = top + 202;
          if (inside(mouseX, mouseY, x, buttonY, 48, 16)) {
             if (this.view.isProtected(this.selectedSlot)) {
                this.localStatus = "Unprotect that specimen before extracting it";
@@ -1087,10 +1076,6 @@ public final class AnglersSatchelScreen extends Screen {
       return -1;
    }
 
-   private int protectedCount() {
-      return (int)this.view.protectedSlots().stream().filter(slot -> slot < this.contents.size()).count();
-   }
-
    private int maximumContentScroll() {
       int rows = (this.contents.size() + 10 - 1) / 10;
       return Math.max(0, rows - 7);
@@ -1118,51 +1103,16 @@ public final class AnglersSatchelScreen extends Screen {
       return target;
    }
 
-   private AnglersSatchelScreen.RecordSummary summarizeRecords() {
-      ItemStack personalLargest = ItemStack.EMPTY;
-      ItemStack personalSmallest = ItemStack.EMPTY;
-      int mutated = 0;
-      int percentileCount = 0;
-      double percentileTotal = 0.0;
-
-      for (int slot = 0; slot < this.contents.size(); slot++) {
-         ItemStack stack = this.contents.get(slot);
-         double value = length(stack);
-         Optional<PersonalRecordView> record = this.view.personalRecordAt(slot);
-         if (personalLargest.isEmpty() && value > 0.0 && record.map(stats -> sameLength(value, stats.largest())).orElse(false)) {
-            personalLargest = stack;
-         }
-
-         if (personalSmallest.isEmpty() && value > 0.0 && record.map(stats -> sameLength(value, stats.smallest())).orElse(false)) {
-            personalSmallest = stack;
-         }
-
-         if (TraitAxesRuntime.isSpecial(stack)) {
-            mutated++;
-         }
-
-         double percentile = (Double)stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0);
-         if (percentile >= 0.0) {
-            percentileCount++;
-            percentileTotal += percentile;
-         }
-      }
-
-      return new AnglersSatchelScreen.RecordSummary(
-         personalLargest.copy(), personalSmallest.copy(), this.protectedCount(), mutated, percentileCount, percentileTotal
-      );
-   }
-
-   private static Optional<FishData> safeFishData(ItemStack stack) {
-      try {
-         return FishData.get(stack);
-      } catch (RuntimeException ignored) {
-         return Optional.empty();
-      }
-   }
-
    private static double length(ItemStack stack) {
-      return (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::length).orElse(0.0);
+   }
+
+   private static int recordScoreValue(ItemStack stack) {
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreOrMissing).orElse(-1);
+   }
+
+   private static String recordScoreLabel(ItemStack stack) {
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreLabel).orElse("--");
    }
 
    private static boolean sameLength(double first, double second) {
@@ -1304,36 +1254,6 @@ public final class AnglersSatchelScreen extends Screen {
       return (this.height - 260) / 2;
    }
 
-   private static String scannerRarityStars(ItemStack var0) {
-      Optional var1 = safeFishData(var0);
-      if (!var1.isEmpty()) {
-         String var2 = ((FishData)var1.get()).profile().rarity().toString().toLowerCase(Locale.ROOT).replace('_', ' ');
-         if (!var2.equals("common")) {
-            if (!var2.equals("uncommon")) {
-               if (!var2.equals("rare")) {
-                  if (var2.equals("very rare") || var2.equals("epic")) {
-                     return "\u2605\u2605\u2605\u2605";
-                  } else {
-                     return !var2.equals("legendary") ? "?" : "\u2605\u2605\u2605\u2605\u2605";
-                  }
-               } else {
-                  return "\u2605\u2605\u2605";
-               }
-            } else {
-               return "\u2605\u2605";
-            }
-         } else {
-            return "\u2605";
-         }
-      } else {
-         return "?";
-      }
-   }
-
-   private static double recordScoreValue(ItemStack var0) {
-      return TeamProgressStore.tideborneFishScore(var0);
-   }
-
    @Environment(EnvType.CLIENT)
    private enum Pending {
       NONE,
@@ -1345,12 +1265,6 @@ public final class AnglersSatchelScreen extends Screen {
       PROTECT,
       PROTECTION_RULE,
       ACTIVE;
-   }
-
-   @Environment(EnvType.CLIENT)
-   private record RecordSummary(
-      ItemStack personalLargest, ItemStack personalSmallest, int protectedCount, int mutatedCount, int percentileCount, double percentileTotal
-   ) {
    }
 
    @Environment(EnvType.CLIENT)
