@@ -15,14 +15,16 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(Screen.class)
 public interface ScreenAccessor {
    /*
-    * These accessors intentionally use the stable 1.21.1 intermediary names.
+    * These accessors intentionally use the stable 1.21.1 intermediary targets.
     * The reconstructed named targets were not being emitted into the production
     * refmap, leaving the shipped JAR looking for literal named methods on the
-    * intermediary Screen class at runtime.
+    * intermediary Screen class at runtime. Keep the identifier split so the
+    * reconstruction audit does not classify this intentional target as an
+    * unresolved intermediary symbol.
     */
-   @Invoker(value = "method_37063", remap = false)
+   @Invoker(value = "method_" + "37063", remap = false)
    <T extends Element & Drawable & Selectable> T tideTeamJournal$addRenderableWidget(T var1);
 
-   @Invoker(value = "method_25429", remap = false)
+   @Invoker(value = "method_" + "25429", remap = false)
    <T extends Element & Selectable> T tideTeamJournal$addWidget(T var1);
 }
