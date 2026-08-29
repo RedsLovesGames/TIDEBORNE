@@ -62,7 +62,7 @@ The strengthened specimen tests explicitly require a migrated real fish to conta
 
 ## Validation result
 
-GitHub Actions run `33268651496` is green on the Stage 55 implementation head `6fbddf5ea0cfa6b786ef9191212e1a101046bae6`.
+GitHub Actions run `33268651496` is green on the Stage 55 implementation head `6fbddf5ca4116273f9ad06c086a735d8e678e9fb`.
 
 The Java 21 workflow successfully completed:
 
