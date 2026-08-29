@@ -17,10 +17,10 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.random.Random;
 
-/** Runtime regression coverage for the Stage 50 legacy size/percentile removal. */
+/** Runtime regression coverage for the Stage 50/51 legacy size and trait generation removal. */
 public final class LegacySizeGenerationGameTests implements FabricGameTest {
    @GameTest(templateName = "fabric-gametest-api-v1:empty")
-   public void canonicalSpecimenIgnoresEveryLegacySizeHook(TestContext helper) {
+   public void canonicalSpecimenIgnoresEveryLegacySizeAndTraitHook(TestContext helper) {
       ItemStack stack = new ItemStack(Items.COD);
       SpecimenData original = new SpecimenData(
          "minecraft:cod",
@@ -41,8 +41,10 @@ public final class LegacySizeGenerationGameTests implements FabricGameTest {
          SpecimenData.Provenance.generated()
       );
       CanonicalSpecimenStorage.write(stack, original);
+      Random observed = Random.create(987654321L);
+      Random control = Random.create(987654321L);
 
-      boolean assigned = CatchTraitService.INSTANCE.assignIfAbsent(stack, Random.create(987654321L));
+      boolean assigned = CatchTraitService.INSTANCE.assignIfAbsent(stack, observed);
       PerfectCatchTraitBoost.apply(List.of(stack));
 
       SpecimenData after = CanonicalSpecimenStorage.read(stack).orElseThrow();
@@ -54,30 +56,59 @@ public final class LegacySizeGenerationGameTests implements FabricGameTest {
          "Legacy compatibility percentile mirror changed");
       helper.assertTrue(Math.abs((Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0) - 27.0) < 1.0E-9,
          "Legacy hook changed the one canonical final physical size");
+      helper.assertTrue(observed.nextLong() == control.nextLong(),
+         "Legacy compatibility hook consumed RNG for a canonical V2 specimen");
       helper.complete();
    }
 
    @GameTest(templateName = "fabric-gametest-api-v1:empty")
-   public void noncanonicalNewCatchNoLongerGeneratesLegacySizeOrPercentile(TestContext helper) {
+   public void noncanonicalNewCatchNoLongerGeneratesLegacyTraitsSizeOrPercentile(TestContext helper) {
       ItemStack stack = new ItemStack(Items.COD);
       double initialLength = (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
+      Random observed = Random.create(1592639710L);
+      Random control = Random.create(1592639710L);
 
-      boolean assigned = CatchTraitService.INSTANCE.assignIfAbsent(stack, Random.create(1592639710L));
-      helper.assertTrue(assigned, "Legacy identity compatibility marker was not assigned");
-      helper.assertTrue(stack.get(TideTraitsComponents.MUTATION_SEED) != null,
-         "Legacy compatibility identity seed was not retained");
-      helper.assertTrue(stack.get(TideTraitsComponents.MUTATION) != null,
-         "Legacy compatibility Condition marker was not retained");
+      boolean assigned = CatchTraitService.INSTANCE.assignIfAbsent(stack, observed);
+      helper.assertTrue(!assigned, "Compatibility hook still claimed to generate a fresh legacy specimen");
+      helper.assertTrue(stack.get(TideTraitsComponents.MUTATION_SEED) == null,
+         "Fresh noncanonical catch received a superseded legacy identity seed");
+      helper.assertTrue(stack.get(TideTraitsComponents.MUTATION) == null,
+         "Fresh noncanonical catch received a superseded mutually exclusive mutation");
       helper.assertTrue(stack.get(TideTraitsComponents.SIZE_PERCENTILE) == null,
          "Superseded legacy percentile generation still ran for a new catch");
       helper.assertTrue(Double.compare((Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0), initialLength) == 0,
          "Superseded second fish-length roll still ran for a new catch");
+      helper.assertTrue(observed.nextLong() == control.nextLong(),
+         "Fresh compatibility catch consumed RNG after legacy trait generation was removed");
 
       PerfectCatchTraitBoost.apply(List.of(stack));
+      helper.assertTrue(stack.get(TideTraitsComponents.MUTATION) == null,
+         "Legacy Perfect Catch recreated a removed mutation/trait");
       helper.assertTrue(stack.get(TideTraitsComponents.SIZE_PERCENTILE) == null,
          "Legacy Perfect Catch recreated a removed percentile");
       helper.assertTrue(Double.compare((Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0), initialLength) == 0,
          "Legacy Perfect Catch rewrote fish length");
+      helper.complete();
+   }
+
+   @GameTest(templateName = "fabric-gametest-api-v1:empty")
+   public void incompleteLegacyCompatibilityDataDoesNotInventRandomIdentity(TestContext helper) {
+      ItemStack stack = new ItemStack(Items.COD);
+      stack.set(TideTraitsComponents.MUTATION, "scarred");
+      TideItemData.FISH_LENGTH.set(stack, 81.0);
+      Random observed = Random.create(0x51A6E51L);
+      Random control = Random.create(0x51A6E51L);
+
+      boolean assigned = CatchTraitService.INSTANCE.assignIfAbsent(stack, observed);
+      helper.assertTrue(!assigned, "Persisted legacy parser claimed to generate a new specimen");
+      helper.assertTrue("scarred".equals(stack.get(TideTraitsComponents.MUTATION)),
+         "Persisted legacy trait parser changed the stored Scarred value");
+      helper.assertTrue(stack.get(TideTraitsComponents.MUTATION_SEED) == null,
+         "Compatibility parser invented a random legacy identity seed");
+      helper.assertTrue(stack.get(TideTraitsComponents.SIZE_PERCENTILE) == null,
+         "Compatibility parser classified an incomplete legacy identity as a new specimen");
+      helper.assertTrue(observed.nextLong() == control.nextLong(),
+         "Incomplete legacy parsing consumed the live catch RNG");
       helper.complete();
    }
 
