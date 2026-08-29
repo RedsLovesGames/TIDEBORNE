@@ -7,6 +7,8 @@ import java.util.function.DoubleSupplier;
 public final class FishingGearEffects {
     public static final String CATCH_ZONE_AREA_MULTIPLIER = "catch_zone_area";
     public static final String MINIGAME_SPEED_MULTIPLIER = "minigame_speed";
+    public static final String FISH_WEIGHT_MULTIPLIER = "fish_weight";
+    public static final String CRATE_WEIGHT_MULTIPLIER = "crate_weight";
     public static final String CATCH_LOSS_PREVENTION_CHANCE = "catch_loss_prevention_chance";
     public static final String CATCH_LOSS_PROTECTION_SOURCES = "catch_loss_protection_sources";
 
@@ -19,6 +21,14 @@ public final class FishingGearEffects {
 
     public static double minigameSpeedMultiplier(FishingGearModifiers modifiers) {
         return requireModifiers(modifiers).namedMultiplierModifier(MINIGAME_SPEED_MULTIPLIER);
+    }
+
+    public static double fishWeightMultiplier(FishingGearModifiers modifiers) {
+        return requireModifiers(modifiers).namedMultiplierModifier(FISH_WEIGHT_MULTIPLIER);
+    }
+
+    public static double crateWeightMultiplier(FishingGearModifiers modifiers) {
+        return requireModifiers(modifiers).namedMultiplierModifier(CRATE_WEIGHT_MULTIPLIER);
     }
 
     public static double catchLossPreventionChance(FishingGearModifiers modifiers) {
