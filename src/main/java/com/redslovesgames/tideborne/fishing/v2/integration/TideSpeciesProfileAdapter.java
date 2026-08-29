@@ -22,6 +22,8 @@ public final class TideSpeciesProfileAdapter {
     private static final double Z90 = 1.2815515655446004;
 
     public Optional<Candidate> adapt(FishData data, com.li64.tide.data.fishing.FishingContext context) {
+        // Tide owns the fishing-environment rules. A profile exists for this cast only after
+        // Tide has accepted every configured condition through shouldKeep(context).
         if (data == null || !data.shouldKeep(context)) {
             return Optional.empty();
         }
@@ -36,13 +38,14 @@ public final class TideSpeciesProfileAdapter {
 
     /**
      * Builds the stable species profile needed to migrate an already-existing fish stack.
-     * Migration deliberately ignores current biome, weather, bait, luck, and other encounter context.
+     * Migration deliberately ignores current biome, weather, bait, luck, and other encounter context,
+     * but still preserves Tide's authoritative base selection weight as species metadata.
      */
     public SpeciesProfile adaptForMigration(FishData data) {
         if (data == null) {
             throw new IllegalArgumentException("fish data is required for migration");
         }
-        return profile(data, 1.0);
+        return profile(data, data.weight());
     }
 
     private static SpeciesProfile profile(FishData data, double encounterWeight) {
@@ -52,10 +55,11 @@ public final class TideSpeciesProfileAdapter {
                 speciesId,
                 CanonicalRarity.fromStars(data.profile().rarity().getNumStars()),
                 encounterWeight,
+                // Runtime profiles are already context-normalized by FishData#shouldKeep above.
                 SpeciesEligibility.always(),
                 data.strength(),
                 data.speed(),
-                data.behavior().toString(),
+                data.behavior().getSerializedName(),
                 data.size().<SizeDistribution>map(TideSpeciesProfileAdapter::sizeDistribution)
                         .orElse(NoPhysicalSizeDistribution.INSTANCE),
                 Set.of(),
@@ -97,6 +101,11 @@ public final class TideSpeciesProfileAdapter {
         return new LogNormalSizeDistribution(median, sigma);
     }
 
+    /**
+     * Keeps the exact authoritative Tide record attached to the normalized profile. Bucket item,
+     * display data, journal flags, parent metadata, and other Tide-only metadata therefore stay
+     * available to the runtime bridge without creating duplicate canonical representations.
+     */
     public record Candidate(FishData fishData, SpeciesProfile profile) {
     }
 }
