@@ -90,6 +90,25 @@ class LegacyFishMigrationServiceTest {
     }
 
     @Test
+    void migratedLegacySpecimenGetsCanonicalDeterministicScoreWithoutChangingIdentity() {
+        LegacyFishMigrationService.LegacyFish input = legacy(82.0, 0x55AA77L, 57.5, "Scarred", "Giant");
+
+        SpecimenData first = migration.migrate(species, input).specimen();
+        SpecimenData second = migration.migrate(species, input).specimen();
+        FishScoreV2Service.Result expected = new FishScoreV2Service().calculate(species.rarity(), first);
+
+        assertTrue(first.rawFishScore().isPresent());
+        assertTrue(first.fishScore().isPresent());
+        assertEquals(expected.rawScore(), first.rawFishScore().orElseThrow(), 0.0);
+        assertEquals(expected.fishScore(), first.fishScore().orElseThrow());
+        assertEquals(first, second);
+        assertEquals(82.0, first.basePercentile(), 0.0);
+        assertEquals(57.5, first.finalLength(), 0.0);
+        assertEquals(SpecimenData.BodyType.GIANT, first.bodyType());
+        assertEquals(SpecimenData.Condition.SCARRED, first.condition());
+    }
+
+    @Test
     void writesCanonicalSchemaAndSecondPassIsExactNoOp() {
         LegacyFishMigrationService.MigrationResult first = migration.migrate(
                 species,
