@@ -70,9 +70,10 @@ dependencies {
             throw new GradleException('Myths of the Sea runtime validation requires exact Myths, CERBON API, and GeckoLib JARs in dev/libs')
         }
         // Keep these exact verified artifacts on Loom's mod runtime path so their
-        // intermediary mappings and class tweakers are remapped into this Yarn-named
-        // GameTest runtime. gradle.properties explicitly permits their newer producer
-        // Loom metadata without changing Tideborne's maintained Loom version.
+        // intermediary bytecode, mixins, and class tweakers are remapped into the
+        // Yarn-named GameTest runtime. CI removes only incompatible newer-producer
+        // Fabric-Loom-Version manifest metadata after verifying the exact upstream
+        // artifacts; all non-manifest entries and the static remap request are kept.
         modRuntimeOnly files(cerbonsApiJar)
         modRuntimeOnly files(geckolibJar)
         modRuntimeOnly files(mythsJar)
