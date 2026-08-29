@@ -13,13 +13,43 @@ public final class SpeciesSelectionService {
             FishingEnvironment environment,
             RandomGenerator random
     ) {
+        Objects.requireNonNull(random, "random");
+
+        List<WeightedSpecies> eligible = eligibleSpecies(species, context, environment);
+        double totalWeight = 0.0;
+        for (WeightedSpecies candidate : eligible) {
+            totalWeight += candidate.adjustedWeight();
+        }
+
+        if (!Double.isFinite(totalWeight) || totalWeight <= 0.0) {
+            throw new IllegalArgumentException("eligible species pool must contain positive finite encounter weight");
+        }
+
+        double target = random.nextDouble() * totalWeight;
+        double cumulative = 0.0;
+        for (WeightedSpecies candidate : eligible) {
+            cumulative += candidate.adjustedWeight();
+            if (target < cumulative) {
+                return candidate.profile();
+            }
+        }
+        return eligible.get(eligible.size() - 1).profile();
+    }
+
+    /**
+     * Returns the exact eligible weighted pool used by canonical species selection.
+     * This is pure and is also the supported read-only debug projection for selection weights.
+     */
+    public List<WeightedSpecies> eligibleSpecies(
+            List<SpeciesProfile> species,
+            FishingContext context,
+            FishingEnvironment environment
+    ) {
         Objects.requireNonNull(species, "species");
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(environment, "environment");
-        Objects.requireNonNull(random, "random");
 
         List<WeightedSpecies> eligible = new ArrayList<>();
-        double totalWeight = 0.0;
         for (SpeciesProfile profile : species) {
             if (profile == null || !profile.isEligible(environment) || profile.encounterWeight() <= 0.0) {
                 continue;
@@ -29,24 +59,14 @@ public final class SpeciesSelectionService {
                 throw new IllegalArgumentException("adjusted encounter weight overflowed for " + profile.speciesId());
             }
             if (weight > 0.0) {
-                eligible.add(new WeightedSpecies(profile, weight));
-                totalWeight += weight;
+                eligible.add(new WeightedSpecies(profile, profile.encounterWeight(), weight));
             }
         }
 
-        if (eligible.isEmpty() || !Double.isFinite(totalWeight) || totalWeight <= 0.0) {
+        if (eligible.isEmpty()) {
             throw new IllegalArgumentException("eligible species pool must contain positive finite encounter weight");
         }
-
-        double target = random.nextDouble() * totalWeight;
-        double cumulative = 0.0;
-        for (WeightedSpecies candidate : eligible) {
-            cumulative += candidate.weight;
-            if (target < cumulative) {
-                return candidate.profile;
-            }
-        }
-        return eligible.get(eligible.size() - 1).profile;
+        return List.copyOf(eligible);
     }
 
     public double adjustedWeight(SpeciesProfile profile, double fishingLuck) {
@@ -54,7 +74,16 @@ public final class SpeciesSelectionService {
         return profile.encounterWeight() * profile.rarity().fishingLuckMultiplier(fishingLuck);
     }
 
-    private record WeightedSpecies(SpeciesProfile profile, double weight) {
+    /** Immutable view of one candidate's canonical pre-luck and post-luck encounter weights. */
+    public record WeightedSpecies(SpeciesProfile profile, double baseWeight, double adjustedWeight) {
+        public WeightedSpecies {
+            Objects.requireNonNull(profile, "profile");
+            if (!Double.isFinite(baseWeight) || baseWeight <= 0.0) {
+                throw new IllegalArgumentException("baseWeight must be positive and finite");
+            }
+            if (!Double.isFinite(adjustedWeight) || adjustedWeight <= 0.0) {
+                throw new IllegalArgumentException("adjustedWeight must be positive and finite");
+            }
+        }
     }
 }
-

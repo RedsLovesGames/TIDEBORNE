@@ -5,12 +5,14 @@ import com.redslovesgames.tideborne.fishing.v2.FightProfile;
 import com.redslovesgames.tideborne.fishing.v2.FishingContext;
 import com.redslovesgames.tideborne.fishing.v2.FishingEnvironment;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
+import com.redslovesgames.tideborne.fishing.v2.SpeciesSelectionService;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
 import com.redslovesgames.tideborne.fishing.v2.TraitMomentumProgression;
 import com.redslovesgames.tideborne.fishing.v2.TraitMomentumStorage;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.WeakHashMap;
@@ -38,6 +40,22 @@ public final class CanonicalCatchStateManager {
             return Optional.empty();
         }
         return Optional.ofNullable(STATES.get(hook));
+    }
+
+    /** Returns the active canonical catch owned by this player without advancing or mutating it. */
+    public static Optional<CatchState> findForPlayer(ServerPlayerEntity player) {
+        if (player == null) {
+            return Optional.empty();
+        }
+        synchronized (STATES) {
+            for (Map.Entry<TideFishingHook, CatchState> entry : STATES.entrySet()) {
+                TideFishingHook hook = entry.getKey();
+                if (hook != null && player.equals(hook.getPlayerOwner())) {
+                    return Optional.ofNullable(entry.getValue());
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     public static void clear(TideFishingHook hook) {
@@ -118,6 +136,7 @@ public final class CanonicalCatchStateManager {
         private SpecimenData specimen;
         private final FightProfile fightProfile;
         private final int capturedTraitMomentum;
+        private final List<SpeciesSelectionService.WeightedSpecies> eligibleSpecies;
         private boolean specimenFinalized;
         private boolean traitMomentumUpdated;
 
@@ -129,7 +148,7 @@ public final class CanonicalCatchStateManager {
                 SpecimenData specimen,
                 FightProfile fightProfile
         ) {
-            this(catchSeed, context, environment, species, specimen, fightProfile, 0);
+            this(catchSeed, context, environment, species, specimen, fightProfile, 0, List.of());
         }
 
         public CatchState(
@@ -140,6 +159,19 @@ public final class CanonicalCatchStateManager {
                 SpecimenData specimen,
                 FightProfile fightProfile,
                 int capturedTraitMomentum
+        ) {
+            this(catchSeed, context, environment, species, specimen, fightProfile, capturedTraitMomentum, List.of());
+        }
+
+        public CatchState(
+                long catchSeed,
+                FishingContext context,
+                FishingEnvironment environment,
+                SpeciesProfile species,
+                SpecimenData specimen,
+                FightProfile fightProfile,
+                int capturedTraitMomentum,
+                List<SpeciesSelectionService.WeightedSpecies> eligibleSpecies
         ) {
             if (context == null || environment == null || species == null || specimen == null || fightProfile == null) {
                 throw new IllegalArgumentException("canonical catch state fields are required");
@@ -158,6 +190,9 @@ public final class CanonicalCatchStateManager {
             this.specimen = specimen;
             this.fightProfile = fightProfile;
             this.capturedTraitMomentum = capturedTraitMomentum;
+            this.eligibleSpecies = eligibleSpecies == null || eligibleSpecies.isEmpty()
+                    ? List.of()
+                    : List.copyOf(eligibleSpecies);
         }
 
         public long catchSeed() {
@@ -186,6 +221,10 @@ public final class CanonicalCatchStateManager {
 
         public int capturedTraitMomentum() {
             return capturedTraitMomentum;
+        }
+
+        public List<SpeciesSelectionService.WeightedSpecies> eligibleSpecies() {
+            return eligibleSpecies;
         }
 
         public synchronized boolean specimenFinalized() {

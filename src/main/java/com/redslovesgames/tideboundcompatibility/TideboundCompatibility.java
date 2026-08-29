@@ -7,6 +7,7 @@ package com.redslovesgames.tideboundcompatibility;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.redslovesgames.tideborne.command.FishingInspectCommand;
 import com.redslovesgames.tideboundcompatibility.compat.apex.ApexCompat;
 import com.redslovesgames.tideboundcompatibility.compat.apex.SharkScentManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
@@ -112,10 +113,15 @@ public final class TideboundCompatibility implements ModInitializer {
       }
    }
 
-   private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+   static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
       LiteralArgumentBuilder<ServerCommandSource> root = CommandManager.literal("tideborne_internal_fishing")
          .executes(context -> status(context.getSource()))
          .then(CommandManager.literal("status").executes(context -> status(context.getSource())))
+         .then(
+            CommandManager.literal("inspect")
+               .requires(source -> source.hasPermissionLevel(2))
+               .executes(context -> FishingInspectCommand.run(context.getSource()))
+         )
          .then(
             CommandManager.literal("reload")
                .requires(source -> source.hasPermissionLevel(2))

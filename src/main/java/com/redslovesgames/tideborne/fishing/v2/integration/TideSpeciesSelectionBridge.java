@@ -65,6 +65,11 @@ public final class TideSpeciesSelectionBridge {
             return CatchResult.empty();
         }
 
+        List<SpeciesSelectionService.WeightedSpecies> eligibleSpecies = selector.eligibleSpecies(
+                profiles,
+                context,
+                environment
+        );
         long catchSeed = tideContext.rng().nextLong();
         SpeciesProfile selected = selector.select(
                 profiles,
@@ -126,7 +131,8 @@ public final class TideSpeciesSelectionBridge {
                             selected,
                             preFightSpecimen,
                             fightProfile,
-                            capturedTraitMomentum
+                            capturedTraitMomentum,
+                            eligibleSpecies
                     )
             );
         }
