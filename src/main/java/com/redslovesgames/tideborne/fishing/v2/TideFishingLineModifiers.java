@@ -1,0 +1,61 @@
+package com.redslovesgames.tideborne.fishing.v2;
+
+import com.li64.tide.registries.TideItems;
+import net.minecraft.item.ItemStack;
+
+/** Canonical Fishing System 2.0 representation of Tide 2.1.1 fishing-line fight modifiers. */
+public final class TideFishingLineModifiers {
+    public enum LegacyLine {
+        COPPER,
+        IRON,
+        GOLDEN,
+        DIAMOND
+    }
+
+    private static final FishingGearModifiers COPPER = FishingGearModifiers.builder()
+            .tempoMultiplier(0.90D)
+            .build();
+    private static final FishingGearModifiers IRON = FishingGearModifiers.builder()
+            .strengthMultiplier(0.86D)
+            .build();
+    private static final FishingGearModifiers GOLDEN = FishingGearModifiers.builder()
+            .tempoMultiplier(0.95D)
+            .build();
+    private static final FishingGearModifiers DIAMOND = FishingGearModifiers.builder()
+            .strengthMultiplier(0.75D)
+            .build();
+
+    private TideFishingLineModifiers() {
+    }
+
+    public static FishingGearModifiers forLegacyLine(LegacyLine line) {
+        if (line == null) {
+            return FishingGearModifiers.neutral();
+        }
+        return switch (line) {
+            case COPPER -> COPPER;
+            case IRON -> IRON;
+            case GOLDEN -> GOLDEN;
+            case DIAMOND -> DIAMOND;
+        };
+    }
+
+    public static FishingGearModifiers forLine(ItemStack line) {
+        if (line == null || line.isEmpty()) {
+            return FishingGearModifiers.neutral();
+        }
+        if (line.isOf(TideItems.COPPER_LINE)) {
+            return COPPER;
+        }
+        if (line.isOf(TideItems.IRON_LINE)) {
+            return IRON;
+        }
+        if (line.isOf(TideItems.GOLDEN_LINE)) {
+            return GOLDEN;
+        }
+        if (line.isOf(TideItems.DIAMOND_LINE)) {
+            return DIAMOND;
+        }
+        return FishingGearModifiers.neutral();
+    }
+}
