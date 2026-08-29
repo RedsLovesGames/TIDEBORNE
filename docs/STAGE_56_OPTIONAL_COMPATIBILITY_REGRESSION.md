@@ -36,33 +36,36 @@ The canonical Fishing System 2.0 species boundary remains Tide's live `TideData.
 With the exact optional versions above:
 
 - Tide loads 106 `FishData` entries.
-- `TideSpeciesProfileIndex` indexes the same 106 Tide-compatible canonical species.
-- every live Tide fish resolves through `TideSpeciesProfileAdapter` with its canonical rarity and size profile intact.
+- every live Tide fish is adapted through `TideSpeciesProfileAdapter` and retains the same canonical species ID.
+- the Stage 56 regression now walks every live `FishData` entry in every runtime matrix leg rather than sampling one profile.
 - Apex Waters 1.1.1 contributes no `apexwaters:*` `FishData` entries to Tide's fish registry.
 - Myths of the Sea 1.3.0 contributes no `myths_of_the_sea:*` `FishData` entries to Tide's fish registry.
 
-Tideborne therefore does not synthesize fake SpeciesProfiles for either optional namespace. If a future optional-mod version actually registers Tide `FishData`, the generic live-registry adapter is the integration boundary and the Stage 56 regression will expose that registry change.
+Tideborne therefore does not synthesize fake SpeciesProfiles for either optional namespace. If a future optional-mod version actually registers Tide `FishData`, the live-registry adapter is the integration boundary and the Stage 56 regression will expose that registry change.
 
 ## Fishing eligibility
 
 Fishing eligibility remains derived from registered Tide `FishData` plus its existing `shouldKeep(context)` restrictions.
 
-Because the exact Apex and Myths versions do not register their own Tide fish entries, they are not independent candidates in the Fishing System 2.0 species selector. Their presence does not alter the canonical eligibility/profile mapping of the 106 Tide fish.
+Because the exact Apex and Myths versions do not register their own Tide fish entries, they are not independent candidates in the Fishing System 2.0 species selector. The Stage 56 GameTest explicitly fails if either optional namespace appears in the live Tide fish eligibility pool.
+
+The Apex compatibility adapter is also checked directly: Apex Waters exposes no Tide-catchable species IDs and its Great White Shark entity is not adapted into a synthetic Tide fish profile.
 
 This is intentional. Stage 56 does not invent optional fish merely because an optional mod is loaded.
 
 ## Specimen generation
 
-For every runtime matrix leg, the regression suite reloads the live Tide species profile index and performs canonical specimen generation from a real indexed Tide species.
+For every runtime matrix leg, the regression suite adapts every live Tide `FishData` entry and performs canonical specimen generation twice for each species using the same deterministic species-derived seed.
 
-The test verifies:
+For every live species the test verifies:
 
+- the canonical profile retains the registered Tide species ID
 - repeated generation with the same canonical seed is exactly deterministic
-- generated final length is finite and positive
-- canonical raw FishScore is present
-- canonical integer FishScore is present
+- generated base and final lengths are finite and positive
+- the generated specimen retains the profile species ID
+- canonical FishScore is present
 
-This validates that optional-mod loading does not disturb the canonical species-profile-to-specimen pipeline.
+This validates that optional-mod loading does not disturb the canonical species-profile-to-specimen pipeline anywhere in the live Tide fish registry.
 
 ## Absent-mod classloading safety
 
@@ -73,7 +76,7 @@ The no-optional-mod launch and the single-mod launches prove both optional integ
 - Tideborne boots with both absent.
 - no Stage 56 test or V2 species/profile/generation class directly loads optional-mod implementation classes merely by existing on the classpath.
 
-The GameTest runtime also checks actual Fabric Loader mod presence against the expected matrix for each launch.
+The GameTest runtime also checks actual Fabric Loader mod presence and exact supported version against the expected matrix for each launch.
 
 ## Myths development-remap compatibility
 
@@ -91,9 +94,9 @@ This is a test-harness adaptation only. It does not modify Tideborne gameplay co
 
 ## Result
 
-GitHub Actions run `33271168192` was the first fully green four-way Stage 56 matrix after the Myths development-remap harness was corrected. After removing the unused Loom-property experiment and documenting the working remap boundary, the cleaned harness was validated again by GitHub Actions run `33271394257`.
+GitHub Actions run `33271676247` is the final Stage 56 validation run after expanding profile/specimen coverage to every live Tide fish.
 
-Final validation on run `33271394257`:
+Final validation:
 
 - exact optional dependency preparation and manifest-integrity checks: passed
 - clean Gradle build and unit tests: passed
@@ -103,6 +106,6 @@ Final validation on run `33271394257`:
 - Apex Waters + Myths of the Sea: passed
 - built-JAR artifact upload: passed
 
-The preceding fully instrumented run confirmed all 26 required GameTests passed independently in each of the four runtime legs.
+All four launches run the complete required GameTest suite, including the Stage 56 presence, eligibility/profile, and all-live-species deterministic specimen checks.
 
 No Fishing System 2.0 production compatibility defect was found. No production fishing, trait, scoring, persistence, or eligibility behavior was changed by Stage 56.
