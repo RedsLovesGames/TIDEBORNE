@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "tideborne",
-  "version": "1.3.57",
+  "version": "2.0.0",
   "name": "Tideborne",
   "description": "Tideborne Native Integration with independent Body Type and Condition traits, size-extreme Giant and Dwarf specimens, Perfect Specimen quality, Fish Score, Angler's Satchel, shared team records, journal badges, and legacy migration.",
   "authors": [
