@@ -561,3 +561,25 @@ Detailed behavior is documented in `docs/STAGE_35_STEEL_LEADER_MIGRATION.md`.
 ## Current execution gate after Stage 35
 
 Stage 35 is complete. Tide's built-in line values and Steel Leader are now partially migrated into the canonical gear/modifier architecture, but the broader gear/context pipeline and other compatibility gear remain intentionally unmigrated. Do not begin Tentacle Line, Swift Line, Leviathan Bait, or later gear slices unless a new numbered stage explicitly authorizes them.
+
+## Stage 40 Apex Waters compatibility SpeciesProfile audit is complete
+
+Stage 40 processed only Apex Waters 1.1.1.
+
+Frozen Stage 40 contracts:
+
+- the exact upstream Apex Waters 1.1.1 integration surface contains the Great White Shark entity, its spawn egg, raw shark meat, and cooked shark meat;
+- Apex Waters 1.1.1 contains no Tide fishing data or `FishData`, so it contributes zero fish to Tide's fishing selector;
+- the canonical Apex Waters SpeciesProfile set is therefore intentionally empty;
+- no rarity, encounter weight, fishing environment, physical size distribution, Strength, Tempo, or behavior is invented for the Great White Shark or its items;
+- `ApexWatersSpeciesProfileAdapter` explicitly exposes the empty official species set and has no Apex class dependency, preserving optional-mod safety;
+- adapter tests freeze the empty set and prove the shark entity, spawn egg, and meat items cannot become synthetic SpeciesProfiles;
+- CI run `33249418726` passed the clean build and unit tests, Fabric GameTests with Apex Waters absent, Fabric GameTests with the exact Apex Waters 1.1.1 JAR present, and built-JAR artifact upload.
+
+Implementation commit `5ae18e98f5f816520aacc9bf0e360e263e187e5f` is green in GitHub Actions run `33249418726`.
+
+Detailed behavior is documented in `docs/STAGE_40_APEX_WATERS_SPECIES_PROFILE_AUDIT.md`.
+
+## Current execution gate after Stage 40
+
+Stage 40 is complete. The next compatibility mod to process is **Myths of the Sea 1.3.0**. Do not process Myths of the Sea or another compatibility mod in this Stage 40 slice; continue only when the next explicitly queued stage authorizes it.
