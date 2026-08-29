@@ -30,7 +30,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Build one server-owned canonical `FishingContext` for each catch attempt.
 - [x] Integrate `SpeciesSelectionService` only into Tide `FishSelector#getResult`, leaving the top-level Tide catch-category selector unchanged.
 - [x] Verify Tide `FishSelector.weight(context) = 85` remains unchanged, preserving ordinary Tide fish versus junk/crate/treasure category probability.
-- [x] Preserve Tide `shouldKeep` eligibility plus current location, biome, dimension, weather, time, bait, and compatibility restrictions at the V2 boundary.
+- [x] Preserve Tide `shouldKeep` eligibility plus current location, biome, dimension, weather, time, bait, rod, and compatibility restrictions at the V2 boundary.
 - [x] Preserve existing fishing and compatibility weight modifiers while removing affected legacy `selection_quality` behavior from the canonical species-selection path.
 - [x] Generate one catch seed, select one species, and call `SpecimenGenerator.generateBase` once for the canonical catch.
 - [x] Generate one canonical natural percentile and one canonical final size for the current Steps 1 through 4 specimen model.
@@ -180,7 +180,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Wire the migration core into the canonical ItemStack read path for legacy-only and older-schema registered fish, preserving valid seed/percentile/length/trait state, writing current schema once, failing malformed payloads safely, and leaving non-fish items untouched. Stage 31 green run: `33210443398` on commit `ba19d216869732521420b7bc9f2c3859f6e0d164`.
 - [x] Extend that same migration authority across legacy entity and bucket transfer data, fish displays, persisted Angler's Satchel contents, personal Journal roots, reconstructable team Journal record snapshots, and record-holder/network projection boundaries. Length-only registered fish migrate without a subsystem-specific interpretation path; repeated reads are idempotent, invalid canonical data fails closed, and old save shapes remain loadable. Stage 32 green run: `33240339974` on commit `0fd0301b13864b130d373b0e8e89ae4ab0e12383`.
 - [x] Add Stage 32 integration coverage for legacy entity/bucket round trips, length-only display migration, persisted Satchel migration, personal/team Journal record backfill, preservation of unrelated record-holder metadata, and repeated migration stability.
-- [ ] Recalculate FishScore only after canonical migration where a migrated persistence consumer requires it.
+- [x] Recalculate FishScore only after canonical migration where a migrated persistence consumer requires it. Stage 55 real-fish migration computes the missing score from the final preserved specimen through `FishScoreV2Service`; aggregate-only history remains non-synthetic.
 - [ ] Make canonical `SpecimenData` authoritative across persistence, Satchel, Journal, records, history, teams, UI, and networking.
 - [ ] Integrate gear into the canonical context/fight pipeline.
 - [ ] Rework Leviathan Bait to fish-only catches, +15 Fishing Luck, substantial Trait Luck, Strength 1.15, Tempo 1.15, with old `selection_quality` behavior removed.
@@ -219,3 +219,13 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Preserve the regression-only scope. No balance constants or unrelated runtime behavior were changed.
 - [x] Run the full Java 21 CI validation, including clean Gradle build/unit tests, Fabric GameTests without Apex Waters, Fabric GameTests with Apex Waters 1.1.1, and artifact upload. Green run: `33263857714`.
 - [x] Document the Stage 54 validation in `docs/STAGE_54_FRESH_WORLD_REGRESSION.md` and `docs/CURRENT_STATE.md`.
+
+## Stage 55 - Tideborne 1.3.57 old-world compatibility
+
+- [x] Make reconstructable pre-V2 1.3.57 fish receive canonical deterministic FishScore after legacy identity/trait/size migration without adding RNG or rerolling specimen state.
+- [x] Calculate a missing score for older partial canonical ItemStacks only after final preserved canonical fields are known, while preserving an already-saved canonical score.
+- [x] Require migrated old ItemStacks, entities, buckets, displays, and Satchel fish to preserve deterministic seed, natural percentile, physical length, mapped traits, and exact canonical score across repeated reads/transfers.
+- [x] Preserve personal/team Journal aggregate history without fabricating missing historical traits or FishScore; deterministic reconstructable size snapshots remain idempotent.
+- [x] Preserve event-history, contributor/leaderboard, top-fish/record data and ordering through the established one-time persisted-score compatibility storage rather than reranking or inventing a second specimen.
+- [x] Run the full Java 21 validation gate: clean build/unit tests, Fabric GameTests without Apex Waters, Fabric GameTests with exact Apex Waters 1.1.1, and artifact upload. Green implementation run: `33268651496`.
+- [x] Document Stage 55 in `docs/STAGE_55_1_3_57_COMPATIBILITY.md` and `docs/CURRENT_STATE.md`.
