@@ -504,3 +504,27 @@ Detailed Stage 32 behavior is documented in `docs/STAGE_32_RUNTIME_LEGACY_MIGRAT
 ## Current execution gate after Stage 32
 
 Stage 32 is complete. Do not begin later queued work from this state unless a new numbered stage explicitly authorizes it. Remaining unchecked migration and progression work is tracked in `docs/TODO.md`.
+
+## Stage 33 canonical gear modifier model is complete
+
+Stage 33 adds the immutable `FishingGearModifiers` domain model without migrating current runtime gear behavior.
+
+Frozen model contracts:
+
+- one server-side canonical model represents additive Fishing Luck and Trait Luck, multiplicative Strength and Tempo, category and catch-pool restrictions, per-Body-Type chance multipliers, and named additive/multiplicative fishing modifiers
+- numeric stacking semantics are explicit: luck and named additive keys add; Strength, Tempo, Body Type chance, and named multiplier keys multiply
+- category and catch-pool allow-lists intersect; deny-lists union; deny wins; an active empty allow-list means allow nothing rather than unrestricted
+- composition uses exact decimal accumulation before final `double` conversion, so input iteration order does not change the composed result
+- identifier maps and sets use canonical sorted order and immutable snapshots; Body Type keys use enum order
+- the model has no client or UI dependency
+- Stage 33 does not wire the model into `FishingContext`, gear items, bait, rod, line, hook paths, species selection, trait generation, or minigame behavior
+
+`FishingGearModifiersTest` covers neutral identity, numeric stacking, input-order independence, restriction composition, disjoint allow-list behavior, key ordering, immutability, and invalid inputs.
+
+Implementation commit `d0737e6043f5ddd3900dc9ed75207b4f48e9e29a` is green in GitHub Actions run `33241656395`: exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
+
+Detailed behavior is documented in `docs/STAGE_33_CANONICAL_GEAR_MODIFIERS.md`.
+
+## Current execution gate after Stage 33
+
+Stage 33 is complete. The canonical gear modifier representation now exists, but no runtime behavior migration has occurred. Do not integrate gear into the canonical context/fight pipeline or begin Leviathan Bait or other progression work unless a later numbered stage explicitly authorizes it.
