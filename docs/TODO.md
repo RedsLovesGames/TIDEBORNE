@@ -195,3 +195,18 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Make modifier composition deterministic and input-order-independent, with canonical sorted identifier collections and explicit restriction stacking.
 - [x] Add pure composition tests for neutral identity, numeric stacking, restrictions, deterministic ordering, immutability, and invalid values. Green Stage 33 run: `33241656395` on commit `d0737e6043f5ddd3900dc9ed75207b4f48e9e29a`.
 - [x] Keep Stage 33 representation-only: no runtime gear behavior migration and no UI dependency.
+
+## Stage 34 - Tide built-in fishing-line modifiers
+
+- [x] Move Tide 2.1.1 Copper, Iron, Golden, and Diamond line fight multipliers under `FishingGearModifiers` while preserving exact 0.90 Tempo, 0.86 Strength, 0.95 Tempo, and 0.75 Strength values.
+- [x] Keep each Tide line effect applied once at Tide's existing minigame constructor location, with no second post-processing multiplier path.
+- [x] Add exact mapping/composition/double-application regression tests and validate build/GameTests. Green Stage 34 run: `33243058422` on commit `c96917c76ddf93c5f99789aab4675416a6e2e34d`.
+
+## Stage 35 - Steel Leader
+
+- [x] Adapt Steel Leader attachment/legacy-line state into one canonical `FishingGearModifiers` representation with named catch-zone, minigame-speed, and catch-loss-protection effects.
+- [x] Preserve current default Steel Leader behavior: catch-zone x0.90, minigame speed x1.05, and 90% server-side shark catch-loss prevention.
+- [x] Remove direct Steel Leader gameplay checks from minigame and shark-loss consumers after the canonical adapter is active, while retaining Angling Table/storage identity checks for compatibility.
+- [x] Preserve strict `roll < chance` behavior and legacy protection RNG consumption semantics.
+- [x] Add ordinary-catch, canonical-composition, disabled-Apex, chance-boundary, and RNG-count tests. Green Stage 35 run: `33243653492` on implementation commit `b2198af9109769eb9d8abe88d8453e4934618160`.
+- [x] Document Stage 35 in `docs/STAGE_35_STEEL_LEADER_MIGRATION.md`.
