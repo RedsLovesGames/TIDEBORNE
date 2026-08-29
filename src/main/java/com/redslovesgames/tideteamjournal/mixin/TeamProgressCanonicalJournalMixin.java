@@ -69,58 +69,104 @@ abstract class TeamProgressCanonicalJournalMixin {
         StoredFishScoreStorage.migrateRoot(sourceRoot);
     }
 
-    @Inject(method = "mergeTrackedDataOnce", at = @At("RETURN"))
-    private static void tideborne$finishStoredScoreMerge(
-            NbtCompound targetRoot,
-            NbtCompound sourceRoot,
-            int historyLimit,
-            CallbackInfo callback
-    ) {
-        StoredFishScoreStorage.acceptCompatibilityWrites(targetRoot);
-    }
-
     @Inject(method = "readHistory", at = @At("HEAD"))
     private static void tideborne$migrateHistoryScores(NbtCompound root, CallbackInfoReturnable<?> callback) {
         StoredFishScoreStorage.migrateRoot(root);
     }
 
-    @Inject(method = "writeHistory", at = @At("RETURN"))
-    private static void tideborne$persistHistoryScores(NbtCompound root, java.util.List<?> events, int limit, CallbackInfo callback) {
-        StoredFishScoreStorage.acceptCompatibilityWrites(root);
-    }
-
     @Inject(method = "tideborneRegisterContributorFishScore", at = @At("HEAD"))
-    private static void tideborne$canonicalizeContributorRead(java.util.UUID id, NbtCompound tag, CallbackInfo callback) {
+    private static void tideborne$migrateContributorRead(java.util.UUID id, NbtCompound tag, CallbackInfo callback) {
         StoredFishScoreStorage.migrateLegacyScore(tag);
-        StoredFishScoreStorage.syncCompatibilityMirror(tag);
     }
 
     @Inject(method = "tideborneUpdateContributorFishScore", at = @At("HEAD"))
-    private static void tideborne$prepareContributorWrite(NbtCompound tag, CallbackInfo callback) {
+    private static void tideborne$migrateContributorWrite(NbtCompound tag, CallbackInfo callback) {
         StoredFishScoreStorage.migrateLegacyScore(tag);
-        StoredFishScoreStorage.syncCompatibilityMirror(tag);
-    }
-
-    @Inject(method = "tideborneUpdateContributorFishScore", at = @At("RETURN"))
-    private static void tideborne$persistContributorWrite(NbtCompound tag, CallbackInfo callback) {
-        StoredFishScoreStorage.acceptCompatibilityWrite(tag);
-        StoredFishScoreStorage.syncCompatibilityMirror(tag);
     }
 
     @Inject(method = "tideborneRegisterEventMeta", at = @At("HEAD"))
-    private static void tideborne$canonicalizeEventRead(TeamProgressStore.RecordEvent event, NbtCompound tag, CallbackInfo callback) {
+    private static void tideborne$migrateEventRead(TeamProgressStore.RecordEvent event, NbtCompound tag, CallbackInfo callback) {
         StoredFishScoreStorage.migrateLegacyScore(tag);
-        StoredFishScoreStorage.syncCompatibilityMirror(tag);
     }
 
     @Inject(method = "tideborneRecordCurrentTopFish", at = @At("HEAD"))
-    private static void tideborne$prepareTopFishOrdering(NbtCompound root, java.util.UUID id, String name, CallbackInfo callback) {
+    private static void tideborne$migrateTopFishOrdering(NbtCompound root, java.util.UUID id, String name, CallbackInfo callback) {
         StoredFishScoreStorage.migrateRoot(root);
     }
 
-    @Inject(method = "tideborneRecordCurrentTopFish", at = @At("RETURN"))
-    private static void tideborne$persistTopFishScores(NbtCompound root, java.util.UUID id, String name, CallbackInfo callback) {
-        StoredFishScoreStorage.acceptCompatibilityWrites(root);
+    @Redirect(
+            method = "mergeTrackedDataOnce",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getInt(Ljava/lang/String;)I")
+    )
+    private static int tideborne$canonicalMergeRead(NbtCompound tag, String key) {
+        return canonicalInt(tag, key);
+    }
+
+    @Redirect(
+            method = "mergeTrackedDataOnce",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;putInt(Ljava/lang/String;I)V")
+    )
+    private static void tideborne$canonicalMergeWrite(NbtCompound tag, String key, int value) {
+        putCanonicalInt(tag, key, value);
+    }
+
+    @Redirect(
+            method = "tideborneUpdateContributorFishScore",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getInt(Ljava/lang/String;)I")
+    )
+    private static int tideborne$canonicalContributorRead(NbtCompound tag, String key) {
+        return canonicalInt(tag, key);
+    }
+
+    @Redirect(
+            method = "tideborneUpdateContributorFishScore",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;putInt(Ljava/lang/String;I)V")
+    )
+    private static void tideborne$canonicalContributorWrite(NbtCompound tag, String key, int value) {
+        putCanonicalInt(tag, key, value);
+    }
+
+    @Redirect(
+            method = "tideborneRegisterContributorFishScore",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getInt(Ljava/lang/String;)I")
+    )
+    private static int tideborne$canonicalContributorRegistration(NbtCompound tag, String key) {
+        return canonicalInt(tag, key);
+    }
+
+    @Redirect(
+            method = "tideborneRegisterEventMeta",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getBoolean(Ljava/lang/String;)Z")
+    )
+    private static boolean tideborne$canonicalEventPresence(NbtCompound tag, String key) {
+        if (StoredFishScoreStorage.LEGACY_SCORE_KEY.equals(key)) {
+            return StoredFishScoreStorage.readCanonical(tag).isPresent();
+        }
+        return tag.getBoolean(key);
+    }
+
+    @Redirect(
+            method = "tideborneRegisterEventMeta",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getInt(Ljava/lang/String;)I")
+    )
+    private static int tideborne$canonicalEventRead(NbtCompound tag, String key) {
+        return canonicalInt(tag, key);
+    }
+
+    @Redirect(
+            method = "tideborneEventFishScoreForWrite",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getInt(Ljava/lang/String;)I")
+    )
+    private static int tideborne$canonicalEventFallback(NbtCompound tag, String key) {
+        return canonicalInt(tag, key);
+    }
+
+    @Redirect(
+            method = "tideborneRecordCurrentTopFish",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NbtCompound;getInt(Ljava/lang/String;)I")
+    )
+    private static int tideborne$canonicalTopFishRead(NbtCompound tag, String key) {
+        return canonicalInt(tag, key);
     }
 
     @Inject(method = "tideborneBeginCatch", at = @At("HEAD"))
@@ -154,6 +200,23 @@ abstract class TeamProgressCanonicalJournalMixin {
     @Inject(method = "tideborneClearCatch", at = @At("TAIL"))
     private static void tideborne$clearCanonicalJournalCatch(CallbackInfo callback) {
         TeamCanonicalJournalCapture.clear();
+    }
+
+    private static int canonicalInt(NbtCompound tag, String key) {
+        if (StoredFishScoreStorage.LEGACY_SCORE_KEY.equals(key)) {
+            return StoredFishScoreStorage.readCanonical(tag).orElse(0);
+        }
+        return tag.getInt(key);
+    }
+
+    /** Keep the historical field only as an output mirror; canonical storage is written first. */
+    private static void putCanonicalInt(NbtCompound tag, String key, int value) {
+        if (StoredFishScoreStorage.LEGACY_SCORE_KEY.equals(key)) {
+            StoredFishScoreStorage.writeCanonical(tag, value);
+            tag.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, value);
+            return;
+        }
+        tag.putInt(key, value);
     }
 
     private static String serialized(Enum<?> value) {

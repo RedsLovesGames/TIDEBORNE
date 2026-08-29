@@ -28,15 +28,34 @@ class StoredFishScoreStorageTest {
     }
 
     @Test
-    void canonicalScoreWinsOverConflictingCompatibilityMirror() {
+    void canonicalScoreWinsWithoutReadingOrRepairingCompatibilityField() {
         NbtCompound tag = new NbtCompound();
         tag.putInt(StoredFishScoreStorage.CANONICAL_SCORE_KEY, 2400);
         tag.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, 17);
 
         assertFalse(StoredFishScoreStorage.migrateLegacyScore(tag));
-        assertTrue(StoredFishScoreStorage.syncCompatibilityMirror(tag));
-        assertEquals(2400, tag.getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
         assertEquals(OptionalInt.of(2400), StoredFishScoreStorage.readCanonical(tag));
+        assertEquals(17, tag.getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
+    }
+
+    @Test
+    void canonicalWritesDoNotCreateLegacyMirrors() {
+        NbtCompound tag = new NbtCompound();
+
+        StoredFishScoreStorage.writeCanonical(tag, 1250);
+
+        assertEquals(OptionalInt.of(1250), StoredFishScoreStorage.readCanonical(tag));
+        assertFalse(tag.contains(StoredFishScoreStorage.LEGACY_SCORE_KEY));
+    }
+
+    @Test
+    void laterLegacyWriteCannotReplaceCanonicalScore() {
+        NbtCompound tag = new NbtCompound();
+        StoredFishScoreStorage.writeCanonical(tag, 1250);
+        tag.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, 2900);
+
+        assertFalse(StoredFishScoreStorage.migrateLegacyScore(tag));
+        assertEquals(OptionalInt.of(1250), StoredFishScoreStorage.readCanonical(tag));
     }
 
     @Test
@@ -73,7 +92,7 @@ class StoredFishScoreStorageTest {
     }
 
     @Test
-    void rootMigrationRepairsHistoryAndTopFishMirrorsFromCanonicalScores() {
+    void rootMigrationLeavesExistingCanonicalScoresUntouched() {
         NbtCompound root = new NbtCompound();
         NbtList history = new NbtList();
         NbtCompound event = new NbtCompound();
@@ -82,16 +101,9 @@ class StoredFishScoreStorageTest {
         history.add(event);
         root.put("history", history);
 
-        NbtList topFish = new NbtList();
-        NbtCompound fish = new NbtCompound();
-        fish.putInt(StoredFishScoreStorage.CANONICAL_SCORE_KEY, 2888);
-        fish.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, 7);
-        topFish.add(fish);
-        root.put("top_fish", topFish);
-
-        assertTrue(StoredFishScoreStorage.migrateRoot(root));
-        assertEquals(2666, ((NbtCompound) root.getList("history", 10).get(0)).getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
-        assertEquals(2888, ((NbtCompound) root.getList("top_fish", 10).get(0)).getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
+        assertFalse(StoredFishScoreStorage.migrateRoot(root));
+        assertEquals(2666, StoredFishScoreStorage.readCanonical(event).orElseThrow());
+        assertEquals(42, event.getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
     }
 
     @Test
@@ -113,17 +125,6 @@ class StoredFishScoreStorageTest {
 
         assertEquals(List.of("second", "third", "first"), before);
         assertEquals(before, after);
-    }
-
-    @Test
-    void controlledCompatibilityWritePromotesNewCanonicalScore() {
-        NbtCompound tag = new NbtCompound();
-        StoredFishScoreStorage.writeCanonical(tag, 1250);
-        tag.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, 1700);
-
-        assertTrue(StoredFishScoreStorage.acceptCompatibilityWrite(tag));
-        assertEquals(1700, StoredFishScoreStorage.readCanonical(tag).orElseThrow());
-        assertFalse(StoredFishScoreStorage.syncCompatibilityMirror(tag));
     }
 
     private static NbtCompound record(String id, int score) {
