@@ -29,7 +29,7 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 - [x] Add a Tide-to-V2 species adapter that produces canonical `SpeciesProfile` data without inventing unsupported fish.
 - [x] Build one server-owned canonical `FishingContext` for each catch attempt.
 - [x] Integrate `SpeciesSelectionService` only into Tide `FishSelector#getResult`, leaving the top-level Tide catch-category selector unchanged.
-- [x] Verify Tide `FishSelector.weight(context) = 85` remains unchanged, preserving ordinary fish versus junk/crate/treasure category probability.
+- [x] Verify Tide `FishSelector.weight(context) = 85` remains unchanged, preserving ordinary Tide fish versus junk/crate/treasure category probability.
 - [x] Preserve Tide `shouldKeep` eligibility plus current location, biome, dimension, weather, time, bait, and compatibility restrictions at the V2 boundary.
 - [x] Preserve existing fishing and compatibility weight modifiers while removing affected legacy `selection_quality` behavior from the canonical species-selection path.
 - [x] Generate one catch seed, select one species, and call `SpecimenGenerator.generateBase` once for the canonical catch.
@@ -178,6 +178,8 @@ The authoritative behavior and formulas are in `docs/FISHING_SYSTEM_2_SPEC.md`. 
 
 - [x] Implement the pure deterministic, idempotent legacy fish migration core, including trait mapping, legacy physical-size preservation, species-distribution percentile recovery, deterministic missing-seed derivation, schema-v2 write-once behavior, and canonical no-regeneration guarantees. Green run: `33191935530` on commit `1364c015722722fd943f04b894ff7a75827edef3`.
 - [x] Wire the migration core into the canonical ItemStack read path for legacy-only and older-schema registered fish, preserving valid seed/percentile/length/trait state, writing current schema once, failing malformed payloads safely, and leaving non-fish items untouched. Stage 31 green run: `33210443398` on commit `ba19d216869732521420b7bc9f2c3859f6e0d164`.
+- [x] Extend that same migration authority across legacy entity and bucket transfer data, fish displays, persisted Angler's Satchel contents, personal Journal roots, reconstructable team Journal record snapshots, and record-holder/network projection boundaries. Length-only registered fish migrate without a subsystem-specific interpretation path; repeated reads are idempotent, invalid canonical data fails closed, and old save shapes remain loadable. Stage 32 green run: `33240339974` on commit `0fd0301b13864b130d373b0e8e89ae4ab0e12383`.
+- [x] Add Stage 32 integration coverage for legacy entity/bucket round trips, length-only display migration, persisted Satchel migration, personal/team Journal record backfill, preservation of unrelated record-holder metadata, and repeated migration stability.
 - [ ] Recalculate FishScore only after canonical migration where a migrated persistence consumer requires it.
 - [ ] Make canonical `SpecimenData` authoritative across persistence, Satchel, Journal, records, history, teams, UI, and networking.
 - [ ] Integrate gear into the canonical context/fight pipeline.
