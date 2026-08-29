@@ -138,6 +138,10 @@ public final class AnglersSatchelPersistenceGameTests implements FabricGameTest 
                 "Legacy Scarred mutation unexpectedly changed Pigmentation " + phase);
         helper.assertTrue(actual.specimenQuality() == SpecimenData.SpecimenQuality.NORMAL,
                 "Legacy Scarred mutation unexpectedly changed Quality " + phase);
+        helper.assertTrue(actual.rawFishScore().isPresent(),
+                "Migrated legacy Satchel fish is missing canonical raw FishScore " + phase);
+        helper.assertTrue(actual.fishScore().isPresent(),
+                "Migrated legacy Satchel fish is missing canonical FishScore " + phase);
     }
 
     private static void assertOpaqueStackMetadata(TestContext helper, ItemStack stack, String phase) {
