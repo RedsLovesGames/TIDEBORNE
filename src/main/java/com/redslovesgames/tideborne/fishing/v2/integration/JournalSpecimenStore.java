@@ -8,9 +8,10 @@ import com.li64.tide.data.player.TidePlayerData.FishPlayerData;
 import com.redslovesgames.tideborne.fishing.v2.LegacyFishMigrationService;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
-import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -127,7 +128,7 @@ public final class JournalSpecimenStore {
         try {
             LegacyFishMigrationService.LegacyFish legacy = new LegacyFishMigrationService.LegacyFish(
                     species.speciesId(), null, null, null, length, null, null, null);
-            SpecimenData migrated = MIGRATION.migrate(species, legacy).specimen();
+            SpecimenData migrated = withoutSyntheticHistoricalScore(MIGRATION.migrate(species, legacy).specimen());
             NbtCompound allSpecies = journalRoot.contains(ROOT_KEY, 10)
                     ? journalRoot.getCompound(ROOT_KEY)
                     : new NbtCompound();
@@ -141,6 +142,27 @@ public final class JournalSpecimenStore {
         } catch (IllegalArgumentException | NullPointerException exception) {
             return false;
         }
+    }
+
+    private static SpecimenData withoutSyntheticHistoricalScore(SpecimenData specimen) {
+        return new SpecimenData(
+                specimen.speciesId(),
+                specimen.schemaVersion(),
+                specimen.generationVersion(),
+                specimen.deterministicSeed(),
+                specimen.basePercentile(),
+                specimen.baseLength(),
+                specimen.finalLength(),
+                specimen.finalPercentile(),
+                specimen.bodyType(),
+                specimen.condition(),
+                specimen.pigmentation(),
+                specimen.specimenQuality(),
+                specimen.perfectCatch(),
+                OptionalDouble.empty(),
+                OptionalInt.empty(),
+                specimen.provenance()
+        );
     }
 
     private static TidePlayerData legacyJournalData(NbtCompound root) {
