@@ -17,20 +17,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /** Keeps team journal score/catch capture on the finalized server canonical specimen. */
 @Mixin(value = TeamProgressStore.class, remap = false)
 abstract class TeamProgressCanonicalJournalMixin {
+    /**
+     * Shared FishScore consumer boundary used by Satchel/profile/item display code.
+     * Canonical storage may migrate a readable legacy specimen once; an unreadable or scoreless
+     * specimen stays scoreless instead of falling through to the reconstructed pre-V2 formula.
+     */
     @Inject(method = "tideborneFishScore", at = @At("HEAD"), cancellable = true)
     private static void tideborne$canonicalScore(ItemStack stack, CallbackInfoReturnable<Double> callback) {
         SpecimenData specimen = CanonicalSpecimenStorage.read(stack).orElse(null);
-        if (specimen != null) {
-            callback.setReturnValue(specimen.fishScore().isPresent()
-                    ? (double) specimen.fishScore().getAsInt()
-                    : -1.0);
-        }
+        callback.setReturnValue(specimen != null && specimen.fishScore().isPresent()
+                ? (double) specimen.fishScore().getAsInt()
+                : -1.0);
     }
 
-    /**
-     * Leaderboard capture must never fall through to TeamProgressStore's reconstructed V1 formula.
-     * A catch without a persisted canonical V2 score simply has no score for this consumer.
-     */
+    /** Leaderboard capture uses the same canonical specimen score boundary as other consumers. */
     @Redirect(
             method = "tideborneBeginCatch",
             at = @At(
@@ -39,8 +39,10 @@ abstract class TeamProgressCanonicalJournalMixin {
             )
     )
     private static double tideborne$storedLeaderboardScore(ItemStack stack) {
-        Integer score = stack.get(com.redslovesgames.tidetraits.component.TideTraitsComponents.SPECIMEN_FISH_SCORE);
-        return score == null || score <= 0 ? -1.0 : score.doubleValue();
+        SpecimenData specimen = CanonicalSpecimenStorage.read(stack).orElse(null);
+        return specimen != null && specimen.fishScore().isPresent()
+                ? specimen.fishScore().getAsInt()
+                : -1.0;
     }
 
     @Inject(method = "ensureInitialized", at = @At("RETURN"), cancellable = true)

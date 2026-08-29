@@ -73,6 +73,28 @@ class StoredFishScoreStorageTest {
     }
 
     @Test
+    void rootMigrationRepairsHistoryAndTopFishMirrorsFromCanonicalScores() {
+        NbtCompound root = new NbtCompound();
+        NbtList history = new NbtList();
+        NbtCompound event = new NbtCompound();
+        event.putInt(StoredFishScoreStorage.CANONICAL_SCORE_KEY, 2666);
+        event.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, 42);
+        history.add(event);
+        root.put("history", history);
+
+        NbtList topFish = new NbtList();
+        NbtCompound fish = new NbtCompound();
+        fish.putInt(StoredFishScoreStorage.CANONICAL_SCORE_KEY, 2888);
+        fish.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, 7);
+        topFish.add(fish);
+        root.put("top_fish", topFish);
+
+        assertTrue(StoredFishScoreStorage.migrateRoot(root));
+        assertEquals(2666, ((NbtCompound) root.getList("history", 10).get(0)).getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
+        assertEquals(2888, ((NbtCompound) root.getList("top_fish", 10).get(0)).getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
+    }
+
+    @Test
     void migratingStoredScoresPreservesDescendingRecordOrder() {
         List<NbtCompound> records = new ArrayList<>();
         records.add(record("first", 1700));
