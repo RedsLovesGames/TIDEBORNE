@@ -6,7 +6,6 @@
 package com.redslovesgames.tidetraits.mixin.client;
 
 import com.li64.tide.data.player.FishStats;
-import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenNetworkCodec;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenStore;
 import com.redslovesgames.tideteamjournal.client.ClientJournalSpecimens;
@@ -85,7 +84,7 @@ public abstract class TeamStatsPercentileMixin {
       callback.cancel();
    }
 
-   @Inject(method = "getRequiredHeight", at = @At("HEAD"), cancellable = true, require = 1)
+   @Inject(method = "getRequiredHeight", at = @At("HEAD"), cancellable = true, require = 1, remap = false)
    private void tideTraits$canonicalHeight(CallbackInfoReturnable<Integer> callback) {
       if (this.lines != null && ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.LATEST).isPresent()) {
          callback.setReturnValue(this.lines.size() * 11 + 57);
