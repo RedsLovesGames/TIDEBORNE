@@ -1,7 +1,6 @@
 package com.redslovesgames.tideborne.command.debug;
 
 import com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry;
-import net.minecraft.registry.Registries;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
@@ -26,8 +25,7 @@ public final class FishingGearRegistryDebugCommand {
         send(source, "Canonical fishing gear profiles: " + FishingGearRegistry.profiles().size()
                 + " (Tide=" + tide + ", Tideborne=" + tideborne + ")");
         for (FishingGearRegistry.GearProfile profile : FishingGearRegistry.GearProfile.values()) {
-            String itemId = FishingGearRegistry.registeredItem(profile)
-                    .map(Registries.ITEM::getId)
+            String itemId = FishingGearRegistry.registeredId(profile)
                     .map(Object::toString)
                     .orElse("unregistered");
             send(source, " - " + itemId + " -> " + profile.name()
