@@ -10,7 +10,6 @@ import com.li64.tide.data.fishing.FishData;
 import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.client.MinecraftClient;
@@ -76,13 +75,22 @@ public final class TopFishScreen extends Screen {
       TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("CANONICAL SPECIMEN"), left + 300, top + 63, MUTED);
 
       NbtList list = ClientTeamData.get().getList("top_fish", 10);
-      NbtCompound selected = null;
-      int row = 0;
-      for (Iterator<NbtCompound> iterator = list.stream().map(element -> (NbtCompound)element).iterator(); iterator.hasNext() && row < 12; row++) {
-         NbtCompound tag = iterator.next();
+      if (list.isEmpty()) {
+         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No canonical team fish yet"), left + 124, top + 132, MUTED);
+         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No specimen selected"), left + 300, top + 151, MUTED);
+         return;
+      }
+
+      int visibleCount = Math.min(12, list.size());
+      int selectedIndex = 0;
+      if (mouseX >= left + 34 && mouseX < left + 214 && mouseY >= top + 73 && mouseY < top + 73 + visibleCount * 12) {
+         selectedIndex = Math.min(visibleCount - 1, Math.max(0, (mouseY - (top + 73)) / 12));
+      }
+
+      for (int row = 0; row < visibleCount; row++) {
+         NbtCompound tag = (NbtCompound)list.get(row);
          int rowY = top + 73 + row * 12;
-         if (mouseX >= left + 34 && mouseX < left + 214 && mouseY >= rowY && mouseY < rowY + 12) {
-            selected = tag;
+         if (row == selectedIndex) {
             graphics.fill(left + 34, rowY, left + 214, rowY + 12, 866633688);
          }
 
@@ -109,48 +117,58 @@ public final class TopFishScreen extends Screen {
          }
       }
 
-      if (selected == null) {
-         if (list.isEmpty()) {
-            return;
-         }
-         selected = (NbtCompound)list.get(0);
-      }
-
+      NbtCompound selected = (NbtCompound)list.get(selectedIndex);
       ItemStack stack = fishStack(selected.getString("fish"));
       CanonicalRecordDisplay display = CanonicalRecordDisplay.from(selected).orElse(null);
-      renderFish3D(graphics, stack, left + 300, top + 96);
-      this.drawFitted(graphics, stack.getName().getString(), left + 238, top + 126, 124, TEXT, mouseX, mouseY);
-
-      int x = left + 238;
-      int y = top + 139;
-      this.section(graphics, "Specimen", x, y);
-      String score = display == null ? FishingUiFormat.UNAVAILABLE : display.scoreLabel();
-      this.drawFitted(graphics, "FishScore " + score, x, y + 12, 66, SCORE_COLOR, mouseX, mouseY);
-      this.drawFitted(graphics, "Stars " + stars(selected.getInt("fish_stars")), x + 70, y + 12, 58, MUTED, mouseX, mouseY);
-      String percentile = display == null ? FishingUiFormat.UNAVAILABLE : FishingUiFormat.percentile(display.percentile());
-      this.drawFitted(graphics, "Percentile " + percentile, x, y + 22, 66, MUTED, mouseX, mouseY);
-      double lengthValue = display != null && Double.isFinite(display.length()) ? display.length() : selected.getDouble("length");
-      this.drawFitted(graphics, "Length " + FishingUiFormat.length(lengthValue), x + 70, y + 22, 58, MUTED, mouseX, mouseY);
-
-      this.section(graphics, "Traits", x, y + 35);
-      this.drawFitted(graphics, "Body " + (display == null ? FishingUiFormat.UNAVAILABLE : display.bodyTypeLabel()), x, y + 47, 64, BODY_COLOR, mouseX, mouseY);
-      this.drawFitted(graphics, "Condition " + (display == null ? FishingUiFormat.UNAVAILABLE : display.conditionLabel()), x + 67, y + 47, 61, CONDITION_COLOR, mouseX, mouseY);
-      this.drawFitted(graphics, "Pigment " + (display == null ? FishingUiFormat.UNAVAILABLE : display.pigmentationLabel()), x, y + 57, 64, PIGMENT_COLOR, mouseX, mouseY);
-      this.drawFitted(graphics, "Quality " + (display == null ? FishingUiFormat.UNAVAILABLE : display.qualityLabel()), x + 67, y + 57, 61, QUALITY_COLOR, mouseX, mouseY);
-
-      this.section(graphics, "Catch Info", x, y + 70);
-      String catcher = selected.getString("catcher_name");
-      this.drawFitted(graphics, "By " + (catcher.isBlank() ? FishingUiFormat.UNAVAILABLE : catcher), x, y + 82, 64, MUTED, mouseX, mouseY);
-      this.drawFitted(
+      renderFish3D(graphics, stack, left + 300, top + 92);
+      this.drawValue(
          graphics,
-         "Caught " + FishingUiFormat.timestamp(selected.contains("timestamp", 99) ? selected.getLong("timestamp") : -1L),
-         x + 67,
-         y + 82,
-         61,
-         MUTED,
+         stack.getName().getString(),
+         stack.getName().getString(),
+         left + 238,
+         top + 117,
+         124,
+         TEXT,
          mouseX,
          mouseY
       );
+
+      int x = left + 238;
+      int y = top + 132;
+      int leftColumn = x;
+      int rightColumn = x + 64;
+
+      this.section(graphics, "Specimen", x, y);
+      String score = display == null ? FishingUiFormat.UNAVAILABLE : display.scoreLabel();
+      String rarity = stars(selected.getInt("fish_stars"));
+      this.drawValue(graphics, "Score " + score, "FishScore: " + score, leftColumn, y + 11, 60, SCORE_COLOR, mouseX, mouseY);
+      this.drawValue(graphics, rarity.isBlank() ? "Stars N/A" : rarity, "Stars: " + (rarity.isBlank() ? FishingUiFormat.UNAVAILABLE : rarity), rightColumn, y + 11, 60, MUTED, mouseX, mouseY);
+
+      String percentile = display == null ? FishingUiFormat.UNAVAILABLE : FishingUiFormat.percentile(display.percentile());
+      double lengthValue = display != null && Double.isFinite(display.length()) ? display.length() : selected.getDouble("length");
+      String length = FishingUiFormat.length(lengthValue);
+      this.drawValue(graphics, percentile, "Percentile: " + percentile, leftColumn, y + 21, 60, MUTED, mouseX, mouseY);
+      this.drawValue(graphics, length, "Length: " + length, rightColumn, y + 21, 60, MUTED, mouseX, mouseY);
+
+      this.section(graphics, "Traits", x, y + 34);
+      String body = display == null ? FishingUiFormat.UNAVAILABLE : display.bodyTypeLabel();
+      String condition = display == null ? FishingUiFormat.UNAVAILABLE : display.conditionLabel();
+      String pigment = display == null ? FishingUiFormat.UNAVAILABLE : display.pigmentationLabel();
+      String quality = display == null ? FishingUiFormat.UNAVAILABLE : display.qualityLabel();
+      this.drawValue(graphics, "Body " + body, "Body Type: " + body, leftColumn, y + 45, 60, BODY_COLOR, mouseX, mouseY);
+      this.drawValue(graphics, "Cond " + condition, "Condition: " + condition, rightColumn, y + 45, 60, CONDITION_COLOR, mouseX, mouseY);
+      this.drawValue(graphics, "Pig " + pigment, "Pigmentation: " + pigment, leftColumn, y + 55, 60, PIGMENT_COLOR, mouseX, mouseY);
+      this.drawValue(graphics, "Qual " + quality, "Quality: " + quality, rightColumn, y + 55, 60, QUALITY_COLOR, mouseX, mouseY);
+
+      this.section(graphics, "Catch Info", x, y + 68);
+      String catcher = selected.getString("catcher_name");
+      String catcherLabel = catcher.isBlank() ? FishingUiFormat.UNAVAILABLE : catcher;
+      long timestampValue = selected.contains("timestamp", 99) ? selected.getLong("timestamp") : -1L;
+      String timestamp = FishingUiFormat.timestamp(timestampValue);
+      String date = dateOnly(timestamp);
+      this.drawValue(graphics, "By " + catcherLabel, "Caught By: " + catcherLabel, leftColumn, y + 79, 72, MUTED, mouseX, mouseY);
+      this.drawValue(graphics, date, "Caught: " + timestamp, x + 76, y + 79, 48, MUTED, mouseX, mouseY);
+
       if (!this.hoverTooltip.isEmpty()) {
          graphics.drawOrderedTooltip(this.textRenderer, this.hoverTooltip.stream().map(Text::asOrderedText).toList(), mouseX, mouseY);
       }
@@ -158,15 +176,34 @@ public final class TopFishScreen extends Screen {
 
    private void section(DrawContext graphics, String label, int x, int y) {
       TideTextRenderer.draw(graphics, this.textRenderer, label, x, y, TEXT);
-      graphics.fill(x, y + 10, x + 128, y + 11, 0x66725F43);
+      graphics.fill(x, y + 9, x + 124, y + 10, 0x66725F43);
    }
 
-   private void drawFitted(DrawContext graphics, String value, int x, int y, int width, int color, int mouseX, int mouseY) {
+   private void drawValue(
+      DrawContext graphics,
+      String value,
+      String tooltip,
+      int x,
+      int y,
+      int width,
+      int color,
+      int mouseX,
+      int mouseY
+   ) {
       FittedText fitted = FishingUiLayout.ellipsize(value, width, this.textRenderer::getWidth);
       TideTextRenderer.draw(graphics, this.textRenderer, fitted.text(), x, y, color);
-      if (fitted.clipped() && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 10) {
-         this.hoverTooltip = List.of(Text.literal(value));
+      boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 10;
+      if (hovered && (fitted.clipped() || (tooltip != null && !tooltip.equals(value)))) {
+         this.hoverTooltip = List.of(Text.literal(tooltip == null ? value : tooltip));
       }
+   }
+
+   private static String dateOnly(String timestamp) {
+      if (timestamp == null || timestamp.equals(FishingUiFormat.UNAVAILABLE)) {
+         return FishingUiFormat.UNAVAILABLE;
+      }
+      int comma = timestamp.indexOf(',');
+      return comma > 0 ? timestamp.substring(0, comma) : timestamp;
    }
 
    @Override
