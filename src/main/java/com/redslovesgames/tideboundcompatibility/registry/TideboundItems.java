@@ -11,11 +11,8 @@ import com.li64.tide.registries.items.TideFishingRodItem;
 import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
 import com.redslovesgames.tideboundcompatibility.item.ChumBucketItem;
 import com.redslovesgames.tideboundcompatibility.item.KujiraBoneFishingRodItem;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.ModifyEntries;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registry;
-import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
 import net.minecraft.item.Item.Settings;
 
@@ -43,29 +40,6 @@ public final class TideboundItems {
       register("steel_leader", STEEL_LEADER);
       register("shark_tooth", SHARK_TOOTH);
       register("shark_tooth_hook", SHARK_TOOTH_HOOK);
-      ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register((ModifyEntries)entries -> {
-         if (TideboundCompatibility.isMythsIntegrationActive()) {
-            entries.add(KUJIRA_BONE_FISHING_ROD);
-            entries.add(TENTACLE_LINE);
-            entries.add(SWIFT_LINE);
-            entries.add(SEAFARERS_HOOK);
-         }
-
-         if (TideboundCompatibility.isApexIntegrationActive()) {
-            entries.add(STEEL_LEADER);
-            entries.add(SHARK_TOOTH_HOOK);
-            entries.add(CHUM_BUCKET);
-         }
-      });
-      ItemGroupEvents.modifyEntriesEvent(ItemGroups.INGREDIENTS).register((ModifyEntries)entries -> {
-         if (TideboundCompatibility.isMythsIntegrationActive()) {
-            entries.add(LEVIATHAN_BAIT);
-         }
-
-         if (TideboundCompatibility.isApexIntegrationActive()) {
-            entries.add(SHARK_TOOTH);
-         }
-      });
    }
 
    private static void register(String path, Item item) {
