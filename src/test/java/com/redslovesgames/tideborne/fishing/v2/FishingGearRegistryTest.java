@@ -3,42 +3,42 @@ package com.redslovesgames.tideborne.fishing.v2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.li64.tide.registries.TideItems;
-import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
-import net.minecraft.item.Item;
+import net.minecraft.util.Identifier;
 import org.junit.jupiter.api.Test;
 
 class FishingGearRegistryTest {
     @Test
-    void everySupportedFishingGearItemHasOneCanonicalProfile() {
-        assertProfile(TideItems.COPPER_LINE, FishingGearRegistry.GearProfile.TIDE_COPPER_LINE);
-        assertProfile(TideItems.IRON_LINE, FishingGearRegistry.GearProfile.TIDE_IRON_LINE);
-        assertProfile(TideItems.GOLDEN_LINE, FishingGearRegistry.GearProfile.TIDE_GOLDEN_LINE);
-        assertProfile(TideItems.DIAMOND_LINE, FishingGearRegistry.GearProfile.TIDE_DIAMOND_LINE);
+    void everySupportedFishingGearIdHasOneCanonicalProfile() {
+        assertProfile("tide:copper_line", FishingGearRegistry.GearProfile.TIDE_COPPER_LINE);
+        assertProfile("tide:iron_line", FishingGearRegistry.GearProfile.TIDE_IRON_LINE);
+        assertProfile("tide:golden_line", FishingGearRegistry.GearProfile.TIDE_GOLDEN_LINE);
+        assertProfile("tide:diamond_line", FishingGearRegistry.GearProfile.TIDE_DIAMOND_LINE);
 
-        assertProfile(TideboundItems.TENTACLE_LINE, FishingGearRegistry.GearProfile.TENTACLE_LINE);
-        assertProfile(TideboundItems.SWIFT_LINE, FishingGearRegistry.GearProfile.SWIFT_LINE);
-        assertProfile(TideboundItems.STEEL_LEADER, FishingGearRegistry.GearProfile.STEEL_LEADER);
-        assertProfile(TideboundItems.SEAFARERS_HOOK, FishingGearRegistry.GearProfile.SEAFARERS_HOOK);
-        assertProfile(TideboundItems.SHARK_TOOTH_HOOK, FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK);
-        assertProfile(TideboundItems.KUJIRA_BONE_FISHING_ROD, FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD);
-        assertProfile(TideboundItems.LEVIATHAN_BAIT, FishingGearRegistry.GearProfile.LEVIATHAN_BAIT);
+        assertProfile("tidebound_compatibility:tentacle_line", FishingGearRegistry.GearProfile.TENTACLE_LINE);
+        assertProfile("tidebound_compatibility:swift_line", FishingGearRegistry.GearProfile.SWIFT_LINE);
+        assertProfile("tidebound_compatibility:steel_leader", FishingGearRegistry.GearProfile.STEEL_LEADER);
+        assertProfile("tidebound_compatibility:seafarers_hook", FishingGearRegistry.GearProfile.SEAFARERS_HOOK);
+        assertProfile("tidebound_compatibility:shark_tooth_hook", FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK);
+        assertProfile("tidebound_compatibility:kujira_bone_fishing_rod", FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD);
+        assertProfile("tidebound_compatibility:leviathan_bait", FishingGearRegistry.GearProfile.LEVIATHAN_BAIT);
 
         assertEquals(FishingGearRegistry.GearProfile.values().length, FishingGearRegistry.profiles().size());
     }
 
     @Test
-    void everyCanonicalProfileReversesToTheSameRegisteredItem() {
+    void everyCanonicalProfileReversesToTheSameExactId() {
         for (FishingGearRegistry.GearProfile profile : FishingGearRegistry.GearProfile.values()) {
-            Item item = FishingGearRegistry.registeredItem(profile).orElseThrow();
-            assertEquals(profile, FishingGearRegistry.resolve(item).orElseThrow());
+            Identifier itemId = FishingGearRegistry.registeredId(profile).orElseThrow();
+            assertEquals(profile, FishingGearRegistry.resolveId(itemId).orElseThrow());
+            assertEquals(profile.itemId(), itemId);
         }
     }
 
     @Test
-    void unregisteredItemCannotInheritBehaviorByNameClassOrSimilarity() {
-        Item lookalike = new Item(new Item.Settings());
-        assertTrue(FishingGearRegistry.resolve(lookalike).isEmpty());
+    void unregisteredLookalikeIdsCannotInheritBehavior() {
+        assertTrue(FishingGearRegistry.resolveId(Identifier.of("othermod", "diamond_line")).isEmpty());
+        assertTrue(FishingGearRegistry.resolveId(Identifier.of("tide", "diamond_line_extra")).isEmpty());
+        assertTrue(FishingGearRegistry.resolveId(Identifier.of("tidebound_compatibility", "swift_line_plus")).isEmpty());
     }
 
     @Test
@@ -55,8 +55,9 @@ class FishingGearRegistryTest {
                 FishingGearRegistry.GearProfile.STEEL_LEADER.slot());
     }
 
-    private static void assertProfile(Item item, FishingGearRegistry.GearProfile expected) {
-        assertEquals(expected, FishingGearRegistry.resolve(item).orElseThrow());
-        assertEquals(item, FishingGearRegistry.registeredItem(expected).orElseThrow());
+    private static void assertProfile(String itemId, FishingGearRegistry.GearProfile expected) {
+        Identifier id = Identifier.of(itemId);
+        assertEquals(expected, FishingGearRegistry.resolveId(id).orElseThrow());
+        assertEquals(id, FishingGearRegistry.registeredId(expected).orElseThrow());
     }
 }
