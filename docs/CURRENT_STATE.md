@@ -5,749 +5,155 @@ Updated: 2026-08-30
 ## Baseline and branch
 
 - compatibility baseline: Tideborne 1.3.57
+- current release line: Tideborne 2.0.0
 - Minecraft: 1.21.1
 - Java: 21
 - Tide runtime target: 2.1.1
 - active development branch: `dev`
 - reconstruction branch: `reconstruct-1.3.57`
 - `main` remains untouched at `41e53b052660e04e546b07b305c5047b3f646675`
-- authoritative redesign contract: `docs/FISHING_SYSTEM_2_SPEC.md`
+- authoritative Fishing System 2.0 contract: `docs/FISHING_SYSTEM_2_SPEC.md`
 
-## Phase 0 is complete
+Frozen reconstruction anchors remain:
 
-The exact Tideborne 1.3.57 release artifact was recovered, verified, reconstructed into maintained source/resources, mechanically normalized, and built successfully.
+- Tideborne 1.3.57 release JAR SHA-256: `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`
+- reconstructed canonical content-tree SHA-256: `5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6`
+- Tide 2.1.1 Fabric 1.21.1 SHA-256: `498a5e8dda940866c9b0decadf7960724ef489fb49215b30f70c18d12f07b1c8`
+- Apex Waters 1.1.1 Fabric 1.21.1 SHA-256: `00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37`
 
-Frozen verification anchors:
+Historical implementation details remain available in the dedicated stage documents and Git history. This file records the current authoritative state.
 
-- release JAR SHA-256: `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`
-- canonical content-tree SHA-256: `5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6`
-- canonical files: 442
-- canonical `.class` files: 272
-- canonical non-class resources: 170
-- reconstructed Java source files: 187
+## Fishing System 2.0 is complete
 
-The reconstruction workflow verifies the exact release input before decompilation. The old incomplete Base64 reconstruction chunks are no longer part of the recovery path.
+The current `dev` branch contains the completed Fishing System 2.0 implementation and its post-release recovery/polish work.
 
-## Green reconstructed baseline
+Canonical runtime authority includes:
 
-GitHub Actions build run `33152569860` successfully completed the repository build step and artifact upload for commit `e06387aa1df731ef2ae16059c6418e78f046c341`.
+- server-owned Tide species selection using canonical Fishing Luck weighting and existing Tide eligibility restrictions;
+- one canonical natural specimen percentile/base-size sample per catch;
+- independent deterministic Body Type, Condition, Pigmentation, and Specimen Quality axes;
+- canonical final physical size and size-adjusted final percentile without a second specimen sample;
+- canonical Perfect Catch integration and Perfect Specimen behavior;
+- server-owned per-player, per-species Trait Momentum;
+- canonical FishScore V2 as the production score source;
+- canonical Strength, Tempo, line, Steel Leader, rod, and Leviathan Bait behavior;
+- canonical ItemStack, entity, bucket, display, Satchel, Journal, record, leaderboard, and network persistence/projection paths;
+- deterministic one-way migration for recoverable Tideborne 1.3.57 fish and saved-data representations;
+- guarded legacy compatibility paths that cannot reroll or overwrite current canonical V2 state.
 
-The workflow runs:
-
-```text
-./gradlew clean build --stacktrace
-./gradlew runGametest --stacktrace
-```
-
-against Java 21 with exact external compile dependencies fetched in CI:
-
-- Tide 2.1.1 Fabric 1.21.1, SHA-256 `498a5e8dda940866c9b0decadf7960724ef489fb49215b30f70c18d12f07b1c8`
-- Apex Waters 1.1.1 Fabric 1.21.1, SHA-256 `00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37`
-
-The reconstructed baseline was fast-forwarded onto `dev`. No merge conflict or history rewrite was required because the reconstruction work is a direct descendant of the previous `dev` head.
-
-## Fishing System 2.0 execution state
-
-Specification execution steps 1 through 4 are complete in the pure V2 domain layer and are now runtime-integrated on `dev`.
-
-Pure V2 steps:
-
-1. `FishingContext`, `SpeciesProfile`, and canonical rarity
-2. species selection and rarity-aware Fishing Luck
-3. canonical `SpecimenData`, direct percentile, and size math
-4. fight normalization and size fight scaling
-
-Implementation root:
-
-```text
-src/main/java/com/redslovesgames/tideborne/fishing/v2/
-```
-
-The original deterministic pure V2 suite remains green, with additional Body Type, Condition, and Pigmentation coverage layered on top.
-
-## Steps 1 through 4 runtime integration is green
-
-Runtime validation completed on `dev` with GitHub Actions run `33159465388`. Both the clean Gradle build and Fabric GameTests passed.
-
-Verified runtime contracts:
-
-- `FishSelectorMixin` replaces only Tide `FishSelector#getResult`. Tide's top-level `TideFishingManager` category selector and `FishSelector.weight(context) = 85` remain unchanged, so ordinary Tide fish versus junk, crate, and treasure probability is unchanged.
-- `TideSpeciesProfileAdapter` preserves Tide `shouldKeep` eligibility and existing fishing/compatibility weight modifiers while omitting the superseded legacy `selection_quality` adjustment from the canonical species-selection path.
-- one server-owned Tide fishing context produces one canonical catch seed, one V2 species selection, and one `SpecimenGenerator` canonical generation call.
-- `SpecimenGenerator` samples one canonical natural percentile and one matching base length, then deterministic trait finalization may transform physical size without another natural sample.
-- the V2 bridge intentionally does not call Tide `FishData#getResult`, preventing Tide's independent `SizeData#getRandomLength` roll from becoming a hidden second natural size roll.
-- `CanonicalSpecimenStorage` persists canonical specimen identity and mirrors the canonical final percentile/length into compatibility components before downstream catch handling.
-- the canonical `FightProfile` explicitly drives minigame behavior, strength, tempo, and catch-zone baseline values.
-- existing Tide copper, iron, golden, and diamond line effects still layer on top of the canonical fight baseline.
-- existing Tideborne Tentacle Line, Swift Line, Steel Leader, Leviathan Bait, Perfect Catch skill detection, and related compatibility hooks remain in their current integration positions unless a later specification step replaces their behavior.
-- canonical specimen components survive the current item-to-entity-to-item and bucket transfer paths. Full source stack serialization preserves canonical components, and the specimen transfer hooks preserve the compatibility mirrors.
-- the invalid Mixin 0.8.7 injector on the `Bucketable` interface was replaced by a concrete `FishEntity#copyDataToStack` hook, allowing the GameTest server to start while preserving entity-to-bucket specimen transfer.
-- legacy `CatchTraitService` natural-size sampling is bypassed for canonical specimens because canonical storage has already supplied the compatibility identity/seed/percentile state.
-- legacy `PerfectCatchTraitBoost` now refuses to rewrite percentile or fish length when canonical specimen identity is present. The actual Fishing System 2.0 Perfect Catch reward redesign remains Step 8.
-
-Runtime GameTests cover:
-
-1. canonical specimen item/entity representation round trip
-2. canonical specimen immunity to the legacy catch individualizer reroll path
-3. canonical specimen immunity to the legacy Perfect Catch percentile/length rewrite
-
-A focused search of the migrated runtime path found no remaining duplicate species selection, natural percentile, natural size, fight strength, or fight tempo calculation used by canonical V2 catches. Legacy sampled-size and trait paths still exist as guarded fallback compatibility for old/noncanonical catches and should remain until their stored-data callers are migrated.
-
-## Deterministic trait RNG splitting
-
-A stateless V2 `TraitRandom` utility is defined inside the Fishing System 2.0 package for specimen trait axes.
-
-The utility:
-
-- derives each trait decision directly from the canonical specimen seed plus a fixed salt
-- exposes deterministic unit doubles in `[0, 1)` using the upper 53 bits of a mixed 64-bit value
-- uses no mutable or shared RNG state
-- gives Body Type event, Body Type variant, Body Type physical size, Condition, Pigmentation, and Perfect Specimen decisions reserved stable salts
-- keeps event, variant, and physical-size decisions on separate salts
-- guarantees that evaluating or adding an unrelated future salt does not consume state or shift existing outcomes
-
-## Step 5 Body Type is complete
-
-The V2 Body Type implementation now covers probability selection, canonical physical-size finalization, and canonical fight-profile modification.
-
-Frozen behavior:
-
-- canonical values are `NORMAL`, `GIANT`, and `DWARF`
-- the Body Type base event probability is exactly 5%; canonical event chance now applies selected-species rarity compensation and then Trait Luck through `TraitProbabilityService`; a failed adjusted event returns `NORMAL`
-- the event and variant decisions use the reserved `TraitRandom.Salts.BODY_TYPE_EVENT` and `BODY_TYPE_VARIANT` streams
-- after an event, Giant probability is `0.25 + 0.50 * (naturalPercentile / 100.0)`
-- Giant therefore rises smoothly from 25% of Body Type events at P0 to 75% at P100, with 50% at P50
-- there is no hard percentile threshold; Giant remains possible at low percentile and Dwarf remains possible at high percentile
-- Giant physical size is sampled uniformly and deterministically from 1.10x to 1.30x using the independent `BODY_TYPE_SIZE` stream
-- Dwarf physical size is sampled uniformly and deterministically from 0.60x to 0.82x using the same dedicated Body Type size stream
-- Normal physical size is exactly 1.0x
-- Body Type finalization always starts from canonical `baseLength`; it never rerolls or stacks a second base-size sample
-- `basePercentile` remains the one natural specimen percentile generated with `baseLength`
-- `finalLength` is `baseLength * bodyTypeSizeMultiplier`
-- for species with a physical size distribution, `finalPercentile` is the deterministic CDF percentile of `finalLength`; it is size-adjusted, not independently sampled
-- species represented by `NoPhysicalSizeDistribution` retain `finalPercentile == basePercentile` because there is no meaningful physical-size percentile to derive
-- Body Type selection and physical size do not consume or depend on Condition, Pigmentation, or Quality streams
-- the Tide V2 species bridge calls full `SpecimenGenerator.generate`, which performs exactly one base specimen sample and then applies Body Type finalization before canonical storage and fight-profile creation
-- `FightProfileService` first computes the existing normalized species fight values and percentile fight scaling, then applies the Body Type modifiers to that already-computed canonical profile
-- Giant applies Strength x1.08 and Tempo x0.95
-- Dwarf applies Strength x0.92 and Tempo x1.08
-- Normal applies no fight modification
-- Body Type tempo reuses the existing final Tempo clamp, and catch-zone area is recalculated from the Body Type-adjusted canonical Strength through the existing bounded catch-zone model
-- no second fight calculation path was introduced; `TideSpeciesSelectionBridge` still creates the one canonical `FightProfile`, and `FishingModifiers.modifyMinigame` still consumes that stored profile before layering Tide line effects and Tideborne compatibility effects
-
-This interpretation of `finalPercentile` is explicit in `docs/FISHING_SYSTEM_2_SPEC.md`: the separate base and final size pairs exist so the natural specimen identity remains frozen while deterministic physical modifiers can change the final measured percentile without introducing a second random specimen roll.
-
-Deterministic tests cover exact 5% base configuration, repeatability, approximately 5% one-star zero-Trait-Luck event frequency, shared-pipeline event rates across several rarity and Trait Luck combinations, exact shared-pipeline equality, the reserved future Body Type event multiplier, P75 versus P25 Giant bias, both variants across the percentile range, P50 balance, the documented bias formula, independence from other trait streams, physical multiplier bounds, deterministic multiplier values, exact Normal identity, Giant/Dwarf size direction, preserved base percentile, size-adjusted final percentile, no-physical-size fallback, exactly one base-size quantile sample during complete generation, exact Normal/Giant/Dwarf fight multiplier comparisons for otherwise identical specimens, preserved percentile fight scaling, catch-zone recomputation, and unchanged behavior.
-
-Body Type fight implementation is commit `72c98ea3d3f79161d97720a5833d47eb4e2f4a33`. Validation is green with GitHub Actions run `33163133061`: `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-## Body Type runtime authority is complete
-
-The completed Body Type model is now wired into the server-authoritative V2 specimen lifecycle without adding a second trait decision path.
-
-Runtime order is explicit and fixed:
-
-```text
-species selected
--> base specimen generated once
--> Body Type generated once
--> final physical size produced
--> canonical FightProfile generated
--> specimen persisted
-```
-
-Runtime authority and compatibility contracts:
-
-- `SpecimenGenerator.generate` explicitly calls base generation first, then performs one deterministic Body Type selection, then applies the selected Body Type to physical size without another Body Type or natural-size sample.
-- `TideSpeciesSelectionBridge` creates the canonical `FightProfile` from that finalized specimen before `CanonicalSpecimenStorage` persists it.
-- `SpecimenData.bodyType` remains the immutable in-memory canonical value.
-- `CanonicalSpecimenStorage` persists Body Type in the canonical `SPECIMEN_BODY_TYPE` component and mirrors the exact same value to legacy `BODY_TYPE` only for compatibility.
-- `TraitAxesRuntime` recognizes canonical schema-v2 specimens and reads canonical Body Type first. For those specimens its migration, editing, and physical-effect helpers cannot generate or reapply a legacy Body Type.
-- `TraitAxesRuntime.normalizeNew` returns before the old P97 Giant and P3 Dwarf gates and before the legacy body-size multiplier when canonical V2 specimen identity is present.
-- interim schema-v2 stacks that predate `SPECIMEN_BODY_TYPE` are migrated by copying their already-persisted legacy `BODY_TYPE` into canonical storage once. This migration consumes no RNG.
-- `SpecimenTransfer` writes an explicit `CanonicalBodyType` transfer field in addition to the existing compatibility `BodyType` field and generic source-stack snapshot. Restoration makes the canonical value authoritative and repairs a stale compatibility mirror rather than rerolling it.
-- entity, item, bucket, serialization, UI/admin compatibility reads, and legacy physical-effect helpers therefore preserve canonical Body Type instead of deriving a new value.
-
-The runtime GameTest fixture deliberately uses a P99.25 canonical Dwarf while corrupting only the legacy mirror to Giant. This places the specimen inside the old P97 Giant gate and proves canonical Dwarf survives direct transfer NBT, item/entity/item transfer, the legacy catch individualizer, and legacy Perfect Catch handling without changing.
-
-Stage 6 implementation plus TODO state at commit `faeb4d3c102a976740749cb5af6017bbba76b38d` is green in GitHub Actions run `33164107173`. The exact-dependency clean Gradle build, unit tests included by the build, Fabric GameTests, and built-JAR artifact upload all completed successfully.
-
-## Step 6 Condition axis is complete
-
-The Condition portion of the independent trait-axis step is implemented without introducing Trait Luck, rarity compensation, Pigmentation generation, or any second mutation authority.
-
-Frozen Condition behavior:
-
-- canonical values are `NORMAL`, `SCARRED`, and `PARASITE_RIDDEN`
-- the base Condition event probability is exactly 5%; a failed event returns `NORMAL`
-- when the event triggers, Scarred is exactly 65% of the conditional split and Parasite-Ridden is exactly 35%
-- event and subtype selection use the reserved `TraitRandom.Salts.CONDITION_EVENT` and `CONDITION_VARIANT` streams
-- Condition does not consume Body Type event, variant, or size streams and Body Type does not consume Condition streams
-- Body Type and Condition have no mutual exclusion; both notable values can exist on the same canonical specimen
-- `SpecimenData.condition` is one required enum-valued field, so each canonical specimen has exactly one Condition state rather than a collection that could represent incompatible simultaneous conditions
-- `SpecimenGenerator.generate` now samples the natural specimen once, finalizes Body Type physical size, then applies one deterministic Condition derived from the same canonical specimen seed through the independent Condition salts
-- Condition application preserves species identity, natural percentile, base length, final physical size, Body Type, Pigmentation, Quality, Perfect Catch state, score fields, and provenance
-- `CanonicalSpecimenStorage` persists the enum value to `SPECIMEN_CONDITION` and mirrors that exact value to legacy `MUTATION` only for compatibility
-- `CatchTraitService.assignIfAbsent` now detects canonical V2 specimen identity before the legacy mutation selector can run; it repairs a missing/stale legacy mutation mirror from `SPECIMEN_CONDITION` and returns without consuming legacy RNG
-- UI and compatibility code therefore do not own Condition generation; the canonical server-generated specimen value is persisted before those consumers run
-- no Trait Luck or rarity compensation is applied in this slice, so the frozen 5% and 65/35 base probabilities are used directly
-
-Deterministic Condition tests cover exact probability constants, repeatability, approximately 5% event frequency, approximately 65/35 triggered subtype frequency, independence from Body Type streams, a fixed seed that produces Body Type plus Condition simultaneously, repeated Condition application without accumulation, and full canonical generation preserving the one natural specimen sample.
-
-The runtime GameTest fixture now carries canonical `DWARF` plus `SCARRED`. Item/entity/item transfer proves canonical Condition survives representation transfer, and the legacy-individualizer test deletes the `MUTATION` compatibility mirror before invocation. The test then proves `SCARRED` remains canonical and the compatibility mirror is restored to `scarred` without changing the canonical seed, percentile, Body Type, or Condition.
-
-Condition implementation commit `023c9a01918f525c8a726862d7cd800bc587d9f3` is green in GitHub Actions run `33165044512`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-## Step 6 Pigmentation axis is complete
-
-The Pigmentation portion of the independent trait-axis step is implemented as a separate canonical axis and does not use the legacy mutually-exclusive mutation selector.
-
-Frozen Pigmentation behavior:
-
-- canonical values are `NORMAL`, `ALBINO`, and `IRIDESCENT`
-- the base Pigmentation event probability is exactly 1.5%; a failed event returns `NORMAL`
-- when the event triggers, Albino is exactly 70% of the conditional split and Iridescent is exactly 30%
-- event and subtype selection use the reserved `TraitRandom.Salts.PIGMENTATION_EVENT` and `PIGMENTATION_VARIANT` streams
-- Pigmentation does not consume or depend on Body Type or Condition streams, and those axes do not consume Pigmentation streams
-- `SpecimenData.pigmentation` is one required enum-valued field, so every canonical specimen has exactly one Pigmentation state
-- `SpecimenGenerator.generate` finalizes Body Type physical size, then Condition, then Pigmentation; all three decisions derive independently from the same immutable canonical specimen seed through separate salts
-- there is no cross-axis mutual exclusion: deterministic seed `29894` produces `GIANT + PARASITE_RIDDEN + IRIDESCENT` in full canonical generation
-- Pigmentation application preserves species identity, natural percentile, base and final length, final percentile, Body Type, Condition, Quality, Perfect Catch state, score fields, and provenance
-- `CanonicalSpecimenStorage` persists Pigmentation to `SPECIMEN_PIGMENTATION`; it is not packed into legacy `MUTATION`, so legacy Condition compatibility state cannot make Pigmentation mutually exclusive
-- `CatchTraitService.assignIfAbsent` exits through the canonical V2 path before legacy mutation selection and does not write `SPECIMEN_PIGMENTATION`, so canonical Pigmentation cannot be rerolled by the old mutation authority
-- the existing generic canonical source-stack snapshot preserves `SPECIMEN_PIGMENTATION` through item/entity/item representation transfer without adding a second Pigmentation representation
-- no Trait Luck, rarity compensation, Specimen Quality, Perfect Catch redesign, or scoring behavior is introduced by this slice
-
-Deterministic Pigmentation tests cover exact probability constants, repeatability, approximately 1.5% event frequency, approximately 70/30 triggered subtype frequency, independence from Body Type and Condition streams, deterministic three-axis stacking, idempotent Pigmentation application, and preservation of the single natural specimen sample.
-
-Runtime GameTests write a canonical `GIANT + PARASITE_RIDDEN + IRIDESCENT` specimen, deliberately replace the legacy `MUTATION` mirror with `albino`, invoke the legacy catch individualizer, and prove canonical Iridescent Pigmentation remains unchanged while only the Condition compatibility mirror is repaired. A second GameTest proves the same canonical Pigmentation survives item/entity/item representation transfer.
-
-Pigmentation implementation commit `7fd6181c09ca0e49dd598adf5fbb39d992eb29e3` is green in GitHub Actions run `33165703632`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-## Condition and Pigmentation runtime integration is complete
-
-The three currently implemented canonical specimen axes are now confirmed end to end in the server-authoritative runtime path.
-
-Runtime generation order is explicit and deterministic:
-
-```text
-species selected
--> base specimen generated once
--> Body Type generated once
--> final physical size produced
--> Condition generated once
--> Pigmentation generated once
--> canonical FightProfile generated
--> specimen persisted
-```
-
-Runtime authority and transfer contracts:
-
-- `TideSpeciesSelectionBridge` makes one call to `SpecimenGenerator.generate` for the selected species and uses that single returned `SpecimenData` for both `CanonicalSpecimenStorage` and `CanonicalCatchStateManager`.
-- `SpecimenGenerator.generate` uses the already-frozen independent trait salts and applies Body Type, Condition, and Pigmentation exactly once without shared mutable RNG state or a second natural specimen sample.
-- `CanonicalSpecimenStorage` persists all three axes as `SPECIMEN_BODY_TYPE`, `SPECIMEN_CONDITION`, and `SPECIMEN_PIGMENTATION` before downstream legacy catch handling runs.
-- only compatibility mirrors are written into legacy components: Body Type mirrors to `BODY_TYPE`, Condition mirrors to `MUTATION`, and Pigmentation remains canonical-only because there is no separate legacy Pigmentation component.
-- `CatchTraitService.assignIfAbsent` exits before legacy mutation selection for canonical schema-v2 specimens, repairs the Condition compatibility mirror from canonical state, and does not regenerate Body Type, Condition, or Pigmentation.
-- `TraitAxesRuntime` remains a guarded compatibility fallback for canonical specimens. Its canonical migration and normalization paths do not run legacy Body Type gates or mutation generation.
-- `SpecimenTransfer` data version 4 now stores `CanonicalBodyType`, `CanonicalCondition`, and `CanonicalPigmentation` explicitly in addition to the generic source-stack snapshot. This makes all three axes survive even the snapshot-free transfer fallback instead of relying on generic component serialization alone.
-- restoration makes canonical Body Type and Condition authoritative over their legacy compatibility mirrors, while Pigmentation restores only its canonical component and cannot become mutually exclusive with Condition.
-- item, entity, bucket, entity reload, and direct transfer-NBT representations therefore retain the same stacked axes without another trait decision.
-
-The runtime GameTests use the deterministic stacked fixture `GIANT + PARASITE_RIDDEN + IRIDESCENT`. They prove stale legacy Body Type/mutation values are repaired without changing canonical axes, and prove the same three values survive item/entity/bucket/entity/item conversion plus explicit transfer NBT without a registry-backed source-stack snapshot.
-
-Runtime axis integration implementation is commit `774752af3b22f7a4dcb814602f48c21cd1895779`. GitHub Actions run `33166720586` is green: exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-## Pure Trait Luck probability math is complete
-
-Stage 10 adds the isolated Fishing System 2.0 Trait Luck probability service without wiring Trait Luck into Body Type, Condition, Pigmentation, Specimen Quality, rarity compensation, Momentum, or any runtime trait generator.
-
-Frozen probability behavior:
-
-- `TraitLuckProbabilityService` implements exactly `P' = 1 - (1 - P)^(1 + T / 10)`
-- numeric probability inputs clamp to `[0, 1]`; `NaN` probability is rejected because it cannot represent an event chance
-- `P = 0` and `P = 1` remain exact fixed endpoints for every supported Trait Luck input
-- Trait Luck below `-10` clamps to `-10`, keeping the exponent nonnegative and preventing invalid negative adjusted probabilities
-- `NaN` Trait Luck behaves as zero; negative infinity reaches the `-10` floor; positive infinity safely saturates every nonzero, nonunit base probability to 1
-- the implementation uses `log1p` and `expm1` for stable probability math while preserving exact T=0 and endpoint behavior
-- the service contains no RNG state and performs no trait selection; deterministic trait selection remains the responsibility of the existing independent trait streams
-- Fishing Luck and Trait Luck remain mechanically separate; `SpeciesSelectionService` production code is unchanged and continues to read only `FishingContext.fishingLuck()`
-- a seeded regression compares species selection under identical Fishing Luck with Trait Luck 0 versus 1,000,000 and requires the selected species sequence to remain identical
-
-Unit coverage includes T=0 identity, monotonic increase for positive Trait Luck, output range, the documented 1% numerical examples, additional known numerical cases, exact 0/1 endpoints, probability clamping and NaN rejection, and defined negative/extreme Trait Luck behavior.
-
-Implementation commit `7606bc21d4d5489692e210227d8c7fdeac15f339` is validated by GitHub Actions run `33167369448`: `./gradlew clean build --stacktrace`, unit tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload completed successfully.
-
-## Rarity compensation probability path is complete
-
-Stage 11 adds canonical rare-species trait compensation without wiring probability changes into the trait generators yet.
-
-Frozen probability behavior:
-
-- `CanonicalRarity` now stores the exact trait-event multipliers 1 star 1.00, 2 star 1.15, 3 star 1.40, 4 star 1.80, and 5 star 2.40 alongside the pre-existing, unchanged Fishing Luck coefficients
-- `TraitProbabilityService` is the reusable canonical V2 trait-event probability path
-- callers provide a base trait event probability plus the selected canonical `SpeciesProfile`; rarity is read only from `SpeciesProfile.rarity()` so a second independent rarity value cannot disagree with the selected species
-- the calculation order is fixed as base trait probability, rarity compensation, Trait Luck transform, then final defensive bounding to `[0, 1]`
-- the existing `TraitLuckProbabilityService` remains the single implementation of the Trait Luck formula and its frozen input-safety behavior; `TraitProbabilityService` composes it rather than duplicating the formula
-- no random selection is performed by either probability service
-- `SpeciesSelectionService` is unchanged, so rarity compensation and Trait Luck do not participate in Fishing Luck species selection
-- Body Type, Condition, Pigmentation, and later Specimen Quality generators are intentionally not wired to the new probability path in this stage; that remains a dedicated integration slice
-
-Exact unit coverage verifies all five canonical rarity multipliers, all five compensated probabilities at zero Trait Luck, combined rarity plus Trait Luck numerical cases, the required rarity-before-Trait-Luck order using the 5-star 5% plus T=10 result of 22.56%, final probability bounds, and inherited invalid-input behavior.
-
-Implementation commit `abf75156f906a0ef2e40b813e5b20f6870372430` contains the code and tests. Full CI validation is recorded below once the documentation commit is validated.
-
-## Body Type trait probability integration is complete
-
-Stage 12 moves only the Body Type event probability onto the shared canonical trait probability pipeline.
-
-Frozen integration behavior:
-
-- Body Type keeps its exact 5% base event probability.
-- `BodyTypeGenerator` calls `TraitProbabilityService` with the selected canonical `SpeciesProfile`, so rarity compensation is applied first and Trait Luck is applied second before the final event bound.
-- canonical species rarity comes only from `SpeciesProfile.rarity()`; Body Type does not accept or derive a second independent rarity value.
-- `TideSpeciesSelectionBridge` passes the server-owned `FishingContext.traitLuck()` into `SpecimenGenerator`, which forwards it to the one canonical Body Type selection.
-- the Body Type event comparison still uses `TraitRandom.Salts.BODY_TYPE_EVENT`, and the conditional Giant/Dwarf decision still uses `TraitRandom.Salts.BODY_TYPE_VARIANT`; no deterministic salt changed.
-- Giant/Dwarf subtype selection remains entirely separate from event probability and still uses `giantProbability = 0.25 + 0.50 * (naturalPercentile / 100.0)` after an event triggers.
-- there are still no hard percentile thresholds, so Giant remains possible at low percentile and Dwarf remains possible at high percentile.
-- `SpecimenGenerator` and `BodyTypeGenerator` now accept an explicit Body Type event probability multiplier. Runtime supplies `1.0` in this stage. This reserves the API position needed for the later Perfect Catch 1.25x Body Type rule without implementing Perfect Catch behavior early.
-- the reserved Body Type event multiplier is applied after the canonical base, rarity, Trait Luck pipeline and is bounded to `[0, 1]`; it does not alter the Giant/Dwarf conditional split.
-- the old two-argument Body Type selector was not restored after stale tests exposed callers, preventing a rarity-free bypass path from remaining beside the canonical API.
-- Condition, Pigmentation, Specimen Quality, Momentum, and Perfect Catch reward behavior are unchanged by this stage.
-
-Statistical coverage samples Body Type events across multiple rarity and Trait Luck combinations, including 1-star T=-5, 1-star T=10, 3-star T=0, 4-star T=20, and 5-star T=10. Exact tests additionally prove all rarity/Trait Luck combinations route through `TraitProbabilityService`, the future multiplier is post-pipeline and bounded, deterministic Body Type salts remain stable, subtype bias remains separate, and natural specimen size is not rerolled.
-
-Implementation commit `149aa5b9d67ec59334dae4fb3810c27db586029a` introduced the canonical pipeline integration. Commit `ee5bc701feed9aa7fff2c9c4694ed45bfcba38cb` updated the remaining Body Type test callers to the species-aware canonical API after CI exposed the stale two-argument calls. GitHub Actions run `33168959022` is green: exact-dependency `./gradlew clean build --stacktrace`, unit and statistical tests included by the Gradle build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-## Condition and Pigmentation trait probability integration is complete
-
-Stage 13 moves Condition and Pigmentation event probability onto the same canonical `TraitProbabilityService` path already used by Body Type.
-
-Frozen integration behavior:
-
-- Condition keeps its exact 5% base event probability, then selected-species rarity compensation is applied, then Trait Luck, then the final bounded probability is compared against `TraitRandom.Salts.CONDITION_EVENT`.
-- Pigmentation keeps its exact 1.5% base event probability, then selected-species rarity compensation is applied, then Trait Luck, then the final bounded probability is compared against `TraitRandom.Salts.PIGMENTATION_EVENT`.
-- `ConditionGenerator` and `PigmentationGenerator` now require the selected canonical `SpeciesProfile` and Trait Luck for event selection. Neither accepts a second independent rarity value.
-- `SpecimenGenerator` forwards the same server-owned Trait Luck value it already receives from `TideSpeciesSelectionBridge` to Body Type, Condition, and Pigmentation in the existing single-pass generation order.
-- Condition subtype selection still uses `TraitRandom.Salts.CONDITION_VARIANT` with the frozen 65% Scarred and 35% Parasite-Ridden conditional split.
-- Pigmentation subtype selection still uses `TraitRandom.Salts.PIGMENTATION_VARIANT` with the frozen 70% Albino and 30% Iridescent conditional split.
-- rarity compensation and Trait Luck alter only whether each axis event occurs. They do not alter subtype ratios and do not consume the variant RNG streams.
-- Body Type, Condition, and Pigmentation continue to use independent event and variant salts, so evaluating one axis does not shift any other axis and notable values can still stack.
-- all adjusted trait probability decisions remain in the server-authoritative canonical specimen generator. Client/UI and legacy compatibility code continue to consume persisted canonical axis values rather than recomputing them.
-- no Specimen Quality, Momentum, Perfect Catch reward, Perfect Specimen, or FishScore behavior is implemented by this stage.
-
-Exact tests prove one-star zero-Trait-Luck base probabilities remain 5% and 1.5%, five-star rarity compensation raises them to 12% and 3.6%, and five-star T=10 raises them to 22.56% and 7.0704% respectively. Statistical tests apply the compensated T=10 event probabilities while checking that triggered Condition remains approximately 65/35 and triggered Pigmentation remains approximately 70/30. The existing deterministic stacking seed remains valid at the one-star zero-Trait-Luck baseline, and `SpecimenGeneratorTest` now proves the same Trait Luck value is forwarded to all three implemented axes without changing the single natural specimen sample.
-
-Implementation commit `7e4a9f6804b07428c57c752e56d40e5075b7b6a2` contains the generator, runtime forwarding, and test changes. GitHub Actions run `33169902017` performs the exact-dependency clean build, unit/statistical tests, Fabric GameTests, and artifact upload for that implementation commit.
-
-## Per-species Trait Momentum storage is complete
-
-Stage 14 implements the storage and access layer for player Trait Momentum without applying Momentum to catch probabilities yet.
-
-Frozen storage behavior:
-
-- `TraitMomentumStorage` is the server-authoritative public facade and accepts `ServerPlayerEntity`, so client-only state cannot author Momentum values.
-- each player has an independent map keyed by canonical namespaced species ID; there is no global Momentum scalar and one species cannot overwrite another species' value.
-- stored Momentum is bounded to the inclusive range 0 through 15. Zero is the default and zero-valued entries are omitted from the serialized species map.
-- `get`, `set`, `add`, `clear`, and immutable `snapshot` access APIs are available for progression without exposing mutable backing data.
-- the storage uses Tide's existing per-player `TidePlayer` persistent NBT root, matching the persistence pattern already used by Tideborne discovery data. This provides logout/restart persistence without putting Momentum into the team-shared Tide journal.
-- Momentum is serialized under the dedicated `FishingV2TraitMomentum` compound with `DataVersion = 1` and a `Species` compound containing integer values by species ID.
-- malformed non-compound roots, wrong value types, invalid species IDs, and negative values do not create Momentum. Oversized stored values are clamped to 15.
-- the decoder also accepts an unversioned direct species-to-int map as a legacy/early-data shape, allowing safe forward migration instead of failing or creating a global fallback value.
-- no fish item, entity, specimen, `SpecimenData`, or client packet owns the player's Momentum.
-
-Unit coverage proves independent species values, cap/floor enforcement including overflow-safe additions, serialization/deserialization through the player-root shape, default zero for absent data, sanitization of malformed entries, and loading of the tolerated old unversioned format.
-
-Implementation commit `2727ad0ae3d6a35fcab047f93412220554ceb867` is green in GitHub Actions run `33170551133`. The exact-dependency build, all unit tests, Fabric GameTests, and built-JAR artifact upload completed successfully.
-
-## Trait Momentum progression is complete
-
-Stage 15 wires the stored per-player, per-species Momentum into canonical catch generation and completed-catch progression.
-
-Frozen progression behavior:
-
-- species selection remains unchanged and is still driven only by Fishing Luck and the canonical species selector.
-- after a species is selected, `TideSpeciesSelectionBridge` reads Momentum only for that selected species and captures the integer value before specimen generation.
-- the captured Momentum value is added to the server-owned `FishingContext.traitLuck()` as temporary Trait Luck for Body Type, Condition, and Pigmentation event probabilities. It does not participate in species selection.
-- the frozen captured value is stored only in transient `CanonicalCatchStateManager.CatchState`; it is not written into the fish item, entity, `SpecimenData`, provenance, or any client-owned state.
-- later changes to the player's stored Momentum cannot alter the deterministic specimen already generated for that catch because generation uses the captured value exactly once.
-- a fully normal catch is defined only by canonical trait axes: Body Type, Condition, Pigmentation, and Specimen Quality must all be `NORMAL`. Natural percentile, base/final size, and the Perfect Catch skill flag do not determine whether the specimen is fully normal.
-- a fully normal completed catch adds exactly +1 Momentum for that species.
-- any notable value on one of those canonical trait axes resets that species' Momentum to 0. This is the stage-15 interpretation of the specification's required substantial reduction.
-- the existing storage cap keeps Momentum bounded at 15.
-- progression occurs only from the server-side completed `TideFishingHook#retrieve(ItemStack, ServerWorld, PlayerEntity)` path. `CanonicalCatchStateManager` owns a synchronized one-shot guard, so duplicate completion callbacks for the same canonical catch cannot apply Momentum twice.
-- if the catch is invalidated or lost before completion, the canonical catch state is cleared first and there is no Momentum update.
-- item/entity conversion, serialization, bucket transfer, UI reads, legacy trait callbacks, and other representation callbacks do not update Momentum.
-- species isolation remains exact because both capture and progression use `SpecimenData.speciesId()` / selected `SpeciesProfile.speciesId()` as the only Momentum key.
-
-Focused tests prove repeated fully normal catches increase Momentum one point at a time, the 15 cap remains enforced, each notable canonical axis resets Momentum, other species remain unchanged, captured Momentum adds to temporary Trait Luck, fully-normal classification ignores non-axis size/Perfect Catch metadata, captured Momentum stays frozen in catch state, and the completion update callback can execute exactly once.
-
-Implementation commit `c2b7422d5a29325f25f1bab692f6526dc3780ebf` is green in GitHub Actions run `33171860987`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests, Fabric GameTests, and built-JAR artifact upload all completed successfully.
-
-## Perfect Catch pre-delivery lifecycle is complete
-
-Stage 16 fixes the runtime ordering so Tide's existing center-zone Perfect Catch result is known before canonical post-fight specimen finalization and fish delivery. It does not implement the later Perfect Catch reward math.
-
-Current canonical runtime order:
-
-```text
-species selected
--> catch/specimen seed fixed
--> natural percentile and base length generated once
--> Body Type generated
--> final physical size produced
--> canonical FightProfile generated
--> Tide minigame runs
--> Tide resolves the existing center-zone Perfect Catch skill check
--> retrieve(perfectCatch) enters on the server
--> perfectCatch captured into canonical catch/specimen state
--> Condition generated
--> Pigmentation generated
--> finalized specimen persisted to the selected fish item
--> Tide delivery continues
--> completed-catch Momentum progression runs once
-```
-
-Frozen lifecycle behavior:
-
-- `SpecimenGenerator.generatePreFight` now owns only the pre-fight specimen portion required to build the fight: the single natural specimen sample, Body Type, and Body Type physical-size finalization.
-- `SpecimenGenerator.finalizeAfterFight` receives that already-created pre-fight specimen and the authoritative `perfectCatch` boolean, writes the skill flag into canonical `SpecimenData`, then generates Condition and Pigmentation.
-- Perfect Catch is therefore available at the canonical post-fight generation boundary before final persistence, which is the integration point required by later +10 Trait Luck and Perfect Specimen reward work.
-- this stage does not yet apply +10 Trait Luck, the 1.25x Body Type event multiplier, or any Perfect Specimen bonus.
-- post-fight finalization preserves species ID, deterministic specimen seed, `basePercentile`, `baseLength`, Body Type, `finalLength`, and `finalPercentile` exactly.
-- species selection is not repeated.
-- natural percentile and base size are not repeated.
-- Perfect Catch alone does not change length or percentile.
-- `CanonicalCatchStateManager.CatchState` now keeps the pre-fight specimen mutable only inside transient server-owned catch state until one-shot post-fight finalization completes.
-- the same frozen captured Momentum value from Stage 15 is reused for post-fight Condition and Pigmentation probability generation; persistent Momentum is not reread during finalization.
-- `CanonicalCatchStateManager.capturePerfectCatch` finalizes canonical state first, then writes that finalized specimen onto matching canonical hooked items through `CanonicalSpecimenStorage` before Tide's delivery/retrieval work proceeds.
-- `SPECIMEN_PERFECT_CATCH` is therefore persisted together with the final Condition and Pigmentation before delivery.
-- repeated finalization calls return the already-finalized specimen, preventing a later callback from changing the captured Perfect Catch result.
-- `TideFishingHookMixin` captures the existing `retrieve(boolean perfectCatch)` parameter at method entry. Tide's center-zone detection itself is unchanged.
-- canonical V2 catches bypass the reconstructed late `PerfectCatchTraitBoost` mutation at `retrieve(boolean)` return. Legacy/noncanonical catches retain that old compatibility path.
-- the defensive canonical guard inside `PerfectCatchTraitBoost` remains in place as a second protection against old percentile/length mutation from other compatibility callers.
-
-Integration coverage in `CanonicalCatchStateManagerTest#perfectCatchReachesCanonicalGenerationBeforePersistence` proves the persistence seam receives `perfectCatch = true` only after canonical finalization, while species, seed, natural percentile, base length, Body Type, final length, and final percentile remain unchanged. A repeated finalization attempt with the opposite flag returns the same already-finalized specimen and cannot overwrite the captured result.
-
-Implementation commit `8a7f3bdc8bc4e16de926a50aff7b7e4efc7fffa0` is green in GitHub Actions run `33172897527`. The exact-dependency `./gradlew clean build --stacktrace`, unit/integration tests, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-## Perfect Catch +10 temporary Trait Luck is complete
-
-Stage 17 implements only the Fishing System 2.0 Perfect Catch Trait Luck reward on the server-authoritative post-fight finalization path established in Stage 16.
-
-Frozen reward behavior:
-
-- `SpecimenGenerator.PERFECT_CATCH_TRAIT_LUCK_BONUS` is exactly `10.0`.
-- `CanonicalCatchStateManager.CatchState` continues to compose the server-owned catch Trait Luck from `FishingContext.traitLuck()` plus the selected species' frozen `capturedTraitMomentum` value before post-fight finalization.
-- when `perfectCatch` is true, `SpecimenGenerator.finalizeAfterFight` adds exactly +10 to that already-composed temporary Trait Luck value before generating Condition and Pigmentation.
-- when `perfectCatch` is false, post-fight Condition and Pigmentation continue to receive the ordinary gear/context Trait Luck plus captured Momentum value unchanged.
-- the +10 value is a local post-fight probability input only. It is not written back to `FishingContext`, `TraitMomentumStorage`, `CatchState.capturedTraitMomentum`, `SpecimenData`, item components, or any client-owned state.
-- species selection has already completed before Perfect Catch is known, so the +10 cannot affect Fishing Luck weighting or the selected species.
-- Body Type has already been generated and physical size finalized before the minigame, so Stage 17 does not reroll Body Type and does not retroactively apply +10 Trait Luck to Body Type probability.
-- natural percentile, base length, final length, and final percentile remain unchanged by the Perfect Catch Trait Luck bonus.
-- the existing deterministic trait salts remain unchanged; Perfect Catch alters only the probability threshold supplied to the independent post-fight Condition and Pigmentation event comparisons.
-- the existing one-shot canonical finalization guard remains authoritative, so a later repeated callback cannot remove or reapply the bonus to generate a different specimen.
-- the separate Perfect Catch Body Type x1.25 reward and Perfect Specimen bonus remain intentionally unimplemented for later dedicated stages.
-
-`CanonicalCatchStateManagerTest#identicalCatchGetsExactlyTenTemporaryTraitLuckWhenPerfect` compares two otherwise identical canonical catches using the same species, specimen seed, pre-fight specimen, fight profile, gear/context Trait Luck, and captured Momentum. The fixture uses gear/context Trait Luck 7 plus Momentum 5, giving ordinary T=12 and Perfect Catch T=22. Deterministic seed `78` stays `NORMAL` for Condition at T=12 but becomes `SCARRED` at T=22, proving the +10 reward changes the actual canonical trait probability decision rather than merely setting the Perfect Catch flag. The same test proves species, seed, natural/final size state, Body Type, context Trait Luck, and captured Momentum are unchanged.
-
-Implementation commit `a4bc250c614e53ef03694721fc044172165a52f5` is green in GitHub Actions run `33173824349`. The exact-dependency `./gradlew clean build --stacktrace`, unit/integration tests, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-## Current execution gate
-
-Stage 17 is complete. Perfect Catch now grants exactly +10 temporary Trait Luck at the server-authoritative post-fight canonical trait-generation boundary, stacking with the catch's gear/context Trait Luck and frozen per-species Momentum without modifying either source and without affecting species selection or already-finalized Body Type/size state.
-
-Do not extend this completed stage into the Perfect Catch Body Type x1.25 reward, Perfect Specimen probability/bonus, FishScore, migration, gear progression, or later slices. Continue only with the next explicitly queued stage.
-
-## Later frozen slices
-
-Execute in this order unless a later explicit queued stage narrows the work further:
-
-1. apply the remaining Perfect Catch rewards: Body Type event chance x1.25 and the later Perfect Specimen bonus
-2. remaining independent Specimen Quality / Perfect Specimen implementation
-3. remaining Trait Luck and rarity-compensation integration for later notable axes
-4. FishScore V2 with the canonical linear 1 to 3000 mapping
-5. deterministic migration and canonical `SpecimenData` adoption across persistence/UI/network systems
-6. gear and Leviathan Bait progression
-7. compatibility SpeciesProfiles
-8. legacy cleanup
-9. final build, migration, optional-mod, and runtime validation
-
-See `docs/TODO.md` for checkbox-level execution state and `docs/FISHING_SYSTEM_2_SPEC.md` for frozen formulas and compatibility contracts.
-
-## Stage 32 runtime legacy migration coverage is complete
-
-This section supersedes the older execution-gate text above for the current queued repository state.
-
-Stage 32 finishes runtime migration coverage for old saved fish data across entities, buckets, displays, the Angler's Satchel, personal Journal roots, team Journal record snapshots, and relevant record-holder/network projection boundaries.
-
-Frozen migration contracts:
-
-- `LegacyFishMigrationService` remains the one canonical interpreter of legacy fish state. No persistence subsystem owns a separate trait mapping, percentile calculation, size inference, or seed derivation.
-- `LegacyPersistenceMigration` only bridges registered length-only Tide fish that lack enough legacy markers for the Stage 31 ItemStack classifier. Successful conversion still delegates to `LegacyFishMigrationService` and writes through `CanonicalSpecimenStorage`.
-- invalid current or partially canonical payloads fail closed and never fall back to length-only reinterpretation.
-- entity and bucket transfer paths migrate legacy transfer NBT before exporting or applying it, while preserving the existing transfer container and generic source-stack snapshot.
-- legacy bucketable entities identify species through Tide's normal bucket mapping. Entity reload migration is idempotent because a successful transfer payload becomes canonical immediately.
-- displays migrate their stored fish at the existing `setDisplayStack` boundary and use canonical `finalLength` without changing Tide's block-entity save format, model selection, orientation, placement, or removal behavior.
-- Angler's Satchel reads migrate nested stored fish and commit the upgraded copies back to the existing `SatchelContents` only when migration succeeds. Failed write-back leaves the original contents intact.
-- personal Journal loading performs one-time reconstructable record backfill on the persisted player root.
-- team Journal canonical reads, record update paths, and display/network projections use the same journal backfill before consuming canonical record snapshots.
-- old Tide journals contain aggregate largest/smallest lengths rather than complete historical specimen identity. Only those reconstructable record snapshots are backfilled. Historical latest specimen identity, missing trait axes, Perfect Catch state, and FishScore are not fabricated.
-- record-holder ownership, leaderboard, and history structures that do not contain recoverable specimen identity remain unchanged. They are not reinterpreted into a second inferred specimen.
-- all outer old-world save shapes remain loadable. Successful migration is write-once canonical state on the next read, so repeated reads do not reroll or regenerate specimen data.
-
-Stage 32 integration coverage includes legacy entity/bucket round trips, length-only display migration, persisted Satchel migration and extraction, deterministic personal/team Journal record backfill, preservation of unrelated record-holder metadata, and repeated-migration stability.
-
-The implementation/test head `0fd0301b13864b130d373b0e8e89ae4ab0e12383` is green in GitHub Actions run `33240339974`. The exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, Fabric GameTests, and built-JAR artifact upload all completed successfully.
-
-Detailed Stage 32 behavior is documented in `docs/STAGE_32_RUNTIME_LEGACY_MIGRATION.md`.
-
-## Current execution gate after Stage 32
-
-Stage 32 is complete. Do not begin later queued work from this state unless a new numbered stage explicitly authorizes it. Remaining unchecked migration and progression work is tracked in `docs/TODO.md`.
-
-## Stage 33 canonical gear modifier model is complete
-
-Stage 33 adds the immutable `FishingGearModifiers` domain model without migrating current runtime gear behavior.
-
-Frozen model contracts:
-
-- one server-side canonical model represents additive Fishing Luck and Trait Luck, multiplicative Strength and Tempo, category and catch-pool restrictions, per-Body-Type chance multipliers, and named additive/multiplicative fishing modifiers
-- numeric stacking semantics are explicit: luck and named additive keys add; Strength, Tempo, Body Type chance, and named multiplier keys multiply
-- category and catch-pool allow-lists intersect; deny-lists union; deny wins; an active empty allow-list means allow nothing rather than unrestricted
-- composition uses exact decimal accumulation before final `double` conversion, so input iteration order does not change the composed result
-- identifier maps and sets use canonical sorted order and immutable snapshots; Body Type keys use enum order
-- the model has no client or UI dependency
-- Stage 33 does not wire the model into `FishingContext`, gear items, bait, rod, line, hook paths, species selection, trait generation, or minigame behavior
-
-`FishingGearModifiersTest` covers neutral identity, numeric stacking, input-order independence, restriction composition, disjoint allow-list behavior, key ordering, immutability, and invalid inputs.
-
-Implementation commit `d0737e6043f5ddd3900dc9ed75207b4f48e9e29a` is green in GitHub Actions run `33241656395`: exact-dependency `./gradlew clean build --stacktrace`, unit tests included by the build, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all completed successfully.
-
-Detailed behavior is documented in `docs/STAGE_33_CANONICAL_GEAR_MODIFIERS.md`.
-
-## Current execution gate after Stage 33
-
-Stage 33 is complete. The canonical gear modifier representation now exists, but no runtime behavior migration has occurred. Do not integrate gear into the canonical context/fight pipeline or begin Leviathan Bait or other progression work unless a later numbered stage explicitly authorizes it.
-
-## Stage 34 Tide line modifier migration is complete
-
-Stage 34 moves Tide 2.1.1 Copper, Iron, Golden, and Diamond line fight values under the canonical `FishingGearModifiers` representation while retaining Tide's existing line identity checks and minigame ordering.
-
-Frozen Stage 34 values are Copper Tempo x0.90, Iron Strength x0.86, Golden Tempo x0.95, and Diamond Strength x0.75. `FishCatchMinigameLineModifierMixin` replaces Tide's four hard-coded constructor constants with the canonical model values at the same execution point, so each line effect remains single-application behavior rather than a second post-processing layer.
-
-Implementation commit `c96917c76ddf93c5f99789aab4675416a6e2e34d` is green in GitHub Actions run `33243058422`. Detailed behavior is documented in `docs/STAGE_34_LEGACY_FISHING_LINE_MIGRATION.md`.
-
-## Stage 35 Steel Leader migration is complete
-
-Stage 35 moves Steel Leader gameplay interpretation behind one canonical gear adapter without changing its persisted attachment representation or Angling Table compatibility.
-
-Frozen Stage 35 contracts:
-
-- `SteelLeaderGearModifiers` is the one runtime adapter from current attached-component or legacy custom-line Steel Leader state into `FishingGearModifiers`.
-- `FishingGearEffects` defines canonical named effects for catch-zone area, minigame speed, catch-loss prevention chance, and protection-source count.
-- default Steel Leader behavior remains catch-zone x0.90, minigame speed x1.05, and 90% shark catch-loss prevention.
-- the minigame consumer and shark-loss retrieve consumer no longer call `SteelLeaderAttachment.hasOnHook` directly or read Steel Leader balance values directly.
-- the existing Tentacle Line and Swift Line minigame precedence is preserved, so Steel Leader is not newly stacked on top of those active Myths line branches.
-- shark theft remains server-authoritative. The server determines the theft event, resolves the canonical protection modifier, consumes world RNG, invalidates lost catches, and sends feedback/payloads.
-- strict legacy `roll < chance` behavior is preserved. No leader consumes no protection roll; a present leader consumes one protection roll when a shark-loss event occurs, including when configured prevention is zero.
-- `SteelLeaderAttachment` and Angling Table Steel Leader identity checks remain only for storage/representation compatibility, not duplicate gameplay behavior.
-
-`SteelLeaderGearModifiersTest` covers exact default values, ordinary catches with no leader, disabled Apex behavior, canonical modifier composition, strict shark-protection chance boundaries, and protection RNG consumption semantics.
-
-Implementation commit `b2198af9109769eb9d8abe88d8453e4934618160` is green in GitHub Actions run `33243653492`: exact dependency fetch, reconstruction validation, `./gradlew clean build --stacktrace`, unit tests, `./gradlew runGametest --stacktrace`, and built-JAR artifact upload all passed.
-
-Detailed behavior is documented in `docs/STAGE_35_STEEL_LEADER_MIGRATION.md`.
-
-## Current execution gate after Stage 35
-
-Stage 35 is complete. Tide's built-in line values and Steel Leader are now partially migrated into the canonical gear/modifier architecture, but the broader gear/context pipeline and other compatibility gear remain intentionally unmigrated. Do not begin Tentacle Line, Swift Line, Leviathan Bait, or later gear slices unless a new numbered stage explicitly authorizes them.
-
-## Stage 40 Apex Waters compatibility SpeciesProfile audit is complete
-
-Stage 40 processed only Apex Waters 1.1.1.
-
-Frozen Stage 40 contracts:
-
-- the exact upstream Apex Waters 1.1.1 integration surface contains the Great White Shark entity, its spawn egg, raw shark meat, and cooked shark meat;
-- Apex Waters 1.1.1 contains no Tide fishing data or `FishData`, so it contributes zero fish to Tide's fishing selector;
-- the canonical Apex Waters SpeciesProfile set is therefore intentionally empty;
-- no rarity, encounter weight, fishing environment, physical size distribution, Strength, Tempo, or behavior is invented for the Great White Shark or its items;
-- `ApexWatersSpeciesProfileAdapter` explicitly exposes the empty official species set and has no Apex class dependency, preserving optional-mod safety;
-- adapter tests freeze the empty set and prove the shark entity, spawn egg, and meat items cannot become synthetic SpeciesProfiles;
-- CI run `33249418726` passed the clean build and unit tests, Fabric GameTests with Apex Waters absent, Fabric GameTests with the exact Apex Waters 1.1.1 JAR present, and built-JAR artifact upload.
-
-Implementation commit `5ae18e98f5f816520aacc9bf0e360e263e187e5f` is green in GitHub Actions run `33249418726`.
-
-Detailed behavior is documented in `docs/STAGE_40_APEX_WATERS_SPECIES_PROFILE_AUDIT.md`.
-
-## Current execution gate after Stage 40
-
-Stage 40 is complete. The next compatibility mod to process is **Myths of the Sea 1.3.0**. Do not process Myths of the Sea or another compatibility mod in this Stage 40 slice; continue only when the next explicitly queued stage authorizes it.
-
-## Stage 54 new-world regression pass is complete
-
-This section supersedes the older execution-gate text above for the current queued repository state.
-
-Stage 54 performed a focused regression pass from fresh state after the later Fishing System 2.0 migration and legacy-calculation cleanup work. The pass exercised the canonical new-world path together with the repository's existing unit and Fabric GameTest coverage for normal fishing, species eligibility, percentile/size, Body Type, Condition, Pigmentation, Perfect Catch, Perfect Specimen, canonical Strength/Tempo, Tide lines, rods, Steel Leader, Leviathan Bait, buckets, displays, the Angler's Satchel, Journal persistence, and leaderboard/record consumers.
-
-Focused Stage 54 GameTests add direct fresh-state coverage for:
-
-- empty per-species Trait Momentum state and current-format persistence;
-- canonical specimen generation with current schema/generation, one natural percentile/base-size pair, finalized size/traits, canonical FishScore, and direct ItemStack persistence without legacy migration;
-- a brand-new rod with no Steel Leader state, current Steel Leader attachment add/remove behavior, and canonical catch-zone, minigame-speed, and catch-loss-protection effects;
-- canonical Leviathan Bait modifiers, including fish-only catch restriction, +15 Fishing Luck, +8 Trait Luck, Strength x1.15, and Tempo x1.15.
-
-The regression pass exposed one production defect: `SteelLeaderAttachment` could miss the current `STEEL_LEADER_ATTACHED` component when given a fresh `ItemStack`, because the compatibility reflection path did not represent the actual new-stack component access. The Stage 54 production fix makes `ItemStack` reads and writes use `TideTraitsComponents.STEEL_LEADER_ATTACHED` directly while retaining the existing compatibility reflection fallback for other supported objects. No balance constants or unrelated runtime behavior changed.
-
-Stage 54 commits:
-
-- `908db40bfd6897d863a07725d4f52afb9b186239` adds the focused fresh-world regression GameTests and `docs/STAGE_54_FRESH_WORLD_REGRESSION.md`;
-- `b087f3e6a386d006afd672533e5c175156dff7db` fixes fresh Steel Leader attachment state.
-
-GitHub Actions run `33263857714` is green for the production-fix head. The Java 21 workflow completed exact dependency/reconstruction validation, `./gradlew clean build --stacktrace` with unit tests, Fabric GameTests without Apex Waters, Fabric GameTests with the exact Apex Waters 1.1.1 artifact, and built-JAR artifact upload successfully.
-
-Detailed Stage 54 validation is documented in `docs/STAGE_54_FRESH_WORLD_REGRESSION.md`.
-
-## Current execution gate after Stage 54
-
-Stage 54 is complete. The new-world regression gate is green, the only defect found by this pass was the fresh Steel Leader attachment-state bug, and that defect is fixed. Do not begin a later numbered stage from this state unless explicitly queued.
-
-## Stage 55 Tideborne 1.3.57 old-world compatibility is complete
-
-This section supersedes the older execution-gate text above for the current queued repository state.
-
-Stage 55 focused exclusively on saved Tideborne 1.3.57 data. Real reconstructable legacy fish now migrate exactly once to canonical V2 state and receive deterministic canonical FishScore from the final migrated specimen through `FishScoreV2Service`. The migration adds no RNG, does not call specimen trait generation, preserves valid legacy percentile/physical size, and cannot reroll traits or size.
-
-Three compatibility defects were fixed during the pass:
-
-- pre-V2 real fish could reach canonical specimen state without a canonical FishScore after legacy cached-score fallback removal;
-- older partial canonical ItemStacks could restore preserved canonical fields after a missing score had already been calculated, so missing score calculation now occurs only after the final preserved specimen is known while an existing saved score remains authoritative;
-- aggregate-only Journal record reconstruction briefly inherited real-fish scoring, so aggregate historical snapshots now deliberately keep score absent rather than inventing a historical specimen score from incomplete identity.
-
-The regression matrix covers old fish ItemStacks, entities, bucket payloads, displays, Angler's Satchel entries, personal Journal, team Journal, event-history score persistence, contributor/leaderboard score persistence, and top-fish/record data. Real migrated fish are required to retain deterministic seed, natural percentile, physical length, mapped traits, and exact score across repeated reads/transfers. Aggregate-only historical structures preserve their existing semantics and ordering instead of being reinterpreted into a synthetic specimen.
-
-Stage 55 implementation/test head `6fbddf5ca4116273f9ad06c086a735d8e678e9fb` is green in GitHub Actions run `33268651496`. The Java 21 workflow completed exact dependency/reconstruction validation, `./gradlew clean build --stacktrace` with all unit tests, Fabric GameTests without Apex Waters, Fabric GameTests with exact Apex Waters 1.1.1, and built-JAR artifact upload successfully.
-
-Detailed Stage 55 behavior and validation are documented in `docs/STAGE_55_1_3_57_COMPATIBILITY.md`.
-
-## Current execution gate after Stage 55
-
-Stage 55 is complete. Tideborne 1.3.57 real fish migrate without loss, repeated migration, trait rerolls, or size rerolls and receive deterministic canonical score from the final preserved specimen. Old aggregate-only historical data remains loadable and non-synthetic. Do not begin a later numbered stage unless explicitly queued.
-
-## Stages 57-58 Fishing System 2.0 final validation is complete
-
-This section supersedes the older execution-gate text above for the current repository state.
-
-Tideborne is versioned as 2.0.0 for Minecraft 1.21.1, Java 21, and Tide 2.1.1. The final
-release workflow validates the exact `dev` release commit and publishes only after the full
-gate succeeds.
-
-The final validation includes:
-
-- repository structure, mixin, entrypoint, GameTest registration, intermediary-name, and
-  common-entrypoint client-class checks;
-- a clean build and the complete JUnit suite;
-- the complete Fabric GameTest suite in four runtime matrices: no optional mods, Apex Waters
-  only, Myths of the Sea only, and both optional mods;
-- a real dedicated-server boot plus a separately launched client connection;
-- normal server fishing through the canonical bridge, equality between persisted specimen
-  data and server-owned catch state, immutable canonical state when compatibility mirrors are
-  edited, and server-owned per-player Momentum;
-- client-to-server payload boundary checks plus the existing team Journal, shared discovery,
-  record-holder, leaderboard, event, Satchel, transfer, migration, and canonical networking
-  tests;
-- production artifact verification for `build/libs/tideborne-2.0.0.jar` followed by release
-  publication as `TIDEBORN-2.0.0` from the exact successful commit.
-
-Final inspection corrected five previously unregistered GameTest classes and stale 1.3.57
-release metadata. All 12 GameTest classes are now registered. Canonical Fishing System 2.0
-selection, specimen, trait, score, persistence, networking, Journal, record, and gear paths
-are authoritative. Legacy paths remain only as guarded migration, representation, or
-noncanonical compatibility fallbacks and cannot reroll or overwrite canonical V2 catches.
-
-Running the newly registered coverage found and fixed two hidden transfer/idempotence defects:
-specimen-free entities no longer generate canonical state from an ordinary Tide length during
-export, and the first migration read now returns the normalized persisted representation seen
-by subsequent reads rather than non-persisted transient provenance.
-
-The dedicated smoke harness detects readiness and the client connection from the kernel socket
-state because Gradle buffers redirected JavaExec logs; after clean shutdown it still requires the
-server's completed join message and rejects client-class, entrypoint, initializer, or mixin errors.
-
-There are no known Fishing System 2.0 blockers. A two-graphical-client interaction is not
-automated; multi-recipient consistency is instead covered by server-side projection and
-broadcast tests, while the runtime smoke proves an actual client can join the dedicated
-server. Detailed validation is documented in
+The final release validation for the core 2.0.0 implementation is documented in
 `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`.
 
-## Current execution gate after Stages 57-58
+## Stage 59 UI correctness and polish is complete
 
-Fishing System 2.0 implementation and final validation are complete. `dev` is the release
-candidate for merge into `main`; this stage does not merge, rebase, or modify `main`.
+Stage 59 established the shared canonical fishing presentation layer and corrected remaining
+score-projection and layout issues across the fishing-facing UI.
 
-## Stage 59 Fishing System 2.0 UI correctness and polish is complete
+Current UI contracts include:
 
-Stage 59 corrected the remaining Fishing System 2.0 presentation and projection defects
-without changing the canonical scoring formula or generating specimen data in a UI path.
+- canonical specimen/FishScore data remains the source of truth;
+- UI code does not generate or mutate specimen state;
+- shared formatting is used for score, percentile, length, traits, timestamps, and unavailable values;
+- Team Records, History, leaderboards, Top Fish, species views, tooltips, and the Angler's Satchel use bounded, human-readable layouts;
+- contributor and event score projections consume canonical score state rather than a duplicate formula.
 
-The contributor FishScore projection now reads the highest valid canonical value from the
-active or finalized catch. This fixes the nested catch-lifecycle case where the inner journal
-write cleared the active catch before the contributor update ran. Missing values remain
-missing instead of becoming zero, and legacy best-score migration remains idempotent.
+Detailed Stage 59 behavior is documented in `docs/STAGE_59_FISHING_UI_POLISH.md`.
 
-Fishing screens now share formatting for canonical score, percentile, length, traits,
-timestamps, and unavailable values. Summary and History share one structured event-row
-renderer. Leaderboards, Top Fish, species profiles, team statistics, tooltips, and the
-Angler's Satchel use clearer grouped layouts, stable ranks, explicit units, right-aligned
-numeric columns, `N/A` for unavailable canonical values, and bounded text with hover detail.
+## Stage 60 legacy fish recovery tooling is complete
 
-Focused tests cover canonical score propagation, missing-score behavior, legacy migration,
-Top Fish and contributor agreement, formatter edge cases, layout truncation/alignment, and
-source-level protection against score formulas or specimen generation in the affected UI.
-The fixed-size screen pass also verified that the five two-line History rows and the revised
-Team Records, Top Fish, species, and Satchel sections remain inside their established panel
-bounds at the default scaled layout. CI is headless, so no pixel screenshot baseline was
-captured.
+Stage 60 adds operator-only recovery tooling for fish created before Fishing System 2.0.
 
-The dedicated client-connect smoke remains a known runner-only failure after the server is
-ready. It is now recorded as a non-blocking workflow result so it cannot suppress production
-artifact validation, validation counts, or artifact upload. GitHub Actions run `33303275742`
-is green: 249 unit tests, all 44 registered GameTests in four optional-mod matrices, production
-JAR validation, artifact upload, and release refresh passed. Detailed changes and validation
-are documented in `docs/STAGE_59_FISHING_UI_POLISH.md`.
+Repair commands:
 
-## Current execution gate after Stage 59
+```text
+/tideborne fishing repair held
+/tideborne fishing repair inventory
+```
 
-Stage 59 is complete on `dev`. No known Fishing System 2.0 UI correctness blocker remains.
-This stage does not merge, rebase, or modify `main`.
+Repair delegates to the existing `CanonicalSpecimenStorage` one-way migration boundary. It does
+not call the specimen generator and does not invent a new specimen. Recoverable legacy identity
+is preserved where available, including species, deterministic seed, percentile/physical size,
+Giant/Dwarf state, mapped Condition, Pigmentation, Perfect Specimen state, and compatible stack
+metadata. Missing canonical FishScore is calculated from the final preserved specimen through the
+single V2 score service.
 
-## CI workflow audit and optimization
+Destructive reroll commands:
 
-The current 2.0.0 CI path is now centralized in `.github/workflows/build.yml`.
-It retains the exact-dependency fetch, repository validation, clean build and JUnit suite,
-four required optional-mod GameTest matrices, non-blocking diagnostic smoke harness,
-production-artifact validation, artifact upload, and successful-`dev` release refresh.
+```text
+/tideborne fishing reroll held --confirm
+/tideborne fishing reroll inventory --confirm
+```
 
-The active workflow now checksum-verifies every frozen external runtime artifact, avoids
-superseded runs for the same workflow/ref, and grants `contents: write` only to the
-post-validation release job. The duplicate intermediary-identifier scan was removed because
-`scripts/validate_repository.sh` already performs the same failing check.
+Reroll intentionally replaces specimen identity with newly generated canonical data. The
+`--confirm` literal is mandatory. An unconfirmed reroll performs no migration and no write.
+Both repair and reroll execute server-side and require operator permission level 2.
 
-The reconstruction-source, reconstruction-repair, and one-off release workflows were
-retired. The first two could write to the historical reconstruction branch despite Phase 0
-being complete, and the latter referenced a fixed historical run, artifact, and commit.
-The reconstruction scripts remain stored for provenance but no longer run continuously.
+Focused GameTests prove deterministic/idempotent repair, identity preservation, confirmation
+safety, and deterministic reroll behavior for an explicit replacement seed.
 
-Implementation commit `ce4595d7bb4a7a8733ba57ef74a9fe524f9616f6` passed local YAML parsing
-and whitespace validation. The full Gradle and shell-script gates were not runnable on the
-local machine because it has Java 8, no WSL distribution, and no exact runtime JARs. The
-Java 21 GitHub Actions workflow was triggered from the `dev` push for full validation.
+Command details are documented in `docs/FISHING_RECOVERY.md` and combined Stage 60/61 validation
+is documented in `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`.
 
-Its build job passed every validation step. The isolated release job initially failed because
-the GitHub CLI could not infer a repository without a checkout. The release commands now pass
-`$GITHUB_REPOSITORY` explicitly. Fix commit
-`45c68d03764b4ee06af537e3a368765d5bc50fdb` is green in GitHub Actions run
-`33305995133`: 249 unit tests, all 44 registered GameTests in four compatibility matrices,
-the dedicated-server/client smoke test, production JAR validation, artifact upload, and the
-isolated release publish job all passed. The refreshed `TIDEBORN-2.0.0` release targets that
-validated commit.
+## Stage 61 final fishing integration and polish is complete
+
+Stage 61 closes the remaining player-facing integration issues without creating another specimen
+or score authority.
+
+Current contracts:
+
+- legitimate registered Tide fish entering Tide's normal `TidePlayerData.logCatch` accounting path
+  with physical length but no canonical specimen are deterministically canonicalized before normal
+  catch progression executes;
+- existing canonical fish remain authoritative and are never rerolled by this bridge;
+- the normal Tide catch-accounting path continues to own Journal/discovery, Team Journal,
+  leaderboard, history, and record progression rather than a parallel crate-only progression system;
+- Top Fish canonical specimen details use full human-readable labels for FishScore, Percentile,
+  Length, Body Type, Condition, Pigmentation, and Quality;
+- the Top Fish panel preserves the shared Stage 59 formatting/color conventions and bounded hover
+  behavior while avoiding the cramped abbreviated `Cond`, `Pig`, and `Qual` presentation;
+- UI code remains read-only with respect to canonical specimen generation and mutation.
+
+Focused GameTests cover the progression bridge and canonical-state preservation.
+
+## Final Stage 60/61 validation
+
+Stage 60 implementation commit:
+
+- `72f9a3b55851b0e5cbe8ff68f37d464b4720eadb` - `feat: add legacy fish repair and guarded reroll tooling`
+
+Stage 61 implementation commit:
+
+- `48983670bbb996fc09d9fb2cab0f533fa762c86d` - `fix: polish specimen details and restore crate fish progression`
+
+The first Stage 61 workflow correctly caught that the two new GameTest classes had not been
+registered as Fabric GameTest entrypoints. That repository-validation failure occurred before
+Java compilation and was fixed by:
+
+- `9619f756c9ecd61139acd5ffc687d68be61a4e04` - `test: register Stage 60 and 61 GameTests`
+
+GitHub Actions run `33319707597` is green on that validated implementation head. It passed:
+
+- exact frozen dependency retrieval and repository validation;
+- clean Java 21 Gradle build and the full unit-test suite;
+- Fabric GameTests with no optional compatibility mods;
+- Fabric GameTests with Apex Waters 1.1.1 only;
+- Fabric GameTests with Myths of the Sea 1.3.0 only;
+- Fabric GameTests with Apex Waters and Myths of the Sea together;
+- dedicated-server/client-connect smoke validation;
+- production `tideborne-2.0.0.jar` validation;
+- final validation-count checks;
+- built-JAR artifact upload;
+- release publication/refresh.
+
+No Stage 60 or Stage 61 implementation failure remains after that run.
+
+## Current execution gate after Stage 61
+
+Fishing System 2.0, its legacy recovery/admin tooling, and its final player-facing integration
+polish are complete on `dev`.
+
+There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item.
+Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope,
+primarily long-term licensing policy and future version compatibility.
+
+Do not merge, rebase, or modify `main` unless explicitly authorized.

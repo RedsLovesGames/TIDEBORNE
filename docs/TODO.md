@@ -1,8 +1,17 @@
 # Tideborne post-2.0 backlog
 
-Fishing System 2.0 implementation is complete. The authoritative behavior remains in
-`docs/FISHING_SYSTEM_2_SPEC.md`, and the completed release gate is documented in
-`docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`.
+Updated: 2026-08-30
+
+Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, and validation are complete on `dev`.
+
+The authoritative behavior and validation record are documented in:
+
+- `docs/FISHING_SYSTEM_2_SPEC.md`
+- `docs/CURRENT_STATE.md`
+- `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`
+- `docs/STAGE_59_FISHING_UI_POLISH.md`
+- `docs/FISHING_RECOVERY.md`
+- `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`
 
 ## Fishing System 2.0
 
@@ -15,16 +24,27 @@ Fishing System 2.0 implementation is complete. The authoritative behavior remain
   Momentum, client request boundaries, team Journal sync, record/leaderboard projections,
   optional-mod matrices, and dedicated-server classloading.
 - [x] Produce and validate the `tideborne-2.0.0.jar` production artifact.
-- [x] Publish the validated artifact as `TIDEBORN-2.0.0` from the final `dev` commit.
-- [x] Complete the Stage 59 Fishing System 2.0 UI correctness and polish pass, including
-  canonical score projections, shared formatting, structured History rows, leaderboard and
-  Top Fish layouts, species display cleanup, and Angler's Satchel clarity.
+- [x] Publish the validated artifact as `TIDEBORN-2.0.0` from the validated `dev` commit.
+- [x] Complete Stage 59 Fishing System 2.0 UI correctness and polish, including canonical
+  score projections, shared formatting, structured History rows, leaderboard and Top Fish
+  layouts, species display cleanup, and Angler's Satchel clarity.
+- [x] Complete Stage 60 legacy fish recovery tooling with identity-preserving repair and an
+  explicitly confirmed destructive reroll path.
+- [x] Complete Stage 61 final integration polish, including Top Fish specimen-detail layout
+  cleanup and canonical progression for legitimate fish entering Tide's normal catch-accounting
+  path from crate rewards.
+- [x] Register and execute the Stage 60 and Stage 61 GameTests in every required compatibility
+  matrix.
 - [x] Consolidate continuous validation on the current 2.0.0 build workflow, retire
   reconstruction-era and one-off release workflows, and pin every CI runtime dependency by
   SHA-256.
 
-No known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item
-remains.
+Stages 60 and 61 are validated on implementation head
+`9619f756c9ecd61139acd5ffc687d68be61a4e04` by GitHub Actions run `33319707597`.
+The clean build, unit tests, all four Fabric GameTest matrices, dedicated-server/client smoke,
+production JAR validation, artifact upload, and release publication passed.
+
+No known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item remains.
 
 ## Remaining non-Fishing-System-2.0 work
 
