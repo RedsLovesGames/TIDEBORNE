@@ -1,27 +1,27 @@
 package com.redslovesgames.tideborne.fishing.v2;
 
-import com.li64.tide.registries.TideItems;
-import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 /**
  * Canonical identity registry for fishing gear consumed by Fishing System 2.0.
  *
- * <p>Resolution is deliberately based on the registered {@link Item} instance rather than display
- * names, translation keys, class names, or substring matching. A visually or textually similar item
- * therefore cannot inherit Tideborne fishing behavior unless it is explicitly registered here.
+ * <p>Resolution is deliberately based on exact registered item IDs rather than display names,
+ * translation keys, class names, or substring matching. A visually or textually similar item
+ * therefore cannot inherit Tideborne fishing behavior unless its exact namespaced ID has a profile.
  */
 public final class FishingGearRegistry {
-    private static final Map<Item, GearProfile> BY_ITEM = createProfiles();
-    private static final Map<GearProfile, Item> BY_PROFILE = invertProfiles(BY_ITEM);
+    private static final Map<Identifier, GearProfile> BY_ID = createProfiles();
+    private static final Map<GearProfile, Identifier> BY_PROFILE = invertProfiles(BY_ID);
     private static final Set<GearProfile> PROFILES = registeredProfiles(BY_PROFILE);
 
     private FishingGearRegistry() {
@@ -38,10 +38,18 @@ public final class FishingGearRegistry {
         if (item == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(BY_ITEM.get(item));
+        return resolveId(Registries.ITEM.getId(item));
     }
 
-    public static Optional<Item> registeredItem(GearProfile profile) {
+    /** Exact-ID lookup used by diagnostics and plain unit tests without bootstrapping game registries. */
+    public static Optional<GearProfile> resolveId(Identifier itemId) {
+        if (itemId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(BY_ID.get(itemId));
+    }
+
+    public static Optional<Identifier> registeredId(GearProfile profile) {
         if (profile == null) {
             return Optional.empty();
         }
@@ -56,29 +64,24 @@ public final class FishingGearRegistry {
         return PROFILES;
     }
 
-    private static Map<Item, GearProfile> createProfiles() {
-        IdentityHashMap<Item, GearProfile> profiles = new IdentityHashMap<>();
-
-        register(profiles, TideItems.COPPER_LINE, GearProfile.TIDE_COPPER_LINE);
-        register(profiles, TideItems.IRON_LINE, GearProfile.TIDE_IRON_LINE);
-        register(profiles, TideItems.GOLDEN_LINE, GearProfile.TIDE_GOLDEN_LINE);
-        register(profiles, TideItems.DIAMOND_LINE, GearProfile.TIDE_DIAMOND_LINE);
-
-        register(profiles, TideboundItems.TENTACLE_LINE, GearProfile.TENTACLE_LINE);
-        register(profiles, TideboundItems.SWIFT_LINE, GearProfile.SWIFT_LINE);
-        register(profiles, TideboundItems.STEEL_LEADER, GearProfile.STEEL_LEADER);
-        register(profiles, TideboundItems.SEAFARERS_HOOK, GearProfile.SEAFARERS_HOOK);
-        register(profiles, TideboundItems.SHARK_TOOTH_HOOK, GearProfile.SHARK_TOOTH_HOOK);
-        register(profiles, TideboundItems.KUJIRA_BONE_FISHING_ROD, GearProfile.KUJIRA_BONE_FISHING_ROD);
-        register(profiles, TideboundItems.LEVIATHAN_BAIT, GearProfile.LEVIATHAN_BAIT);
-
+    private static Map<Identifier, GearProfile> createProfiles() {
+        LinkedHashMap<Identifier, GearProfile> profiles = new LinkedHashMap<>();
+        for (GearProfile profile : GearProfile.values()) {
+            GearProfile previous = profiles.put(profile.itemId(), profile);
+            if (previous != null) {
+                throw new IllegalStateException(
+                        "Fishing gear item ID registered twice: " + profile.itemId()
+                                + " for " + previous + " and " + profile
+                );
+            }
+        }
         return Collections.unmodifiableMap(profiles);
     }
 
-    private static Map<GearProfile, Item> invertProfiles(Map<Item, GearProfile> profiles) {
-        EnumMap<GearProfile, Item> byProfile = new EnumMap<>(GearProfile.class);
-        profiles.forEach((item, profile) -> {
-            Item previous = byProfile.put(profile, item);
+    private static Map<GearProfile, Identifier> invertProfiles(Map<Identifier, GearProfile> profiles) {
+        EnumMap<GearProfile, Identifier> byProfile = new EnumMap<>(GearProfile.class);
+        profiles.forEach((itemId, profile) -> {
+            Identifier previous = byProfile.put(profile, itemId);
             if (previous != null) {
                 throw new IllegalStateException("Fishing gear profile registered twice: " + profile);
             }
@@ -92,17 +95,10 @@ public final class FishingGearRegistry {
         return Collections.unmodifiableMap(byProfile);
     }
 
-    private static Set<GearProfile> registeredProfiles(Map<GearProfile, Item> profiles) {
+    private static Set<GearProfile> registeredProfiles(Map<GearProfile, Identifier> profiles) {
         EnumSet<GearProfile> registered = EnumSet.noneOf(GearProfile.class);
         registered.addAll(profiles.keySet());
         return Collections.unmodifiableSet(registered);
-    }
-
-    private static void register(Map<Item, GearProfile> profiles, Item item, GearProfile profile) {
-        GearProfile previous = profiles.put(item, profile);
-        if (previous != null) {
-            throw new IllegalStateException("Fishing gear item registered twice: " + previous + " and " + profile);
-        }
     }
 
     public enum Origin {
@@ -119,24 +115,30 @@ public final class FishingGearRegistry {
     }
 
     public enum GearProfile {
-        TIDE_COPPER_LINE(Origin.TIDE, Slot.LINE),
-        TIDE_IRON_LINE(Origin.TIDE, Slot.LINE),
-        TIDE_GOLDEN_LINE(Origin.TIDE, Slot.LINE),
-        TIDE_DIAMOND_LINE(Origin.TIDE, Slot.LINE),
-        TENTACLE_LINE(Origin.TIDEBORNE, Slot.LINE),
-        SWIFT_LINE(Origin.TIDEBORNE, Slot.LINE),
-        STEEL_LEADER(Origin.TIDEBORNE, Slot.ATTACHMENT),
-        SEAFARERS_HOOK(Origin.TIDEBORNE, Slot.HOOK),
-        SHARK_TOOTH_HOOK(Origin.TIDEBORNE, Slot.HOOK),
-        KUJIRA_BONE_FISHING_ROD(Origin.TIDEBORNE, Slot.ROD),
-        LEVIATHAN_BAIT(Origin.TIDEBORNE, Slot.BAIT);
+        TIDE_COPPER_LINE("tide", "copper_line", Origin.TIDE, Slot.LINE),
+        TIDE_IRON_LINE("tide", "iron_line", Origin.TIDE, Slot.LINE),
+        TIDE_GOLDEN_LINE("tide", "golden_line", Origin.TIDE, Slot.LINE),
+        TIDE_DIAMOND_LINE("tide", "diamond_line", Origin.TIDE, Slot.LINE),
+        TENTACLE_LINE("tidebound_compatibility", "tentacle_line", Origin.TIDEBORNE, Slot.LINE),
+        SWIFT_LINE("tidebound_compatibility", "swift_line", Origin.TIDEBORNE, Slot.LINE),
+        STEEL_LEADER("tidebound_compatibility", "steel_leader", Origin.TIDEBORNE, Slot.ATTACHMENT),
+        SEAFARERS_HOOK("tidebound_compatibility", "seafarers_hook", Origin.TIDEBORNE, Slot.HOOK),
+        SHARK_TOOTH_HOOK("tidebound_compatibility", "shark_tooth_hook", Origin.TIDEBORNE, Slot.HOOK),
+        KUJIRA_BONE_FISHING_ROD("tidebound_compatibility", "kujira_bone_fishing_rod", Origin.TIDEBORNE, Slot.ROD),
+        LEVIATHAN_BAIT("tidebound_compatibility", "leviathan_bait", Origin.TIDEBORNE, Slot.BAIT);
 
+        private final Identifier itemId;
         private final Origin origin;
         private final Slot slot;
 
-        GearProfile(Origin origin, Slot slot) {
+        GearProfile(String namespace, String path, Origin origin, Slot slot) {
+            this.itemId = Identifier.of(namespace, path);
             this.origin = origin;
             this.slot = slot;
+        }
+
+        public Identifier itemId() {
+            return itemId;
         }
 
         public Origin origin() {
