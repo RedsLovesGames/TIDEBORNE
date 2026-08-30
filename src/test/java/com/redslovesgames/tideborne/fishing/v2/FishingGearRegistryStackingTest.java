@@ -1,6 +1,8 @@
 package com.redslovesgames.tideborne.fishing.v2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
 import com.redslovesgames.tideboundcompatibility.fishing.SteelLeaderGearModifiers;
@@ -29,11 +31,11 @@ class FishingGearRegistryStackingTest {
                 FishingGearEffects.minigameSpeedMultiplier(combined), 1.0e-12);
         assertEquals(config.steelLeaderCatchLossPreventionChance,
                 FishingGearEffects.catchLossPreventionChance(combined), 1.0e-12);
-        assertTrueFishOnly(combined);
+        assertFishOnly(combined);
     }
 
-    private static void assertTrueFishOnly(FishingGearModifiers modifiers) {
-        assertEquals(true, modifiers.categoryRestriction().allows(TideborneFishingGearModifiers.FISH_CATCH_CATEGORY));
-        assertEquals(false, modifiers.categoryRestriction().allows("crate"));
+    private static void assertFishOnly(FishingGearModifiers modifiers) {
+        assertTrue(modifiers.categoryRestriction().allows(TideborneFishingGearModifiers.FISH_CATCH_CATEGORY));
+        assertFalse(modifiers.categoryRestriction().allows("crate"));
     }
 }
