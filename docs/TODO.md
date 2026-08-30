@@ -42,10 +42,10 @@ The authoritative behavior and validation record are documented in:
 - [x] Consolidate continuous validation on the current 2.0.0 build workflow, retire
   reconstruction-era and one-off release workflows, and pin every CI runtime dependency by
   SHA-256.
-- [x] Complete Stage 62 canonical fishing-gear registry hardening: exact registered-item identity
-  profiles now drive native Tide line resolution, Tideborne line/hook/rod recognition, advanced
-  gear tooltips, and operator diagnostics; regression tests cover complete registration,
-  unregistered lookalikes, metadata/reverse lookup, and composed gear stacking.
+- [x] Complete Stage 62 canonical fishing-gear registry hardening: exact namespaced registered-item
+  IDs now drive native Tide line resolution, Tideborne line/hook/rod recognition, advanced gear
+  tooltips, and operator diagnostics; regression tests cover complete registration, unregistered
+  lookalikes, metadata/reverse lookup, and composed gear stacking.
 
 Stages 60 and 61 are validated on implementation head
 `9619f756c9ecd61139acd5ffc687d68be61a4e04` by GitHub Actions run `33319707597`.
