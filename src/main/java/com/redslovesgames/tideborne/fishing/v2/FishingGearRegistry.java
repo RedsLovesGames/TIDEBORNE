@@ -3,6 +3,7 @@ package com.redslovesgames.tideborne.fishing.v2;
 import com.li64.tide.registries.TideItems;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -20,8 +21,8 @@ import net.minecraft.item.ItemStack;
  */
 public final class FishingGearRegistry {
     private static final Map<Item, GearProfile> BY_ITEM = createProfiles();
-    private static final Set<GearProfile> PROFILES =
-            Collections.unmodifiableSet(EnumSet.allOf(GearProfile.class));
+    private static final Map<GearProfile, Item> BY_PROFILE = invertProfiles(BY_ITEM);
+    private static final Set<GearProfile> PROFILES = registeredProfiles(BY_PROFILE);
 
     private FishingGearRegistry() {
     }
@@ -38,6 +39,13 @@ public final class FishingGearRegistry {
             return Optional.empty();
         }
         return Optional.ofNullable(BY_ITEM.get(item));
+    }
+
+    public static Optional<Item> registeredItem(GearProfile profile) {
+        if (profile == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(BY_PROFILE.get(profile));
     }
 
     public static boolean matches(ItemStack stack, GearProfile profile) {
@@ -65,6 +73,29 @@ public final class FishingGearRegistry {
         register(profiles, TideboundItems.LEVIATHAN_BAIT, GearProfile.LEVIATHAN_BAIT);
 
         return Collections.unmodifiableMap(profiles);
+    }
+
+    private static Map<GearProfile, Item> invertProfiles(Map<Item, GearProfile> profiles) {
+        EnumMap<GearProfile, Item> byProfile = new EnumMap<>(GearProfile.class);
+        profiles.forEach((item, profile) -> {
+            Item previous = byProfile.put(profile, item);
+            if (previous != null) {
+                throw new IllegalStateException("Fishing gear profile registered twice: " + profile);
+            }
+        });
+        if (byProfile.size() != GearProfile.values().length) {
+            throw new IllegalStateException(
+                    "Fishing gear profile registry is incomplete: expected "
+                            + GearProfile.values().length + ", found " + byProfile.size()
+            );
+        }
+        return Collections.unmodifiableMap(byProfile);
+    }
+
+    private static Set<GearProfile> registeredProfiles(Map<GearProfile, Item> profiles) {
+        EnumSet<GearProfile> registered = EnumSet.noneOf(GearProfile.class);
+        registered.addAll(profiles.keySet());
+        return Collections.unmodifiableSet(registered);
     }
 
     private static void register(Map<Item, GearProfile> profiles, Item item, GearProfile profile) {
