@@ -303,11 +303,12 @@ jobs:
           tag='TIDEBORN-2.0.0'
           artifact='release-assets/tideborne-2.0.0.jar'
           test -f "$artifact"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$artifact" --clobber
-            gh release edit "$tag" --target "$GITHUB_SHA" --title "$tag"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" "$artifact" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$tag"
           else
             gh release create "$tag" "$artifact" \
+              --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \
               --title "$tag" \
               --generate-notes

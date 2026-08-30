@@ -742,3 +742,7 @@ Implementation commit `ce4595d7bb4a7a8733ba57ef74a9fe524f9616f6` passed local YA
 and whitespace validation. The full Gradle and shell-script gates were not runnable on the
 local machine because it has Java 8, no WSL distribution, and no exact runtime JARs. The
 Java 21 GitHub Actions workflow was triggered from the `dev` push for full validation.
+
+Its build job passed every validation step. The isolated release job initially failed because
+the GitHub CLI could not infer a repository without a checkout. The release commands now pass
+`$GITHUB_REPOSITORY` explicitly and are being revalidated on `dev`.
