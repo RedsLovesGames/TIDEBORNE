@@ -1,5 +1,6 @@
 {
   "mod.tideborne.name": "Tideborne",
+  "itemGroup.tideborne": "Tideborne",
   "config.tideborne.title": "Tideborne Settings",
   "config.tideborne.traits": "Traits & Mutations",
   "config.tideborne.satchel": "Angler's Satchel",
