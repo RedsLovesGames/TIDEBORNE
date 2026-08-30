@@ -2,7 +2,7 @@
 
 Updated: 2026-08-30
 
-Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, and validation are complete on `dev`.
+Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, owned legacy-fish Journal backfill, and validation are complete on `dev`.
 
 The authoritative behavior and validation record are documented in:
 
@@ -35,6 +35,10 @@ The authoritative behavior and validation record are documented in:
   path from crate rewards.
 - [x] Register and execute the Stage 60 and Stage 61 GameTests in every required compatibility
   matrix.
+- [x] Backfill missing canonical Journal specimen display data from actual old fish a player
+  still owns, including length-only Tide fish that predate Tideborne specimen components, without
+  replaying catches, incrementing progression, unlocking uncaught species, or overwriting an
+  existing canonical latest specimen.
 - [x] Consolidate continuous validation on the current 2.0.0 build workflow, retire
   reconstruction-era and one-off release workflows, and pin every CI runtime dependency by
   SHA-256.
@@ -43,6 +47,12 @@ Stages 60 and 61 are validated on implementation head
 `9619f756c9ecd61139acd5ffc687d68be61a4e04` by GitHub Actions run `33319707597`.
 The clean build, unit tests, all four Fabric GameTest matrices, dedicated-server/client smoke,
 production JAR validation, artifact upload, and release publication passed.
+
+The owned legacy-fish Journal backfill is implemented at
+`44c4803f8f6bee16eb76b162b82883398a8bd3ca` and validated by GitHub Actions run
+`33323297138`. The clean build, unit tests, all four Fabric GameTest matrices,
+dedicated-server/client-connect smoke test, production JAR validation, artifact upload, and
+release refresh passed. The `TIDEBORN-2.0.0` release was refreshed from that implementation head.
 
 No known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item remains.
 
