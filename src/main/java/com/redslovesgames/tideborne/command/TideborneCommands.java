@@ -6,11 +6,14 @@
 package com.redslovesgames.tideborne.command;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import com.redslovesgames.tideborne.command.debug.SpecimenDebugCommand;
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
-import com.redslovesgames.tideborne.migration.TideborneMigrationManager;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
@@ -23,7 +26,7 @@ public final class TideborneCommands {
    public static synchronized void init() {
       if (!initialized) {
          initialized = true;
-         CommandRegistrationCallback.EVENT.register((CommandRegistrationCallback)(var0, var1, var2) -> register(var0));
+         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> register(dispatcher));
       }
    }
 
@@ -32,84 +35,121 @@ public final class TideborneCommands {
       CommandNode<ServerCommandSource> journal = dispatcher.getRoot().getChild("tideborne_internal_team");
       CommandNode<ServerCommandSource> fishing = dispatcher.getRoot().getChild("tideborne_internal_fishing");
 
-      LiteralArgumentBuilder<ServerCommandSource> root = LiteralArgumentBuilder.<ServerCommandSource>literal("tideborne")
-         .executes(context -> help(context.getSource()))
-         .then(LiteralArgumentBuilder.<ServerCommandSource>literal("help").executes(context -> help(context.getSource())))
-         .then(LiteralArgumentBuilder.<ServerCommandSource>literal("status").executes(context -> status(context.getSource())))
+      LiteralArgumentBuilder<ServerCommandSource> root = CommandManager.literal("tideborne")
+         .executes(context -> TideborneCommandUi.showRoot(context.getSource()))
+         .then(CommandManager.literal("status").executes(context -> status(context.getSource())))
          .then(
-            LiteralArgumentBuilder.<ServerCommandSource>literal("reload")
+            CommandManager.literal("reload")
                .requires(source -> source.hasPermissionLevel(2))
                .executes(context -> reload(context.getSource()))
-         )
-         .then(
-            LiteralArgumentBuilder.<ServerCommandSource>literal("migrate")
-               .then(LiteralArgumentBuilder.<ServerCommandSource>literal("status").executes(context -> migrationStatus(context.getSource())))
-         )
-         .then(
-            LiteralArgumentBuilder.<ServerCommandSource>literal("debug")
-               .then(LiteralArgumentBuilder.<ServerCommandSource>literal("backend").executes(context -> debugBackend(context.getSource())))
-         )
-         .then(
-            LiteralArgumentBuilder.<ServerCommandSource>literal("badges")
-               .then(LiteralArgumentBuilder.<ServerCommandSource>literal("backfillhistory").executes(HistoryBadgeCommand.INSTANCE))
          );
 
-      redirect(root, "traits", traits);
       redirect(root, "journal", journal);
-      redirect(root, "team", journal);
-      redirect(root, "fishing", fishing);
+
+      LiteralArgumentBuilder<ServerCommandSource> debug = CommandManager.literal("debug")
+         .requires(source -> source.hasPermissionLevel(2))
+         .executes(context -> TideborneCommandUi.showDebug(context.getSource()));
+
+      LiteralArgumentBuilder<ServerCommandSource> fishingDebug = CommandManager.literal("fishing")
+         .executes(context -> TideborneCommandUi.showFishingDebug(context.getSource()));
+      redirect(fishingDebug, "inspect", child(fishing, "inspect"));
+      redirect(fishingDebug, "reproduce", child(fishing, "reproduce"));
+      debug.then(fishingDebug);
+
+      LiteralArgumentBuilder<ServerCommandSource> specimen = CommandManager.literal("specimen")
+         .executes(context -> TideborneCommandUi.showSpecimenDebug(context.getSource()));
+      redirect(specimen, "inspect", child(traits, "inspect"));
+      redirect(specimen, "reroll", child(fishing, "reroll"));
+
+      LiteralArgumentBuilder<ServerCommandSource> set = CommandManager.literal("set")
+         .then(
+            CommandManager.literal("percentile")
+               .then(
+                  CommandManager.argument("value", DoubleArgumentType.doubleArg(0.0, 100.0))
+                     .executes(context -> SpecimenDebugCommand.setPercentile(
+                        context.getSource(),
+                        DoubleArgumentType.getDouble(context, "value")
+                     ))
+               )
+         )
+         .then(
+            CommandManager.literal("body")
+               .then(CommandManager.literal("normal")
+                  .executes(context -> SpecimenDebugCommand.setBodyType(context.getSource(), SpecimenData.BodyType.NORMAL)))
+               .then(CommandManager.literal("giant")
+                  .executes(context -> SpecimenDebugCommand.setBodyType(context.getSource(), SpecimenData.BodyType.GIANT)))
+               .then(CommandManager.literal("dwarf")
+                  .executes(context -> SpecimenDebugCommand.setBodyType(context.getSource(), SpecimenData.BodyType.DWARF)))
+         )
+         .then(
+            CommandManager.literal("condition")
+               .then(CommandManager.literal("normal")
+                  .executes(context -> SpecimenDebugCommand.setCondition(context.getSource(), SpecimenData.Condition.NORMAL)))
+               .then(CommandManager.literal("scarred")
+                  .executes(context -> SpecimenDebugCommand.setCondition(context.getSource(), SpecimenData.Condition.SCARRED)))
+               .then(CommandManager.literal("parasite_ridden")
+                  .executes(context -> SpecimenDebugCommand.setCondition(context.getSource(), SpecimenData.Condition.PARASITE_RIDDEN)))
+         )
+         .then(
+            CommandManager.literal("pigmentation")
+               .then(CommandManager.literal("normal")
+                  .executes(context -> SpecimenDebugCommand.setPigmentation(context.getSource(), SpecimenData.Pigmentation.NORMAL)))
+               .then(CommandManager.literal("albino")
+                  .executes(context -> SpecimenDebugCommand.setPigmentation(context.getSource(), SpecimenData.Pigmentation.ALBINO)))
+               .then(CommandManager.literal("iridescent")
+                  .executes(context -> SpecimenDebugCommand.setPigmentation(context.getSource(), SpecimenData.Pigmentation.IRIDESCENT)))
+         );
+      specimen.then(set);
+      specimen.then(CommandManager.literal("body").executes(context -> TideborneCommandUi.showBodyTypes(context.getSource())));
+      specimen.then(CommandManager.literal("condition").executes(context -> TideborneCommandUi.showConditions(context.getSource())));
+      specimen.then(CommandManager.literal("pigmentation").executes(context -> TideborneCommandUi.showPigmentations(context.getSource())));
+      debug.then(specimen);
+
+      redirect(debug, "registry", child(traits, "dumpfish"));
+      root.then(debug);
+
+      // Hidden compatibility route. This is intentionally omitted from the clickable UI.
+      CommandNode<ServerCommandSource> repairInventory = child(child(fishing, "repair"), "inventory");
+      if (repairInventory != null) {
+         root.then(
+            CommandManager.literal("fishing")
+               .requires(source -> source.hasPermissionLevel(2))
+               .then(
+                  CommandManager.literal("repair")
+                     .then(CommandManager.literal("inventory").redirect(repairInventory))
+               )
+         );
+      }
+
       dispatcher.register(root);
-      alias(dispatcher, "tidetraits", traits);
-      alias(dispatcher, "tideteamjournal", journal);
-      alias(dispatcher, "tideboundcompat", fishing);
    }
 
-   private static void redirect(LiteralArgumentBuilder<ServerCommandSource> root, String name, CommandNode<ServerCommandSource> target) {
+   private static CommandNode<ServerCommandSource> child(CommandNode<ServerCommandSource> parent, String name) {
+      return parent == null ? null : parent.getChild(name);
+   }
+
+   private static void redirect(
+      LiteralArgumentBuilder<ServerCommandSource> root,
+      String name,
+      CommandNode<ServerCommandSource> target
+   ) {
       if (target != null) {
-         root.then(LiteralArgumentBuilder.<ServerCommandSource>literal(name).redirect(target));
+         root.then(CommandManager.literal(name).redirect(target));
       }
    }
 
-   private static void alias(CommandDispatcher<ServerCommandSource> dispatcher, String name, CommandNode<ServerCommandSource> target) {
-      if (target != null) {
-         dispatcher.register(LiteralArgumentBuilder.<ServerCommandSource>literal(name).redirect(target));
-      }
-   }
-
-   private static int help(ServerCommandSource var0) {
-      send(var0, "Tideborne commands (press Tab at any point for valid choices):");
-      send(var0, "/tideborne traits <inspect|setmutation|clearmutation|percentile|dumpfish>");
-      send(var0, "/tideborne journal <open|status|merge|claim|assign|claimall|leaderboard|history|member>");
-      send(var0, "/tideborne fishing <status|inspect|reproduce|reload>");
-      send(var0, "/tideborne status  |  /tideborne reload  |  /tideborne migrate status");
-      send(var0, "/tideborne badges backfillhistory  - backfill per-world discovery badges from retained event history");
+   private static int status(ServerCommandSource source) {
+      send(source, "Tideborne 2.0.0 - Fishing System 2.0 active.");
+      send(source, "Use /tideborne for the clickable command menu.");
       return 1;
    }
 
-   private static int status(ServerCommandSource var0) {
-      send(var0, "Tideborne 2.0.0 - Fishing System 2.0 and unified commands active.");
-      send(var0, TideborneMigrationManager.status());
-      send(var0, "Use /tideborne help for grouped commands, or press Tab to explore a group.");
+   private static int reload(ServerCommandSource source) {
+      send(source, TideborneConfigBackend.reloadServerSide());
       return 1;
    }
 
-   private static int reload(ServerCommandSource var0) {
-      send(var0, TideborneConfigBackend.reloadServerSide());
-      return 1;
-   }
-
-   private static int migrationStatus(ServerCommandSource var0) {
-      send(var0, TideborneMigrationManager.status());
-      send(var0, "Legacy Tideborne data namespaces remain preserved for world compatibility.");
-      return 1;
-   }
-
-   private static int debugBackend(ServerCommandSource var0) {
-      send(var0, "Tideborne backend facade: active.");
-      return 1;
-   }
-
-   private static void send(ServerCommandSource var0, String var1) {
-      var0.sendFeedback(() -> Text.literal(var1), false);
+   private static void send(ServerCommandSource source, String message) {
+      source.sendFeedback(() -> Text.literal(message), false);
    }
 }
