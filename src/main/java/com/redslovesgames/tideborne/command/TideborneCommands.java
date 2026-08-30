@@ -9,6 +9,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import com.redslovesgames.tideborne.command.debug.FishingGearRegistryDebugCommand;
 import com.redslovesgames.tideborne.command.debug.SpecimenDebugCommand;
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
@@ -106,6 +107,7 @@ public final class TideborneCommands {
       debug.then(specimen);
 
       redirect(debug, "registry", child(traits, "dumpfish"));
+      debug.then(CommandManager.literal("gear").executes(context -> FishingGearRegistryDebugCommand.run(context.getSource())));
       root.then(debug);
 
       // Hidden compatibility route. This is intentionally omitted from the clickable UI.
