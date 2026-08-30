@@ -190,14 +190,14 @@ The `TIDEBORN-2.0.0` release now targets that implementation commit. Its refresh
 ## Stage 62 canonical fishing gear registry is complete
 
 Stage 62 hardens fishing gear identity without changing Fishing System 2.0 balance. Gear behavior is
-now keyed by one explicit canonical registry of registered `Item` identities instead of duplicated
+now keyed by one explicit canonical registry of exact namespaced item IDs instead of duplicated
 consumer-side recognition logic.
 
 Current gear-registry contracts:
 
 - every supported native Tide line and Tideborne fishing gear item has exactly one canonical
-  `GearProfile`, origin, and equipment slot classification;
-- resolution uses the registered `Item` identity only; display names, translation keys, class names,
+  `GearProfile`, exact namespaced item ID, origin, and equipment slot classification;
+- resolution uses the exact registered item ID only; display names, translation keys, class names,
   and substring similarity cannot grant fishing behavior to an unregistered lookalike;
 - native Tide Copper, Iron, Golden, and Diamond line effects resolve through the shared registry;
 - Tideborne Tentacle/Swift lines, Seafarer's/Shark Tooth hooks, and Kujira rod runtime selection
@@ -213,15 +213,44 @@ Current gear-registry contracts:
 - modifier arithmetic continues through `FishingGearModifiers.compose`; no second gear stacking or
   balance formula was introduced.
 
-Focused tests cover complete profile registration, rejection of unregistered lookalikes, profile
-metadata/reverse identity, and cross-gear stacking across native line, Tideborne line, Steel Leader,
-and Leviathan Bait effects.
+Focused unit tests cover exact profile registration, rejection of unregistered lookalike IDs,
+metadata/reverse identity, and cross-gear stacking. A registered Fabric GameTest verifies those IDs
+against the actual runtime Tide/Tideborne item registries.
+
+GitHub Actions run `33330163321` is green on validated Stage 62 head
+`9957e50a0a7dc95c7bbc07fb1f34979a8404c046`, including the full build/unit suite, all four
+compatibility GameTest matrices, dedicated-server/client-connect smoke validation, production JAR
+validation, artifact upload, and release refresh.
+
+## Stage 63 Tideborne creative tab is complete
+
+Stage 63 gives Tideborne-owned content a dedicated Creative Mode tab without changing any item
+registry IDs, recipes, saved data, or Fishing System 2.0 gear identities.
+
+Current creative-tab contracts:
+
+- dedicated item group ID is `tideborne:tideborne`;
+- display name is `Tideborne`;
+- the Angler's Satchel is the tab icon and is always present;
+- Myths of the Sea-owned compatibility content remains visible only when the Myths integration is
+  active;
+- Apex Waters-owned compatibility content remains visible only when the Apex integration is active;
+- entries are curated by gameplay role: Satchel, rod, lines/leaders, hooks, then bait/utilities;
+- the old Satchel injection into vanilla Tools is removed;
+- Tideborne compatibility items are no longer duplicated into vanilla Tools or Ingredients;
+- native Tide items and Tide's own creative presentation are untouched;
+- registration is common-side after the Satchel and compatibility item registries initialize, with
+  no client-only class dependency.
+
+A registered Fabric GameTest verifies that the new item group exists at runtime and uses the actual
+Angler's Satchel as its icon. Full behavior and ownership are documented in
+`docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`.
 
 ## Current execution gate
 
 Fishing System 2.0, its legacy recovery/admin tooling, final player-facing integration polish, the
-owned legacy-fish Journal backfill, and canonical fishing-gear registry hardening are complete on
-`dev`.
+owned legacy-fish Journal backfill, canonical fishing-gear registry hardening, and the dedicated
+Tideborne creative tab are complete on `dev`.
 
 There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item.
 Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope,
