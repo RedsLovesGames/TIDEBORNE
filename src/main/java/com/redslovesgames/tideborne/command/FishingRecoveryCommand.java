@@ -1,0 +1,119 @@
+package com.redslovesgames.tideborne.command;
+
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService;
+import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService.Result;
+import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService.Status;
+import java.util.SplittableRandom;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+
+/** Operator-only legacy fish repair and explicitly confirmed destructive reroll tooling. */
+public final class FishingRecoveryCommand {
+    private static final LegacyFishRecoveryService RECOVERY = new LegacyFishRecoveryService();
+
+    private FishingRecoveryCommand() {
+    }
+
+    public static LiteralArgumentBuilder<ServerCommandSource> repairCommand() {
+        return CommandManager.literal("repair")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.literal("held").executes(context -> repairHeld(context.getSource())))
+                .then(CommandManager.literal("inventory").executes(context -> repairInventory(context.getSource())));
+    }
+
+    public static LiteralArgumentBuilder<ServerCommandSource> rerollCommand() {
+        return CommandManager.literal("reroll")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.literal("held")
+                        .executes(context -> rerollHeld(context.getSource(), false))
+                        .then(CommandManager.literal("--confirm")
+                                .executes(context -> rerollHeld(context.getSource(), true))))
+                .then(CommandManager.literal("inventory")
+                        .executes(context -> rerollInventory(context.getSource(), false))
+                        .then(CommandManager.literal("--confirm")
+                                .executes(context -> rerollInventory(context.getSource(), true))));
+    }
+
+    private static int repairHeld(ServerCommandSource source) {
+        ServerPlayerEntity player = player(source);
+        if (player == null) return 0;
+        Result result = RECOVERY.repair(player.getMainHandStack());
+        if (result.status() == Status.REPAIRED) {
+            send(source, "Repaired held legacy fish into canonical Fishing System 2.0 data.");
+            return 1;
+        }
+        if (result.status() == Status.ALREADY_CURRENT) {
+            send(source, "Held fish is already current canonical Fishing System 2.0 data. No changes made.");
+            return 0;
+        }
+        source.sendError(Text.literal("Held item is not a recoverable legacy Tide fish. No changes made."));
+        return 0;
+    }
+
+    private static int repairInventory(ServerCommandSource source) {
+        ServerPlayerEntity player = player(source);
+        if (player == null) return 0;
+        int repaired = 0;
+        int current = 0;
+        for (int slot = 0; slot < player.getInventory().size(); slot++) {
+            ItemStack stack = player.getInventory().getStack(slot);
+            Result result = RECOVERY.repair(stack);
+            if (result.status() == Status.REPAIRED) repaired++;
+            if (result.status() == Status.ALREADY_CURRENT) current++;
+        }
+        int repairedCount = repaired;
+        int currentCount = current;
+        source.sendFeedback(() -> Text.literal("Legacy fish repair complete: " + repairedCount
+                + " repaired, " + currentCount + " already current."), true);
+        return repaired;
+    }
+
+    private static int rerollHeld(ServerCommandSource source, boolean confirmed) {
+        ServerPlayerEntity player = player(source);
+        if (player == null) return 0;
+        if (!confirmed) return confirmationRequired(source, "held");
+        long seed = new SplittableRandom(System.nanoTime() ^ player.getUuid().getLeastSignificantBits()).nextLong();
+        Result result = RECOVERY.reroll(player.getMainHandStack(), seed, true);
+        if (result.status() == Status.REROLLED) {
+            send(source, "Destructively rerolled held fish with newly generated canonical specimen data.");
+            return 1;
+        }
+        source.sendError(Text.literal("Held item is not a registered Tide fish. No changes made."));
+        return 0;
+    }
+
+    private static int rerollInventory(ServerCommandSource source, boolean confirmed) {
+        ServerPlayerEntity player = player(source);
+        if (player == null) return 0;
+        if (!confirmed) return confirmationRequired(source, "inventory");
+        SplittableRandom seeds = new SplittableRandom(System.nanoTime() ^ player.getUuid().getMostSignificantBits());
+        int rerolled = 0;
+        for (int slot = 0; slot < player.getInventory().size(); slot++) {
+            Result result = RECOVERY.reroll(player.getInventory().getStack(slot), seeds.nextLong(), true);
+            if (result.status() == Status.REROLLED) rerolled++;
+        }
+        int count = rerolled;
+        source.sendFeedback(() -> Text.literal("Destructive canonical reroll complete: " + count + " Tide fish rerolled."), true);
+        return rerolled;
+    }
+
+    private static int confirmationRequired(ServerCommandSource source, String target) {
+        source.sendError(Text.literal("Reroll is destructive and replaces specimen identity. Re-run as `reroll "
+                + target + " --confirm` to proceed."));
+        return 0;
+    }
+
+    private static ServerPlayerEntity player(ServerCommandSource source) {
+        if (source.getEntity() instanceof ServerPlayerEntity player) return player;
+        source.sendError(Text.literal("Fish repair/reroll targeting must be run by a player."));
+        return null;
+    }
+
+    private static void send(ServerCommandSource source, String message) {
+        source.sendFeedback(() -> Text.literal(message), true);
+    }
+}

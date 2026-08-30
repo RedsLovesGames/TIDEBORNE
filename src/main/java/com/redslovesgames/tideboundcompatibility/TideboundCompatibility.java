@@ -12,6 +12,7 @@ import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.redslovesgames.tideborne.command.FishingInspectCommand;
+import com.redslovesgames.tideborne.command.FishingRecoveryCommand;
 import com.redslovesgames.tideborne.command.FishingReproduceCommand;
 import com.redslovesgames.tideboundcompatibility.compat.apex.ApexCompat;
 import com.redslovesgames.tideboundcompatibility.compat.apex.SharkScentManager;
@@ -129,6 +130,8 @@ public final class TideboundCompatibility implements ModInitializer {
                .executes(context -> FishingInspectCommand.run(context.getSource()))
          )
          .then(reproduceCommand())
+         .then(FishingRecoveryCommand.repairCommand())
+         .then(FishingRecoveryCommand.rerollCommand())
          .then(
             CommandManager.literal("reload")
                .requires(source -> source.hasPermissionLevel(2))
