@@ -2,6 +2,7 @@ package com.redslovesgames.tideborne.client.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,7 +16,8 @@ class FishingUiSourceSafetyTest {
             "src/main/java/com/redslovesgames/tideteamjournal/client/TopFishScreen.java",
             "src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/AnglersSatchelScreen.java",
             "src/main/java/com/redslovesgames/tidetraits/mixin/client/FishProfileSizeRangeMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java"
+            "src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java",
+            "src/main/java/com/redslovesgames/tidetraits/client/gui/journal/DiscoveryBadgesComponent.java"
     );
 
     @Test
@@ -33,6 +35,24 @@ class FishingUiSourceSafetyTest {
     void summaryAndHistoryReuseOneStructuredEventRowRenderer() throws IOException {
         String source = Files.readString(Path.of(AFFECTED_UI.get(0)));
         assertEquals(3, occurrences(source, "renderEventRow("));
+    }
+
+    @Test
+    void discoveryBadgesAreGroupedByCanonicalCategories() throws IOException {
+        String source = Files.readString(Path.of(AFFECTED_UI.get(5)));
+        assertTrue(source.contains("\"Body Type\""));
+        assertTrue(source.contains("\"Condition\""));
+        assertTrue(source.contains("\"Pigmentation\""));
+        assertTrue(source.contains("\"Quality\""));
+        assertTrue(source.contains("\"Size\""));
+        assertFalse(source.contains("MUTATIONS ="));
+    }
+
+    @Test
+    void speciesFallbackDoesNotDuplicateCanonicalSpecimenBlock() throws IOException {
+        String source = Files.readString(Path.of(AFFECTED_UI.get(3)));
+        assertTrue(source.contains("JournalSpecimenStore.LATEST"));
+        assertTrue(source.contains("No canonical specimen recorded"));
     }
 
     private static int occurrences(String source, String needle) {
