@@ -6,6 +6,7 @@
 package com.redslovesgames.tideteamjournal.mixin;
 
 import com.li64.tide.data.player.TidePlayerData;
+import com.redslovesgames.tideborne.fishing.v2.integration.CrateFishProgressionBridge;
 import com.redslovesgames.tideteamjournal.TeamJournalService;
 import com.redslovesgames.tideteamjournal.TeamProgressStore;
 import net.minecraft.item.ItemStack;
@@ -43,6 +44,10 @@ abstract class TidePlayerDataMixin {
 
    @Inject(method = "logCatch", at = @At("HEAD"))
    private void tideTeamJournal$snapshotBeforeCatch(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo callback) {
+      // Crate and other legitimate Tide award paths can reach Tide's normal accounting with a
+      // physical fish length but no Tideborne specimen payload. Normalize that stack first, then
+      // keep using the exact same Tide logCatch progression and Team Journal path as normal fish.
+      CrateFishProgressionBridge.ensureCanonicalForCatchAccounting(stack);
       TeamProgressStore.tideborneBeginCatch(stack);
       this.tideTeamJournal$beforeCatchData = new TidePlayerData(((TidePlayerData)(Object)this).getAsTag());
    }

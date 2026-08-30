@@ -70,7 +70,7 @@ public final class TopFishScreen extends Screen {
       graphics.drawTexture(BG, left, top, 0.0F, 0.0F, 400, 260, 400, 260);
       TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("TEAM RECORDS  •  TOP FISH"), left + 200, top + 29, TEXT);
       graphics.fill(left + 28, top + 60, left + 220, top + 225, 869844122);
-      graphics.fill(left + 228, top + 60, left + 372, top + 225, 584631450);
+      graphics.fill(left + 228, top + 60, left + 372, top + 250, 584631450);
       TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("TOP 12"), left + 124, top + 63, MUTED);
       TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("CANONICAL SPECIMEN"), left + 300, top + 63, MUTED);
 
@@ -120,13 +120,13 @@ public final class TopFishScreen extends Screen {
       NbtCompound selected = (NbtCompound)list.get(selectedIndex);
       ItemStack stack = fishStack(selected.getString("fish"));
       CanonicalRecordDisplay display = CanonicalRecordDisplay.from(selected).orElse(null);
-      renderFish3D(graphics, stack, left + 300, top + 92);
+      renderFish3D(graphics, stack, left + 300, top + 86);
       this.drawValue(
          graphics,
          stack.getName().getString(),
          stack.getName().getString(),
          left + 238,
-         top + 117,
+         top + 108,
          124,
          TEXT,
          mouseX,
@@ -134,40 +134,48 @@ public final class TopFishScreen extends Screen {
       );
 
       int x = left + 238;
-      int y = top + 132;
       int leftColumn = x;
       int rightColumn = x + 64;
+      int columnWidth = 60;
 
-      this.section(graphics, "Specimen", x, y);
+      this.section(graphics, "Specimen", x, top + 120);
       String score = display == null ? FishingUiFormat.UNAVAILABLE : display.scoreLabel();
       String rarity = stars(selected.getInt("fish_stars"));
-      this.drawValue(graphics, "Score " + score, "FishScore: " + score, leftColumn, y + 11, 60, SCORE_COLOR, mouseX, mouseY);
-      this.drawValue(graphics, rarity.isBlank() ? "Stars N/A" : rarity, "Stars: " + (rarity.isBlank() ? FishingUiFormat.UNAVAILABLE : rarity), rightColumn, y + 11, 60, MUTED, mouseX, mouseY);
-
       String percentile = display == null ? FishingUiFormat.UNAVAILABLE : FishingUiFormat.percentile(display.percentile());
       double lengthValue = display != null && Double.isFinite(display.length()) ? display.length() : selected.getDouble("length");
       String length = FishingUiFormat.length(lengthValue);
-      this.drawValue(graphics, percentile, "Percentile: " + percentile, leftColumn, y + 21, 60, MUTED, mouseX, mouseY);
-      this.drawValue(graphics, length, "Length: " + length, rightColumn, y + 21, 60, MUTED, mouseX, mouseY);
+      this.label(graphics, "FishScore", leftColumn, top + 132);
+      this.label(graphics, "Stars", rightColumn, top + 132);
+      this.drawValue(graphics, score, "FishScore: " + score, leftColumn, top + 141, columnWidth, SCORE_COLOR, mouseX, mouseY);
+      this.drawValue(graphics, rarity.isBlank() ? FishingUiFormat.UNAVAILABLE : rarity,
+            "Stars: " + (rarity.isBlank() ? FishingUiFormat.UNAVAILABLE : rarity), rightColumn, top + 141, columnWidth, MUTED, mouseX, mouseY);
+      this.label(graphics, "Percentile", leftColumn, top + 151);
+      this.label(graphics, "Length", rightColumn, top + 151);
+      this.drawValue(graphics, percentile, "Percentile: " + percentile, leftColumn, top + 160, columnWidth, MUTED, mouseX, mouseY);
+      this.drawValue(graphics, length, "Length: " + length, rightColumn, top + 160, columnWidth, MUTED, mouseX, mouseY);
 
-      this.section(graphics, "Traits", x, y + 34);
+      this.section(graphics, "Traits", x, top + 173);
       String body = display == null ? FishingUiFormat.UNAVAILABLE : display.bodyTypeLabel();
       String condition = display == null ? FishingUiFormat.UNAVAILABLE : display.conditionLabel();
       String pigment = display == null ? FishingUiFormat.UNAVAILABLE : display.pigmentationLabel();
       String quality = display == null ? FishingUiFormat.UNAVAILABLE : display.qualityLabel();
-      this.drawValue(graphics, "Body " + body, "Body Type: " + body, leftColumn, y + 45, 60, BODY_COLOR, mouseX, mouseY);
-      this.drawValue(graphics, "Cond " + condition, "Condition: " + condition, rightColumn, y + 45, 60, CONDITION_COLOR, mouseX, mouseY);
-      this.drawValue(graphics, "Pig " + pigment, "Pigmentation: " + pigment, leftColumn, y + 55, 60, PIGMENT_COLOR, mouseX, mouseY);
-      this.drawValue(graphics, "Qual " + quality, "Quality: " + quality, rightColumn, y + 55, 60, QUALITY_COLOR, mouseX, mouseY);
+      this.label(graphics, "Body Type", leftColumn, top + 185);
+      this.label(graphics, "Condition", rightColumn, top + 185);
+      this.drawValue(graphics, body, "Body Type: " + body, leftColumn, top + 194, columnWidth, BODY_COLOR, mouseX, mouseY);
+      this.drawValue(graphics, condition, "Condition: " + condition, rightColumn, top + 194, columnWidth, CONDITION_COLOR, mouseX, mouseY);
+      this.label(graphics, "Pigmentation", leftColumn, top + 204);
+      this.label(graphics, "Quality", rightColumn, top + 204);
+      this.drawValue(graphics, pigment, "Pigmentation: " + pigment, leftColumn, top + 213, columnWidth, PIGMENT_COLOR, mouseX, mouseY);
+      this.drawValue(graphics, quality, "Quality: " + quality, rightColumn, top + 213, columnWidth, QUALITY_COLOR, mouseX, mouseY);
 
-      this.section(graphics, "Catch Info", x, y + 68);
+      this.section(graphics, "Catch Info", x, top + 226);
       String catcher = selected.getString("catcher_name");
       String catcherLabel = catcher.isBlank() ? FishingUiFormat.UNAVAILABLE : catcher;
       long timestampValue = selected.contains("timestamp", 99) ? selected.getLong("timestamp") : -1L;
       String timestamp = FishingUiFormat.timestamp(timestampValue);
       String date = dateOnly(timestamp);
-      this.drawValue(graphics, "By " + catcherLabel, "Caught By: " + catcherLabel, leftColumn, y + 79, 72, MUTED, mouseX, mouseY);
-      this.drawValue(graphics, date, "Caught: " + timestamp, x + 76, y + 79, 48, MUTED, mouseX, mouseY);
+      this.drawValue(graphics, "By " + catcherLabel, "Caught by: " + catcherLabel, leftColumn, top + 238, 72, MUTED, mouseX, mouseY);
+      this.drawValue(graphics, date, "Caught: " + timestamp, x + 76, top + 238, 48, MUTED, mouseX, mouseY);
 
       if (!this.hoverTooltip.isEmpty()) {
          graphics.drawOrderedTooltip(this.textRenderer, this.hoverTooltip.stream().map(Text::asOrderedText).toList(), mouseX, mouseY);
@@ -177,6 +185,11 @@ public final class TopFishScreen extends Screen {
    private void section(DrawContext graphics, String label, int x, int y) {
       TideTextRenderer.draw(graphics, this.textRenderer, label, x, y, TEXT);
       graphics.fill(x, y + 9, x + 124, y + 10, 0x66725F43);
+   }
+
+   private void label(DrawContext graphics, String label, int x, int y) {
+      FittedText fitted = FishingUiLayout.ellipsize(label, 60, this.textRenderer::getWidth);
+      TideTextRenderer.draw(graphics, this.textRenderer, fitted.text(), x, y, MUTED);
    }
 
    private void drawValue(
