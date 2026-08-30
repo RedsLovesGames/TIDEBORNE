@@ -147,10 +147,50 @@ GitHub Actions run `33319707597` is green on that validated implementation head.
 
 No Stage 60 or Stage 61 implementation failure remains after that run.
 
-## Current execution gate after Stage 61
+## Owned legacy fish Journal backfill is complete
 
-Fishing System 2.0, its legacy recovery/admin tooling, and its final player-facing integration
-polish are complete on `dev`.
+A post-release migration gap was found in old Journal entries that retained Tide catch history but
+had no canonical `latest` specimen snapshot. Aggregate Tide Journal data can reconstruct historical
+largest/smallest lengths, but it cannot safely invent the exact last specimen. The fix therefore
+uses an actual old fish item the player still owns as the authoritative missing specimen source.
+
+Implementation commit:
+
+- `44c4803f8f6bee16eb76b162b82883398a8bd3ca` - `fix: backfill owned legacy fish into journal specimens`
+
+Current behavior:
+
+- backfill runs server-side on player login and FTB team changes;
+- the repair commands also invoke the backfill so it can be applied immediately without a new catch;
+- only species already unlocked in the authoritative Tide Journal are eligible;
+- owning a fish never unlocks a species that was never caught;
+- an existing canonical `latest` specimen is never overwritten;
+- current canonical fish are copied without rerolling;
+- recoverable Tideborne legacy fish use the existing deterministic migration boundary;
+- old Tide fish with only a valid preserved physical length are deterministically canonicalized
+  from registered species plus that length, fixing the class of old fish the original repair
+  command classified as having no Tideborne legacy specimen payload;
+- total caught, first-catch date, largest/smallest stats, history events, record ownership,
+  contributor totals, rewards, and Trait Momentum are not replayed or incremented;
+- the backfill never calls Tide's `logCatch` path and is idempotent.
+
+Focused GameTests prove that a length-only owned old fish fills the missing `latest` specimen while
+preserving the historical Tide Journal compound byte-for-byte, repeated backfill is stable, and an
+owned fish cannot unlock an uncaught species.
+
+GitHub Actions run `33323297138` is green on implementation head
+`44c4803f8f6bee16eb76b162b82883398a8bd3ca`. It passed the clean build and unit suite, all four
+Fabric GameTest matrices, dedicated-server/client-connect smoke validation, production JAR
+validation, artifact upload, and release publication/refresh.
+
+The `TIDEBORN-2.0.0` release now targets that implementation commit. Its refreshed
+`tideborne-2.0.0.jar` asset has SHA-256
+`0209af64b53617433b5a5cd8bf66b0a3923e3f3636fd81b34985e2cde83d72ab`.
+
+## Current execution gate
+
+Fishing System 2.0, its legacy recovery/admin tooling, final player-facing integration polish, and
+the owned legacy-fish Journal backfill are complete on `dev`.
 
 There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item.
 Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope,
