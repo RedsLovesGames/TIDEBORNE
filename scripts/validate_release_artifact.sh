@@ -23,6 +23,7 @@ unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/v2/SpecimenGenerator.
 unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/v2/integration/TideSpeciesSelectionBridge.class' | rg -q 'TideSpeciesSelectionBridge\.class'
 unzip -l "$artifact" 'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableLeaderMixin.class' | rg -q 'AnglingTableLeaderMixin\.class'
 unzip -l "$artifact" 'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableScreenLeaderMixin.class' | rg -q 'AnglingTableScreenLeaderMixin\.class'
+unzip -l "$artifact" 'com/redslovesgames/tideteamjournal/mixin/TeamProgressCanonicalJournalMixin.class' | rg -q 'TeamProgressCanonicalJournalMixin\.class'
 
 python3 - "$artifact" <<'PY'
 import json
@@ -62,6 +63,12 @@ fi
 if unzip -p "$artifact" 'com/redslovesgames/tideboundcompatibility/fishing/SteelLeaderAttachment.class' \
     | strings | rg -q 'getRodItem'; then
     echo "Production SteelLeaderAttachment still uses TideFishingHook.getRodItem for rod-stack state" >&2
+    exit 1
+fi
+
+if unzip -p "$artifact" 'com/redslovesgames/tideteamjournal/mixin/TeamProgressCanonicalJournalMixin.class' \
+    | strings | rg -q 'tideborne\$(storedLeaderboardScore|canonicalMergeRead|canonicalMergeWrite|canonicalContributorRead|canonicalContributorWrite|canonicalContributorRegistration|canonicalEventPresence|canonicalEventRead|canonicalEventFallback|canonicalTopFishRead)'; then
+    echo "Production TeamProgressCanonicalJournalMixin still contains fragile Minecraft redirect handlers" >&2
     exit 1
 fi
 
