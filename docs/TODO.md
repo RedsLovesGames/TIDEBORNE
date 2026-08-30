@@ -16,6 +16,9 @@ Fishing System 2.0 implementation is complete. The authoritative behavior remain
   optional-mod matrices, and dedicated-server classloading.
 - [x] Produce and validate the `tideborne-2.0.0.jar` production artifact.
 - [x] Publish the validated artifact as `TIDEBORN-2.0.0` from the final `dev` commit.
+- [x] Complete the Stage 59 Fishing System 2.0 UI correctness and polish pass, including
+  canonical score projections, shared formatting, structured History rows, leaderboard and
+  Top Fish layouts, species display cleanup, and Angler's Satchel clarity.
 
 No known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item
 remains.

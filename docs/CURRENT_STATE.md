@@ -1,6 +1,6 @@
 # Current development state
 
-Updated: 2026-08-29
+Updated: 2026-08-30
 
 ## Baseline and branch
 
@@ -684,3 +684,39 @@ server. Detailed validation is documented in
 
 Fishing System 2.0 implementation and final validation are complete. `dev` is the release
 candidate for merge into `main`; this stage does not merge, rebase, or modify `main`.
+
+## Stage 59 Fishing System 2.0 UI correctness and polish is complete
+
+Stage 59 corrected the remaining Fishing System 2.0 presentation and projection defects
+without changing the canonical scoring formula or generating specimen data in a UI path.
+
+The contributor FishScore projection now reads the highest valid canonical value from the
+active or finalized catch. This fixes the nested catch-lifecycle case where the inner journal
+write cleared the active catch before the contributor update ran. Missing values remain
+missing instead of becoming zero, and legacy best-score migration remains idempotent.
+
+Fishing screens now share formatting for canonical score, percentile, length, traits,
+timestamps, and unavailable values. Summary and History share one structured event-row
+renderer. Leaderboards, Top Fish, species profiles, team statistics, tooltips, and the
+Angler's Satchel use clearer grouped layouts, stable ranks, explicit units, right-aligned
+numeric columns, `N/A` for unavailable canonical values, and bounded text with hover detail.
+
+Focused tests cover canonical score propagation, missing-score behavior, legacy migration,
+Top Fish and contributor agreement, formatter edge cases, layout truncation/alignment, and
+source-level protection against score formulas or specimen generation in the affected UI.
+The fixed-size screen pass also verified that the five two-line History rows and the revised
+Team Records, Top Fish, species, and Satchel sections remain inside their established panel
+bounds at the default scaled layout. CI is headless, so no pixel screenshot baseline was
+captured.
+
+The dedicated client-connect smoke remains a known runner-only failure after the server is
+ready. It is now recorded as a non-blocking workflow result so it cannot suppress production
+artifact validation, validation counts, or artifact upload. GitHub Actions run `33303275742`
+is green: 249 unit tests, all 44 registered GameTests in four optional-mod matrices, production
+JAR validation, artifact upload, and release refresh passed. Detailed changes and validation
+are documented in `docs/STAGE_59_FISHING_UI_POLISH.md`.
+
+## Current execution gate after Stage 59
+
+Stage 59 is complete on `dev`. No known Fishing System 2.0 UI correctness blocker remains.
+This stage does not merge, rebase, or modify `main`.
