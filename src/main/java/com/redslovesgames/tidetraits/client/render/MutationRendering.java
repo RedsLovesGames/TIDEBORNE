@@ -117,7 +117,7 @@ public final class MutationRendering {
    private static Optional<MutationTextureCache.Visual> visual(Entity entity) {
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound specimen = specimenEntity.tideTraits$getSpecimenTag();
-         Optional<FishMutation> mutation = FishMutation.bySerializedName(specimen.getString("Mutation"));
+         Optional<FishMutation> mutation = visualMutation(specimen);
          if (!mutation.isEmpty() && usesGeneratedTexture(mutation.get())) {
             long seed = specimen.contains("MutationSeed", 99) ? specimen.getLong("MutationSeed") : fallbackSeed(entity.getUuid());
 
@@ -137,6 +137,24 @@ public final class MutationRendering {
       } else {
          return Optional.empty();
       }
+   }
+
+   private static Optional<FishMutation> visualMutation(NbtCompound specimen) {
+      Optional<FishMutation> pigmentation = FishMutation.bySerializedName(
+         specimen.getString(SpecimenTransfer.CANONICAL_PIGMENTATION_KEY)
+      );
+      if (pigmentation.filter(mutation -> mutation == FishMutation.ALBINO || mutation == FishMutation.IRIDESCENT).isPresent()) {
+         return pigmentation;
+      }
+
+      Optional<FishMutation> condition = FishMutation.bySerializedName(
+         specimen.getString(SpecimenTransfer.CANONICAL_CONDITION_KEY)
+      );
+      if (condition.filter(mutation -> mutation == FishMutation.SCARRED || mutation == FishMutation.PARASITE_RIDDEN).isPresent()) {
+         return condition;
+      }
+
+      return FishMutation.bySerializedName(specimen.getString(SpecimenTransfer.MUTATION_KEY));
    }
 
    private static boolean usesGeneratedTexture(FishMutation mutation) {
