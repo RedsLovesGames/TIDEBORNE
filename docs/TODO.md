@@ -2,7 +2,7 @@
 
 Updated: 2026-08-30
 
-Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, owned legacy-fish Journal backfill, canonical gear-registry hardening, and validation are complete on `dev`.
+Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, owned legacy-fish Journal backfill, canonical gear-registry hardening, and the dedicated Tideborne creative tab are complete on `dev`.
 
 The authoritative behavior and validation record are documented in:
 
@@ -12,6 +12,7 @@ The authoritative behavior and validation record are documented in:
 - `docs/STAGE_59_FISHING_UI_POLISH.md`
 - `docs/FISHING_RECOVERY.md`
 - `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`
+- `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`
 
 ## Fishing System 2.0
 
@@ -46,6 +47,9 @@ The authoritative behavior and validation record are documented in:
   IDs now drive native Tide line resolution, Tideborne line/hook/rod recognition, advanced gear
   tooltips, and operator diagnostics; regression tests cover complete registration, unregistered
   lookalikes, metadata/reverse lookup, and composed gear stacking.
+- [x] Complete Stage 63 dedicated Tideborne creative tab: keep all existing item IDs stable, use
+  the Angler's Satchel as the tab icon, preserve optional-mod visibility rules, curate Tideborne
+  gear by gameplay role, and remove duplicate Tideborne entries from vanilla Tools/Ingredients.
 
 Stages 60 and 61 are validated on implementation head
 `9619f756c9ecd61139acd5ffc687d68be61a4e04` by GitHub Actions run `33319707597`.
