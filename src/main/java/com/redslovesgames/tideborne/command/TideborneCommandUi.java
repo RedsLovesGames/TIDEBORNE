@@ -48,8 +48,12 @@ public final class TideborneCommandUi {
         send(source, button("Specimen Tools", "/tideborne debug specimen", ClickEvent.Action.RUN_COMMAND,
                 Formatting.AQUA, "Inspect or edit canonical held specimens"));
         send(source, Text.literal("Data").formatted(Formatting.GRAY));
-        send(source, button("Fish Registry", "/tideborne debug registry", ClickEvent.Action.RUN_COMMAND,
-                Formatting.AQUA, "Dump registered Tide fish profile diagnostics"));
+        MutableText registries = button("Fish Registry", "/tideborne debug registry", ClickEvent.Action.RUN_COMMAND,
+                Formatting.AQUA, "Dump registered Tide fish profile diagnostics");
+        registries.append(Text.literal("  "));
+        registries.append(button("Gear Registry", "/tideborne debug gear", ClickEvent.Action.RUN_COMMAND,
+                Formatting.AQUA, "Dump canonical fishing gear profile diagnostics"));
+        send(source, registries);
         send(source, Text.empty());
         send(source, back("/tideborne", "Back to Tideborne"));
         send(source, Text.literal(RULE).formatted(Formatting.DARK_GRAY));
