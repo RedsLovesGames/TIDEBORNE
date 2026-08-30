@@ -36,21 +36,6 @@ abstract class TeamProgressCanonicalJournalMixin {
                 : -1.0);
     }
 
-    /** Leaderboard capture uses the same canonical specimen score boundary as other consumers. */
-    @Redirect(
-            method = "tideborneBeginCatch",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lcom/redslovesgames/tideteamjournal/TeamProgressStore;tideborneFishScore(Lnet/minecraft/item/ItemStack;)D"
-            )
-    )
-    private static double tideborne$storedLeaderboardScore(ItemStack stack) {
-        SpecimenData specimen = CanonicalSpecimenStorage.read(stack).orElse(null);
-        return specimen != null && specimen.fishScore().isPresent()
-                ? specimen.fishScore().getAsInt()
-                : -1.0;
-    }
-
     @Inject(method = "ensureInitialized", at = @At("RETURN"), cancellable = true)
     private static void tideborne$migrateStoredScores(NbtCompound root, CallbackInfoReturnable<Boolean> callback) {
         if (StoredFishScoreStorage.migrateRoot(root) && !Boolean.TRUE.equals(callback.getReturnValue())) {
