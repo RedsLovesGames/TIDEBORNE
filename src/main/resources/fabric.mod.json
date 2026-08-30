@@ -37,7 +37,9 @@
       "com.redslovesgames.tideborne.fishing.v2.integration.CanonicalEntityTransferGameTests",
       "com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorageGameTests",
       "com.redslovesgames.tideborne.fishing.v2.integration.LegacyEntityBucketMigrationGameTests",
-      "com.redslovesgames.tideborne.fishing.v2.integration.LegacyJournalPersistenceGameTests"
+      "com.redslovesgames.tideborne.fishing.v2.integration.LegacyJournalPersistenceGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.integration.CrateFishProgressionBridgeGameTests"
     ]
   },
   "mixins": [
