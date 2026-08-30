@@ -30,7 +30,11 @@ on:
       - '.github/workflows/build.yml'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: tideborne-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -84,6 +88,8 @@ jobs:
           tide_sha="$(sha256sum dev/libs/tide-fabric-1.21.1-2.1.1.jar | awk '{print $1}')"
           tide_mod_version="$(unzip -p dev/libs/tide-fabric-1.21.1-2.1.1.jar fabric.mod.json | jq -r '.version')"
           test "$tide_mod_version" = '2.1.1'
+          echo '498a5e8dda940866c9b0decadf7960724ef489fb49215b30f70c18d12f07b1c8  dev/libs/tide-fabric-1.21.1-2.1.1.jar' \
+            | sha256sum --check --strict
           echo "Tide 2.1.1 Modrinth version: $tide_version_id"
           echo "Tide 2.1.1 SHA-256: $tide_sha"
 
@@ -100,11 +106,17 @@ jobs:
             dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar
           test "$(unzip -p dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar fabric.mod.json | jq -r '.id')" = 'myths_of_the_sea'
           test "$(unzip -p dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar fabric.mod.json | jq -r '.version')" = '1.3.0'
+          echo '55e0944707b91dc3ae15d8a5162184f8327521c4ace71d05f9c0985495222bab  dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar' \
+            | sha256sum --check --strict
 
           fetch_modrinth_primary 'GkIc6rRo' 'kxmVyCru' \
             dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar
+          echo '0587dc8b69ed66aa98f5054a7cad23ed58fc437e7da316d5fc82491969caf03d  dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar' \
+            | sha256sum --check --strict
           fetch_modrinth_primary '8BmcQJ2H' 'dnJdtm0u' \
             dev/libs/geckolib-fabric-1.21.1-4.9.2.jar
+          echo 'eac4cf55e1cb99b22cb91ea87c774d2a670c1711a80f4aff50e6ad56b6c58e7e  dev/libs/geckolib-fabric-1.21.1-4.9.2.jar' \
+            | sha256sum --check --strict
 
           echo "Myths of the Sea 1.3.0 SHA-256: $(sha256sum dev/libs/myths-of-the-sea-fabric-1.21.1-1.3.0.jar | awk '{print $1}')"
           echo "CERBON API 1.3.0 SHA-256: $(sha256sum dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar | awk '{print $1}')"
@@ -186,16 +198,6 @@ jobs:
 
               print(f'{jar}: sanitized producer Loom {version} metadata for Loom 1.10 QA remapping')
           PY
-
-      - name: Validate reconstruction identifiers
-        shell: bash
-        run: |
-          if [ -d src/main/java ]; then
-            if grep -R -n -E '\b(class|method|field)_[0-9]+' src/main/java; then
-              echo 'Unresolved Minecraft intermediary identifiers remain in maintained Java source.'
-              exit 1
-            fi
-          fi
 
       - name: Validate repository structure and release metadata
         run: ./scripts/validate_repository.sh
@@ -279,14 +281,28 @@ jobs:
           path: build/libs/*.jar
           if-no-files-found: error
 
+  publish-release:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Download validated JARs
+        uses: actions/download-artifact@v4
+        with:
+          name: tideborne-${{ github.sha }}
+          path: release-assets
+
       - name: Publish TIDEBORN-2.0.0 release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           tag='TIDEBORN-2.0.0'
-          artifact='build/libs/tideborne-2.0.0.jar'
+          artifact='release-assets/tideborne-2.0.0.jar'
+          test -f "$artifact"
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "$artifact" --clobber
             gh release edit "$tag" --target "$GITHUB_SHA" --title "$tag"

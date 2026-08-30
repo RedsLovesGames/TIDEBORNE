@@ -720,3 +720,20 @@ are documented in `docs/STAGE_59_FISHING_UI_POLISH.md`.
 
 Stage 59 is complete on `dev`. No known Fishing System 2.0 UI correctness blocker remains.
 This stage does not merge, rebase, or modify `main`.
+
+## CI workflow audit and optimization
+
+The current 2.0.0 CI path is now centralized in `.github/workflows/build.yml`.
+It retains the exact-dependency fetch, repository validation, clean build and JUnit suite,
+four required optional-mod GameTest matrices, non-blocking diagnostic smoke harness,
+production-artifact validation, artifact upload, and successful-`dev` release refresh.
+
+The active workflow now checksum-verifies every frozen external runtime artifact, avoids
+superseded runs for the same workflow/ref, and grants `contents: write` only to the
+post-validation release job. The duplicate intermediary-identifier scan was removed because
+`scripts/validate_repository.sh` already performs the same failing check.
+
+The reconstruction-source, reconstruction-repair, and one-off release workflows were
+retired. The first two could write to the historical reconstruction branch despite Phase 0
+being complete, and the latter referenced a fixed historical run, artifact, and commit.
+The reconstruction scripts remain stored for provenance but no longer run continuously.

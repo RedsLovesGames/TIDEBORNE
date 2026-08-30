@@ -1,5 +1,29 @@
 # Validation gates
 
+## Current 2.0.0 CI gate
+
+`.github/workflows/build.yml` is the single active validation and release workflow for
+the maintained `dev` branch. It runs the following required gates in order:
+
+1. exact checksum verification for Tide, Apex Waters, Myths of the Sea, CERBON API,
+   and GeckoLib;
+2. repository metadata, entrypoint, mixin, and GameTest-registration validation;
+3. clean Java 21 build and the complete JUnit suite;
+4. Fabric GameTests with no optional mods, Apex only, Myths only, and both mods;
+5. production JAR validation and artifact upload;
+6. a release-only publish job with `contents: write`, after validation succeeds on a
+   `dev` push.
+
+The dedicated-server and client-connect smoke harness continues to collect diagnostics,
+but its known runner-only client-connect failure is non-blocking. It must not prevent the
+required build, GameTest, artifact-validation, artifact-upload, or release-publish gates.
+
+The completed reconstruction workflows and the one-off release workflow were retired after
+their historical work completed. The reconstruction scripts remain in the repository as
+recovery tooling and are not part of continuous validation.
+
+## Historical reconstruction gates
+
 Tideborne reconstruction is not complete just because Java compiles. The 1.3.57 baseline mixes persistence, networking, UI, mixins, Tide internals, and optional compatibility, so validation is layered.
 
 ## Gate 1: static project checks

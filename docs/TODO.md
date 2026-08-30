@@ -19,6 +19,9 @@ Fishing System 2.0 implementation is complete. The authoritative behavior remain
 - [x] Complete the Stage 59 Fishing System 2.0 UI correctness and polish pass, including
   canonical score projections, shared formatting, structured History rows, leaderboard and
   Top Fish layouts, species display cleanup, and Angler's Satchel clarity.
+- [x] Consolidate continuous validation on the current 2.0.0 build workflow, retire
+  reconstruction-era and one-off release workflows, and pin every CI runtime dependency by
+  SHA-256.
 
 No known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item
 remains.
