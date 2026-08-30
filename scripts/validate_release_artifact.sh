@@ -18,12 +18,12 @@ esac
 version="$(unzip -p "$artifact" fabric.mod.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
 test "$version" = "2.0.0"
 
-unzip -l "$artifact" 'com/redslovesgames/tideborne/Tideborne.class' | rg -q 'Tideborne\.class'
-unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/v2/SpecimenGenerator.class' | rg -q 'SpecimenGenerator\.class'
-unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/v2/integration/TideSpeciesSelectionBridge.class' | rg -q 'TideSpeciesSelectionBridge\.class'
-unzip -l "$artifact" 'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableLeaderMixin.class' | rg -q 'AnglingTableLeaderMixin\.class'
-unzip -l "$artifact" 'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableScreenLeaderMixin.class' | rg -q 'AnglingTableScreenLeaderMixin\.class'
-unzip -l "$artifact" 'com/redslovesgames/tideteamjournal/mixin/TeamProgressCanonicalJournalMixin.class' | rg -q 'TeamProgressCanonicalJournalMixin\.class'
+unzip -l "$artifact" 'com/redslovesgames/tideborne/Tideborne.class' | grep 'Tideborne\.class' >/dev/null
+unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/v2/SpecimenGenerator.class' | grep 'SpecimenGenerator\.class' >/dev/null
+unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/v2/integration/TideSpeciesSelectionBridge.class' | grep 'TideSpeciesSelectionBridge\.class' >/dev/null
+unzip -l "$artifact" 'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableLeaderMixin.class' | grep 'AnglingTableLeaderMixin\.class' >/dev/null
+unzip -l "$artifact" 'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableScreenLeaderMixin.class' | grep 'AnglingTableScreenLeaderMixin\.class' >/dev/null
+unzip -l "$artifact" 'com/redslovesgames/tideteamjournal/mixin/TeamProgressCanonicalJournalMixin.class' | grep 'TeamProgressCanonicalJournalMixin\.class' >/dev/null
 
 python3 - "$artifact" <<'PY'
 import json
@@ -55,19 +55,19 @@ for section in (refmap.get('mappings', {}), refmap.get('data', {}).get('named:in
 PY
 
 if unzip -p "$artifact" 'com/redslovesgames/tideboundcompatibility/fishing/AnglingTableLeaderSupport.class' \
-    | strings | rg -q 'net\.minecraft\.(screen\.slot\.ForgingSlotsManager|item\.ItemStack)'; then
+    | strings | grep -E 'net\.minecraft\.(screen\.slot\.ForgingSlotsManager|item\.ItemStack)' >/dev/null; then
     echo "Production AnglingTableLeaderSupport still contains Yarn reflection class names" >&2
     exit 1
 fi
 
 if unzip -p "$artifact" 'com/redslovesgames/tideboundcompatibility/fishing/SteelLeaderAttachment.class' \
-    | strings | rg -q 'getRodItem'; then
+    | strings | grep 'getRodItem' >/dev/null; then
     echo "Production SteelLeaderAttachment still uses TideFishingHook.getRodItem for rod-stack state" >&2
     exit 1
 fi
 
 if unzip -p "$artifact" 'com/redslovesgames/tideteamjournal/mixin/TeamProgressCanonicalJournalMixin.class' \
-    | strings | rg -q 'tideborne\$(storedLeaderboardScore|canonicalMergeRead|canonicalMergeWrite|canonicalContributorRead|canonicalContributorWrite|canonicalContributorRegistration|canonicalEventPresence|canonicalEventRead|canonicalEventFallback|canonicalTopFishRead)'; then
+    | strings | grep -E 'tideborne\$(storedLeaderboardScore|canonicalMergeRead|canonicalMergeWrite|canonicalContributorRead|canonicalContributorWrite|canonicalContributorRegistration|canonicalEventPresence|canonicalEventRead|canonicalEventFallback|canonicalTopFishRead)' >/dev/null; then
     echo "Production TeamProgressCanonicalJournalMixin still contains fragile Minecraft redirect handlers" >&2
     exit 1
 fi
