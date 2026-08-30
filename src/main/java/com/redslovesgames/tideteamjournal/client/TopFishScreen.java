@@ -66,9 +66,10 @@ public final class TopFishScreen extends Screen {
       super.render(graphics, mouseX, mouseY, partialTick);
       this.hoverTooltip = List.of();
       int left = (this.width - 400) / 2;
-      int top = (this.height - 260) / 2;
-      graphics.drawTexture(BG, left, top, 0.0F, 0.0F, 400, 260, 400, 260);
-      TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("TEAM RECORDS  •  TOP FISH"), left + 200, top + 29, TEXT);
+      int backgroundTop = (this.height - 260) / 2;
+      graphics.drawTexture(BG, left, backgroundTop, 0.0F, 0.0F, 400, 260, 400, 260);
+      TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("TEAM RECORDS  •  TOP FISH"), left + 200, backgroundTop + 29, TEXT);
+      int top = backgroundTop - 12;
       graphics.fill(left + 28, top + 60, left + 220, top + 225, 869844122);
       graphics.fill(left + 228, top + 60, left + 372, top + 250, 584631450);
       TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("TOP 12"), left + 124, top + 63, MUTED);
