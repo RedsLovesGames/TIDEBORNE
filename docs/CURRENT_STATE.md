@@ -745,4 +745,9 @@ Java 21 GitHub Actions workflow was triggered from the `dev` push for full valid
 
 Its build job passed every validation step. The isolated release job initially failed because
 the GitHub CLI could not infer a repository without a checkout. The release commands now pass
-`$GITHUB_REPOSITORY` explicitly and are being revalidated on `dev`.
+`$GITHUB_REPOSITORY` explicitly. Fix commit
+`45c68d03764b4ee06af537e3a368765d5bc50fdb` is green in GitHub Actions run
+`33305995133`: 249 unit tests, all 44 registered GameTests in four compatibility matrices,
+the dedicated-server/client smoke test, production JAR validation, artifact upload, and the
+isolated release publish job all passed. The refreshed `TIDEBORN-2.0.0` release targets that
+validated commit.
