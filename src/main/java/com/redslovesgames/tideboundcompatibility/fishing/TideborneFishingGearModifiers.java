@@ -6,8 +6,8 @@ import com.li64.tide.data.fishing.FishingContext;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearEffects;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
-import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundTags;
 import java.util.Objects;
 import net.minecraft.item.ItemConvertible;
@@ -31,10 +31,10 @@ public final class TideborneFishingGearModifiers {
             return FishingGearModifiers.neutral();
         }
 
-        ItemStack line = hook.getLine();
+        FishingGearRegistry.GearProfile lineProfile = FishingGearRegistry.resolve(hook.getLine()).orElse(null);
         return selectMinigameLine(
-                line != null && line.isOf(TideboundItems.TENTACLE_LINE),
-                line != null && line.isOf(TideboundItems.SWIFT_LINE),
+                lineProfile == FishingGearRegistry.GearProfile.TENTACLE_LINE,
+                lineProfile == FishingGearRegistry.GearProfile.SWIFT_LINE,
                 SteelLeaderGearModifiers.forHook(hook, config),
                 config
         );
@@ -69,15 +69,16 @@ public final class TideborneFishingGearModifiers {
         }
 
         TideFishingHook hook = context.hook();
+        FishingGearRegistry.GearProfile hookProfile = FishingGearRegistry.resolve(hook.getHook()).orElse(null);
         ItemStack fish = new ItemStack((ItemConvertible)data.fish().value());
         FishingGearModifiers sharkTooth = sharkToothHook(
-                hook.getHook().isOf(TideboundItems.SHARK_TOOTH_HOOK),
+                hookProfile == FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK,
                 fish.isIn(TideboundTags.PREDATORY_FISH) || fish.isIn(TideboundTags.LARGE_FISH),
                 fish.isIn(TideboundTags.VERY_SMALL_FISH),
                 config
         );
         FishingGearModifiers seafarer = seafarersHook(
-                hook.getHook().isOf(TideboundItems.SEAFARERS_HOOK),
+                hookProfile == FishingGearRegistry.GearProfile.SEAFARERS_HOOK,
                 fish.isIn(Items.LEGENDARY_FISH)
                         && context.exactBiome().isIn(BiomeTags.IS_OCEAN)
                         && context.level().isNight(),
@@ -91,8 +92,9 @@ public final class TideborneFishingGearModifiers {
         if (context == null) {
             return FishingGearModifiers.neutral();
         }
+        FishingGearRegistry.GearProfile rodProfile = FishingGearRegistry.resolve(context.rod()).orElse(null);
         return kujiraRod(
-                context.rod() != null && context.rod().isOf(TideboundItems.KUJIRA_BONE_FISHING_ROD),
+                rodProfile == FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD,
                 context.exactBiome().isIn(BiomeTags.IS_OCEAN),
                 config
         );
