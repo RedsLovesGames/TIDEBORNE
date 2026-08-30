@@ -12,30 +12,38 @@ import java.util.List;
 import java.util.Objects;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 @Environment(EnvType.CLIENT)
 public final class DiscoveryBadgesComponent extends ProfileComponent {
-   private static final int PROFILE_HEIGHT = 260;
    private static final int CONTENT_TOP = 24;
    private static final int CONTENT_BOTTOM = 244;
-   private static final int REQUIRED_HEIGHT = 14;
+   private static final int REQUIRED_HEIGHT = 34;
    private static final int ICON_SIZE = 10;
-   private static final int ICON_GAP = 1;
-   private static final int GROUP_GAP = 5;
-   private static final List<DiscoveryBadgesComponent.Badge> MUTATIONS = List.of(
-      mutation("Albino", "albino"),
-      mutation("Scarred", "scarred"),
-      mutation("Parasite-Ridden", "parasite_ridden"),
-      mutation("Iridescent", "iridescent"),
+   private static final int ICON_STEP = 11;
+   private static final int LABEL_GAP = 3;
+   private static final int GROUP_GAP = 6;
+   private static final int HEADING_COLOR = 0x725F43;
+
+   private static final List<Badge> BODY_TYPE = List.of(
       mutation("Dwarf", "dwarf"),
-      mutation("Giant", "giant"),
+      mutation("Giant", "giant")
+   );
+   private static final List<Badge> CONDITION = List.of(
+      mutation("Scarred", "scarred"),
+      mutation("Parasite-Ridden", "parasite_ridden")
+   );
+   private static final List<Badge> PIGMENTATION = List.of(
+      mutation("Albino", "albino"),
+      mutation("Iridescent", "iridescent")
+   );
+   private static final List<Badge> QUALITY = List.of(
       mutation("Perfect Specimen", "perfect_specimen")
    );
-   private static final List<DiscoveryBadgesComponent.Badge> SIZE_BANDS = List.of(
+   private static final List<Badge> SIZE_BANDS = List.of(
       sizeBand("Runty", "runty"),
       sizeBand("Small", "small"),
       sizeBand("Average", "average"),
@@ -43,6 +51,7 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
       sizeBand("Trophy", "trophy"),
       sizeBand("Legendary", "legendary")
    );
+
    private final Identifier speciesId;
 
    public DiscoveryBadgesComponent(Identifier speciesId) {
@@ -50,42 +59,104 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
    }
 
    public void render(DrawContext graphics, TextRenderer font, int x, int y, int mouseX, int mouseY, float partialTick) {
-      int var8 = (graphics.getScaledWindowHeight() - 260) / 2;
-      int var9 = var8 + 24;
-      int var10 = var8 + 244;
-      if (y < var10 && y + 14 > var9) {
-         DiscoverySnapshot var11 = DiscoveryClient.snapshot();
-         DiscoveryBadgesComponent.HoveredBadge var12 = null;
-         int var13 = x + 14;
+      int profileTop = (graphics.getScaledWindowHeight() - 260) / 2;
+      int clipTop = profileTop + CONTENT_TOP;
+      int clipBottom = profileTop + CONTENT_BOTTOM;
+      if (y >= clipBottom || y + REQUIRED_HEIGHT <= clipTop) {
+         return;
+      }
 
-         try {
-            graphics.enableScissor(x, var9, x + 174, var10);
-            var12 = this.renderBadges(graphics, MUTATIONS, true, var11, var13, y, mouseX, mouseY, var9, var10);
-            int var14 = var13 + 87;
-            DiscoveryBadgesComponent.HoveredBadge var15 = this.renderBadges(graphics, SIZE_BANDS, false, var11, var14, y, mouseX, mouseY, var9, var10);
-            if (var15 != null) {
-               var12 = var15;
-            }
-         } finally {
-            graphics.disableScissor();
-         }
+      DiscoverySnapshot snapshot = DiscoveryClient.snapshot();
+      HoveredBadge hovered = null;
+      int contentX = x + 8;
 
-         if (var12 != null) {
-            String var20 = var12.discovered() ? "Discovered: " : "Locked: ";
-            String var21 = var20 + var12.badge().label();
-            graphics.drawTooltip(font, Text.literal(var21), mouseX, mouseY);
-         }
+      try {
+         graphics.enableScissor(x, clipTop, x + 174, clipBottom);
+
+         GroupRender body = this.renderGroup(
+            graphics, font, "Body Type", BODY_TYPE, BadgeKind.TRAIT, snapshot, contentX, y, mouseX, mouseY, clipTop, clipBottom
+         );
+         GroupRender condition = this.renderGroup(
+            graphics,
+            font,
+            "Condition",
+            CONDITION,
+            BadgeKind.TRAIT,
+            snapshot,
+            body.nextX() + GROUP_GAP,
+            y,
+            mouseX,
+            mouseY,
+            clipTop,
+            clipBottom
+         );
+         hovered = prefer(condition.hovered(), body.hovered());
+
+         GroupRender pigment = this.renderGroup(
+            graphics,
+            font,
+            "Pigmentation",
+            PIGMENTATION,
+            BadgeKind.TRAIT,
+            snapshot,
+            contentX,
+            y + 11,
+            mouseX,
+            mouseY,
+            clipTop,
+            clipBottom
+         );
+         GroupRender quality = this.renderGroup(
+            graphics,
+            font,
+            "Quality",
+            QUALITY,
+            BadgeKind.TRAIT,
+            snapshot,
+            pigment.nextX() + GROUP_GAP,
+            y + 11,
+            mouseX,
+            mouseY,
+            clipTop,
+            clipBottom
+         );
+         hovered = prefer(quality.hovered(), prefer(pigment.hovered(), hovered));
+
+         GroupRender size = this.renderGroup(
+            graphics,
+            font,
+            "Size",
+            SIZE_BANDS,
+            BadgeKind.SIZE,
+            snapshot,
+            contentX,
+            y + 22,
+            mouseX,
+            mouseY,
+            clipTop,
+            clipBottom
+         );
+         hovered = prefer(size.hovered(), hovered);
+      } finally {
+         graphics.disableScissor();
+      }
+
+      if (hovered != null) {
+         String state = hovered.discovered() ? "Discovered: " : "Locked: ";
+         graphics.drawTooltip(font, Text.literal(hovered.category() + " • " + state + hovered.badge().label()), mouseX, mouseY);
       }
    }
 
    public int getRequiredHeight() {
-      return 14;
+      return REQUIRED_HEIGHT;
    }
 
-   private DiscoveryBadgesComponent.HoveredBadge renderBadges(
+   private GroupRender renderGroup(
       DrawContext graphics,
-      List<DiscoveryBadgesComponent.Badge> badges,
-      boolean mutations,
+      TextRenderer font,
+      String category,
+      List<Badge> badges,
+      BadgeKind kind,
       DiscoverySnapshot snapshot,
       int x,
       int rowY,
@@ -94,37 +165,45 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
       int clipTop,
       int clipBottom
    ) {
-      DiscoveryBadgesComponent.HoveredBadge hovered = null;
+      graphics.drawText(font, Text.literal(category), x, rowY + 1, HEADING_COLOR, false);
+      int iconX = x + font.getWidth(category) + LABEL_GAP;
+      HoveredBadge hovered = null;
 
-      for (int index = 0; index < badges.size(); index++) {
-         DiscoveryBadgesComponent.Badge badge = badges.get(index);
-         boolean discovered = mutations ? snapshot.hasMutation(this.speciesId, badge.discoveryId()) : snapshot.hasSizeBand(this.speciesId, badge.discoveryId());
-         int iconX = x + index * 11;
-         if (mutations && index >= 4) {
-            iconX += 5;
+      for (Badge badge : badges) {
+         boolean discovered = kind == BadgeKind.TRAIT
+            ? snapshot.hasMutation(this.speciesId, badge.discoveryId())
+            : snapshot.hasSizeBand(this.speciesId, badge.discoveryId());
+         graphics.drawTexture(discovered ? badge.unlockedTexture() : badge.lockedTexture(), iconX, rowY, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+         if (mouseX >= iconX
+            && mouseX < iconX + ICON_SIZE
+            && mouseY >= rowY
+            && mouseY < rowY + ICON_SIZE
+            && mouseY >= clipTop
+            && mouseY < clipBottom) {
+            hovered = new HoveredBadge(category, badge, discovered);
          }
-
-         graphics.drawTexture(discovered ? badge.unlockedTexture() : badge.lockedTexture(), iconX, rowY, 0.0F, 0.0F, 10, 10, 10, 10);
-         if (mouseX >= iconX && mouseX < iconX + 10 && mouseY >= rowY && mouseY < rowY + 10 && mouseY >= clipTop && mouseY < clipBottom) {
-            hovered = new DiscoveryBadgesComponent.HoveredBadge(badge, discovered);
-         }
+         iconX += ICON_STEP;
       }
 
-      return hovered;
+      return new GroupRender(iconX - 1, hovered);
    }
 
-   private static DiscoveryBadgesComponent.Badge mutation(String label, String id) {
+   private static HoveredBadge prefer(HoveredBadge preferred, HoveredBadge fallback) {
+      return preferred != null ? preferred : fallback;
+   }
+
+   private static Badge mutation(String label, String id) {
       return badge(label, id, "mutations");
    }
 
-   private static DiscoveryBadgesComponent.Badge sizeBand(String label, String id) {
+   private static Badge sizeBand(String label, String id) {
       return badge(label, id, "sizes");
    }
 
-   private static DiscoveryBadgesComponent.Badge badge(String label, String id, String directory) {
+   private static Badge badge(String label, String id, String directory) {
       Identifier discoveryId = Identifier.of("tide_traits", id);
       String base = "textures/gui/journal/" + directory + "/";
-      return new DiscoveryBadgesComponent.Badge(
+      return new Badge(
          label,
          discoveryId,
          Identifier.of("tide_traits", base + "locked/" + id + "_locked.png"),
@@ -133,10 +212,20 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
    }
 
    @Environment(EnvType.CLIENT)
+   private enum BadgeKind {
+      TRAIT,
+      SIZE
+   }
+
+   @Environment(EnvType.CLIENT)
    private record Badge(String label, Identifier discoveryId, Identifier lockedTexture, Identifier unlockedTexture) {
    }
 
    @Environment(EnvType.CLIENT)
-   private record HoveredBadge(DiscoveryBadgesComponent.Badge badge, boolean discovered) {
+   private record HoveredBadge(String category, Badge badge, boolean discovered) {
+   }
+
+   @Environment(EnvType.CLIENT)
+   private record GroupRender(int nextX, HoveredBadge hovered) {
    }
 }
