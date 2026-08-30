@@ -9,6 +9,7 @@ import com.redslovesgames.tideborne.command.TideborneCommands;
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
 import com.redslovesgames.tideborne.migration.TideborneMigrationManager;
 import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
+import com.redslovesgames.tideteamjournal.OwnedFishJournalBackfill;
 import com.redslovesgames.tideteamjournal.TideTeamJournal;
 import com.redslovesgames.tidetraits.TideTraits;
 import net.fabricmc.api.ModInitializer;
@@ -25,6 +26,7 @@ public final class Tideborne implements ModInitializer {
          TideborneConfigBackend.beforeSubsystems();
          new TideTraits().onInitialize();
          new TideTeamJournal().onInitialize();
+         OwnedFishJournalBackfill.init();
          new TideboundCompatibility().onInitialize();
          TideborneCommands.init();
          TideborneConfigBackend.afterSubsystems();

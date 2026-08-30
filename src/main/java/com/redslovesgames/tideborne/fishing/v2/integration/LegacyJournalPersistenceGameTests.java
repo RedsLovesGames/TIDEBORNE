@@ -2,11 +2,13 @@ package com.redslovesgames.tideborne.fishing.v2.integration;
 
 import com.li64.tide.Tide;
 import com.li64.tide.data.fishing.FishData;
+import com.li64.tide.data.item.TideItemData;
 import com.li64.tide.data.player.CatchTimestamp;
 import com.li64.tide.data.player.FishStats;
 import com.li64.tide.data.player.TidePlayerData;
 import com.li64.tide.data.player.TidePlayerData.FishPlayerData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideteamjournal.OwnedFishJournalBackfill;
 import com.redslovesgames.tidetraits.compat.multiplayer.PersonalTideJournal;
 import java.util.Optional;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -61,6 +63,85 @@ public final class LegacyJournalPersistenceGameTests implements FabricGameTest {
                 "Already-migrated team journal reported another migration");
         helper.assertTrue(teamOnce.equals(teamRoot),
                 "Repeated team journal migration changed persistence");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void ownedLengthOnlyLegacyFishBackfillsMissingLatestWithoutReplayingCatch(TestContext helper) {
+        ServerPlayerEntity player = (ServerPlayerEntity) helper.createMockCreativeServerPlayerInWorld();
+        ItemStack cod = new ItemStack(Items.COD);
+        FishData fish = FishData.get(cod).orElseThrow();
+        double legacyLength = 47.25;
+
+        FishStats stats = new FishStats();
+        stats.logCatch(CatchTimestamp.now(player.getWorld()), legacyLength);
+        TidePlayerData legacyJournal = new TidePlayerData();
+        legacyJournal.fishPlayerData.put(
+                fish.fish(),
+                new FishPlayerData(true, true, false, Optional.of(stats))
+        );
+
+        NbtCompound teamRoot = new NbtCompound();
+        teamRoot.put("journal", legacyJournal.getAsTag());
+        TideItemData.FISH_LENGTH.set(cod, legacyLength);
+        NbtCompound historicalJournal = teamRoot.getCompound("journal").copy();
+
+        helper.assertTrue(
+                CanonicalSpecimenStorage.detectMigration(cod) == CanonicalSpecimenStorage.MigrationState.NONE,
+                "Length-only old Tide fish unexpectedly started with Tideborne specimen metadata"
+        );
+        helper.assertTrue(
+                JournalSpecimenStore.read(teamRoot, "minecraft:cod", JournalSpecimenStore.LATEST).isEmpty(),
+                "Aggregate legacy migration unexpectedly invented a latest specimen"
+        );
+        helper.assertTrue(
+                OwnedFishJournalBackfill.backfillStack(teamRoot, cod),
+                "Actual owned legacy fish did not backfill the missing Journal specimen"
+        );
+
+        SpecimenData imported = JournalSpecimenStore.read(
+                teamRoot,
+                "minecraft:cod",
+                JournalSpecimenStore.LATEST
+        ).orElseThrow();
+        helper.assertTrue(Double.compare(imported.finalLength(), legacyLength) == 0,
+                "Owned-fish Journal backfill changed the preserved physical length");
+        helper.assertTrue(imported.fishScore().isPresent(),
+                "Owned-fish Journal backfill did not persist canonical FishScore");
+        helper.assertTrue(
+                CanonicalSpecimenStorage.detectMigration(cod) == CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT,
+                "Owned length-only fish was not normalized to current canonical specimen data"
+        );
+        helper.assertTrue(historicalJournal.equals(teamRoot.getCompound("journal")),
+                "Owned-fish Journal backfill changed Tide catch counts, dates, or record statistics"
+        );
+
+        NbtCompound once = teamRoot.copy();
+        helper.assertTrue(!OwnedFishJournalBackfill.backfillStack(teamRoot, cod),
+                "Repeated owned-fish Journal backfill imported the same species twice");
+        helper.assertTrue(once.equals(teamRoot),
+                "Repeated owned-fish Journal backfill was not idempotent");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void ownedFishDoesNotUnlockAnUncaughtJournalSpecies(TestContext helper) {
+        ItemStack cod = new ItemStack(Items.COD);
+        double legacyLength = 41.0;
+        TideItemData.FISH_LENGTH.set(cod, legacyLength);
+
+        NbtCompound teamRoot = new NbtCompound();
+        teamRoot.put("journal", new TidePlayerData().getAsTag());
+        helper.assertTrue(!OwnedFishJournalBackfill.backfillStack(teamRoot, cod),
+                "Owned-fish backfill unlocked a species that was never caught in the Journal");
+        helper.assertTrue(
+                CanonicalSpecimenStorage.detectMigration(cod) == CanonicalSpecimenStorage.MigrationState.NONE,
+                "Rejected uncaught fish was mutated during Journal backfill"
+        );
+        helper.assertTrue(
+                JournalSpecimenStore.read(teamRoot, "minecraft:cod", JournalSpecimenStore.LATEST).isEmpty(),
+                "Rejected uncaught fish created a canonical Journal specimen"
+        );
         helper.complete();
     }
 

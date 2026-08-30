@@ -4,6 +4,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService;
 import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService.Result;
 import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService.Status;
+import com.redslovesgames.tideteamjournal.OwnedFishJournalBackfill;
 import java.util.SplittableRandom;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;
@@ -42,13 +43,20 @@ public final class FishingRecoveryCommand {
         ServerPlayerEntity player = player(source);
         if (player == null) return 0;
         Result result = RECOVERY.repair(player.getMainHandStack());
+        int journalImported = OwnedFishJournalBackfill.backfillAndSync(player);
         if (result.status() == Status.REPAIRED) {
-            send(source, "Repaired held legacy fish into canonical Fishing System 2.0 data.");
+            send(source, "Repaired held legacy fish into canonical Fishing System 2.0 data."
+                    + journalSuffix(journalImported));
             return 1;
         }
         if (result.status() == Status.ALREADY_CURRENT) {
-            send(source, "Held fish is already current canonical Fishing System 2.0 data. No changes made.");
-            return 0;
+            send(source, "Held fish is already current canonical Fishing System 2.0 data."
+                    + journalSuffix(journalImported));
+            return journalImported > 0 ? 1 : 0;
+        }
+        if (journalImported > 0) {
+            send(source, "Backfilled the owned fish into the Journal from its preserved Tide data without replaying a catch.");
+            return 1;
         }
         source.sendError(Text.literal("Held item is not a recoverable legacy Tide fish. No changes made."));
         return 0;
@@ -65,11 +73,14 @@ public final class FishingRecoveryCommand {
             if (result.status() == Status.REPAIRED) repaired++;
             if (result.status() == Status.ALREADY_CURRENT) current++;
         }
+        int journalImported = OwnedFishJournalBackfill.backfillAndSync(player);
         int repairedCount = repaired;
         int currentCount = current;
+        int importedCount = journalImported;
         source.sendFeedback(() -> Text.literal("Legacy fish repair complete: " + repairedCount
-                + " repaired, " + currentCount + " already current."), true);
-        return repaired;
+                + " repaired, " + currentCount + " already current, " + importedCount
+                + " missing Journal specimen(s) backfilled."), true);
+        return repaired + journalImported;
     }
 
     private static int rerollHeld(ServerCommandSource source, boolean confirmed) {
@@ -111,6 +122,10 @@ public final class FishingRecoveryCommand {
         if (source.getEntity() instanceof ServerPlayerEntity player) return player;
         source.sendError(Text.literal("Fish repair/reroll targeting must be run by a player."));
         return null;
+    }
+
+    private static String journalSuffix(int imported) {
+        return imported > 0 ? " Backfilled " + imported + " missing Journal specimen(s)." : " No Journal backfill was needed.";
     }
 
     private static void send(ServerCommandSource source, String message) {
