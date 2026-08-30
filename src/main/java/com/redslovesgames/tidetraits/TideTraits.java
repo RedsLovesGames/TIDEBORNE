@@ -14,9 +14,6 @@ import com.redslovesgames.tidetraits.discovery.DiscoveryManager;
 import com.redslovesgames.tidetraits.satchel.SatchelRegistration;
 import com.redslovesgames.tidetraits.satchel.network.SatchelNetworking;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents.ModifyEntries;
-import net.minecraft.item.ItemGroups;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +31,6 @@ public final class TideTraits implements ModInitializer {
       CatchTraitService.INSTANCE.setConfig(settings.mutations());
       CatchTraitService.INSTANCE.init();
       TideTraitsCommands.init();
-      ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register((ModifyEntries)entries -> entries.add(SatchelRegistration.ANGLERS_SATCHEL));
       LOGGER.info("[Tideborne] Initializing traits and specimen systems");
    }
 }
