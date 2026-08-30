@@ -116,7 +116,7 @@ public final class TideborneCommands {
                .requires(source -> source.hasPermissionLevel(2))
                .then(
                   CommandManager.literal("repair")
-                     .then(CommandManager.literal("inventory").redirect(repairInventory))
+                     .then(executableRedirect("inventory", repairInventory))
                )
          );
       }
@@ -128,14 +128,32 @@ public final class TideborneCommands {
       return parent == null ? null : parent.getChild(name);
    }
 
-   private static void redirect(
+   static void redirect(
       LiteralArgumentBuilder<ServerCommandSource> root,
       String name,
       CommandNode<ServerCommandSource> target
    ) {
       if (target != null) {
-         root.then(CommandManager.literal(name).redirect(target));
+         root.then(executableRedirect(name, target));
       }
+   }
+
+   /**
+    * Brigadier redirects continue parsing at the target node, but they do not inherit the target
+    * node's executable command when the alias itself is the end of the input. Copy the target
+    * command and requirement onto the alias so commands such as `/tideborne journal` and
+    * `/tideborne debug specimen inspect` remain executable while deeper arguments still redirect.
+    */
+   static LiteralArgumentBuilder<ServerCommandSource> executableRedirect(
+      String name,
+      CommandNode<ServerCommandSource> target
+   ) {
+      LiteralArgumentBuilder<ServerCommandSource> alias = CommandManager.literal(name)
+         .requires(target.getRequirement());
+      if (target.getCommand() != null) {
+         alias.executes(target.getCommand());
+      }
+      return alias.redirect(target);
    }
 
    private static int status(ServerCommandSource source) {
