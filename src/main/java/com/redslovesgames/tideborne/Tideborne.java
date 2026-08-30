@@ -8,6 +8,7 @@ package com.redslovesgames.tideborne;
 import com.redslovesgames.tideborne.command.TideborneCommands;
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
 import com.redslovesgames.tideborne.migration.TideborneMigrationManager;
+import com.redslovesgames.tideborne.registry.TideborneItemGroups;
 import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
 import com.redslovesgames.tideteamjournal.OwnedFishJournalBackfill;
 import com.redslovesgames.tideteamjournal.TideTeamJournal;
@@ -28,6 +29,7 @@ public final class Tideborne implements ModInitializer {
          new TideTeamJournal().onInitialize();
          OwnedFishJournalBackfill.init();
          new TideboundCompatibility().onInitialize();
+         TideborneItemGroups.init();
          TideborneCommands.init();
          TideborneConfigBackend.afterSubsystems();
          System.out.println("[Tideborne] Native backend, unified commands/config, migration and compatibility layers initialized.");
