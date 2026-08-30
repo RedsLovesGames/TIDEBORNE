@@ -1,6 +1,5 @@
 package com.redslovesgames.tideborne.fishing.v2;
 
-import com.li64.tide.registries.TideItems;
 import net.minecraft.item.ItemStack;
 
 /** Canonical Fishing System 2.0 representation of Tide 2.1.1 fishing-line fight modifiers. */
@@ -44,18 +43,22 @@ public final class TideFishingLineModifiers {
         if (line == null || line.isEmpty()) {
             return FishingGearModifiers.neutral();
         }
-        if (line.isOf(TideItems.COPPER_LINE)) {
-            return COPPER;
+        return FishingGearRegistry.resolve(line)
+                .map(TideFishingLineModifiers::forProfile)
+                .orElseGet(FishingGearModifiers::neutral);
+    }
+
+    /** Resolves the fixed Tide line effect for an already-canonical gear profile. */
+    public static FishingGearModifiers forProfile(FishingGearRegistry.GearProfile profile) {
+        if (profile == null) {
+            return FishingGearModifiers.neutral();
         }
-        if (line.isOf(TideItems.IRON_LINE)) {
-            return IRON;
-        }
-        if (line.isOf(TideItems.GOLDEN_LINE)) {
-            return GOLDEN;
-        }
-        if (line.isOf(TideItems.DIAMOND_LINE)) {
-            return DIAMOND;
-        }
-        return FishingGearModifiers.neutral();
+        return switch (profile) {
+            case TIDE_COPPER_LINE -> COPPER;
+            case TIDE_IRON_LINE -> IRON;
+            case TIDE_GOLDEN_LINE -> GOLDEN;
+            case TIDE_DIAMOND_LINE -> DIAMOND;
+            default -> FishingGearModifiers.neutral();
+        };
     }
 }
