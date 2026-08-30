@@ -28,6 +28,14 @@ class FishingGearRegistryTest {
     }
 
     @Test
+    void everyCanonicalProfileReversesToTheSameRegisteredItem() {
+        for (FishingGearRegistry.GearProfile profile : FishingGearRegistry.GearProfile.values()) {
+            Item item = FishingGearRegistry.registeredItem(profile).orElseThrow();
+            assertEquals(profile, FishingGearRegistry.resolve(item).orElseThrow());
+        }
+    }
+
+    @Test
     void unregisteredItemCannotInheritBehaviorByNameClassOrSimilarity() {
         Item lookalike = new Item(new Item.Settings());
         assertTrue(FishingGearRegistry.resolve(lookalike).isEmpty());
@@ -49,5 +57,6 @@ class FishingGearRegistryTest {
 
     private static void assertProfile(Item item, FishingGearRegistry.GearProfile expected) {
         assertEquals(expected, FishingGearRegistry.resolve(item).orElseThrow());
+        assertEquals(item, FishingGearRegistry.registeredItem(expected).orElseThrow());
     }
 }
