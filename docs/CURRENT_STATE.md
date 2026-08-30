@@ -737,3 +737,8 @@ The reconstruction-source, reconstruction-repair, and one-off release workflows 
 retired. The first two could write to the historical reconstruction branch despite Phase 0
 being complete, and the latter referenced a fixed historical run, artifact, and commit.
 The reconstruction scripts remain stored for provenance but no longer run continuously.
+
+Implementation commit `ce4595d7bb4a7a8733ba57ef74a9fe524f9616f6` passed local YAML parsing
+and whitespace validation. The full Gradle and shell-script gates were not runnable on the
+local machine because it has Java 8, no WSL distribution, and no exact runtime JARs. The
+Java 21 GitHub Actions workflow was triggered from the `dev` push for full validation.
