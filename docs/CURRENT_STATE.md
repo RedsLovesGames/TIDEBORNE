@@ -187,10 +187,41 @@ The `TIDEBORN-2.0.0` release now targets that implementation commit. Its refresh
 `tideborne-2.0.0.jar` asset has SHA-256
 `0209af64b53617433b5a5cd8bf66b0a3923e3f3636fd81b34985e2cde83d72ab`.
 
+## Stage 62 canonical fishing gear registry is complete
+
+Stage 62 hardens fishing gear identity without changing Fishing System 2.0 balance. Gear behavior is
+now keyed by one explicit canonical registry of registered `Item` identities instead of duplicated
+consumer-side recognition logic.
+
+Current gear-registry contracts:
+
+- every supported native Tide line and Tideborne fishing gear item has exactly one canonical
+  `GearProfile`, origin, and equipment slot classification;
+- resolution uses the registered `Item` identity only; display names, translation keys, class names,
+  and substring similarity cannot grant fishing behavior to an unregistered lookalike;
+- native Tide Copper, Iron, Golden, and Diamond line effects resolve through the shared registry;
+- Tideborne Tentacle/Swift lines, Seafarer's/Shark Tooth hooks, and Kujira rod runtime selection
+  resolve through the same registry while preserving their existing contextual/configured effects;
+- Steel Leader remains applied from its authoritative persisted attachment state, while its item and
+  tooltip identity are represented by the same canonical gear profile;
+- Leviathan Bait remains applied from the authoritative active-bait state, while its item and tooltip
+  identity are represented by the canonical profile;
+- advanced Tideborne equipment tooltips consume the same profile identity used by runtime gear
+  resolution, preventing UI/runtime identity drift;
+- `/tideborne debug gear` provides read-only operator diagnostics for canonical gear item IDs,
+  profiles, origins, and slots, and is exposed from the clickable Debug Tools panel;
+- modifier arithmetic continues through `FishingGearModifiers.compose`; no second gear stacking or
+  balance formula was introduced.
+
+Focused tests cover complete profile registration, rejection of unregistered lookalikes, profile
+metadata/reverse identity, and cross-gear stacking across native line, Tideborne line, Steel Leader,
+and Leviathan Bait effects.
+
 ## Current execution gate
 
-Fishing System 2.0, its legacy recovery/admin tooling, final player-facing integration polish, and
-the owned legacy-fish Journal backfill are complete on `dev`.
+Fishing System 2.0, its legacy recovery/admin tooling, final player-facing integration polish, the
+owned legacy-fish Journal backfill, and canonical fishing-gear registry hardening are complete on
+`dev`.
 
 There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item.
 Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope,
