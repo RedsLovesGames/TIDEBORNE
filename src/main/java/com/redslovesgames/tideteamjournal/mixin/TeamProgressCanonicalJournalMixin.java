@@ -91,6 +91,10 @@ abstract class TeamProgressCanonicalJournalMixin {
     @Inject(method = "tideborneUpdateContributorFishScore", at = @At("HEAD"))
     private static void tideborne$migrateContributorWrite(NbtCompound tag, CallbackInfo callback) {
         StoredFishScoreStorage.migrateLegacyScore(tag);
+        StoredFishScoreStorage.updateBest(
+                tag,
+                StoredFishScoreStorage.highestCanonicalScore(threadLocalTag(TIDEBORNE_CURRENT_FISH), threadLocalTag(TIDEBORNE_LAST_FISH))
+        );
         syncLegacyMirror(tag);
     }
 
@@ -167,6 +171,11 @@ abstract class TeamProgressCanonicalJournalMixin {
         if (value instanceof NbtCompound tag) {
             syncLegacyMirror(tag);
         }
+    }
+
+    private static NbtCompound threadLocalTag(ThreadLocal threadLocal) {
+        Object value = threadLocal.get();
+        return value instanceof NbtCompound tag ? tag : null;
     }
 
     /** Compatibility output only. Canonical storage remains the source of truth. */

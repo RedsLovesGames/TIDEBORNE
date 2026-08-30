@@ -18,8 +18,7 @@
     "client.FishingJournalMixin",
     "client.GuiGraphicsMixin",
     "client.ScreenAccessor",
-    "client.SyncPlayerDataMsgMixin",
-    "client.TeamRecordsCanonicalDisplayMixin"
+    "client.SyncPlayerDataMsgMixin"
   ],
   "injectors": {
     "defaultRequire": 1

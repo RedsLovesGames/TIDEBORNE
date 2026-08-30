@@ -46,7 +46,7 @@ class SatchelSpecimenDisplayTest {
 
       assertFalse(display.fishScore().isPresent());
       assertEquals(-1, display.scoreOrMissing());
-      assertEquals("--", display.scoreLabel());
+      assertEquals("N/A", display.scoreLabel());
       assertEquals("?", display.rarityStarsLabel());
    }
 

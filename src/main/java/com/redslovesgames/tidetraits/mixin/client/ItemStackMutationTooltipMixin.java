@@ -6,12 +6,12 @@
 package com.redslovesgames.tidetraits.mixin.client;
 
 import com.li64.tide.data.fishing.FishData;
+import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.player.PlayerEntity;
@@ -71,11 +71,11 @@ public abstract class ItemStackMutationTooltipMixin {
          canonical.add(field("Rarity", "★".repeat(rarityStars), Formatting.GOLD));
       }
 
-      canonical.add(field("Length", formatLength(finalLength), Formatting.AQUA));
-      canonical.add(field("Percentile", formatPercentile(finalPercentile), Formatting.AQUA));
-      canonical.add(field("Body Type", titleCase(bodyType), traitColor(bodyType)));
-      canonical.add(field("Condition", titleCase(condition), traitColor(condition)));
-      canonical.add(field("Pigmentation", titleCase(pigmentation), traitColor(pigmentation)));
+      canonical.add(field("Length", FishingUiFormat.length(finalLength), Formatting.AQUA));
+      canonical.add(field("Percentile", FishingUiFormat.percentile(finalPercentile), Formatting.AQUA));
+      canonical.add(field("Body Type", FishingUiFormat.trait(bodyType), traitColor(bodyType)));
+      canonical.add(field("Condition", FishingUiFormat.trait(condition), traitColor(condition)));
+      canonical.add(field("Pigmentation", FishingUiFormat.trait(pigmentation), traitColor(pigmentation)));
 
       if ("perfect_specimen".equalsIgnoreCase(quality)) {
          canonical.add(Text.literal("Perfect Specimen").formatted(Formatting.GOLD));
@@ -84,7 +84,7 @@ public abstract class ItemStackMutationTooltipMixin {
          canonical.add(Text.literal("Perfect Catch").formatted(Formatting.AQUA));
       }
       if (fishScore != null) {
-         canonical.add(field("Fish Score", Integer.toString(fishScore), Formatting.AQUA));
+         canonical.add(field("FishScore", FishingUiFormat.fishScore(fishScore), Formatting.AQUA));
       }
 
       original.addAll(insertionIndex, canonical);
@@ -131,6 +131,7 @@ public abstract class ItemStackMutationTooltipMixin {
          || text.startsWith("Condition:")
          || text.startsWith("Pigmentation:")
          || text.startsWith("Fish Score:")
+         || text.startsWith("FishScore:")
          || text.equals("Perfect Specimen")
          || text.equals("Perfect Catch");
    }
@@ -142,27 +143,7 @@ public abstract class ItemStackMutationTooltipMixin {
          : speciesId;
    }
 
-   private static String formatLength(double length) {
-      return String.format(Locale.ROOT, "%.1f cm", length);
-   }
-
-   private static String formatPercentile(double percentile) {
-      return String.format(Locale.ROOT, "P%.2f", percentile);
-   }
-
    private static String titleCase(String id) {
-      StringBuilder output = new StringBuilder();
-
-      for (String part : id.toLowerCase(Locale.ROOT).replace('-', '_').split("_")) {
-         if (!part.isBlank()) {
-            if (!output.isEmpty()) {
-               output.append(' ');
-            }
-
-            output.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
-         }
-      }
-
-      return output.toString();
+      return FishingUiFormat.trait(id);
    }
 }

@@ -55,6 +55,37 @@ public final class StoredFishScoreStorage {
         tag.putInt(CANONICAL_SCORE_KEY, score);
     }
 
+    /** Updates a contributor projection from an already-finalized canonical catch score. */
+    public static boolean updateBest(NbtCompound contributor, OptionalInt candidate) {
+        if (contributor == null) {
+            return false;
+        }
+        boolean changed = migrateLegacyScore(contributor);
+        if (candidate == null || candidate.isEmpty() || candidate.getAsInt() <= 0) {
+            return changed;
+        }
+        int previous = readCanonical(contributor).orElse(-1);
+        if (candidate.getAsInt() > previous) {
+            writeCanonical(contributor, candidate.getAsInt());
+            return true;
+        }
+        return changed;
+    }
+
+    /** Returns the highest valid canonical score without consulting compatibility fields. */
+    public static OptionalInt highestCanonicalScore(NbtCompound... candidates) {
+        int highest = -1;
+        if (candidates != null) {
+            for (NbtCompound candidate : candidates) {
+                OptionalInt score = readCanonical(candidate);
+                if (score.isPresent()) {
+                    highest = Math.max(highest, score.getAsInt());
+                }
+            }
+        }
+        return highest > 0 ? OptionalInt.of(highest) : OptionalInt.empty();
+    }
+
     /** Migrates persisted contributor/history/top-fish score fields once. */
     public static boolean migrateRoot(NbtCompound root) {
         if (root == null) {

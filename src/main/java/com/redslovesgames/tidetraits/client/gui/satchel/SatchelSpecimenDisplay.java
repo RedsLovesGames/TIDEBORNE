@@ -1,9 +1,9 @@
 package com.redslovesgames.tidetraits.client.gui.satchel;
 
 import com.li64.tide.data.fishing.FishData;
+import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
 import net.fabricmc.api.EnvType;
@@ -116,23 +116,23 @@ final class SatchelSpecimenDisplay {
    }
 
    String scoreLabel() {
-      return this.fishScore.isPresent() ? Integer.toString(this.fishScore.getAsInt()) : "--";
+      return FishingUiFormat.fishScore(this.fishScore);
    }
 
    String bodyTypeLabel() {
-      return titleCase(this.bodyType.name());
+      return FishingUiFormat.trait(this.bodyType);
    }
 
    String conditionLabel() {
-      return titleCase(this.condition.name());
+      return FishingUiFormat.trait(this.condition);
    }
 
    String pigmentationLabel() {
-      return titleCase(this.pigmentation.name());
+      return FishingUiFormat.trait(this.pigmentation);
    }
 
    String qualityLabel() {
-      return titleCase(this.quality.name());
+      return FishingUiFormat.trait(this.quality);
    }
 
    String rarityStarsLabel() {
@@ -156,16 +156,4 @@ final class SatchelSpecimenDisplay {
       }
    }
 
-   private static String titleCase(String id) {
-      StringBuilder output = new StringBuilder();
-      for (String part : id.toLowerCase(Locale.ROOT).replace('-', '_').split("_")) {
-         if (!part.isBlank()) {
-            if (!output.isEmpty()) {
-               output.append(' ');
-            }
-            output.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
-         }
-      }
-      return output.toString();
-   }
 }

@@ -49,7 +49,7 @@ class CanonicalJournalDisplayTest {
         CanonicalRecordDisplay display = CanonicalRecordDisplay.from(tag).orElseThrow();
 
         assertTrue(display.score().isEmpty());
-        assertEquals("--", display.scoreLabel());
+        assertEquals("N/A", display.scoreLabel());
         assertEquals("Giant", display.bodyTypeLabel());
     }
 

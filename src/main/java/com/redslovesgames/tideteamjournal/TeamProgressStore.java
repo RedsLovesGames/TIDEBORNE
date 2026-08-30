@@ -275,7 +275,7 @@ public final class TeamProgressStore {
          history = history.stream().filter(event -> event.type().name().equalsIgnoreCase(eventType)).toList();
       }
 
-      int pageSize = 8;
+      int pageSize = 5;
       int maxPage = Math.max(0, (history.size() - 1) / pageSize);
       int safePage = Math.max(0, Math.min(page, maxPage));
       result.putInt("page", safePage);
@@ -518,12 +518,12 @@ public final class TeamProgressStore {
    }
 
    public static void tideborneRegisterContributorFishScore(UUID var0, NbtCompound var1) {
-      TIDEBORNE_CONTRIBUTOR_SCORES.put(var0, var1.getInt("fish_score"));
+      TIDEBORNE_CONTRIBUTOR_SCORES.put(var0, StoredFishScoreStorage.readCanonical(var1).orElse(-1));
    }
 
    public static int tideborneContributorFishScore(TeamProgressStore.Contributor var0) {
       Integer var1 = (Integer)TIDEBORNE_CONTRIBUTOR_SCORES.get(var0.id());
-      return var1 == null ? 0 : var1;
+      return var1 == null ? -1 : var1;
    }
 
    public static void tideborneRegisterEventMeta(TeamProgressStore.RecordEvent var0, NbtCompound var1) {

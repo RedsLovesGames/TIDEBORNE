@@ -1,5 +1,6 @@
 package com.redslovesgames.tideteamjournal.client;
 
+import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
 import java.util.Locale;
 import java.util.Optional;
@@ -36,7 +37,7 @@ public record CanonicalRecordDisplay(
     }
 
     public String scoreLabel() {
-        return score.isPresent() ? Integer.toString(score.getAsInt()) : "--";
+        return FishingUiFormat.fishScore(score);
     }
 
     public String bodyTypeLabel() {
@@ -60,19 +61,6 @@ public record CanonicalRecordDisplay(
     }
 
     private static String label(String value) {
-        if (value == null || value.isBlank()) {
-            return "--";
-        }
-        StringBuilder output = new StringBuilder();
-        for (String part : value.replace('-', '_').split("_")) {
-            if (part.isBlank()) {
-                continue;
-            }
-            if (!output.isEmpty()) {
-                output.append(' ');
-            }
-            output.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
-        }
-        return output.toString();
+        return FishingUiFormat.trait(value);
     }
 }

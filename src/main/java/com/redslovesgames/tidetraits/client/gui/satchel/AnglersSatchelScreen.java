@@ -5,6 +5,9 @@
  */
 package com.redslovesgames.tidetraits.client.gui.satchel;
 
+import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
+import com.redslovesgames.tideborne.client.ui.FishingUiLayout;
+import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
 import com.redslovesgames.tidetraits.compat.multiplayer.MultiplayerDiscoveryClient;
 import com.redslovesgames.tidetraits.compat.multiplayer.SharedDiscoveryAvailability;
 import com.redslovesgames.tidetraits.compat.multiplayer.SharedDiscoverySnapshot;
@@ -24,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -240,38 +242,41 @@ public final class AnglersSatchelScreen extends Screen {
       if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          ItemStack stack = this.contents.get(this.selectedSlot);
          Optional<SatchelSpecimenDisplay> canonical = SatchelSpecimenDisplay.from(stack);
-         String name = this.textRenderer.trimToWidth(stack.getName().getString(), 100);
-         graphics.drawText(this.textRenderer, canonical.map(SatchelSpecimenDisplay::rarityStarsLabel).orElse("?"), x, y + 13, -12965349, false);
-         graphics.drawText(this.textRenderer, name, x + 42, y + 13, -12965349, false);
-         graphics.drawText(this.textRenderer, "Slot " + (this.selectedSlot + 1), x, y + 24, -9282236, false);
+         String fullName = stack.getName().getString();
+         FittedText name = FishingUiLayout.ellipsize(fullName, 86, this.textRenderer::getWidth);
+         graphics.drawText(this.textRenderer, canonical.map(SatchelSpecimenDisplay::rarityStarsLabel).orElse("?"), x, y + 10, -12965349, false);
+         graphics.drawText(this.textRenderer, name.text(), x + 34, y + 10, -12965349, false);
+         if (this.view.isProtected(this.selectedSlot)) {
+            blit(graphics, statusIcon("protected"), x + 112, y + 1, 7, 7);
+         }
+         if (name.clipped() && inside(mouseX, mouseY, x + 34, y + 10, 86, 10)) {
+            this.showTooltip(graphics, mouseX, mouseY, List.of(Text.literal(fullName)));
+         }
          SatchelFeatureView scanner = this.view.feature(SatchelFeature.TRAIT_SCANNER.id());
          boolean scannerEnabled = scanner != null && scanner.unlocked() && scanner.enabled();
          if (scannerEnabled) {
             if (canonical.isPresent()) {
                SatchelSpecimenDisplay specimen = canonical.get();
-               graphics.drawText(this.textRenderer, String.format(Locale.ROOT, "Length %.2f", specimen.length()), x, y + 38, -12965349, false);
-               graphics.drawText(this.textRenderer, String.format(Locale.ROOT, "Percentile %.1f", specimen.percentile()), x, y + 48, -12965349, false);
-               graphics.drawText(this.textRenderer, "Body " + specimen.bodyTypeLabel(), x, y + 58, -12965349, false);
+               graphics.drawText(this.textRenderer, "FishScore " + specimen.scoreLabel(), x, y + 20, -12965349, false);
+               graphics.drawText(this.textRenderer, "Length " + FishingUiFormat.length(specimen.length()), x, y + 29, -12965349, false);
+               graphics.drawText(this.textRenderer, "Percentile " + FishingUiFormat.percentile(specimen.percentile()), x, y + 38, -12965349, false);
+               graphics.drawText(this.textRenderer, "Traits", x, y + 49, -12965349, false);
+               graphics.drawText(this.textRenderer, "Body Type " + specimen.bodyTypeLabel(), x, y + 59, -12965349, false);
                graphics.drawText(this.textRenderer, "Condition " + specimen.conditionLabel(), x, y + 68, -12965349, false);
-               graphics.drawText(this.textRenderer, "Pigment " + specimen.pigmentationLabel(), x, y + 78, -12965349, false);
-               graphics.drawText(this.textRenderer, "Quality " + specimen.qualityLabel(), x, y + 88, -12965349, false);
-               graphics.drawText(this.textRenderer, "Score " + specimen.scoreLabel(), x, y + 98, -12965349, false);
+               graphics.drawText(this.textRenderer, "Pigment " + specimen.pigmentationLabel(), x, y + 77, -12965349, false);
+               graphics.drawText(this.textRenderer, "Quality " + specimen.qualityLabel(), x, y + 86, -12965349, false);
             } else {
                graphics.drawTextWrapped(
-                  this.textRenderer, Text.literal("Canonical specimen data is unavailable for this stored fish."), x, y + 40, 120, -9282236
+                  this.textRenderer, Text.literal("Canonical specimen data is unavailable for this stored fish."), x, y + 24, 120, -9282236
                );
             }
          } else {
             graphics.drawTextWrapped(
-               this.textRenderer, Text.literal("Trait Scanner locked/off. Enable it to reveal specimen details."), x, y + 40, 120, -9282236
+               this.textRenderer, Text.literal("Trait Scanner locked/off. Enable it to reveal specimen details."), x, y + 24, 120, -9282236
             );
          }
 
-         this.renderPersonalRecordSummary(graphics, x, y + 110, this.selectedSlot);
-         if (this.view.isProtected(this.selectedSlot)) {
-            blit(graphics, statusIcon("protected"), x, y + 121, 7, 7);
-            graphics.drawText(this.textRenderer, "Trophy protected", x + 10, y + 121, -6671571, false);
-         }
+         this.renderPersonalRecordSummary(graphics, x, y + 97, this.selectedSlot);
 
          int extractY = top + 202;
          drawButton(graphics, x, extractY, "Take", !this.view.isProtected(this.selectedSlot), mouseX, mouseY);
@@ -288,7 +293,7 @@ public final class AnglersSatchelScreen extends Screen {
       boolean available = organizer != null && organizer.unlocked() && organizer.enabled();
       graphics.drawText(
          this.textRenderer,
-         available ? "Ordered comparator chain" : "Tackle Organizer must be unlocked and enabled",
+         available ? "Sort Priority" : "Tackle Organizer must be unlocked and enabled",
          left + 29,
          top + 63,
          available ? -12965349 : -6671571,
@@ -307,8 +312,8 @@ public final class AnglersSatchelScreen extends Screen {
          String prefix = priority < 0 ? "+ " : priority + 1 + ". ";
          graphics.drawText(this.textRenderer, prefix + label, rowX + 17, y + 5, priority < 0 ? -9282236 : -12965349, false);
          if (priority >= 0) {
-            String direction = this.draftSortRules.get(priority).directionId().equals("desc") ? "DESC" : "ASC";
-            graphics.drawText(this.textRenderer, direction, rowX + 111, y + 5, -12965349, false);
+            String direction = this.draftSortRules.get(priority).directionId().equals("desc") ? "↓ Desc" : "↑ Asc";
+            graphics.drawText(this.textRenderer, direction, rowX + 106, y + 5, -12965349, false);
             graphics.fill(rowX + 147, y, rowX + 159, y + 18, 1619751761);
             graphics.fill(rowX + 161, y, rowX + 173, y + 18, 1619751761);
             graphics.drawText(this.textRenderer, "^", rowX + 150, y + 5, -12965349, false);
@@ -318,12 +323,12 @@ public final class AnglersSatchelScreen extends Screen {
 
       int buttonY = top + 118;
       drawButton(graphics, left + 260, buttonY, this.sortDirty ? "Apply sort" : "Applied", available && this.sortDirty, mouseX, mouseY);
-      graphics.drawText(this.textRenderer, "Click a row.", left + 220 + (150 - this.textRenderer.getWidth("Click a row.")) / 2, top + 91, -9282236, false);
-      graphics.drawText(this.textRenderer, "ASC/DESC reverses.", left + 245, top + 103, -9282236, false);
+      graphics.drawText(this.textRenderer, "Click direction to reverse", left + 232, top + 92, -9282236, false);
+      graphics.drawText(this.textRenderer, "Use arrows to reorder", left + 239, top + 104, -9282236, false);
    }
 
    private void renderUpgrades(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
-      graphics.drawText(this.textRenderer, "", left + 29, top + 63, -9282236, false);
+      graphics.drawText(this.textRenderer, "Installed Upgrades", left + 29, top + 63, -12965349, false);
 
       for (int index = 0; index <= SATCHEL_UPGRADES.size(); index++) {
          int column = index / 3;
@@ -348,7 +353,7 @@ public final class AnglersSatchelScreen extends Screen {
       boolean enabled = unlocked && lock.enabled();
       graphics.drawText(
          this.textRenderer,
-         unlocked ? "Trophy Lock automatic rules" : "Unlock Trophy Lock to configure automatic rules.",
+         unlocked ? "Trophy Lock Automatic Rules" : "Unlock Trophy Lock to configure automatic rules.",
          left + 29,
          top + 187,
          unlocked ? -12965349 : -9282236,
@@ -435,9 +440,16 @@ public final class AnglersSatchelScreen extends Screen {
          drawButton(graphics, left + 30, top + 134, "Upgrades", true, mouseX, mouseY);
       } else {
          int listX = left + 38;
-         int lengthX = listX + 154;
          graphics.drawText(
-            this.textRenderer, "Leaderboard", (400 - MinecraftClient.getInstance().textRenderer.getWidth("Leaderboard")) / 2 + left, top + 69, -12965349, false
+            this.textRenderer, "Satchel Records", (400 - this.textRenderer.getWidth("Satchel Records")) / 2 + left, top + 64, -12965349, false
+         );
+         graphics.drawText(
+            this.textRenderer,
+            "Top satchel specimens by canonical V2 FishScore",
+            (400 - this.textRenderer.getWidth("Top satchel specimens by canonical V2 FishScore")) / 2 + left,
+            top + 75,
+            -9282236,
+            false
          );
          List<ItemStack> sorted = this.contents.stream().sorted(Comparator.comparingInt(AnglersSatchelScreen::recordScoreValue).reversed()).toList();
          byte visible = 16;
@@ -449,31 +461,25 @@ public final class AnglersSatchelScreen extends Screen {
             }
 
             ItemStack stack = sorted.get(actual);
-            int rowY = top + 83 + index % 8 * 16;
-            graphics.drawItem(stack, listX + index / 8 * 174, rowY - 4);
+            int columnX = listX + index / 8 * 174;
+            int rowY = top + 94 + index % 8 * 15;
+            graphics.drawText(this.textRenderer, Integer.toString(actual + 1), columnX, rowY, -9282236, false);
+            graphics.drawItem(stack, columnX + 18, rowY - 4);
+            FittedText name = FishingUiLayout.ellipsize(stack.getName().getString(), 91, this.textRenderer::getWidth);
             graphics.drawText(
-               this.textRenderer, this.textRenderer.trimToWidth(stack.getName().getString(), 100), listX + index / 8 * 174 + 19, rowY, -12965349, false
+               this.textRenderer, name.text(), columnX + 37, rowY, -12965349, false
             );
             String score = recordScoreLabel(stack);
             graphics.drawText(
-               this.textRenderer, score, lengthX + index / 8 * 174 - MinecraftClient.getInstance().textRenderer.getWidth(score), rowY, -9282236, false
+               this.textRenderer, score, FishingUiLayout.rightAlignedX(columnX + 170, this.textRenderer.getWidth(score)), rowY, 0xFF43A8D8, false
             );
          }
-
-         graphics.drawText(
-            this.textRenderer,
-            "Canonical V2 FishScore",
-            (400 - MinecraftClient.getInstance().textRenderer.getWidth("Canonical V2 FishScore")) / 2 + left,
-            top + 211,
-            -9282236,
-            false
-         );
       }
    }
 
    private void renderRecordBadge(DrawContext graphics, int x, int y, String icon, String label, ItemStack stack) {
       blit(graphics, statusIcon(icon), x, y, 7, 7);
-      String rawValue = stack.isEmpty() ? "--" : stack.getName().getString() + String.format(Locale.ROOT, " %.2f", length(stack));
+      String rawValue = stack.isEmpty() ? FishingUiFormat.UNAVAILABLE : stack.getName().getString() + " " + FishingUiFormat.length(length(stack));
       int valueWidth = Math.max(18, 155 - this.textRenderer.getWidth(label + " "));
       String value = this.textRenderer.trimToWidth(rawValue, valueWidth);
       graphics.drawText(this.textRenderer, label + " " + value, x + 11, y - 1, -12965349, false);
@@ -504,14 +510,14 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private void renderPersonalRecordSummary(DrawContext graphics, int x, int y, int slot) {
+      graphics.drawText(this.textRenderer, "Records", x, y, -12965349, false);
       Optional<PersonalRecordView> record = this.view.personalRecordAt(slot);
       if (record.isEmpty()) {
-         graphics.drawText(this.textRenderer, "No personal record yet", x, y, -9282236, false);
+         graphics.drawText(this.textRenderer, "No personal record yet", x, y + 10, -9282236, false);
       } else {
          PersonalRecordView stats = record.get();
-         graphics.drawText(
-            this.textRenderer, String.format(Locale.ROOT, "Personal L %.1f  S %.1f", stats.largest(), stats.smallest()), x, y, -9282236, false
-         );
+         graphics.drawText(this.textRenderer, "Personal largest: " + FishingUiFormat.length(stats.largest()), x, y + 10, -9282236, false);
+         graphics.drawText(this.textRenderer, "Personal smallest: " + FishingUiFormat.length(stats.smallest()), x, y + 19, -9282236, false);
       }
    }
 
@@ -704,7 +710,7 @@ public final class AnglersSatchelScreen extends Screen {
          }
       }
 
-      if (inside(mouseX, mouseY, left + 244, top + 106, 72, 16)) {
+      if (inside(mouseX, mouseY, left + 260, top + 118, 72, 16)) {
          this.showTooltip(
             graphics,
             mouseX,
@@ -1112,7 +1118,7 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private static String recordScoreLabel(ItemStack stack) {
-      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreLabel).orElse("--");
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreLabel).orElse(FishingUiFormat.UNAVAILABLE);
    }
 
    private static boolean sameLength(double first, double second) {
@@ -1165,23 +1171,6 @@ public final class AnglersSatchelScreen extends Screen {
 
    private static boolean inside(double mouseX, double mouseY, int x, int y, int width, int height) {
       return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
-   }
-
-   private static String titleCase(String id) {
-      String[] parts = id.toLowerCase(Locale.ROOT).replace('-', '_').split("_");
-      StringBuilder builder = new StringBuilder();
-
-      for (String part : parts) {
-         if (!part.isBlank()) {
-            if (!builder.isEmpty()) {
-               builder.append(' ');
-            }
-
-            builder.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
-         }
-      }
-
-      return builder.toString();
    }
 
    private static String featureLabel(SatchelFeature feature) {

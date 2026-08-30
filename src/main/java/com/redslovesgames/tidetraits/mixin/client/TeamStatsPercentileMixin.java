@@ -6,11 +6,11 @@
 package com.redslovesgames.tidetraits.mixin.client;
 
 import com.li64.tide.data.player.FishStats;
+import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenNetworkCodec;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenStore;
 import com.redslovesgames.tideteamjournal.client.ClientJournalSpecimens;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -49,12 +49,17 @@ public abstract class TeamStatsPercentileMixin {
       int cursorY = 0;
       int largestIndex = -1;
       int smallestIndex = -1;
+      Optional<JournalSpecimenNetworkCodec.DisplaySpecimen> latest = ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.LATEST);
       if (this.tideTraits$stats.getLargestCatch() > 0.0 && this.lines.size() >= 2) {
          largestIndex = this.lines.size() - 2;
          smallestIndex = this.lines.size() - 1;
       }
+      boolean singleCatch = this.tideTraits$stats.getAmountCaught() == 1 && largestIndex >= 0 && latest.isPresent();
 
       for (int index = 0; index < this.lines.size(); index++) {
+         if (singleCatch && (index == largestIndex || index == smallestIndex)) {
+            continue;
+         }
          Text line = this.lines.get(index);
          if (index == largestIndex) {
             line = this.tideTraits$withCanonicalPercentile(line, JournalSpecimenStore.LARGEST);
@@ -65,19 +70,31 @@ public abstract class TeamStatsPercentileMixin {
          cursorY += 11;
       }
 
-      Optional<JournalSpecimenNetworkCodec.DisplaySpecimen> latest = ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.LATEST);
+      if (singleCatch) {
+         JournalSpecimenNetworkCodec.DisplaySpecimen specimen = latest.orElseThrow();
+         drawCenteredFit(
+            graphics,
+            font,
+            Text.literal("Recorded specimen: " + FishingUiFormat.length(specimen.finalLength()) + "  " + FishingUiFormat.percentile(specimen.finalPercentile())),
+            center,
+            y + cursorY,
+            12620915
+         );
+         cursorY += 11;
+      }
+
       if (latest.isPresent()) {
          JournalSpecimenNetworkCodec.DisplaySpecimen specimen = latest.get();
          cursorY += 2;
-         drawCenteredFit(graphics, font, Text.literal("Body Type: " + label(specimen.bodyType())), center, y + cursorY, 0xB36CE2);
+         drawCenteredFit(graphics, font, Text.literal("Body Type: " + FishingUiFormat.trait(specimen.bodyType())), center, y + cursorY, 0xB36CE2);
          cursorY += 11;
-         drawCenteredFit(graphics, font, Text.literal("Condition: " + label(specimen.condition())), center, y + cursorY, 0xD36B5D);
+         drawCenteredFit(graphics, font, Text.literal("Condition: " + FishingUiFormat.trait(specimen.condition())), center, y + cursorY, 0xD36B5D);
          cursorY += 11;
-         drawCenteredFit(graphics, font, Text.literal("Pigmentation: " + label(specimen.pigmentation())), center, y + cursorY, 0x4FAFD6);
+         drawCenteredFit(graphics, font, Text.literal("Pigmentation: " + FishingUiFormat.trait(specimen.pigmentation())), center, y + cursorY, 0x4FAFD6);
          cursorY += 11;
-         drawCenteredFit(graphics, font, Text.literal("Quality: " + label(specimen.specimenQuality())), center, y + cursorY, 0xD6A94F);
+         drawCenteredFit(graphics, font, Text.literal("Quality: " + FishingUiFormat.trait(specimen.specimenQuality())), center, y + cursorY, 0xD6A94F);
          cursorY += 11;
-         String score = specimen.fishScore().isPresent() ? Integer.toString(specimen.fishScore().getAsInt()) : "--";
+         String score = FishingUiFormat.fishScore(specimen.fishScore());
          drawCenteredFit(graphics, font, Text.literal("FishScore: " + score), center, y + cursorY, 0x43A8D8);
       }
 
@@ -87,14 +104,17 @@ public abstract class TeamStatsPercentileMixin {
    @Inject(method = "getRequiredHeight", at = @At("HEAD"), cancellable = true, require = 1, remap = false)
    private void tideTraits$canonicalHeight(CallbackInfoReturnable<Integer> callback) {
       if (this.lines != null && ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.LATEST).isPresent()) {
-         callback.setReturnValue(this.lines.size() * 11 + 57);
+         int visibleBaseLines = this.tideTraits$stats != null && this.tideTraits$stats.getAmountCaught() == 1 && this.lines.size() >= 2
+            ? this.lines.size() - 1
+            : this.lines.size();
+         callback.setReturnValue(visibleBaseLines * 11 + 57);
       }
    }
 
    @Unique
    private Text tideTraits$withCanonicalPercentile(Text line, String recordKind) {
       return ClientJournalSpecimens.read(this.tideTraits$speciesId, recordKind)
-         .<Text>map(specimen -> Text.literal(line.getString() + String.format(Locale.ROOT, "  •  P%.1f", specimen.finalPercentile())))
+         .<Text>map(specimen -> Text.literal(line.getString() + "  •  " + FishingUiFormat.percentile(specimen.finalPercentile())))
          .orElse(line);
    }
 
@@ -110,15 +130,4 @@ public abstract class TeamStatsPercentileMixin {
       graphics.getMatrices().pop();
    }
 
-   @Unique
-   private static String label(Enum<?> value) {
-      StringBuilder output = new StringBuilder();
-      for (String part : value.name().toLowerCase(Locale.ROOT).split("_")) {
-         if (!output.isEmpty()) {
-            output.append(' ');
-         }
-         output.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
-      }
-      return output.toString();
-   }
 }

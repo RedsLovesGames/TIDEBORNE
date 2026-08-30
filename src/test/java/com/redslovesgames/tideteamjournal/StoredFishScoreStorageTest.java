@@ -59,6 +59,44 @@ class StoredFishScoreStorageTest {
     }
 
     @Test
+    void finalizedLastCatchUpdatesContributorWhenNestedHookClearedCurrentCatch() {
+        NbtCompound contributor = new NbtCompound();
+        NbtCompound finalizedLastCatch = new NbtCompound();
+        StoredFishScoreStorage.writeCanonical(finalizedLastCatch, 644);
+
+        OptionalInt projected = StoredFishScoreStorage.highestCanonicalScore(null, finalizedLastCatch);
+        assertTrue(StoredFishScoreStorage.updateBest(contributor, projected));
+        assertEquals(644, StoredFishScoreStorage.readCanonical(contributor).orElseThrow());
+    }
+
+    @Test
+    void missingContributorScoreNeverBecomesLegitimateZero() {
+        NbtCompound contributor = new NbtCompound();
+
+        assertFalse(StoredFishScoreStorage.updateBest(contributor, OptionalInt.empty()));
+        assertTrue(StoredFishScoreStorage.readCanonical(contributor).isEmpty());
+
+        UUID id = UUID.randomUUID();
+        TeamProgressStore.tideborneClearContributorScores();
+        TeamProgressStore.tideborneRegisterContributorFishScore(id, contributor);
+        TeamProgressStore.Contributor projection = new TeamProgressStore.Contributor(id, "No Score", 1, 1, 0, 0, false);
+        assertEquals(-1, TeamProgressStore.tideborneContributorFishScore(projection));
+        assertEquals(-1, projection.toTag().getInt(StoredFishScoreStorage.LEGACY_SCORE_KEY));
+        assertTrue(StoredFishScoreStorage.readCanonical(projection.toTag()).isEmpty());
+    }
+
+    @Test
+    void topFishAndContributorProjectionAgreeOnCanonicalScore() {
+        NbtCompound topFish = new NbtCompound();
+        StoredFishScoreStorage.writeCanonical(topFish, 2100);
+        NbtCompound contributor = new NbtCompound();
+
+        StoredFishScoreStorage.updateBest(contributor, StoredFishScoreStorage.highestCanonicalScore(topFish));
+
+        assertEquals(StoredFishScoreStorage.readCanonical(topFish), StoredFishScoreStorage.readCanonical(contributor));
+    }
+
+    @Test
     void rootMigrationCoversContributorsHistoryAndTopFishButNotMissingScores() {
         NbtCompound root = new NbtCompound();
         NbtCompound contributors = new NbtCompound();
