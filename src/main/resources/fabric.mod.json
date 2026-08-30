@@ -28,6 +28,7 @@
     "fabric-gametest": [
       "com.redslovesgames.tidetraits.gametest.TideTraitsGameTests",
       "com.redslovesgames.tidetraits.gametest.LegacySizeGenerationGameTests",
+      "com.redslovesgames.tideborne.gametest.TideborneItemGroupsGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.CanonicalFishingGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.FishingGearRegistryGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.FishDisplayPersistenceGameTests",
