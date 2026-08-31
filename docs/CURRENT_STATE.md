@@ -147,6 +147,13 @@ GitHub Actions run `33367391365` passed:
 - artifact upload;
 - release publishing.
 
+Published release state:
+
+- tag: `TIDEBORN-2.0.0`;
+- target commit: `f6aac3de1277500229428d37a69faf1c5eaf7d9a`;
+- artifact: `tideborne-2.0.0.jar`;
+- artifact SHA-256: `52ea877e4f32a36091910d6d0b70d279baf490f5e324b07e8ee5be451893c9ae`.
+
 No Stage 64 implementation failure remains after that run.
 
 The Stage 64 documentation closure is committed after the validated implementation head and does not change runtime behavior.
