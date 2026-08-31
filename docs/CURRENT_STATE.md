@@ -173,7 +173,20 @@ The hotfix:
 - reserves the journal footer by placing the Team Records button at book-local Y 240 with height 16, keeping the button inside the 260-pixel book instead of overlapping specimen data;
 - adds a source regression guard for compact stats layout and footer-button bounds.
 
-GitHub Actions validation run `33391874599` is the validation run for this hotfix. At documentation time, repository validation, the clean Java 21 Gradle build and unit tests, and all four optional-mod GameTest matrix entries had passed.
+GitHub Actions validation run `33391874599` passed the complete release matrix for this hotfix:
+
+- repository/dependency validation;
+- clean Java 21 Gradle build and unit tests;
+- Fabric GameTests with no optional compatibility mods;
+- Fabric GameTests with Apex Waters only;
+- Fabric GameTests with Myths of the Sea only;
+- Fabric GameTests with Apex Waters and Myths of the Sea together;
+- dedicated-server and client-connect smoke validation;
+- production release JAR validation;
+- artifact upload;
+- release publishing.
+
+The published `TIDEBORN-2.0.0` release now targets `bba9fe969d1860fd6923e017babfd88b78e4d0e1`. The refreshed `tideborne-2.0.0.jar` is 1,080,731 bytes with SHA-256 `85f33f07a0b6f0006ab6697819296f13c170f2c3bae25f76de4fb7535ebe7bc4`.
 
 ## Current execution gate
 
