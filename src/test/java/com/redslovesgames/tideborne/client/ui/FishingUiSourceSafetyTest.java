@@ -18,7 +18,8 @@ class FishingUiSourceSafetyTest {
             "src/main/java/com/redslovesgames/tidetraits/mixin/client/FishProfileSizeRangeMixin.java",
             "src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java",
             "src/main/java/com/redslovesgames/tidetraits/client/gui/journal/DiscoveryBadgesComponent.java",
-            "src/main/java/com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin.java"
+            "src/main/java/com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin.java",
+            "src/main/java/com/redslovesgames/tidetraits/mixin/client/TideFishProfileMixin.java"
     );
 
     @Test
@@ -60,15 +61,43 @@ class FishingUiSourceSafetyTest {
     void journalStatsStayCompactAndFooterButtonStaysInsideBook() throws IOException {
         String stats = Files.readString(Path.of(AFFECTED_UI.get(4)));
         assertTrue(stats.contains("BASE_LINE_STEP = 9"));
-        assertTrue(stats.contains("BEST_SECTION_HEIGHT = 38"));
+        assertTrue(stats.contains("BEST_SECTION_HEIGHT = 43"));
+        assertTrue(stats.contains("firstCatchIndex"));
         assertTrue(stats.contains("index = smallestIndex;"));
-        assertTrue(stats.contains("Best Specimen  •  PC "));
+        assertTrue(stats.contains("graphics.fill(x + 4, y + cursorY"));
+        assertTrue(stats.contains("\"Best Specimen\""));
+        assertTrue(stats.contains("\"PC \""));
 
         String journal = Files.readString(Path.of(AFFECTED_UI.get(6)));
         int buttonY = constantValue(journal, "TEAM_RECORDS_BUTTON_Y");
         int buttonHeight = constantValue(journal, "TEAM_RECORDS_BUTTON_HEIGHT");
         assertTrue(buttonY + buttonHeight <= 260);
         assertTrue(buttonY >= 238);
+    }
+
+    @Test
+    void firstCatchSharesTheSizeBadgeRowAndUsesCompactScale() throws IOException {
+        String badges = Files.readString(Path.of(AFFECTED_UI.get(5)));
+        assertTrue(badges.contains("FIRST_CATCH_SCALE = 0.75F"));
+        assertTrue(badges.contains("\"FC \""));
+        assertTrue(badges.contains("drawScaledRight"));
+        assertTrue(badges.contains("sizeY + 2"));
+
+        String profile = Files.readString(Path.of(AFFECTED_UI.get(7)));
+        assertTrue(profile.contains("new DiscoveryBadgesComponent(speciesId, stats)"));
+    }
+
+    @Test
+    void bestSpecimenUsesOneConsistentPaletteWithSpecialHighlighting() throws IOException {
+        String stats = Files.readString(Path.of(AFFECTED_UI.get(4)));
+        assertTrue(stats.contains("LABEL_COLOR = 0x5A4634"));
+        assertTrue(stats.contains("MUTED_COLOR = 0x8C715A"));
+        assertTrue(stats.contains("VALUE_COLOR = 0x4FA8D8"));
+        assertTrue(stats.contains("HIGHLIGHT_COLOR = 0xD6A94F"));
+        assertTrue(stats.contains("tideTraits$traitColor"));
+        assertFalse(stats.contains("0xB36CE2"));
+        assertFalse(stats.contains("0xD36B5D"));
+        assertFalse(stats.contains("0x4FAFD6"));
     }
 
     private static int constantValue(String source, String name) {

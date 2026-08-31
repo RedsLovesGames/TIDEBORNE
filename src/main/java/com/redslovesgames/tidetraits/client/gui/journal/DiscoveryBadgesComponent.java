@@ -5,9 +5,17 @@
  */
 package com.redslovesgames.tidetraits.client.gui.journal;
 
+import com.li64.tide.Tide;
 import com.li64.tide.client.gui.screens.journal.ProfileComponent;
+import com.li64.tide.data.player.CatchTimestamp;
+import com.li64.tide.data.player.FishStats;
 import com.redslovesgames.tidetraits.discovery.DiscoveryClient;
 import com.redslovesgames.tidetraits.discovery.DiscoverySnapshot;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.Objects;
 import net.fabricmc.api.EnvType;
@@ -19,6 +27,7 @@ import net.minecraft.util.Identifier;
 
 @Environment(EnvType.CLIENT)
 public final class DiscoveryBadgesComponent extends ProfileComponent {
+   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
    private static final int CONTENT_TOP = 24;
    private static final int CONTENT_BOTTOM = 244;
    private static final int REQUIRED_HEIGHT = 34;
@@ -26,7 +35,9 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
    private static final int ICON_STEP = 11;
    private static final int LABEL_GAP = 3;
    private static final int GROUP_GAP = 6;
-   private static final int HEADING_COLOR = 0x725F43;
+   private static final int LABEL_COLOR = 0x5A4634;
+   private static final int MUTED_COLOR = 0x8C715A;
+   private static final float FIRST_CATCH_SCALE = 0.75F;
 
    private static final List<Badge> BODY_TYPE = List.of(
       mutation("Dwarf", "dwarf"),
@@ -53,9 +64,11 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
    );
 
    private final Identifier speciesId;
+   private final FishStats stats;
 
-   public DiscoveryBadgesComponent(Identifier speciesId) {
+   public DiscoveryBadgesComponent(Identifier speciesId, FishStats stats) {
       this.speciesId = Objects.requireNonNull(speciesId, "speciesId");
+      this.stats = stats == null ? new FishStats() : stats;
    }
 
    public void render(DrawContext graphics, TextRenderer font, int x, int y, int mouseX, int mouseY, float partialTick) {
@@ -122,6 +135,7 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
          );
          hovered = prefer(quality.hovered(), prefer(pigment.hovered(), hovered));
 
+         int sizeY = y + 22;
          GroupRender size = this.renderGroup(
             graphics,
             font,
@@ -130,13 +144,18 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
             BadgeKind.SIZE,
             snapshot,
             contentX,
-            y + 22,
+            sizeY,
             mouseX,
             mouseY,
             clipTop,
             clipBottom
          );
          hovered = prefer(size.hovered(), hovered);
+
+         String firstCatch = this.firstCatchLabel();
+         if (firstCatch != null) {
+            drawScaledRight(graphics, font, firstCatch, x + 168, sizeY + 2, FIRST_CATCH_SCALE, MUTED_COLOR);
+         }
       } finally {
          graphics.disableScissor();
       }
@@ -149,6 +168,20 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
 
    public int getRequiredHeight() {
       return REQUIRED_HEIGHT;
+   }
+
+   private String firstCatchLabel() {
+      if (this.stats.getInitialCatchDate().isEmpty()) {
+         return null;
+      }
+
+      CatchTimestamp timestamp = this.stats.getInitialCatchDate().orElseThrow();
+      if (Tide.CLIENT_CONFIG.journal.useRealDate) {
+         Instant instant = timestamp.date();
+         ZonedDateTime localTime = instant.atZone(ZoneId.systemDefault());
+         return "FC " + localTime.format(DATE_FORMAT);
+      }
+      return "FC Day " + (int)(timestamp.ticks() / 24000L);
    }
 
    private GroupRender renderGroup(
@@ -165,7 +198,7 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
       int clipTop,
       int clipBottom
    ) {
-      graphics.drawText(font, Text.literal(category), x, rowY + 1, HEADING_COLOR, false);
+      graphics.drawText(font, Text.literal(category), x, rowY + 1, LABEL_COLOR, false);
       int iconX = x + font.getWidth(category) + LABEL_GAP;
       HoveredBadge hovered = null;
 
@@ -186,6 +219,15 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
       }
 
       return new GroupRender(iconX - 1, hovered);
+   }
+
+   private static void drawScaledRight(DrawContext graphics, TextRenderer font, String text, int rightEdge, int y, float scale, int color) {
+      int width = font.getWidth(text);
+      graphics.getMatrices().push();
+      graphics.getMatrices().translate(rightEdge - width * scale, y, 0.0F);
+      graphics.getMatrices().scale(scale, scale, 1.0F);
+      graphics.drawText(font, Text.literal(text), 0, 0, color, false);
+      graphics.getMatrices().pop();
    }
 
    private static HoveredBadge prefer(HoveredBadge preferred, HoveredBadge fallback) {

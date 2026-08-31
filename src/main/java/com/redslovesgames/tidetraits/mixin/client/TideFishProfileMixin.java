@@ -8,6 +8,8 @@ package com.redslovesgames.tidetraits.mixin.client;
 import com.li64.tide.client.gui.screens.journal.FishProfile;
 import com.li64.tide.client.gui.screens.journal.ProfileComponent;
 import com.li64.tide.data.fishing.FishData;
+import com.li64.tide.data.player.FishStats;
+import com.li64.tide.data.player.TidePlayerData;
 import com.redslovesgames.tidetraits.client.gui.journal.DiscoveryBadgesComponent;
 import com.redslovesgames.tidetraits.fish.FishDescriptor;
 import java.util.ArrayList;
@@ -33,8 +35,11 @@ public abstract class TideFishProfileMixin {
       if (components != null && fishData != null) {
          try {
             Identifier speciesId = FishDescriptor.fromFishData(fishData).canonicalSpeciesId();
-            components.add(Math.max(0, components.size() - 1), new DiscoveryBadgesComponent(speciesId));
-         } catch (RuntimeException var5) {
+            FishStats stats = TidePlayerData.CLIENT_DATA.getDataFor(bareJournalStack.getItem())
+               .flatMap(playerData -> playerData.stats)
+               .orElse(new FishStats());
+            components.add(Math.max(0, components.size() - 1), new DiscoveryBadgesComponent(speciesId, stats));
+         } catch (RuntimeException var6) {
          }
       }
    }
