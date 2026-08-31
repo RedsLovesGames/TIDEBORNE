@@ -62,4 +62,4 @@ Both repair and reroll execute on the server and require operator permission lev
 
 Owned-fish Journal backfill implementation commit `44c4803f8f6bee16eb76b162b82883398a8bd3ca` is validated by GitHub Actions run `33323297138`.
 
-The Stage 64 record-recovery and ranking audit is validated by GitHub Actions run `33367391365` at implementation head `f6aac3e07a7ff7a0955427cc76605bdb94dad086`. Clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke, client-connect smoke, production JAR validation, artifact upload, and release publishing all passed.
+The Stage 64 record-recovery and ranking audit is validated by GitHub Actions run `33367391365` at implementation head `f6aac3de1277500229428d37a69faf1c5eaf7d9a`. Clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke, client-connect smoke, production JAR validation, artifact upload, and release publishing all passed.
