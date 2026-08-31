@@ -428,7 +428,7 @@ Update every discovered score-bearing representation:
 - Satchels
 - bucket and entity round trips
 - personal records
-- Top Fish and Top 12
+- Top Fish and Team Top 15
 - team records
 - Journal and history
 - leaderboards
@@ -453,6 +453,37 @@ Records are separate from scoring:
 - Best Percentile
 - notable or rarest trait combinations where practical
 
+### Canonical Best Specimen
+
+The record ledger persists one canonical Best Specimen per species. This is distinct from the Journal's `latest` specimen snapshot and from historical largest/smallest aggregate values.
+
+Best Specimen ordering is deterministic and uses the full canonical specimen record:
+
+1. higher FishScore;
+2. higher final percentile;
+3. higher final length;
+4. lower deterministic seed;
+5. older server catch timestamp;
+6. player UUID lexical order.
+
+Canonical record identity is stable and duplicate-safe. The identity includes species, catch timestamp, deterministic seed, FishScore rounded to six decimals, and player UUID. Reprocessing the same canonical record cannot create a duplicate ranking candidate.
+
+### Team Top 15
+
+Team Top 15 is derived from canonical Best Specimen records, not from a second scoring formula or reconstructed `latest` state.
+
+- at most one canonical Best Specimen per species participates in the current Team Top 15;
+- the ranking uses the same deterministic comparator as Best Specimen;
+- duplicate canonical record identities are suppressed;
+- the final list is capped at 15 and exposed as immutable projection data;
+- repeated catches of the same species remain valid history, but they do not occupy multiple Team Top 15 slots because only that species' current canonical Best Specimen participates.
+
+### Replay-safe record recovery
+
+Recovery may rebuild durable record projections from a preserved canonical catch without replaying a live catch. The rebuild may update per-player best FishScore, canonical Best Specimen, and the derived Team Top 15 while live-catch counters, challenge progress, and normal catch event/listener signaling remain disabled.
+
+UI consumers remain read-only. The Team Records 3D preview is driven from the selected canonical specimen state, and the Journal Best Specimen panel exposes canonical FishScore, percentile, length, Body Type, Condition, Pigmentation, Quality, and Perfect Catch state.
+
 ## Build diversity
 
 Existing gear should support:
@@ -465,6 +496,10 @@ Existing gear should support:
 - safe builds using a larger zone, lower Tempo, or defensive gear
 
 Prefer reworking existing items over adding unnecessary new items.
+
+Equipment must not directly author FishScore or specimen geometry. Gear can change only the modifier axis it owns, after which canonical specimen state and the single FishScore service determine the final score.
+
+The finalized equipment and stacking audit is documented in `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`.
 
 ## Compatibility fish
 
@@ -487,7 +522,7 @@ Preserve registry IDs and avoid eager optional-mod loading.
 
 Use deterministic seeded random number generation.
 
-Eventually cover:
+Cover:
 
 - rarity and Fishing Luck
 - compatibility normalization
@@ -514,7 +549,12 @@ Eventually cover:
 - idempotent migration
 - Satchel and item migration
 - Journal, team, and history migration
-- Top Fish, Top 12, and leaderboard rebuild
+- Top Fish, Team Top 15, and leaderboard rebuild
+- canonical Best Specimen ordering and duplicate suppression
+- replay-safe record recovery
+- records preview and Journal canonical specimen projection
+- built-in rods, lines, bobbers, hooks, bait, Steel Leader, and Leviathan Bait
+- representative equipment stacking without duplicate modifier application
 - reload stability
 
 ## Execution order
@@ -548,18 +588,10 @@ For every slice:
 
 Do not pause for approval between phases.
 
-## Current run boundary
+## Current implementation boundary
 
-The run that introduced this specification is limited to execution steps 1 through 4:
+Fishing System 2.0 through the Stage 64 canonical-record and equipment/stacking audit is complete on `dev`.
 
-- persist this authoritative specification
-- update current-state and TODO documentation
-- implement `FishingContext`, `SpeciesProfile`, and canonical rarity
-- implement species selection and Fishing Luck
-- implement `SpecimenData` and exact percentile and size math
-- implement fight normalization and size fight scaling
-- add deterministic tests for these systems
-- run and repair the full build
-- commit logical slices
+Stage 64 implementation head `f6aac3e07a7ff7a0955427cc76605bdb94dad086` passed GitHub Actions run `33367391365`, including the clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke, client-connect smoke, production release JAR validation, artifact upload, and release publishing.
 
-Stop after step 4 is green. Leave `docs/CURRENT_STATE.md` with the exact next action for the following session.
+No known Fishing System 2.0 implementation blocker remains. Future work belongs to the post-2.0 backlog unless a new regression is discovered.
