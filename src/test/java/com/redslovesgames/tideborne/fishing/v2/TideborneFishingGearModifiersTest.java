@@ -3,71 +3,74 @@ package com.redslovesgames.tideborne.fishing.v2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
-import com.redslovesgames.tideboundcompatibility.fishing.SteelLeaderGearModifiers;
+import com.redslovesgames.tideboundcompatibility.fishing.LeaderGearModifiers;
+import com.redslovesgames.tideboundcompatibility.fishing.LeaderTier;
 import com.redslovesgames.tideboundcompatibility.fishing.TideborneFishingGearModifiers;
 import org.junit.jupiter.api.Test;
 
 class TideborneFishingGearModifiersTest {
     @Test
-    void tentacleLinePreservesCurrentFightFacingModifiersWithoutLuck() {
+    void tentacleLineUsesRebalancedFightFacingModifiersWithoutLuck() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         FishingGearModifiers modifiers = TideborneFishingGearModifiers.tentacleLine(config);
 
-        assertEquals(1.45D, FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0e-12);
-        assertEquals(1.18D, FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0e-12);
+        assertEquals(1.32D, FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0e-12);
+        assertEquals(1.16D, FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0e-12);
         assertIdentityFightAndLuckAxes(modifiers);
     }
 
     @Test
-    void swiftLinePreservesCurrentFightFacingModifiersWithoutLuck() {
+    void swiftLineUsesRebalancedFightFacingModifiersWithoutLuck() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         FishingGearModifiers modifiers = TideborneFishingGearModifiers.swiftLine(config);
 
-        assertEquals(1.20D, FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0e-12);
-        assertEquals(1.05D, FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0e-12);
+        assertEquals(1.16D, FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0e-12);
+        assertEquals(1.08D, FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0e-12);
         assertIdentityFightAndLuckAxes(modifiers);
     }
 
     @Test
-    void minigameLinePrecedenceMatchesLegacyBranching() {
+    void minigameLinesComposeWithLeaderInsteadOfReplacingIt() {
         TideboundConfig.Values config = new TideboundConfig.Values();
-        FishingGearModifiers steel = SteelLeaderGearModifiers.forAttachmentState(true, config);
+        FishingGearModifiers ironLeader = LeaderGearModifiers.forTier(LeaderTier.IRON, true);
 
-        FishingGearModifiers tentacle = TideborneFishingGearModifiers.selectMinigameLine(true, true, steel, config);
-        FishingGearModifiers swift = TideborneFishingGearModifiers.selectMinigameLine(false, true, steel, config);
-        FishingGearModifiers fallback = TideborneFishingGearModifiers.selectMinigameLine(false, false, steel, config);
+        FishingGearModifiers tentacle = TideborneFishingGearModifiers.selectMinigameLine(true, true, ironLeader, config);
+        FishingGearModifiers swift = TideborneFishingGearModifiers.selectMinigameLine(false, true, ironLeader, config);
+        FishingGearModifiers fallback = TideborneFishingGearModifiers.selectMinigameLine(false, false, ironLeader, config);
 
-        assertEquals(1.45D, FishingGearEffects.catchZoneAreaMultiplier(tentacle), 1.0e-12);
-        assertEquals(1.18D, FishingGearEffects.minigameSpeedMultiplier(tentacle), 1.0e-12);
-        assertEquals(1.20D, FishingGearEffects.catchZoneAreaMultiplier(swift), 1.0e-12);
-        assertEquals(1.05D, FishingGearEffects.minigameSpeedMultiplier(swift), 1.0e-12);
-        assertEquals(0.90D, FishingGearEffects.catchZoneAreaMultiplier(fallback), 1.0e-12);
-        assertEquals(1.05D, FishingGearEffects.minigameSpeedMultiplier(fallback), 1.0e-12);
+        assertEquals(1.32D * 0.95D, FishingGearEffects.catchZoneAreaMultiplier(tentacle), 1.0e-12);
+        assertEquals(1.16D * 1.03D, FishingGearEffects.minigameSpeedMultiplier(tentacle), 1.0e-12);
+        assertEquals(1.16D * 0.95D, FishingGearEffects.catchZoneAreaMultiplier(swift), 1.0e-12);
+        assertEquals(1.08D * 1.03D, FishingGearEffects.minigameSpeedMultiplier(swift), 1.0e-12);
+        assertEquals(0.95D, FishingGearEffects.catchZoneAreaMultiplier(fallback), 1.0e-12);
+        assertEquals(1.03D, FishingGearEffects.minigameSpeedMultiplier(fallback), 1.0e-12);
+        assertEquals(0.55D, FishingGearEffects.catchLossPreventionChance(tentacle), 1.0e-12);
+        assertEquals(0.55D, FishingGearEffects.catchLossPreventionChance(swift), 1.0e-12);
     }
 
     @Test
-    void sharkToothHookPreservesIndependentTagMultipliers() {
+    void sharkToothHookUsesRebalancedIndependentTagMultipliers() {
         TideboundConfig.Values config = new TideboundConfig.Values();
 
-        assertEquals(2.50D, FishingGearEffects.fishWeightMultiplier(
+        assertEquals(2.0D, FishingGearEffects.fishWeightMultiplier(
                 TideborneFishingGearModifiers.sharkToothHook(true, true, false, config)), 1.0e-12);
-        assertEquals(0.35D, FishingGearEffects.fishWeightMultiplier(
+        assertEquals(0.45D, FishingGearEffects.fishWeightMultiplier(
                 TideborneFishingGearModifiers.sharkToothHook(true, false, true, config)), 1.0e-12);
-        assertEquals(0.875D, FishingGearEffects.fishWeightMultiplier(
+        assertEquals(0.90D, FishingGearEffects.fishWeightMultiplier(
                 TideborneFishingGearModifiers.sharkToothHook(true, true, true, config)), 1.0e-12);
         assertEquals(1.0D, FishingGearEffects.fishWeightMultiplier(
                 TideborneFishingGearModifiers.sharkToothHook(true, false, false, config)), 1.0e-12);
     }
 
     @Test
-    void seafarerAndKujiraPreserveCurrentWeightModifiers() {
+    void seafarerAndKujiraUseRebalancedWeightModifiers() {
         TideboundConfig.Values config = new TideboundConfig.Values();
 
         FishingGearModifiers seafarer = TideborneFishingGearModifiers.seafarersHook(true, true, config);
         FishingGearModifiers kujira = TideborneFishingGearModifiers.kujiraRod(true, true, config);
 
         assertEquals(1.35D, FishingGearEffects.fishWeightMultiplier(seafarer), 1.0e-12);
-        assertEquals(1.20D, FishingGearEffects.crateWeightMultiplier(kujira), 1.0e-12);
+        assertEquals(1.30D, FishingGearEffects.crateWeightMultiplier(kujira), 1.0e-12);
         assertIdentityFightAndLuckAxes(seafarer);
         assertIdentityFightAndLuckAxes(kujira);
     }
@@ -109,10 +112,10 @@ class TideborneFishingGearModifiersTest {
         assertEquals(7.0D, combined.traitLuck(), 1.0e-12);
         assertEquals(1.10D, combined.strengthMultiplier(), 1.0e-12);
         assertEquals(0.95D, combined.tempoMultiplier(), 1.0e-12);
-        assertEquals(1.45D, FishingGearEffects.catchZoneAreaMultiplier(combined), 1.0e-12);
-        assertEquals(1.18D, FishingGearEffects.minigameSpeedMultiplier(combined), 1.0e-12);
+        assertEquals(1.32D, FishingGearEffects.catchZoneAreaMultiplier(combined), 1.0e-12);
+        assertEquals(1.16D, FishingGearEffects.minigameSpeedMultiplier(combined), 1.0e-12);
         assertEquals(1.35D, FishingGearEffects.fishWeightMultiplier(combined), 1.0e-12);
-        assertEquals(1.20D, FishingGearEffects.crateWeightMultiplier(combined), 1.0e-12);
+        assertEquals(1.30D, FishingGearEffects.crateWeightMultiplier(combined), 1.0e-12);
     }
 
     private static void assertIdentityFightAndLuckAxes(FishingGearModifiers modifiers) {

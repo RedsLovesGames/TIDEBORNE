@@ -9,15 +9,17 @@ import com.redslovesgames.tideboundcompatibility.fishing.SteelLeaderGearModifier
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
+/** Legacy Steel facade regression: old attachment state must resolve exactly as the new Iron Leader. */
+@SuppressWarnings("deprecation")
 class SteelLeaderGearModifiersTest {
     @Test
-    void attachedSteelLeaderMapsExactCurrentBehavior() {
+    void legacyAttachedSteelStateMapsToCanonicalIronLeader() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         FishingGearModifiers modifiers = SteelLeaderGearModifiers.forAttachmentState(true, config);
 
-        assertEquals(0.90D, FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0e-12);
-        assertEquals(1.05D, FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0e-12);
-        assertEquals(0.90D, FishingGearEffects.catchLossPreventionChance(modifiers), 1.0e-12);
+        assertEquals(0.95D, FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0e-12);
+        assertEquals(1.03D, FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0e-12);
+        assertEquals(0.55D, FishingGearEffects.catchLossPreventionChance(modifiers), 1.0e-12);
         assertEquals(1.0D, modifiers.namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PROTECTION_SOURCES));
         assertEquals(1.0D, modifiers.strengthMultiplier());
         assertEquals(1.0D, modifiers.tempoMultiplier());
@@ -26,7 +28,7 @@ class SteelLeaderGearModifiersTest {
     }
 
     @Test
-    void ordinaryCatchWithoutSteelLeaderIsNeutralAndConsumesNoProtectionRoll() {
+    void ordinaryCatchWithoutLegacyLeaderIsNeutralAndConsumesNoProtectionRoll() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         FishingGearModifiers modifiers = SteelLeaderGearModifiers.forAttachmentState(false, config);
         AtomicInteger rolls = new AtomicInteger();
@@ -43,7 +45,7 @@ class SteelLeaderGearModifiersTest {
     }
 
     @Test
-    void disabledApexCompatibilityMakesAttachmentBehaviorNeutral() {
+    void disabledApexCompatibilityMakesLegacyAttachmentBehaviorNeutral() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         config.enableApexCompat = false;
 
@@ -51,7 +53,7 @@ class SteelLeaderGearModifiersTest {
     }
 
     @Test
-    void steelLeaderComposesThroughCanonicalNamedModifierModel() {
+    void legacyIronLeaderComposesThroughCanonicalNamedModifierModel() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         FishingGearModifiers existing = FishingGearModifiers.builder()
                 .fishingLuck(4.0D)
@@ -63,40 +65,40 @@ class SteelLeaderGearModifiersTest {
                 SteelLeaderGearModifiers.forAttachmentState(true, config)
         );
 
-        assertEquals(0.99D, FishingGearEffects.catchZoneAreaMultiplier(combined), 1.0e-12);
-        assertEquals(1.05D, FishingGearEffects.minigameSpeedMultiplier(combined), 1.0e-12);
-        assertEquals(0.90D, FishingGearEffects.catchLossPreventionChance(combined), 1.0e-12);
+        assertEquals(1.045D, FishingGearEffects.catchZoneAreaMultiplier(combined), 1.0e-12);
+        assertEquals(1.03D, FishingGearEffects.minigameSpeedMultiplier(combined), 1.0e-12);
+        assertEquals(0.55D, FishingGearEffects.catchLossPreventionChance(combined), 1.0e-12);
         assertEquals(4.0D, combined.fishingLuck());
     }
 
     @Test
-    void sharkLossProtectionPreservesStrictLegacyChanceBoundaryAndRollCount() {
+    void ironProtectionPreservesStrictChanceBoundaryAndRollCount() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         FishingGearModifiers modifiers = SteelLeaderGearModifiers.forAttachmentState(true, config);
         AtomicInteger rolls = new AtomicInteger();
 
         assertTrue(FishingGearEffects.preventsCatchLoss(modifiers, () -> {
             rolls.incrementAndGet();
-            return 0.899999D;
+            return 0.549999D;
         }));
         assertFalse(FishingGearEffects.preventsCatchLoss(modifiers, () -> {
             rolls.incrementAndGet();
-            return 0.90D;
+            return 0.55D;
         }));
         assertEquals(2, rolls.get());
     }
 
     @Test
-    void attachedLeaderStillConsumesOneRollAtZeroConfiguredProtection() {
+    void deprecatedSteelNumericOverrideCannotMutateCanonicalIronTier() {
         TideboundConfig.Values config = new TideboundConfig.Values();
         config.steelLeaderCatchLossPreventionChance = 0.0D;
-        FishingGearModifiers modifiers = SteelLeaderGearModifiers.forAttachmentState(true, config);
-        AtomicInteger rolls = new AtomicInteger();
+        config.steelLeaderCatchZoneMultiplier = 2.0D;
+        config.steelLeaderFishSpeedMultiplier = 2.0D;
 
-        assertFalse(FishingGearEffects.preventsCatchLoss(modifiers, () -> {
-            rolls.incrementAndGet();
-            return 0.5D;
-        }));
-        assertEquals(1, rolls.get());
+        FishingGearModifiers modifiers = SteelLeaderGearModifiers.forAttachmentState(true, config);
+
+        assertEquals(0.55D, FishingGearEffects.catchLossPreventionChance(modifiers), 1.0e-12);
+        assertEquals(0.95D, FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0e-12);
+        assertEquals(1.03D, FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0e-12);
     }
 }
