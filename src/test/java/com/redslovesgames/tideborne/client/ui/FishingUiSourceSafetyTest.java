@@ -17,7 +17,8 @@ class FishingUiSourceSafetyTest {
             "src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/AnglersSatchelScreen.java",
             "src/main/java/com/redslovesgames/tidetraits/mixin/client/FishProfileSizeRangeMixin.java",
             "src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/client/gui/journal/DiscoveryBadgesComponent.java"
+            "src/main/java/com/redslovesgames/tidetraits/client/gui/journal/DiscoveryBadgesComponent.java",
+            "src/main/java/com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin.java"
     );
 
     @Test
@@ -53,6 +54,31 @@ class FishingUiSourceSafetyTest {
         String source = Files.readString(Path.of(AFFECTED_UI.get(3)));
         assertTrue(source.contains("JournalSpecimenStore.LATEST"));
         assertTrue(source.contains("No canonical specimen recorded"));
+    }
+
+    @Test
+    void journalStatsStayCompactAndFooterButtonStaysInsideBook() throws IOException {
+        String stats = Files.readString(Path.of(AFFECTED_UI.get(4)));
+        assertTrue(stats.contains("BASE_LINE_STEP = 9"));
+        assertTrue(stats.contains("BEST_SECTION_HEIGHT = 38"));
+        assertTrue(stats.contains("index = smallestIndex;"));
+        assertTrue(stats.contains("Best Specimen  •  PC "));
+
+        String journal = Files.readString(Path.of(AFFECTED_UI.get(6)));
+        int buttonY = constantValue(journal, "TEAM_RECORDS_BUTTON_Y");
+        int buttonHeight = constantValue(journal, "TEAM_RECORDS_BUTTON_HEIGHT");
+        assertTrue(buttonY + buttonHeight <= 260);
+        assertTrue(buttonY >= 238);
+    }
+
+    private static int constantValue(String source, String name) {
+        String marker = name + " = ";
+        int start = source.indexOf(marker);
+        assertTrue(start >= 0, name);
+        start += marker.length();
+        int end = source.indexOf(';', start);
+        assertTrue(end > start, name);
+        return Integer.parseInt(source.substring(start, end).trim());
     }
 
     private static int occurrences(String source, String needle) {
