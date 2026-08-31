@@ -3,9 +3,7 @@ package com.redslovesgames.tideteamjournal;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.player.TidePlayerData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
-import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
-import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenStore;
 import dev.ftb.mods.ftbteams.api.FTBTeamsAPI;
 import dev.ftb.mods.ftbteams.api.Team;
 import net.minecraft.item.Item;
@@ -23,7 +21,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 public final class RecoveredSpecimenRecordService {
     private static final String TEAM_ROOT_KEY = "tide_team_journal";
     private static final String JOURNAL_KEY = "journal";
-    private static final String CONTRIBUTORS_KEY = "contributors";
 
     private RecoveredSpecimenRecordService() {
     }
@@ -61,16 +58,13 @@ public final class RecoveredSpecimenRecordService {
                 return false;
             }
 
-            boolean changed = JournalSpecimenStore.indexBest(root, specimen);
-            changed |= indexContributor(root, player, specimen);
-
-            NbtCompound topFish = CanonicalSpecimenRecordIndexer.project(specimen);
-            topFish.putInt("fish_stars", TeamProgressStore.tideborneFishStars(stack));
-            topFish.putUuid("catcher_id", player.getUuid());
-            topFish.putString("catcher_name", player.getGameProfile().getName());
-            topFish.putBoolean("recovered", true);
-            changed |= CanonicalSpecimenRecordIndexer.indexTeamTopFish(root, topFish);
-
+            boolean changed = RecoveredSpecimenRecordIndexer.index(
+                    root,
+                    specimen,
+                    player.getUuid(),
+                    player.getGameProfile().getName(),
+                    TeamProgressStore.tideborneFishStars(stack)
+            );
             if (changed) {
                 team.markDirty();
                 TeamJournalService.syncCurrentJournal(player);
@@ -85,19 +79,5 @@ public final class RecoveredSpecimenRecordService {
             );
             return false;
         }
-    }
-
-    private static boolean indexContributor(NbtCompound root, ServerPlayerEntity player, SpecimenData specimen) {
-        TeamProgressStore.ensureInitialized(root);
-        NbtCompound contributors = root.getCompound(CONTRIBUTORS_KEY);
-        String key = player.getUuid().toString();
-        NbtCompound contributor = contributors.contains(key, NbtElement.COMPOUND_TYPE)
-                ? contributors.getCompound(key)
-                : new NbtCompound();
-        contributor.putString("name", player.getGameProfile().getName());
-        boolean changed = StoredFishScoreStorage.updateBest(contributor, specimen.fishScore());
-        contributors.put(key, contributor);
-        root.put(CONTRIBUTORS_KEY, contributors);
-        return changed;
     }
 }
