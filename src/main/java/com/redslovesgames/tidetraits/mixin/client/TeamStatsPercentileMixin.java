@@ -31,6 +31,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "com.redslovesgames.tideteamjournal.client.TeamStatsComponent")
 public abstract class TeamStatsPercentileMixin {
+   @Unique private static final int BEST_SECTION_HEIGHT = 53;
    @Shadow @Final private List<Text> lines;
    @Unique private FishStats tideTraits$stats;
    @Unique private Identifier tideTraits$speciesId;
@@ -53,12 +54,12 @@ public abstract class TeamStatsPercentileMixin {
       int cursorY = 0;
       int largestIndex = -1;
       int smallestIndex = -1;
-      Optional<JournalSpecimenNetworkCodec.DisplaySpecimen> latest = ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.LATEST);
+      Optional<JournalSpecimenNetworkCodec.DisplaySpecimen> best = ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.BEST);
       if (this.tideTraits$stats.getLargestCatch() > 0.0 && this.lines.size() >= 2) {
          largestIndex = this.lines.size() - 2;
          smallestIndex = this.lines.size() - 1;
       }
-      boolean singleCatch = this.tideTraits$stats.getAmountCaught() == 1 && largestIndex >= 0 && latest.isPresent();
+      boolean singleCatch = this.tideTraits$stats.getAmountCaught() == 1 && largestIndex >= 0 && best.isPresent();
       RecordHolderStore.RecordNames names = ClientRecordHolders.get(this.tideTraits$speciesId);
       String hoveredTooltip = null;
 
@@ -105,10 +106,10 @@ public abstract class TeamStatsPercentileMixin {
          cursorY += 10;
       }
 
-      if (latest.isPresent()) {
-         JournalSpecimenNetworkCodec.DisplaySpecimen specimen = latest.orElseThrow();
+      if (best.isPresent()) {
+         JournalSpecimenNetworkCodec.DisplaySpecimen specimen = best.orElseThrow();
          cursorY += 2;
-         graphics.drawText(font, Text.literal("Latest Specimen"), x + 4, y + cursorY, 0x725F43, false);
+         graphics.drawText(font, Text.literal("Best Specimen"), x + 4, y + cursorY, 0x725F43, false);
          graphics.fill(x + 4, y + cursorY + 9, x + 170, y + cursorY + 10, 0x66725F43);
          cursorY += 11;
 
@@ -116,7 +117,7 @@ public abstract class TeamStatsPercentileMixin {
          String summary = FishingUiFormat.length(specimen.finalLength())
             + "  •  "
             + FishingUiFormat.percentile(specimen.finalPercentile())
-            + "  •  Score "
+            + "  •  FishScore "
             + score;
          String tooltip = tideTraits$drawCentered(
             graphics, font, summary, summary, center, y + cursorY, 166, 0x43A8D8, mouseX, mouseY
@@ -178,6 +179,13 @@ public abstract class TeamStatsPercentileMixin {
             mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
+         cursorY += 10;
+
+         String perfectCatch = "Perfect Catch: " + (specimen.perfectCatch() ? "Yes" : "No");
+         tooltip = tideTraits$drawCentered(
+            graphics, font, perfectCatch, perfectCatch, center, y + cursorY, 166, 0x725F43, mouseX, mouseY
+         );
+         hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
       }
 
       if (hoveredTooltip != null) {
@@ -192,15 +200,15 @@ public abstract class TeamStatsPercentileMixin {
          return;
       }
 
-      Optional<JournalSpecimenNetworkCodec.DisplaySpecimen> latest = ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.LATEST);
+      Optional<JournalSpecimenNetworkCodec.DisplaySpecimen> best = ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.BEST);
       int visibleBaseLines = this.lines.size();
       if (this.tideTraits$stats.getAmountCaught() == 1
          && this.tideTraits$stats.getLargestCatch() > 0.0
          && this.lines.size() >= 2
-         && latest.isPresent()) {
+         && best.isPresent()) {
          visibleBaseLines -= 2;
       }
-      callback.setReturnValue(visibleBaseLines * 10 + (latest.isPresent() ? 43 : 0));
+      callback.setReturnValue(visibleBaseLines * 10 + (best.isPresent() ? BEST_SECTION_HEIGHT : 0));
    }
 
    @Unique
