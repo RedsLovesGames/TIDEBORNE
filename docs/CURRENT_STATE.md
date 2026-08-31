@@ -1,6 +1,6 @@
 # Current development state
 
-Updated: 2026-08-30
+Updated: 2026-08-31
 
 ## Baseline and branch
 
@@ -181,11 +181,8 @@ owned fish cannot unlock an uncaught species.
 GitHub Actions run `33323297138` is green on implementation head
 `44c4803f8f6bee16eb76b162b82883398a8bd3ca`. It passed the clean build and unit suite, all four
 Fabric GameTest matrices, dedicated-server/client-connect smoke validation, production JAR
-validation, artifact upload, and release publication/refresh.
-
-The `TIDEBORN-2.0.0` release now targets that implementation commit. Its refreshed
-`tideborne-2.0.0.jar` asset has SHA-256
-`0209af64b53617433b5a5cd8bf66b0a3923e3f3636fd81b34985e2cde83d72ab`.
+validation, artifact upload, and release publication/refresh. That release snapshot was later
+superseded by the validated Stage 62 and Stage 63 refreshes documented below.
 
 ## Stage 62 canonical fishing gear registry is complete
 
@@ -236,14 +233,31 @@ Current creative-tab contracts:
   active;
 - Apex Waters-owned compatibility content remains visible only when the Apex integration is active;
 - entries are curated by gameplay role: Satchel, rod, lines/leaders, hooks, then bait/utilities;
+- the creative group and tests consume the same immutable visibility/order matrix;
 - the old Satchel injection into vanilla Tools is removed;
 - Tideborne compatibility items are no longer duplicated into vanilla Tools or Ingredients;
 - native Tide items and Tide's own creative presentation are untouched;
 - registration is common-side after the Satchel and compatibility item registries initialize, with
   no client-only class dependency.
 
-A registered Fabric GameTest verifies that the new item group exists at runtime and uses the actual
-Angler's Satchel as its icon. Full behavior and ownership are documented in
+Registered Fabric GameTests verify the runtime group and Satchel icon, all four exact Myths/Apex
+item matrices and stable order, and that the live list follows the active integration flags.
+
+Final Stage 63 validation:
+
+- validated implementation head: `24cc3a42e30f9dc8a51bf9abef469585e0d2b48b`;
+- GitHub Actions run: `33360256194`;
+- build/unit suite: passed;
+- no-optional, Apex-only, Myths-only, and combined Fabric GameTest matrices: passed;
+- dedicated-server/client-connect smoke validation: passed;
+- production JAR validation and final validation-count checks: passed;
+- artifact upload and release publication/refresh: passed.
+
+The current `TIDEBORN-2.0.0` release targets
+`24cc3a42e30f9dc8a51bf9abef469585e0d2b48b`. Its published `tideborne-2.0.0.jar` asset has SHA-256
+`ff9ef2a8f8aa975336816ae56240302c31dcc777606bb1a88d23c947b799b937`.
+
+Full behavior, ordering, compatibility matrices, and validation are documented in
 `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`.
 
 ## Current execution gate
