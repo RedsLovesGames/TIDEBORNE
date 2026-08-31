@@ -1,8 +1,12 @@
 package com.redslovesgames.tideborne.gametest;
 
 import com.redslovesgames.tideborne.registry.TideborneItemGroups;
+import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
+import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
 import com.redslovesgames.tidetraits.satchel.SatchelRegistration;
+import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.registry.Registries;
 import net.minecraft.test.GameTest;
@@ -18,5 +22,68 @@ public final class TideborneItemGroupsGameTests implements FabricGameTest {
         helper.assertTrue(registered.getIcon().isOf(SatchelRegistration.ANGLERS_SATCHEL),
                 "Tideborne creative tab icon is not the Angler's Satchel");
         helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void creativeTabCompatibilityMatrixHasExactStableOrder(TestContext helper) {
+        assertItems(helper, TideborneItemGroups.creativeItems(false, false),
+                SatchelRegistration.ANGLERS_SATCHEL);
+
+        assertItems(helper, TideborneItemGroups.creativeItems(true, false),
+                SatchelRegistration.ANGLERS_SATCHEL,
+                TideboundItems.KUJIRA_BONE_FISHING_ROD,
+                TideboundItems.TENTACLE_LINE,
+                TideboundItems.SWIFT_LINE,
+                TideboundItems.SEAFARERS_HOOK,
+                TideboundItems.LEVIATHAN_BAIT);
+
+        assertItems(helper, TideborneItemGroups.creativeItems(false, true),
+                SatchelRegistration.ANGLERS_SATCHEL,
+                TideboundItems.STEEL_LEADER,
+                TideboundItems.SHARK_TOOTH_HOOK,
+                TideboundItems.CHUM_BUCKET,
+                TideboundItems.SHARK_TOOTH);
+
+        assertItems(helper, TideborneItemGroups.creativeItems(true, true),
+                SatchelRegistration.ANGLERS_SATCHEL,
+                TideboundItems.KUJIRA_BONE_FISHING_ROD,
+                TideboundItems.TENTACLE_LINE,
+                TideboundItems.SWIFT_LINE,
+                TideboundItems.STEEL_LEADER,
+                TideboundItems.SEAFARERS_HOOK,
+                TideboundItems.SHARK_TOOTH_HOOK,
+                TideboundItems.LEVIATHAN_BAIT,
+                TideboundItems.CHUM_BUCKET,
+                TideboundItems.SHARK_TOOTH);
+
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void currentCreativeItemsFollowActiveIntegrationFlags(TestContext helper) {
+        boolean mythsActive = TideboundCompatibility.isMythsIntegrationActive();
+        boolean apexActive = TideboundCompatibility.isApexIntegrationActive();
+        List<Item> current = TideborneItemGroups.currentCreativeItems();
+
+        helper.assertTrue(current.equals(TideborneItemGroups.creativeItems(mythsActive, apexActive)),
+                "Current Tideborne creative items did not match active optional-integration flags");
+        helper.assertTrue(current.contains(TideboundItems.KUJIRA_BONE_FISHING_ROD) == mythsActive,
+                "Kujira rod visibility did not follow Myths integration state");
+        helper.assertTrue(current.contains(TideboundItems.LEVIATHAN_BAIT) == mythsActive,
+                "Leviathan Bait visibility did not follow Myths integration state");
+        helper.assertTrue(current.contains(TideboundItems.STEEL_LEADER) == apexActive,
+                "Steel Leader visibility did not follow Apex integration state");
+        helper.assertTrue(current.contains(TideboundItems.CHUM_BUCKET) == apexActive,
+                "Chum Bucket visibility did not follow Apex integration state");
+        helper.complete();
+    }
+
+    private static void assertItems(TestContext helper, List<Item> actual, Item... expected) {
+        helper.assertTrue(actual.size() == expected.length,
+                "Unexpected Tideborne creative item count: expected " + expected.length + ", got " + actual.size());
+        for (int index = 0; index < expected.length; index++) {
+            helper.assertTrue(actual.get(index) == expected[index],
+                    "Unexpected Tideborne creative item at index " + index);
+        }
     }
 }
