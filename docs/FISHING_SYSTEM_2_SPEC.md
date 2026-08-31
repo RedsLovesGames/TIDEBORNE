@@ -592,6 +592,6 @@ Do not pause for approval between phases.
 
 Fishing System 2.0 through the Stage 64 canonical-record and equipment/stacking audit is complete on `dev`.
 
-Stage 64 implementation head `f6aac3e07a7ff7a0955427cc76605bdb94dad086` passed GitHub Actions run `33367391365`, including the clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke, client-connect smoke, production release JAR validation, artifact upload, and release publishing.
+Stage 64 implementation head `f6aac3de1277500229428d37a69faf1c5eaf7d9a` passed GitHub Actions run `33367391365`, including the clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke, client-connect smoke, production release JAR validation, artifact upload, and release publishing.
 
 No known Fishing System 2.0 implementation blocker remains. Future work belongs to the post-2.0 backlog unless a new regression is discovered.
