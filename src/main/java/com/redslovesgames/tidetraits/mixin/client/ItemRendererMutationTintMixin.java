@@ -78,7 +78,12 @@ public abstract class ItemRendererMutationTintMixin {
    }
 
    private static Optional<FishMutation> pigmentationMutation(ItemStack stack) {
-      return FishMutation.bySerializedName(stack.get(TideTraitsComponents.SPECIMEN_PIGMENTATION))
+      Optional<FishMutation> canonical = FishMutation.bySerializedName(stack.get(TideTraitsComponents.SPECIMEN_PIGMENTATION))
+         .filter(mutation -> mutation == FishMutation.ALBINO || mutation == FishMutation.IRIDESCENT);
+      if (canonical.isPresent()) {
+         return canonical;
+      }
+      return FishMutation.bySerializedName(stack.get(TideTraitsComponents.MUTATION))
          .filter(mutation -> mutation == FishMutation.ALBINO || mutation == FishMutation.IRIDESCENT);
    }
 
