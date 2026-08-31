@@ -19,7 +19,9 @@ class FishingUiSourceSafetyTest {
             "src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java",
             "src/main/java/com/redslovesgames/tidetraits/client/gui/journal/DiscoveryBadgesComponent.java",
             "src/main/java/com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/mixin/client/TideFishProfileMixin.java"
+            "src/main/java/com/redslovesgames/tidetraits/mixin/client/TideFishProfileMixin.java",
+            "src/main/java/com/redslovesgames/tidetraits/mixin/client/ItemRendererMutationTintMixin.java",
+            "src/main/java/com/redslovesgames/tidetraits/client/render/MutationRendering.java"
     );
 
     @Test
@@ -119,6 +121,29 @@ class FishingUiSourceSafetyTest {
         assertTrue(topFish.contains("Text.literal(\"—\")"));
         assertTrue(topFish.contains("graphics.enableScissor("));
         assertTrue(topFish.contains("graphics.disableScissor();"));
+    }
+
+    @Test
+    void canonicalPigmentationFiltersReachItemAndThreeDimensionalPreviews() throws IOException {
+        String itemRenderer = Files.readString(Path.of(AFFECTED_UI.get(8)));
+        assertTrue(itemRenderer.contains("SPECIMEN_PIGMENTATION"));
+        assertTrue(itemRenderer.contains("FishMutation.ALBINO"));
+        assertTrue(itemRenderer.contains("FishMutation.IRIDESCENT"));
+        assertTrue(itemRenderer.contains("MutationRendering.textureForItem"));
+        assertTrue(itemRenderer.contains("getParticleSprite()"));
+
+        String mutationRendering = Files.readString(Path.of(AFFECTED_UI.get(9)));
+        assertTrue(mutationRendering.contains("textureForItem(Identifier original, ItemStack stack)"));
+        assertTrue(mutationRendering.contains("SPECIMEN_DETERMINISTIC_SEED"));
+        assertTrue(mutationRendering.contains("SPECIMEN_PIGMENTATION"));
+
+        String topFish = Files.readString(Path.of(AFFECTED_UI.get(1)));
+        assertTrue(topFish.contains("CanonicalSpecimenStorage.restoreTransferData(selected, stack);"));
+        assertTrue(topFish.contains("SpecimenTransfer.stackToEntity(stack, entity);"));
+
+        String fishDisplay = Files.readString(Path.of(
+                "src/main/java/com/redslovesgames/tidetraits/mixin/client/FishDisplayBlockEntityMixin.java"));
+        assertTrue(fishDisplay.contains("SpecimenTransfer.stackToEntity(displayStack, renderedEntity);"));
     }
 
     private static int constantValue(String source, String name) {

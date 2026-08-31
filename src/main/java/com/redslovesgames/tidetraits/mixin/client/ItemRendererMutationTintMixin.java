@@ -5,9 +5,11 @@
  */
 package com.redslovesgames.tidetraits.mixin.client;
 
+import com.redslovesgames.tidetraits.client.render.MutationRendering;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import com.redslovesgames.tidetraits.trait.DeterministicValues;
 import com.redslovesgames.tidetraits.trait.FishMutation;
+import java.util.Optional;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.model.BakedModel;
@@ -40,86 +42,142 @@ public abstract class ItemRendererMutationTintMixin {
       ),
       require = 1
    )
-   private void tideTraits$literalMaskOverlay(
-      ItemStack var1, ModelTransformationMode var2, boolean var3, MatrixStack var4, VertexConsumerProvider var5, int var6, int var7, BakedModel var8, CallbackInfo var9
+   private void tideTraits$literalMutationOverlay(
+      ItemStack stack,
+      ModelTransformationMode transformationMode,
+      boolean leftHanded,
+      MatrixStack matrices,
+      VertexConsumerProvider consumers,
+      int light,
+      int overlay,
+      BakedModel model,
+      CallbackInfo ci
    ) {
-      FishMutation var10 = FishMutation.bySerializedName((String)var1.getOrDefault(TideTraitsComponents.MUTATION, "normal")).orElse(FishMutation.NORMAL);
-      Identifier var11 = maskTexture(var1, var10);
-      if (var11 != null) {
-         int[] var12 = maskColor(var10);
-         VertexConsumer var13 = var5.getBuffer(RenderLayer.getEntityTranslucent(var11));
-         Entry var14 = var4.peek();
-         drawFace(var13, var14, 0.0F, 0.0F, 1.0F, 1.0F, 0.58F, var12, var6, var7, false);
-         drawFace(var13, var14, 0.0F, 0.0F, 1.0F, 1.0F, -0.58F, var12, var6, var7, true);
-      }
-   }
-
-   private static Identifier maskTexture(ItemStack var0, FishMutation var1) {
-      long var2 = (Long)var0.getOrDefault(TideTraitsComponents.MUTATION_SEED, 0L);
-      long var4 = DeterministicValues.mix64(var2 ^ -3335678366873096957L ^ var1.ordinal());
-      String var6;
-      if (var1 == FishMutation.SCARRED) {
-         int var7 = Math.floorMod(var4, 4) + 1;
-         var6 = "scar_0" + var7 + ".png";
-      } else if (var1 == FishMutation.PARASITE_RIDDEN) {
-         int var8 = Math.floorMod(var4, 4) + 1;
-         var6 = "parasite_0" + var8 + ".png";
-      } else {
-         if (var1 != FishMutation.IRIDESCENT) {
-            return null;
+      Optional<FishMutation> pigmentation = pigmentationMutation(stack);
+      if (pigmentation.isPresent()) {
+         Identifier filteredTexture = filteredItemTexture(stack, model);
+         if (filteredTexture != null) {
+            VertexConsumer consumer = consumers.getBuffer(RenderLayer.getEntityTranslucent(filteredTexture));
+            Entry entry = matrices.peek();
+            int[] white = new int[]{255, 255, 255, 255};
+            drawFace(consumer, entry, 0.0F, 0.0F, 1.0F, 1.0F, 0.58F, white, light, overlay, false);
+            drawFace(consumer, entry, 0.0F, 0.0F, 1.0F, 1.0F, -0.58F, white, light, overlay, true);
+            return;
          }
-
-         int var9 = Math.floorMod(var4, 2) + 1;
-         var6 = "sparkle_0" + var9 + ".png";
       }
 
-      return Identifier.of("tide_traits", "textures/entity/traits/masks/" + var6);
+      FishMutation mutation = visualMutation(stack);
+      Identifier mask = maskTexture(stack, mutation);
+      if (mask != null) {
+         int[] color = maskColor(mutation);
+         VertexConsumer consumer = consumers.getBuffer(RenderLayer.getEntityTranslucent(mask));
+         Entry entry = matrices.peek();
+         drawFace(consumer, entry, 0.0F, 0.0F, 1.0F, 1.0F, 0.58F, color, light, overlay, false);
+         drawFace(consumer, entry, 0.0F, 0.0F, 1.0F, 1.0F, -0.58F, color, light, overlay, true);
+      }
    }
 
-   private static int[] maskColor(FishMutation var0) {
-      if (var0 == FishMutation.SCARRED) {
-         return new int[]{255, 48, 42, 255};
-      } else {
-         return var0 == FishMutation.PARASITE_RIDDEN ? new int[]{185, 220, 95, 255} : new int[]{235, 250, 255, 255};
+   private static Optional<FishMutation> pigmentationMutation(ItemStack stack) {
+      return FishMutation.bySerializedName(stack.get(TideTraitsComponents.SPECIMEN_PIGMENTATION))
+         .filter(mutation -> mutation == FishMutation.ALBINO || mutation == FishMutation.IRIDESCENT);
+   }
+
+   private static FishMutation visualMutation(ItemStack stack) {
+      Optional<FishMutation> condition = FishMutation.bySerializedName(stack.get(TideTraitsComponents.SPECIMEN_CONDITION))
+         .filter(mutation -> mutation == FishMutation.SCARRED || mutation == FishMutation.PARASITE_RIDDEN);
+      if (condition.isPresent()) {
+         return condition.get();
       }
+      return FishMutation.bySerializedName(stack.getOrDefault(TideTraitsComponents.MUTATION, "normal")).orElse(FishMutation.NORMAL);
+   }
+
+   private static Identifier filteredItemTexture(ItemStack stack, BakedModel model) {
+      if (model == null || model.getParticleSprite() == null || model.getParticleSprite().getContents() == null) {
+         return null;
+      }
+      Identifier spriteId = model.getParticleSprite().getContents().getId();
+      if (spriteId == null || ("minecraft".equals(spriteId.getNamespace()) && "missingno".equals(spriteId.getPath()))) {
+         return null;
+      }
+      String path = spriteId.getPath();
+      Identifier source = Identifier.of(
+         spriteId.getNamespace(),
+         path.startsWith("textures/") ? path : "textures/" + path + (path.endsWith(".png") ? "" : ".png")
+      );
+      return MutationRendering.textureForItem(source, stack);
+   }
+
+   private static Identifier maskTexture(ItemStack stack, FishMutation mutation) {
+      Long canonicalSeed = stack.get(TideTraitsComponents.SPECIMEN_DETERMINISTIC_SEED);
+      Long legacySeed = stack.get(TideTraitsComponents.MUTATION_SEED);
+      long seed = canonicalSeed != null ? canonicalSeed : (legacySeed != null ? legacySeed : 0L);
+      long mixed = DeterministicValues.mix64(seed ^ VARIANT_SALT ^ mutation.ordinal());
+      String file;
+      if (mutation == FishMutation.SCARRED) {
+         int variant = Math.floorMod(mixed, 4) + 1;
+         file = "scar_0" + variant + ".png";
+      } else if (mutation == FishMutation.PARASITE_RIDDEN) {
+         int variant = Math.floorMod(mixed, 4) + 1;
+         file = "parasite_0" + variant + ".png";
+      } else {
+         return null;
+      }
+      return Identifier.of("tide_traits", "textures/entity/traits/masks/" + file);
+   }
+
+   private static int[] maskColor(FishMutation mutation) {
+      if (mutation == FishMutation.SCARRED) {
+         return new int[]{255, 48, 42, 255};
+      }
+      return new int[]{185, 220, 95, 255};
    }
 
    private static void drawFace(
-      VertexConsumer var0, Entry var1, float var2, float var3, float var4, float var5, float var6, int[] var7, int var8, int var9, boolean var10
+      VertexConsumer consumer,
+      Entry entry,
+      float minX,
+      float minY,
+      float maxX,
+      float maxY,
+      float z,
+      int[] color,
+      int light,
+      int overlay,
+      boolean back
    ) {
-      if (!var10) {
-         vertex(var0, var1, var2, var5, var6, var7, 0.0F, 1.0F, var9, var8, 0.0F, 0.0F, 1.0F);
-         vertex(var0, var1, var4, var5, var6, var7, 1.0F, 1.0F, var9, var8, 0.0F, 0.0F, 1.0F);
-         vertex(var0, var1, var4, var3, var6, var7, 1.0F, 0.0F, var9, var8, 0.0F, 0.0F, 1.0F);
-         vertex(var0, var1, var2, var3, var6, var7, 0.0F, 0.0F, var9, var8, 0.0F, 0.0F, 1.0F);
+      if (!back) {
+         vertex(consumer, entry, minX, maxY, z, color, 0.0F, 1.0F, overlay, light, 0.0F, 0.0F, 1.0F);
+         vertex(consumer, entry, maxX, maxY, z, color, 1.0F, 1.0F, overlay, light, 0.0F, 0.0F, 1.0F);
+         vertex(consumer, entry, maxX, minY, z, color, 1.0F, 0.0F, overlay, light, 0.0F, 0.0F, 1.0F);
+         vertex(consumer, entry, minX, minY, z, color, 0.0F, 0.0F, overlay, light, 0.0F, 0.0F, 1.0F);
       } else {
-         vertex(var0, var1, var2, var3, var6, var7, 0.0F, 0.0F, var9, var8, 0.0F, 0.0F, -1.0F);
-         vertex(var0, var1, var4, var3, var6, var7, 1.0F, 0.0F, var9, var8, 0.0F, 0.0F, -1.0F);
-         vertex(var0, var1, var4, var5, var6, var7, 1.0F, 1.0F, var9, var8, 0.0F, 0.0F, -1.0F);
-         vertex(var0, var1, var2, var5, var6, var7, 0.0F, 1.0F, var9, var8, 0.0F, 0.0F, -1.0F);
+         vertex(consumer, entry, minX, minY, z, color, 0.0F, 0.0F, overlay, light, 0.0F, 0.0F, -1.0F);
+         vertex(consumer, entry, maxX, minY, z, color, 1.0F, 0.0F, overlay, light, 0.0F, 0.0F, -1.0F);
+         vertex(consumer, entry, maxX, maxY, z, color, 1.0F, 1.0F, overlay, light, 0.0F, 0.0F, -1.0F);
+         vertex(consumer, entry, minX, maxY, z, color, 0.0F, 1.0F, overlay, light, 0.0F, 0.0F, -1.0F);
       }
    }
 
    private static void vertex(
-      VertexConsumer var0,
-      Entry var1,
-      float var2,
-      float var3,
-      float var4,
-      int[] var5,
-      float var6,
-      float var7,
-      int var8,
-      int var9,
-      float var10,
-      float var11,
-      float var12
+      VertexConsumer consumer,
+      Entry entry,
+      float x,
+      float y,
+      float z,
+      int[] color,
+      float u,
+      float v,
+      int overlay,
+      int light,
+      float normalX,
+      float normalY,
+      float normalZ
    ) {
-      var0.vertex(var1, var2, var3, var4)
-         .color(var5[0], var5[1], var5[2], var5[3])
-         .texture(var6, var7)
-         .overlay(var8)
-         .light(var9)
-         .normal(var1, var10, var11, var12);
+      consumer.vertex(entry, x, y, z)
+         .color(color[0], color[1], color[2], color[3])
+         .texture(u, v)
+         .overlay(overlay)
+         .light(light)
+         .normal(entry, normalX, normalY, normalZ);
    }
 }
