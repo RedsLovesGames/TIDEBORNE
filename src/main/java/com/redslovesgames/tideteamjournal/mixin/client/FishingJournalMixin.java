@@ -22,6 +22,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(FishingJournal.class)
 abstract class FishingJournalMixin {
    @Unique
+   private static final int TEAM_RECORDS_BUTTON_Y = 240;
+   @Unique
+   private static final int TEAM_RECORDS_BUTTON_HEIGHT = 16;
+   @Unique
    private ButtonWidget tideTeamJournal$teamRecordsButton;
 
    @Inject(method = "init", at = @At("TAIL"))
@@ -32,7 +36,12 @@ abstract class FishingJournalMixin {
          int bookLeft = (screen.width - 400) / 2;
          int bookTop = (screen.height - 260) / 2;
          this.tideTeamJournal$teamRecordsButton = new TideJournalButton(
-            bookLeft + 286, bookTop + 232, 88, 18, Text.translatable("screen.tide_team_journal.open"), button -> TeamRecordsScreen.open(screen)
+            bookLeft + 286,
+            bookTop + TEAM_RECORDS_BUTTON_Y,
+            88,
+            TEAM_RECORDS_BUTTON_HEIGHT,
+            Text.translatable("screen.tide_team_journal.open"),
+            button -> TeamRecordsScreen.open(screen)
          );
          ((ScreenAccessor)this).tideTeamJournal$addWidget(this.tideTeamJournal$teamRecordsButton);
       }
