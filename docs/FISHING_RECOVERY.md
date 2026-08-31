@@ -33,6 +33,20 @@ Safety and preservation rules:
 
 This means a player does not need to catch the same species again merely to populate the Fishing System 2.0 specimen portion of an already-unlocked Journal entry, provided an eligible old fish item is still available to the server-side backfill.
 
+## Replay-safe record reconstruction
+
+Fishing System 2.0 record recovery can also rebuild durable score projections from an already-canonical catch without pretending that the catch happened again.
+
+`FishRecords.rebuildRecordsFromCatch` routes the preserved catch through the record ledger with live-catch side effects disabled. The rebuild may restore or improve:
+
+- the player's best FishScore record;
+- the canonical Best Specimen for that species;
+- the derived Team Top 15 ranking.
+
+The rebuild does not increment recent or total live-catch counters, does not advance challenge progress, and does not emit the normal catch listener/event signal used by live-catch reward paths. This keeps record reconstruction separate from progression replay.
+
+Canonical Best Specimen identity is stable and duplicate-safe. Recovery therefore does not create additional ranking entries merely because the same canonical record is processed more than once.
+
 ## Destructive reroll
 
 Use reroll only when the old specimen identity should intentionally be replaced with a newly generated canonical specimen.
@@ -46,4 +60,6 @@ Both repair and reroll execute on the server and require operator permission lev
 
 ## Validation
 
-Owned-fish Journal backfill implementation commit `44c4803f8f6bee16eb76b162b82883398a8bd3ca` is validated by GitHub Actions run `33323297138`. The clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server/client-connect smoke test, production JAR validation, artifact upload, and release refresh all passed.
+Owned-fish Journal backfill implementation commit `44c4803f8f6bee16eb76b162b82883398a8bd3ca` is validated by GitHub Actions run `33323297138`.
+
+The Stage 64 record-recovery and ranking audit is validated by GitHub Actions run `33367391365` at implementation head `f6aac3e07a7ff7a0955427cc76605bdb94dad086`. Clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke, client-connect smoke, production JAR validation, artifact upload, and release publishing all passed.
