@@ -14,18 +14,18 @@ Updated: 2026-08-31
 - `main` remains untouched at `41e53b052660e04e546b07b305c5047b3f646675`
 - authoritative Fishing System 2.0 contract: `docs/FISHING_SYSTEM_2_SPEC.md`
 
-Frozen reconstruction anchors remain:
+Frozen reconstruction anchors:
 
 - Tideborne 1.3.57 release JAR SHA-256: `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`
 - reconstructed canonical content-tree SHA-256: `5a825aa33436ed24110b984390455f5d048a651499e4cecd68efa1402ee6aec6`
 - Tide 2.1.1 Fabric 1.21.1 SHA-256: `498a5e8dda940866c9b0decadf7960724ef489fb49215b30f70c18d12f07b1c8`
 - Apex Waters 1.1.1 Fabric 1.21.1 SHA-256: `00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37`
 
-Historical implementation details remain available in the dedicated stage documents and Git history. This file records the current authoritative state.
+Historical implementation details remain available in dedicated stage documents and Git history. This file records the current authoritative state.
 
 ## Fishing System 2.0 is complete
 
-The current `dev` branch contains the completed Fishing System 2.0 implementation and its post-release recovery/polish work.
+The current `dev` branch contains the completed Fishing System 2.0 implementation, its release validation, recovery/admin tooling, UI polish, canonical gear registry, creative-tab work, and the Stage 64 canonical-record and balance audit.
 
 Canonical runtime authority includes:
 
@@ -36,238 +36,125 @@ Canonical runtime authority includes:
 - canonical Perfect Catch integration and Perfect Specimen behavior;
 - server-owned per-player, per-species Trait Momentum;
 - canonical FishScore V2 as the production score source;
-- canonical Strength, Tempo, line, Steel Leader, rod, and Leviathan Bait behavior;
+- canonical Strength, Tempo, line, Steel Leader, rod, hook, bait, and Leviathan Bait behavior;
 - canonical ItemStack, entity, bucket, display, Satchel, Journal, record, leaderboard, and network persistence/projection paths;
 - deterministic one-way migration for recoverable Tideborne 1.3.57 fish and saved-data representations;
 - guarded legacy compatibility paths that cannot reroll or overwrite current canonical V2 state.
 
-The final release validation for the core 2.0.0 implementation is documented in
-`docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`.
+The final release validation for the core 2.0.0 implementation is documented in `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`.
 
-## Stage 59 UI correctness and polish is complete
+## Post-release stages 59 through 63 are complete
 
-Stage 59 established the shared canonical fishing presentation layer and corrected remaining
-score-projection and layout issues across the fishing-facing UI.
+Stage 59 established the shared canonical fishing presentation layer and corrected score-projection and layout issues across fishing-facing UI. Canonical specimen/FishScore state remains the read-only UI source of truth.
 
-Current UI contracts include:
+Stage 60 added operator-only identity-preserving repair and explicitly confirmed destructive reroll tooling for legacy fish. Recovery details are documented in `docs/FISHING_RECOVERY.md`.
 
-- canonical specimen/FishScore data remains the source of truth;
-- UI code does not generate or mutate specimen state;
-- shared formatting is used for score, percentile, length, traits, timestamps, and unavailable values;
-- Team Records, History, leaderboards, Top Fish, species views, tooltips, and the Angler's Satchel use bounded, human-readable layouts;
-- contributor and event score projections consume canonical score state rather than a duplicate formula.
+Stage 61 closed remaining player-facing integration issues, including canonical progression for legitimate fish entering Tide's normal catch-accounting path and clearer Top Fish specimen details.
 
-Detailed Stage 59 behavior is documented in `docs/STAGE_59_FISHING_UI_POLISH.md`.
+The owned legacy-fish Journal backfill then filled missing canonical `latest` display snapshots from actual old fish a player still owns without replaying catch progression or unlocking uncaught species.
 
-## Stage 60 legacy fish recovery tooling is complete
+Stage 62 hardened gear identity around one exact namespaced canonical fishing-gear registry. Runtime modifiers, advanced tooltips, and operator diagnostics resolve through the same registered identity instead of substring or display-name guesses.
 
-Stage 60 adds operator-only recovery tooling for fish created before Fishing System 2.0.
+Stage 63 added the dedicated `tideborne:tideborne` Creative Mode tab with the Angler's Satchel icon, stable gameplay-role ordering, correct optional-mod visibility, and no duplicate Tideborne injection into vanilla Tools or Ingredients.
 
-Repair commands:
+Stage 63 implementation head `24cc3a42e30f9dc8a51bf9abef469585e0d2b48b` passed GitHub Actions run `33360256194`. Its published `tideborne-2.0.0.jar` snapshot had SHA-256 `ff9ef2a8f8aa975336816ae56240302c31dcc777606bb1a88d23c947b799b937` before the later Stage 64 release refresh.
 
-```text
-/tideborne fishing repair held
-/tideborne fishing repair inventory
-```
+## Stage 64 canonical record and balance audit is complete
 
-Repair delegates to the existing `CanonicalSpecimenStorage` one-way migration boundary. It does
-not call the specimen generator and does not invent a new specimen. Recoverable legacy identity
-is preserved where available, including species, deterministic seed, percentile/physical size,
-Giant/Dwarf state, mapped Condition, Pigmentation, Perfect Specimen state, and compatible stack
-metadata. Missing canonical FishScore is calculated from the final preserved specimen through the
-single V2 score service.
+Stage 64 closes the final Fishing System 2.0 record semantics, record-recovery safety, specimen projection, and built-in equipment/stacking audit.
 
-Destructive reroll commands:
+### Canonical Best Specimen
 
-```text
-/tideborne fishing reroll held --confirm
-/tideborne fishing reroll inventory --confirm
-```
+`FishScoreLedger` persists one canonical Best Specimen per species. It is separate from the Journal's `latest` specimen snapshot and from historical largest/smallest aggregates.
 
-Reroll intentionally replaces specimen identity with newly generated canonical data. The
-`--confirm` literal is mandatory. An unconfirmed reroll performs no migration and no write.
-Both repair and reroll execute server-side and require operator permission level 2.
+Best Specimen comparison is deterministic:
 
-Focused GameTests prove deterministic/idempotent repair, identity preservation, confirmation
-safety, and deterministic reroll behavior for an explicit replacement seed.
+1. higher FishScore;
+2. higher percentile;
+3. higher length;
+4. lower deterministic seed;
+5. older server catch timestamp;
+6. player UUID lexical order.
 
-Command details are documented in `docs/FISHING_RECOVERY.md` and combined Stage 60/61 validation
-is documented in `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`.
+Canonical record identity includes species, server catch timestamp, deterministic seed, FishScore rounded to six decimals, and player UUID. Duplicate canonical identity is suppressed.
 
-## Stage 61 final fishing integration and polish is complete
+### Team Top 15
 
-Stage 61 closes the remaining player-facing integration issues without creating another specimen
-or score authority.
+Team Top 15 is derived from the canonical Best Specimen map and uses the same deterministic comparator.
 
-Current contracts:
+- the projection is capped at 15;
+- only one current canonical Best Specimen per species participates;
+- duplicate canonical record identity is blocked;
+- repeated catches of the same species remain valid history, but do not occupy multiple current Top 15 slots;
+- no second FishScore formula or `latest`-specimen reconstruction is used.
 
-- legitimate registered Tide fish entering Tide's normal `TidePlayerData.logCatch` accounting path
-  with physical length but no canonical specimen are deterministically canonicalized before normal
-  catch progression executes;
-- existing canonical fish remain authoritative and are never rerolled by this bridge;
-- the normal Tide catch-accounting path continues to own Journal/discovery, Team Journal,
-  leaderboard, history, and record progression rather than a parallel crate-only progression system;
-- Top Fish canonical specimen details use full human-readable labels for FishScore, Percentile,
-  Length, Body Type, Condition, Pigmentation, and Quality;
-- the Top Fish panel preserves the shared Stage 59 formatting/color conventions and bounded hover
-  behavior while avoiding the cramped abbreviated `Cond`, `Pig`, and `Qual` presentation;
-- UI code remains read-only with respect to canonical specimen generation and mutation.
+This supersedes stale Top 12 wording from pre-Stage-64 documentation.
 
-Focused GameTests cover the progression bridge and canonical-state preservation.
+### Replay-safe recovery
 
-## Final Stage 60/61 validation
+`FishRecords.rebuildRecordsFromCatch` can rebuild durable record projections from an already-canonical catch without simulating a new live catch.
 
-Stage 60 implementation commit:
+Recovery may restore or improve:
 
-- `72f9a3b55851b0e5cbe8ff68f37d464b4720eadb` - `feat: add legacy fish repair and guarded reroll tooling`
+- per-player best FishScore;
+- canonical Best Specimen;
+- derived Team Top 15.
 
-Stage 61 implementation commit:
+It does not increment recent/total live-catch counters, does not advance challenge progress, and does not emit the normal catch listener/event signal used by live-catch reward paths.
 
-- `48983670bbb996fc09d9fb2cab0f533fa762c86d` - `fix: polish specimen details and restore crate fish progression`
+### Canonical UI projection
 
-The first Stage 61 workflow correctly caught that the two new GameTest classes had not been
-registered as Fabric GameTest entrypoints. That repository-validation failure occurred before
-Java compilation and was fixed by:
+The Team Records 3D preview is driven by the selected canonical specimen state. The Journal Best Specimen panel exposes FishScore, percentile, length, Body Type, Condition, Pigmentation, Quality, and Perfect Catch from canonical data.
 
-- `9619f756c9ecd61139acd5ffc687d68be61a4e04` - `test: register Stage 60 and 61 GameTests`
+Regression coverage includes Iridescent pigmentation transfer through normal world/entity storage and record-preview state.
 
-GitHub Actions run `33319707597` is green on that validated implementation head. It passed:
+### Equipment and stacking audit
 
-- exact frozen dependency retrieval and repository validation;
-- clean Java 21 Gradle build and the full unit-test suite;
+The deterministic Stage 64 audit covers:
+
+- all 5 built-in rod tiers;
+- all 32 built-in Tide bobbers;
+- all 7 built-in hooks;
+- all 3 built-in bait entries;
+- native/Tideborne line progression;
+- Steel Leader line protection;
+- Leviathan Bait boss reachability and Fishing System 2.0 modifier ownership;
+- tagged third-party bobber compatibility;
+- representative full-kit stacking, degraded/corrupted/summoned states, and drop transfer.
+
+Equipment cannot directly author FishScore or canonical specimen geometry. Each modifier layer is applied through its owning system, and FishScore is calculated once from final canonical specimen state.
+
+Detailed audit values and progression tables are in `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`.
+
+## Stage 64 validation
+
+Validated implementation head:
+
+- `f6aac3e07a7ff7a0955427cc76605bdb94dad086` - `test: finish fishing-system-2.0 balance audit`
+
+GitHub Actions run `33367391365` passed:
+
+- repository/dependency validation;
+- clean Java 21 Gradle build;
+- unit tests;
 - Fabric GameTests with no optional compatibility mods;
-- Fabric GameTests with Apex Waters 1.1.1 only;
-- Fabric GameTests with Myths of the Sea 1.3.0 only;
+- Fabric GameTests with Apex Waters only;
+- Fabric GameTests with Myths of the Sea only;
 - Fabric GameTests with Apex Waters and Myths of the Sea together;
-- dedicated-server/client-connect smoke validation;
-- production `tideborne-2.0.0.jar` validation;
-- final validation-count checks;
-- built-JAR artifact upload;
-- release publication/refresh.
+- dedicated-server smoke;
+- client-connect smoke;
+- production release JAR validation;
+- artifact upload;
+- release publishing.
 
-No Stage 60 or Stage 61 implementation failure remains after that run.
+No Stage 64 implementation failure remains after that run.
 
-## Owned legacy fish Journal backfill is complete
-
-A post-release migration gap was found in old Journal entries that retained Tide catch history but
-had no canonical `latest` specimen snapshot. Aggregate Tide Journal data can reconstruct historical
-largest/smallest lengths, but it cannot safely invent the exact last specimen. The fix therefore
-uses an actual old fish item the player still owns as the authoritative missing specimen source.
-
-Implementation commit:
-
-- `44c4803f8f6bee16eb76b162b82883398a8bd3ca` - `fix: backfill owned legacy fish into journal specimens`
-
-Current behavior:
-
-- backfill runs server-side on player login and FTB team changes;
-- the repair commands also invoke the backfill so it can be applied immediately without a new catch;
-- only species already unlocked in the authoritative Tide Journal are eligible;
-- owning a fish never unlocks a species that was never caught;
-- an existing canonical `latest` specimen is never overwritten;
-- current canonical fish are copied without rerolling;
-- recoverable Tideborne legacy fish use the existing deterministic migration boundary;
-- old Tide fish with only a valid preserved physical length are deterministically canonicalized
-  from registered species plus that length, fixing the class of old fish the original repair
-  command classified as having no Tideborne legacy specimen payload;
-- total caught, first-catch date, largest/smallest stats, history events, record ownership,
-  contributor totals, rewards, and Trait Momentum are not replayed or incremented;
-- the backfill never calls Tide's `logCatch` path and is idempotent.
-
-Focused GameTests prove that a length-only owned old fish fills the missing `latest` specimen while
-preserving the historical Tide Journal compound byte-for-byte, repeated backfill is stable, and an
-owned fish cannot unlock an uncaught species.
-
-GitHub Actions run `33323297138` is green on implementation head
-`44c4803f8f6bee16eb76b162b82883398a8bd3ca`. It passed the clean build and unit suite, all four
-Fabric GameTest matrices, dedicated-server/client-connect smoke validation, production JAR
-validation, artifact upload, and release publication/refresh. That release snapshot was later
-superseded by the validated Stage 62 and Stage 63 refreshes documented below.
-
-## Stage 62 canonical fishing gear registry is complete
-
-Stage 62 hardens fishing gear identity without changing Fishing System 2.0 balance. Gear behavior is
-now keyed by one explicit canonical registry of exact namespaced item IDs instead of duplicated
-consumer-side recognition logic.
-
-Current gear-registry contracts:
-
-- every supported native Tide line and Tideborne fishing gear item has exactly one canonical
-  `GearProfile`, exact namespaced item ID, origin, and equipment slot classification;
-- resolution uses the exact registered item ID only; display names, translation keys, class names,
-  and substring similarity cannot grant fishing behavior to an unregistered lookalike;
-- native Tide Copper, Iron, Golden, and Diamond line effects resolve through the shared registry;
-- Tideborne Tentacle/Swift lines, Seafarer's/Shark Tooth hooks, and Kujira rod runtime selection
-  resolve through the same registry while preserving their existing contextual/configured effects;
-- Steel Leader remains applied from its authoritative persisted attachment state, while its item and
-  tooltip identity are represented by the same canonical gear profile;
-- Leviathan Bait remains applied from the authoritative active-bait state, while its item and tooltip
-  identity are represented by the canonical profile;
-- advanced Tideborne equipment tooltips consume the same profile identity used by runtime gear
-  resolution, preventing UI/runtime identity drift;
-- `/tideborne debug gear` provides read-only operator diagnostics for canonical gear item IDs,
-  profiles, origins, and slots, and is exposed from the clickable Debug Tools panel;
-- modifier arithmetic continues through `FishingGearModifiers.compose`; no second gear stacking or
-  balance formula was introduced.
-
-Focused unit tests cover exact profile registration, rejection of unregistered lookalike IDs,
-metadata/reverse identity, and cross-gear stacking. A registered Fabric GameTest verifies those IDs
-against the actual runtime Tide/Tideborne item registries.
-
-GitHub Actions run `33330163321` is green on validated Stage 62 head
-`9957e50a0a7dc95c7bbc07fb1f34979a8404c046`, including the full build/unit suite, all four
-compatibility GameTest matrices, dedicated-server/client-connect smoke validation, production JAR
-validation, artifact upload, and release refresh.
-
-## Stage 63 Tideborne creative tab is complete
-
-Stage 63 gives Tideborne-owned content a dedicated Creative Mode tab without changing any item
-registry IDs, recipes, saved data, or Fishing System 2.0 gear identities.
-
-Current creative-tab contracts:
-
-- dedicated item group ID is `tideborne:tideborne`;
-- display name is `Tideborne`;
-- the Angler's Satchel is the tab icon and is always present;
-- Myths of the Sea-owned compatibility content remains visible only when the Myths integration is
-  active;
-- Apex Waters-owned compatibility content remains visible only when the Apex integration is active;
-- entries are curated by gameplay role: Satchel, rod, lines/leaders, hooks, then bait/utilities;
-- the creative group and tests consume the same immutable visibility/order matrix;
-- the old Satchel injection into vanilla Tools is removed;
-- Tideborne compatibility items are no longer duplicated into vanilla Tools or Ingredients;
-- native Tide items and Tide's own creative presentation are untouched;
-- registration is common-side after the Satchel and compatibility item registries initialize, with
-  no client-only class dependency.
-
-Registered Fabric GameTests verify the runtime group and Satchel icon, all four exact Myths/Apex
-item matrices and stable order, and that the live list follows the active integration flags.
-
-Final Stage 63 validation:
-
-- validated implementation head: `24cc3a42e30f9dc8a51bf9abef469585e0d2b48b`;
-- GitHub Actions run: `33360256194`;
-- build/unit suite: passed;
-- no-optional, Apex-only, Myths-only, and combined Fabric GameTest matrices: passed;
-- dedicated-server/client-connect smoke validation: passed;
-- production JAR validation and final validation-count checks: passed;
-- artifact upload and release publication/refresh: passed.
-
-The current `TIDEBORN-2.0.0` release targets
-`24cc3a42e30f9dc8a51bf9abef469585e0d2b48b`. Its published `tideborne-2.0.0.jar` asset has SHA-256
-`ff9ef2a8f8aa975336816ae56240302c31dcc777606bb1a88d23c947b799b937`.
-
-Full behavior, ordering, compatibility matrices, and validation are documented in
-`docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`.
+The Stage 64 documentation closure is committed after the validated implementation head and does not change runtime behavior.
 
 ## Current execution gate
 
-Fishing System 2.0, its legacy recovery/admin tooling, final player-facing integration polish, the
-owned legacy-fish Journal backfill, canonical fishing-gear registry hardening, and the dedicated
-Tideborne creative tab are complete on `dev`.
+Fishing System 2.0 through Stage 64 is complete on `dev`.
 
-There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item.
-Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope,
-primarily long-term licensing policy and future version compatibility.
+There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item. Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope, currently long-term licensing policy and future version compatibility.
 
 Do not merge, rebase, or modify `main` unless explicitly authorized.
