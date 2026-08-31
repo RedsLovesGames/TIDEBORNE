@@ -14,14 +14,12 @@ public final class BobberGearModifiers {
 
     public static FishingGearModifiers forHook(TideFishingHook hook) {
         if (hook == null) return FishingGearModifiers.neutral();
-        return CustomRodManager.getBobber(hook.getRod()).map(BobberGearModifiers::forBobber)
-                .orElseGet(FishingGearModifiers::neutral);
+        return forBobber(CustomRodManager.getBobber(hook.getRod()));
     }
 
     public static FishingGearModifiers forRod(ItemStack rod) {
         if (rod == null || rod.isEmpty()) return FishingGearModifiers.neutral();
-        return CustomRodManager.getBobber(rod).map(BobberGearModifiers::forBobber)
-                .orElseGet(FishingGearModifiers::neutral);
+        return forBobber(CustomRodManager.getBobber(rod));
     }
 
     public static FishingGearModifiers forBobber(ItemStack bobber) {
@@ -46,9 +44,11 @@ public final class BobberGearModifiers {
     private static FishingGearModifiers zone(double multiplier) {
         return FishingGearModifiers.builder().namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, multiplier).build();
     }
+
     private static FishingGearModifiers crate(double multiplier) {
         return FishingGearModifiers.builder().namedMultiplierModifier(FishingGearEffects.CRATE_WEIGHT_MULTIPLIER, multiplier).build();
     }
+
     private static FishingGearModifiers protection(double chance) {
         return FishingGearModifiers.builder()
                 .namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PREVENTION_CHANCE, chance)

@@ -7,6 +7,7 @@ package com.redslovesgames.tideboundcompatibility.client;
 
 import com.li64.tide.util.BaitUtils;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry;
+import com.redslovesgames.tideboundcompatibility.fishing.LeaderTier;
 import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
 import java.util.List;
 import java.util.Locale;
@@ -48,11 +49,10 @@ final class TideboundTooltips {
                      lines.add(stat("Catch zone", "swift_zone"));
                      lines.add(stat("Fish speed", "swift_speed"));
                   }
-                  case STEEL_LEADER -> {
-                     lines.add(stat("Catch zone", "steel_zone"));
-                     lines.add(stat("Fish speed", "steel_speed"));
-                     lines.add(Text.literal("Catch-loss protection: " + percent("steel_prevent")));
-                  }
+                  case COPPER_LEADER -> appendLeader(lines, LeaderTier.COPPER);
+                  case IRON_LEADER -> appendLeader(lines, LeaderTier.IRON);
+                  case GOLD_LEADER -> appendLeader(lines, LeaderTier.GOLD);
+                  case DIAMOND_LEADER -> appendLeader(lines, LeaderTier.DIAMOND);
                   case SEAFARERS_HOOK ->
                      lines.add(Text.literal("Night ocean legendary weight: " + multiplier("seafarer_rare")));
                   case SHARK_TOOTH_HOOK -> {
@@ -108,6 +108,12 @@ final class TideboundTooltips {
          || stack.isOf(TideboundItems.SHARK_TOOTH);
    }
 
+   private static void appendLeader(List<Text> lines, LeaderTier tier) {
+      lines.add(Text.literal("Catch zone: " + formatMultiplier(tier.catchZoneMultiplier())));
+      lines.add(Text.literal("Fish speed: " + formatMultiplier(tier.fishSpeedMultiplier())));
+      lines.add(Text.literal("Catch-loss protection: " + formatPercent(tier.protection())));
+   }
+
    private static Text flavor(String text) {
       return flavor(Text.literal(text));
    }
@@ -125,10 +131,18 @@ final class TideboundTooltips {
    }
 
    static String multiplier(String key) {
-      return String.format(Locale.ROOT, "%.0f%%", ClientTideboundSettings.decimal(key) * 100.0);
+      return formatMultiplier(ClientTideboundSettings.decimal(key));
    }
 
    static String percent(String key) {
-      return String.format(Locale.ROOT, "%.1f%%", ClientTideboundSettings.decimal(key) * 100.0);
+      return formatPercent(ClientTideboundSettings.decimal(key));
+   }
+
+   private static String formatMultiplier(double value) {
+      return String.format(Locale.ROOT, "%.0f%%", value * 100.0);
+   }
+
+   private static String formatPercent(double value) {
+      return String.format(Locale.ROOT, "%.1f%%", value * 100.0);
    }
 }

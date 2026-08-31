@@ -21,7 +21,10 @@ public final class FishingGearRegistryGameTests implements FabricGameTest {
 
         assertGear(helper, new ItemStack(TideboundItems.TENTACLE_LINE), FishingGearRegistry.GearProfile.TENTACLE_LINE);
         assertGear(helper, new ItemStack(TideboundItems.SWIFT_LINE), FishingGearRegistry.GearProfile.SWIFT_LINE);
-        assertGear(helper, new ItemStack(TideboundItems.STEEL_LEADER), FishingGearRegistry.GearProfile.STEEL_LEADER);
+        assertGear(helper, new ItemStack(TideboundItems.COPPER_LEADER), FishingGearRegistry.GearProfile.COPPER_LEADER);
+        assertGear(helper, new ItemStack(TideboundItems.IRON_LEADER), FishingGearRegistry.GearProfile.IRON_LEADER);
+        assertGear(helper, new ItemStack(TideboundItems.GOLD_LEADER), FishingGearRegistry.GearProfile.GOLD_LEADER);
+        assertGear(helper, new ItemStack(TideboundItems.DIAMOND_LEADER), FishingGearRegistry.GearProfile.DIAMOND_LEADER);
         assertGear(helper, new ItemStack(TideboundItems.SEAFARERS_HOOK), FishingGearRegistry.GearProfile.SEAFARERS_HOOK);
         assertGear(helper, new ItemStack(TideboundItems.SHARK_TOOTH_HOOK), FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK);
         assertGear(helper, new ItemStack(TideboundItems.KUJIRA_BONE_FISHING_ROD), FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD);
