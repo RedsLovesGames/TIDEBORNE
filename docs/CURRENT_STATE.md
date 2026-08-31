@@ -130,7 +130,7 @@ Detailed audit values and progression tables are in `docs/FISHING_SYSTEM_2_BALAN
 
 Validated implementation head:
 
-- `f6aac3e07a7ff7a0955427cc76605bdb94dad086` - `test: finish fishing-system-2.0 balance audit`
+- `f6aac3de1277500229428d37a69faf1c5eaf7d9a` - `test: register pigmentation render state GameTests`
 
 GitHub Actions run `33367391365` passed:
 
