@@ -1,8 +1,4 @@
-/*
- * RECONSTRUCTED SOURCE BASELINE
- * Recovered from Tideborne 1.3.57 bytecode.
- * See docs/RECONSTRUCTION.md before changing behavior.
- */
+/* RECONSTRUCTED SOURCE BASELINE */
 package com.redslovesgames.tideteamjournal;
 
 import com.google.gson.Gson;
@@ -11,157 +7,55 @@ import com.google.gson.JsonParseException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 
 public final class ServerConfig {
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-   private static volatile ServerConfig.Values values = ServerConfig.Values.defaults();
-
-   private ServerConfig() {
+   private static volatile Values values = Values.defaults();
+   private ServerConfig() {}
+   public static Values get(){return values;}
+   public static boolean load(){
+      Values previous=values; Path path=path();
+      try { if(!Files.exists(path)){Files.createDirectories(path.getParent());Files.writeString(path,GSON.toJson(Values.defaults()));}
+         Values parsed=GSON.fromJson(Files.readString(path),Values.class); values=validate(parsed); return true;
+      } catch(IOException|JsonParseException|IllegalArgumentException e){values=previous;TideTeamJournal.LOGGER.error("Could not load {}; retaining the last valid settings",path,e);return false;}
    }
-
-   public static ServerConfig.Values get() {
-      return values;
+   private static Path path(){return FabricLoader.getInstance().getConfigDir().resolve("tide_team_journal-server.json");}
+   static Values validate(Values raw){
+      if(raw==null) throw new IllegalArgumentException("Configuration is empty");
+      raw.historyLimit=Math.max(0,Math.min(10000,raw.historyLimit));
+      raw.visibleMetrics=raw.visibleMetrics!=null&&!raw.visibleMetrics.isEmpty()?raw.visibleMetrics.stream().filter(m->List.of("catches","species","record_events","active_records","fish_score").contains(m)).distinct().toList():List.of("catches","species","record_events","active_records","fish_score");
+      raw.repairMinimumRank="owner".equalsIgnoreCase(raw.repairMinimumRank)?"owner":"officer";
+      raw.claimAllMinimumRank="officer".equalsIgnoreCase(raw.claimAllMinimumRank)?"officer":"owner";
+      raw.bobberBonuses=raw.bobberBonuses==null?new LinkedHashMap<>():raw.bobberBonuses;
+      migrateLegacyBobberDefaults(raw.bobberBonuses);
+      Map<String,BobberBonuses.Bonus> validated=new LinkedHashMap<>();
+      raw.bobberBonuses.forEach((id,b)->{if(Identifier.tryParse(id)!=null&&b!=null)validated.put(id,clamp(b));else TideTeamJournal.LOGGER.warn("Ignoring invalid bobber bonus entry {}",id);});
+      raw.bobberBonuses=validated; raw.fallbackBobberBonus=clamp(raw.fallbackBobberBonus==null?new BobberBonuses.Bonus(0,1):raw.fallbackBobberBonus);
+      tideborneEnsureFishScoreMetric(raw); return raw;
    }
-
-   public static boolean load() {
-      ServerConfig.Values previous = values;
-      Path path = path();
-
-      try {
-         if (!Files.exists(path)) {
-            Files.createDirectories(path.getParent());
-            Files.writeString(path, GSON.toJson(ServerConfig.Values.defaults()));
-         }
-
-         ServerConfig.Values parsed = (ServerConfig.Values)GSON.fromJson(Files.readString(path), ServerConfig.Values.class);
-         values = validate(parsed);
-         return true;
-      } catch (IOException | JsonParseException | IllegalArgumentException exception) {
-         values = previous;
-         TideTeamJournal.LOGGER.error("Could not load {}; retaining the last valid settings", path, exception);
-         return false;
-      }
+   private static void migrateLegacyBobberDefaults(Map<String,BobberBonuses.Bonus> map){
+      migrate(map,"tide:golden_apple_bobber",1,1,2,2); migrate(map,"tide:enchanted_golden_apple_bobber",2,2,5,0);
+      migrate(map,"tide:iron_bobber",0,2,0,0); migrate(map,"tide:diamond_bobber",1,2,0,0); migrate(map,"tide:netherite_bobber",2,2,0,1);
+      migrate(map,"tide:amethyst_bobber",2,0,0,1); migrate(map,"tide:echo_bobber",0,3,0,1); migrate(map,"tide:chorus_bobber",1,1,0,3);
+      migrate(map,"tide:feather_bobber",0,3,0,2); migrate(map,"tide:lichen_bobber",0,2,0,1); migrate(map,"tide:nautilus_bobber",2,0,1,0);
+      migrate(map,"tide:heart_bobber",3,0,1,2); migrate(map,"tide:grassy_bobber",1,1,0,0); migrate(map,"tide:duck_bobber",0,2,0,0);
    }
-
-   private static Path path() {
-      return FabricLoader.getInstance().getConfigDir().resolve("tide_team_journal-server.json");
-   }
-
-   static ServerConfig.Values validate(ServerConfig.Values raw) {
-      if (raw == null) {
-         throw new IllegalArgumentException("Configuration is empty");
-      }
-
-      raw.historyLimit = Math.max(0, Math.min(10000, raw.historyLimit));
-      raw.visibleMetrics = raw.visibleMetrics != null && !raw.visibleMetrics.isEmpty()
-         ? raw.visibleMetrics.stream().filter(metric -> List.of("catches", "species", "record_events", "active_records").contains(metric)).distinct().toList()
-         : List.of("catches", "species", "record_events", "active_records");
-      if (raw.visibleMetrics.isEmpty()) {
-         raw.visibleMetrics = List.of("catches", "species", "record_events", "active_records");
-      }
-
-      raw.repairMinimumRank = "owner".equalsIgnoreCase(raw.repairMinimumRank) ? "owner" : "officer";
-      raw.claimAllMinimumRank = "officer".equalsIgnoreCase(raw.claimAllMinimumRank) ? "officer" : "owner";
-      raw.bobberBonuses = raw.bobberBonuses == null ? new LinkedHashMap<>() : raw.bobberBonuses;
-      Map<String, BobberBonuses.Bonus> validated = new LinkedHashMap<>();
-      raw.bobberBonuses.forEach((id, bonus) -> {
-         if (Identifier.tryParse(id) != null && bonus != null) {
-            validated.put(id, clamp(bonus));
-         } else {
-            TideTeamJournal.LOGGER.warn("Ignoring invalid bobber bonus entry {}", id);
-         }
-      });
-      raw.bobberBonuses = validated;
-      raw.fallbackBobberBonus = clamp(raw.fallbackBobberBonus == null ? new BobberBonuses.Bonus(0, 1) : raw.fallbackBobberBonus);
-      tideborneEnsureFishScoreMetric(raw);
-      return raw;
-   }
-
-   private static BobberBonuses.Bonus clamp(BobberBonuses.Bonus bonus) {
-      return new BobberBonuses.Bonus(Math.max(0, Math.min(10, bonus.luck())), Math.max(0, Math.min(10, bonus.lureSpeed())));
-   }
-
-   private static void tideborneEnsureFishScoreMetric(ServerConfig.Values config) {
-      ArrayList<String> metrics = new ArrayList<>(config.visibleMetrics);
-      if (!metrics.contains("fish_score")) {
-         metrics.add("fish_score");
-      }
-
-      config.visibleMetrics = metrics;
-   }
+   private static void migrate(Map<String,BobberBonuses.Bonus> map,String id,int oldLuck,int oldLure,int newLuck,int newLure){BobberBonuses.Bonus b=map.get(id);if(b!=null&&b.luck()==oldLuck&&b.lureSpeed()==oldLure)map.put(id,new BobberBonuses.Bonus(newLuck,newLure));}
+   private static BobberBonuses.Bonus clamp(BobberBonuses.Bonus b){return new BobberBonuses.Bonus(Math.max(0,Math.min(10,b.luck())),Math.max(0,Math.min(10,b.lureSpeed())));}
+   private static void tideborneEnsureFishScoreMetric(Values c){ArrayList<String> m=new ArrayList<>(c.visibleMetrics);if(!m.contains("fish_score"))m.add("fish_score");c.visibleMetrics=m;}
 
    public static final class Values {
-      public boolean leaderboardEnabled = true;
-      public boolean historyEnabled = true;
-      public boolean contributionTracking = true;
-      public boolean announcementsEnabled = true;
-      public boolean recordBadgesEnabled = true;
-      public boolean recordTooltipsEnabled = true;
-      public boolean operatorBypass = true;
-      public boolean membersMayClaimWithExactFish = true;
-      public int historyLimit = 200;
-      public String repairMinimumRank = "officer";
-      public String claimAllMinimumRank = "owner";
-      public List<String> visibleMetrics = List.of("catches", "species", "record_events", "active_records", "fish_score");
-      public boolean trackDiscoveries = true;
-      public boolean trackLargestRecords = true;
-      public boolean trackSmallestRecords = true;
-      public boolean trackRepairs = true;
-      public boolean bobberBonusesEnabled = true;
-      public BobberBonuses.Bonus fallbackBobberBonus = new BobberBonuses.Bonus(0, 1);
-      public Map<String, BobberBonuses.Bonus> bobberBonuses = defaultBobbers();
-
-      static ServerConfig.Values defaults() {
-         return new ServerConfig.Values();
-      }
-
-      private static Map<String, BobberBonuses.Bonus> defaultBobbers() {
-         Map<String, BobberBonuses.Bonus> result = new LinkedHashMap<>();
-
-         for (String path : List.of(
-            "red_bobber",
-            "orange_bobber",
-            "yellow_bobber",
-            "lime_bobber",
-            "green_bobber",
-            "cyan_bobber",
-            "light_blue_bobber",
-            "blue_bobber",
-            "purple_bobber",
-            "magenta_bobber",
-            "pink_bobber",
-            "white_bobber",
-            "light_gray_bobber",
-            "gray_bobber",
-            "black_bobber",
-            "brown_bobber"
-         )) {
-            result.put("tide:" + path, new BobberBonuses.Bonus(0, 1));
-         }
-
-         result.put("tide:golden_apple_bobber", new BobberBonuses.Bonus(1, 1));
-         result.put("tide:enchanted_golden_apple_bobber", new BobberBonuses.Bonus(2, 2));
-         result.put("tide:iron_bobber", new BobberBonuses.Bonus(0, 2));
-         result.put("tide:golden_bobber", new BobberBonuses.Bonus(2, 0));
-         result.put("tide:diamond_bobber", new BobberBonuses.Bonus(1, 2));
-         result.put("tide:netherite_bobber", new BobberBonuses.Bonus(2, 2));
-         result.put("tide:amethyst_bobber", new BobberBonuses.Bonus(2, 0));
-         result.put("tide:echo_bobber", new BobberBonuses.Bonus(0, 3));
-         result.put("tide:chorus_bobber", new BobberBonuses.Bonus(1, 1));
-         result.put("tide:feather_bobber", new BobberBonuses.Bonus(0, 3));
-         result.put("tide:lichen_bobber", new BobberBonuses.Bonus(0, 2));
-         result.put("tide:nautilus_bobber", new BobberBonuses.Bonus(2, 0));
-         result.put("tide:pearl_bobber", new BobberBonuses.Bonus(1, 2));
-         result.put("tide:heart_bobber", new BobberBonuses.Bonus(3, 0));
-         result.put("tide:grassy_bobber", new BobberBonuses.Bonus(1, 1));
-         result.put("tide:duck_bobber", new BobberBonuses.Bonus(0, 2));
-         return result;
-      }
+      public boolean leaderboardEnabled=true,historyEnabled=true,contributionTracking=true,announcementsEnabled=true,recordBadgesEnabled=true,recordTooltipsEnabled=true,operatorBypass=true,membersMayClaimWithExactFish=true;
+      public int historyLimit=200; public String repairMinimumRank="officer",claimAllMinimumRank="owner";
+      public List<String> visibleMetrics=List.of("catches","species","record_events","active_records","fish_score");
+      public boolean trackDiscoveries=true,trackLargestRecords=true,trackSmallestRecords=true,trackRepairs=true,bobberBonusesEnabled=true;
+      public BobberBonuses.Bonus fallbackBobberBonus=new BobberBonuses.Bonus(0,1); public Map<String,BobberBonuses.Bonus> bobberBonuses=defaultBobbers();
+      static Values defaults(){return new Values();}
+      private static Map<String,BobberBonuses.Bonus> defaultBobbers(){Map<String,BobberBonuses.Bonus> r=new LinkedHashMap<>();
+         for(String p:List.of("red_bobber","orange_bobber","yellow_bobber","lime_bobber","green_bobber","cyan_bobber","light_blue_bobber","blue_bobber","purple_bobber","magenta_bobber","pink_bobber","white_bobber","light_gray_bobber","gray_bobber","black_bobber","brown_bobber"))r.put("tide:"+p,new BobberBonuses.Bonus(0,1));
+         r.put("tide:golden_apple_bobber",new BobberBonuses.Bonus(2,2)); r.put("tide:enchanted_golden_apple_bobber",new BobberBonuses.Bonus(5,0)); r.put("tide:iron_bobber",new BobberBonuses.Bonus(0,0)); r.put("tide:golden_bobber",new BobberBonuses.Bonus(2,0)); r.put("tide:diamond_bobber",new BobberBonuses.Bonus(0,0)); r.put("tide:netherite_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:amethyst_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:echo_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:chorus_bobber",new BobberBonuses.Bonus(0,3)); r.put("tide:feather_bobber",new BobberBonuses.Bonus(0,2)); r.put("tide:lichen_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:nautilus_bobber",new BobberBonuses.Bonus(1,0)); r.put("tide:pearl_bobber",new BobberBonuses.Bonus(1,2)); r.put("tide:heart_bobber",new BobberBonuses.Bonus(1,2)); r.put("tide:grassy_bobber",new BobberBonuses.Bonus(0,0)); r.put("tide:duck_bobber",new BobberBonuses.Bonus(0,0)); return r;}
    }
 }

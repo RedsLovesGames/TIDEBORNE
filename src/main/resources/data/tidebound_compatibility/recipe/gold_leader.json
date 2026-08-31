@@ -1,0 +1,1 @@
+{"fabric:load_conditions":[{"condition":"fabric:all_mods_loaded","values":["apexwaters"]}],"type":"minecraft:crafting_shaped","category":"equipment","pattern":[" GG","GXG","GG "],"key":{"G":{"item":"minecraft:gold_nugget"},"X":{"item":"minecraft:chain"}},"result":{"id":"tidebound_compatibility:gold_leader","count":1}}

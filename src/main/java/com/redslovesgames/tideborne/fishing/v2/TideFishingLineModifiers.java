@@ -4,33 +4,29 @@ import net.minecraft.item.ItemStack;
 
 /** Canonical Fishing System 2.0 representation of Tide 2.1.1 fishing-line fight modifiers. */
 public final class TideFishingLineModifiers {
-    public enum LegacyLine {
-        COPPER,
-        IRON,
-        GOLDEN,
-        DIAMOND
-    }
+    public enum LegacyLine { COPPER, IRON, GOLDEN, DIAMOND }
 
     private static final FishingGearModifiers COPPER = FishingGearModifiers.builder()
-            .tempoMultiplier(0.90D)
+            .tempoMultiplier(0.94D)
+            .namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, 1.02D)
             .build();
     private static final FishingGearModifiers IRON = FishingGearModifiers.builder()
-            .strengthMultiplier(0.86D)
+            .strengthMultiplier(0.92D)
+            .namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, 1.03D)
             .build();
     private static final FishingGearModifiers GOLDEN = FishingGearModifiers.builder()
-            .tempoMultiplier(0.95D)
+            .strengthMultiplier(1.05D)
+            .tempoMultiplier(0.86D)
             .build();
     private static final FishingGearModifiers DIAMOND = FishingGearModifiers.builder()
-            .strengthMultiplier(0.75D)
+            .strengthMultiplier(0.82D)
+            .tempoMultiplier(1.06D)
             .build();
 
-    private TideFishingLineModifiers() {
-    }
+    private TideFishingLineModifiers() {}
 
     public static FishingGearModifiers forLegacyLine(LegacyLine line) {
-        if (line == null) {
-            return FishingGearModifiers.neutral();
-        }
+        if (line == null) return FishingGearModifiers.neutral();
         return switch (line) {
             case COPPER -> COPPER;
             case IRON -> IRON;
@@ -40,19 +36,13 @@ public final class TideFishingLineModifiers {
     }
 
     public static FishingGearModifiers forLine(ItemStack line) {
-        if (line == null || line.isEmpty()) {
-            return FishingGearModifiers.neutral();
-        }
-        return FishingGearRegistry.resolve(line)
-                .map(TideFishingLineModifiers::forProfile)
+        if (line == null || line.isEmpty()) return FishingGearModifiers.neutral();
+        return FishingGearRegistry.resolve(line).map(TideFishingLineModifiers::forProfile)
                 .orElseGet(FishingGearModifiers::neutral);
     }
 
-    /** Resolves the fixed Tide line effect for an already-canonical gear profile. */
     public static FishingGearModifiers forProfile(FishingGearRegistry.GearProfile profile) {
-        if (profile == null) {
-            return FishingGearModifiers.neutral();
-        }
+        if (profile == null) return FishingGearModifiers.neutral();
         return switch (profile) {
             case TIDE_COPPER_LINE -> COPPER;
             case TIDE_IRON_LINE -> IRON;

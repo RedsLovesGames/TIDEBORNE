@@ -1,8 +1,4 @@
-/*
- * RECONSTRUCTED SOURCE BASELINE
- * Recovered from Tideborne 1.3.57 bytecode.
- * See docs/RECONSTRUCTION.md before changing behavior.
- */
+/* RECONSTRUCTED SOURCE BASELINE */
 package com.redslovesgames.tideboundcompatibility.fishing;
 
 import com.li64.tide.Tide;
@@ -16,12 +12,10 @@ import com.redslovesgames.tideborne.fishing.v2.TideFishingLineModifiers;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
 
-/** Compatibility adapters around the canonical Fishing System 2.0 modifier/fight services. */
+/** Compatibility adapters around canonical Fishing System 2.0 modifier/fight services. */
 public final class FishingModifiers {
    private static final FightProfileService CANONICAL_FIGHTS = new FightProfileService();
-
-   private FishingModifiers() {
-   }
+   private FishingModifiers() {}
 
    public static double modifyCrateWeight(FishingContext context, double original) {
       FishingGearModifiers gear = TideborneFishingGearModifiers.forCrateWeight(context, TideboundConfig.get());
@@ -34,43 +28,21 @@ public final class FishingModifiers {
       var canonical = CanonicalCatchStateManager.get(hook);
       if (canonical.isPresent()) {
          var fightProfile = canonical.get().fightProfile();
-         FishingGearModifiers allMinigameGear = FishingGearModifiers.compose(
-            TideFishingLineModifiers.forLine(hook.getLine()),
-            compatibilityGear
-         );
-         projection = CANONICAL_FIGHTS.projectMinigame(
-            fightProfile,
-            allMinigameGear,
-            Tide.SERVER_CONFIG.minigame.minigameDifficultyMultiplier
-         );
+         FishingGearModifiers allMinigameGear = FishingGearModifiers.compose(TideFishingLineModifiers.forLine(hook.getLine()), compatibilityGear);
+         projection = CANONICAL_FIGHTS.projectMinigame(fightProfile, allMinigameGear, Tide.SERVER_CONFIG.minigame.minigameDifficultyMultiplier);
          behavior = canonicalBehavior(fightProfile.behavior(), behavior);
       } else {
-         // Compatibility fallback only. Tide already computed the fight values, so retain them and
-         // apply only the named addon gear effects rather than reconstructing species/fight math.
          projection = CANONICAL_FIGHTS.projectCompatibilityMinigame(area, speed, compatibilityGear);
       }
-
-      return new FishingModifiers.MinigameValues(
-         behavior,
-         (float)projection.catchZoneArea(),
-         (float)projection.speed()
-      );
+      return new FishingModifiers.MinigameValues(behavior, (float)projection.catchZoneArea(), (float)projection.speed());
    }
 
    private static byte canonicalBehavior(String behavior, byte fallback) {
-      if (behavior == null || behavior.isBlank()) {
-         return fallback;
-      }
-
+      if (behavior == null || behavior.isBlank()) return fallback;
       for (MinigameBehavior candidate : MinigameBehavior.values()) {
-         if (candidate.name().equalsIgnoreCase(behavior) || candidate.toString().equalsIgnoreCase(behavior)) {
-            return (byte)candidate.ordinal();
-         }
+         if (candidate.name().equalsIgnoreCase(behavior) || candidate.toString().equalsIgnoreCase(behavior)) return (byte)candidate.ordinal();
       }
-
       return fallback;
    }
-
-   public record MinigameValues(byte behavior, float area, float speed) {
-   }
+   public record MinigameValues(byte behavior, float area, float speed) {}
 }
