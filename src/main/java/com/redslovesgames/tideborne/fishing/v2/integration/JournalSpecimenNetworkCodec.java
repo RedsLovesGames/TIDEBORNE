@@ -25,6 +25,7 @@ public final class JournalSpecimenNetworkCodec {
     private static final String RAW_FISH_SCORE_KEY = "raw_fish_score";
     private static final String FISH_SCORE_KEY = "fish_score";
     private static final String[] RECORD_KINDS = {
+            JournalSpecimenStore.BEST,
             JournalSpecimenStore.LATEST,
             JournalSpecimenStore.LARGEST,
             JournalSpecimenStore.SMALLEST
