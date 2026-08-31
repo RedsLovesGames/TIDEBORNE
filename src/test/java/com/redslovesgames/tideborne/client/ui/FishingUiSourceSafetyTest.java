@@ -100,6 +100,27 @@ class FishingUiSourceSafetyTest {
         assertFalse(stats.contains("0x4FAFD6"));
     }
 
+    @Test
+    void topFishUsesBoundedFifteenSlotTable() throws IOException {
+        String topFish = Files.readString(Path.of(AFFECTED_UI.get(1)));
+        int slots = constantValue(topFish, "TOP_FISH_SLOTS");
+        int panelRight = constantValue(topFish, "LIST_PANEL_RIGHT");
+        int panelBottom = constantValue(topFish, "LIST_PANEL_BOTTOM");
+        int rowRight = constantValue(topFish, "LIST_ROW_RIGHT");
+        int scoreRight = constantValue(topFish, "SCORE_RIGHT_X");
+
+        assertEquals(15, slots);
+        assertTrue(panelRight <= 196);
+        assertTrue(panelBottom <= 240);
+        assertTrue(rowRight <= panelRight);
+        assertTrue(scoreRight <= rowRight);
+        assertTrue(topFish.contains("for (int row = 0; row < TOP_FISH_SLOTS; row++)"));
+        assertTrue(topFish.contains("if (row >= visibleCount)"));
+        assertTrue(topFish.contains("Text.literal(\"—\")"));
+        assertTrue(topFish.contains("graphics.enableScissor("));
+        assertTrue(topFish.contains("graphics.disableScissor();"));
+    }
+
     private static int constantValue(String source, String name) {
         String marker = name + " = ";
         int start = source.indexOf(marker);
