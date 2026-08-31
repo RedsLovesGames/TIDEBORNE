@@ -1,6 +1,6 @@
 # Tideborne post-2.0 backlog
 
-Updated: 2026-08-30
+Updated: 2026-08-31
 
 Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, owned legacy-fish Journal backfill, canonical gear-registry hardening, and the dedicated Tideborne creative tab are complete on `dev`.
 
@@ -49,7 +49,8 @@ The authoritative behavior and validation record are documented in:
   lookalikes, metadata/reverse lookup, and composed gear stacking.
 - [x] Complete Stage 63 dedicated Tideborne creative tab: keep all existing item IDs stable, use
   the Angler's Satchel as the tab icon, preserve optional-mod visibility rules, curate Tideborne
-  gear by gameplay role, and remove duplicate Tideborne entries from vanilla Tools/Ingredients.
+  gear by gameplay role, remove duplicate Tideborne entries from vanilla Tools/Ingredients, and
+  lock the exact four-state Myths/Apex item matrix with registered GameTests.
 
 Stages 60 and 61 are validated on implementation head
 `9619f756c9ecd61139acd5ffc687d68be61a4e04` by GitHub Actions run `33319707597`.
@@ -60,7 +61,13 @@ The owned legacy-fish Journal backfill is implemented at
 `44c4803f8f6bee16eb76b162b82883398a8bd3ca` and validated by GitHub Actions run
 `33323297138`. The clean build, unit tests, all four Fabric GameTest matrices,
 dedicated-server/client-connect smoke test, production JAR validation, artifact upload, and
-release refresh passed. The `TIDEBORN-2.0.0` release was refreshed from that implementation head.
+release refresh passed.
+
+Stage 63 is validated on implementation head
+`24cc3a42e30f9dc8a51bf9abef469585e0d2b48b` by GitHub Actions run `33360256194`. The build/unit
+suite, all four Fabric GameTest compatibility matrices, dedicated-server/client-connect smoke,
+production JAR validation, artifact upload, and release refresh passed. `TIDEBORN-2.0.0` now targets
+that implementation head.
 
 No known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item remains.
 
