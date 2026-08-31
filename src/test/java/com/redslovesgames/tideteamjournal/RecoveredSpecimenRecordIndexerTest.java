@@ -21,7 +21,7 @@ class RecoveredSpecimenRecordIndexerTest {
     void recoveryCanImproveDerivedRecordsWithoutReplayingProgression() {
         UUID playerId = UUID.fromString("12345678-1234-5678-1234-567812345678");
         NbtCompound root = existingProgress(playerId);
-        NbtCompound historyBefore = root.getList("history", 10).copy();
+        NbtList historyBefore = root.getList("history", 10).copy();
         NbtCompound contributorBefore = root.getCompound("contributors").getCompound(playerId.toString()).copy();
         SpecimenData recovered = specimen(0xABCDEF01L, 2750, 96.0, 61.0);
 
