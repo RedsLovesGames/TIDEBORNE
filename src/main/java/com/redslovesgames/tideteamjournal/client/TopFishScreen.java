@@ -41,6 +41,20 @@ public final class TopFishScreen extends Screen {
    private static final int PIGMENT_COLOR = 0x4FAFD6;
    private static final int QUALITY_COLOR = 0xD6A94F;
    private static final int SCORE_COLOR = 0x43A8D8;
+   private static final int TOP_FISH_SLOTS = 15;
+   private static final int LIST_PANEL_LEFT = 28;
+   private static final int LIST_PANEL_RIGHT = 196;
+   private static final int LIST_PANEL_TOP = 42;
+   private static final int LIST_PANEL_BOTTOM = 240;
+   private static final int LIST_ROW_LEFT = 32;
+   private static final int LIST_ROW_RIGHT = 192;
+   private static final int LIST_FIRST_ROW_Y = 56;
+   private static final int RANK_X = 34;
+   private static final int ICON_X = 46;
+   private static final int NAME_X = 64;
+   private static final int NAME_WIDTH = 58;
+   private static final int STARS_X = 126;
+   private static final int SCORE_RIGHT_X = 192;
    private static final int ROW_HEIGHT = 12;
    private final Screen parent;
    private List<Text> hoverTooltip = List.of();
@@ -75,56 +89,89 @@ public final class TopFishScreen extends Screen {
       TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("TEAM RECORDS  •  TOP FISH"), left + 200, backgroundTop + 29, TEXT);
 
       int detailTop = backgroundTop - 12;
-      int listPanelTop = backgroundTop + 42;
       int listHeadingY = backgroundTop + 45;
-      int firstRowY = backgroundTop + 56;
-      graphics.fill(left + 28, listPanelTop, left + 220, backgroundTop + 248, 869844122);
+      int firstRowY = backgroundTop + LIST_FIRST_ROW_Y;
+      graphics.fill(
+         left + LIST_PANEL_LEFT,
+         backgroundTop + LIST_PANEL_TOP,
+         left + LIST_PANEL_RIGHT,
+         backgroundTop + LIST_PANEL_BOTTOM,
+         869844122
+      );
       graphics.fill(left + 228, detailTop + 60, left + 372, detailTop + 250, 584631450);
-      TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("TOP 15"), left + 124, listHeadingY, MUTED);
+      TideTextRenderer.drawCentered(
+         graphics,
+         this.textRenderer,
+         Text.literal("TOP 15"),
+         left + (LIST_PANEL_LEFT + LIST_PANEL_RIGHT) / 2,
+         listHeadingY,
+         MUTED
+      );
       TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("CANONICAL SPECIMEN"), left + 300, detailTop + 63, MUTED);
 
       NbtList list = ClientTeamData.get().getList(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_KEY, 10);
-      if (list.isEmpty()) {
-         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No canonical team fish yet"), left + 124, backgroundTop + 132, MUTED);
-         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No specimen selected"), left + 300, detailTop + 151, MUTED);
-         return;
-      }
-
       int visibleCount = Math.min(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_LIMIT, list.size());
-      int selectedIndex = 0;
-      if (mouseX >= left + 34 && mouseX < left + 214
-         && mouseY >= firstRowY && mouseY < firstRowY + visibleCount * ROW_HEIGHT) {
+      int selectedIndex = visibleCount > 0 ? 0 : -1;
+      if (visibleCount > 0
+         && mouseX >= left + LIST_ROW_LEFT
+         && mouseX < left + LIST_ROW_RIGHT
+         && mouseY >= firstRowY
+         && mouseY < firstRowY + visibleCount * ROW_HEIGHT) {
          selectedIndex = Math.min(visibleCount - 1, Math.max(0, (mouseY - firstRowY) / ROW_HEIGHT));
       }
 
-      for (int row = 0; row < visibleCount; row++) {
-         NbtCompound tag = (NbtCompound)list.get(row);
-         int rowY = firstRowY + row * ROW_HEIGHT;
-         if (row == selectedIndex) {
-            graphics.fill(left + 34, rowY, left + 214, rowY + ROW_HEIGHT, 866633688);
-         }
-
-         ItemStack stack = fishStack(tag.getString("fish"));
-         TideTextRenderer.draw(graphics, this.textRenderer, Integer.toString(row + 1), left + 36, rowY + 2, MUTED);
-         graphics.drawItem(stack, left + 49, rowY - 2);
-         CanonicalRecordDisplay display = CanonicalRecordDisplay.from(tag).orElse(null);
-         String name = stack.getName().getString();
-         FittedText fittedName = FishingUiLayout.ellipsize(name, 73, this.textRenderer::getWidth);
-         TideTextRenderer.draw(graphics, this.textRenderer, fittedName.text(), left + 67, rowY + 2, TEXT);
-         String rarity = stars(tag.getInt("fish_stars"));
-         TideTextRenderer.draw(graphics, this.textRenderer, rarity, left + 143, rowY + 2, MUTED);
-         String score = display == null ? FishingUiFormat.UNAVAILABLE : display.scoreLabel();
-         TideTextRenderer.draw(
-            graphics,
-            this.textRenderer,
-            score,
-            FishingUiLayout.rightAlignedX(left + 211, this.textRenderer.getWidth(score)),
-            rowY + 2,
-            SCORE_COLOR
+      try {
+         graphics.enableScissor(
+            left + LIST_PANEL_LEFT,
+            backgroundTop + LIST_PANEL_TOP,
+            left + LIST_PANEL_RIGHT,
+            backgroundTop + LIST_PANEL_BOTTOM
          );
-         if (fittedName.clipped() && mouseX >= left + 34 && mouseX < left + 214 && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT) {
-            this.hoverTooltip = List.of(Text.literal(name));
+         for (int row = 0; row < TOP_FISH_SLOTS; row++) {
+            int rowY = firstRowY + row * ROW_HEIGHT;
+            if (row < visibleCount && row == selectedIndex) {
+               graphics.fill(left + LIST_ROW_LEFT, rowY, left + LIST_ROW_RIGHT, rowY + ROW_HEIGHT, 866633688);
+            }
+
+            TideTextRenderer.draw(graphics, this.textRenderer, Integer.toString(row + 1), left + RANK_X, rowY + 2, MUTED);
+            if (row >= visibleCount) {
+               TideTextRenderer.draw(graphics, this.textRenderer, Text.literal("—"), left + NAME_X, rowY + 2, MUTED);
+               continue;
+            }
+
+            NbtCompound tag = (NbtCompound)list.get(row);
+            ItemStack stack = fishStack(tag.getString("fish"));
+            graphics.drawItem(stack, left + ICON_X, rowY - 2);
+            CanonicalRecordDisplay display = CanonicalRecordDisplay.from(tag).orElse(null);
+            String name = stack.getName().getString();
+            FittedText fittedName = FishingUiLayout.ellipsize(name, NAME_WIDTH, this.textRenderer::getWidth);
+            TideTextRenderer.draw(graphics, this.textRenderer, fittedName.text(), left + NAME_X, rowY + 2, TEXT);
+            String rarity = stars(tag.getInt("fish_stars"));
+            TideTextRenderer.draw(graphics, this.textRenderer, rarity, left + STARS_X, rowY + 2, MUTED);
+            String score = display == null ? FishingUiFormat.UNAVAILABLE : display.scoreLabel();
+            TideTextRenderer.draw(
+               graphics,
+               this.textRenderer,
+               score,
+               FishingUiLayout.rightAlignedX(left + SCORE_RIGHT_X, this.textRenderer.getWidth(score)),
+               rowY + 2,
+               SCORE_COLOR
+            );
+            if (fittedName.clipped()
+               && mouseX >= left + LIST_ROW_LEFT
+               && mouseX < left + LIST_ROW_RIGHT
+               && mouseY >= rowY
+               && mouseY < rowY + ROW_HEIGHT) {
+               this.hoverTooltip = List.of(Text.literal(name));
+            }
          }
+      } finally {
+         graphics.disableScissor();
+      }
+
+      if (selectedIndex < 0) {
+         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No specimen selected"), left + 300, detailTop + 151, MUTED);
+         return;
       }
 
       NbtCompound selected = (NbtCompound)list.get(selectedIndex);
