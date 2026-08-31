@@ -138,7 +138,7 @@ class FishingUiSourceSafetyTest {
         assertTrue(mutationRendering.contains("SPECIMEN_PIGMENTATION"));
 
         String topFish = Files.readString(Path.of(AFFECTED_UI.get(1)));
-        assertTrue(topFish.contains("CanonicalSpecimenStorage.restoreTransferData(selected, stack);"));
+        assertTrue(occurrences(topFish, "CanonicalSpecimenStorage.restoreTransferData(") >= 2);
         assertTrue(topFish.contains("SpecimenTransfer.stackToEntity(stack, entity);"));
 
         String fishDisplay = Files.readString(Path.of(
