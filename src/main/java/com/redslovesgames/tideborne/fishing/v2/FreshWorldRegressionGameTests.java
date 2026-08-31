@@ -16,6 +16,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 
 /** Fresh-state regression coverage after the Stage 50-53 legacy calculator removals. */
+@SuppressWarnings("deprecation")
 public final class FreshWorldRegressionGameTests implements FabricGameTest {
     private static final String SPECIES_ID = "tideborne:fresh_world_fixture";
 
@@ -89,41 +90,41 @@ public final class FreshWorldRegressionGameTests implements FabricGameTest {
         ItemStack rod = new ItemStack(Items.FISHING_ROD);
 
         helper.assertTrue(!SteelLeaderAttachment.has(rod),
-                "Brand-new rod unexpectedly contained Steel Leader attachment state");
-        assertNeutralSteelLeader(helper, SteelLeaderGearModifiers.forAttachmentState(false, config));
+                "Brand-new rod unexpectedly contained legacy leader attachment state");
+        assertNeutralLegacyLeader(helper, SteelLeaderGearModifiers.forAttachmentState(false, config));
 
         SteelLeaderAttachment.set(rod, true);
         helper.assertTrue(SteelLeaderAttachment.has(rod),
-                "Current Steel Leader component could not be attached to a brand-new rod");
+                "Legacy leader attachment component could not be attached to a brand-new rod");
         FishingGearModifiers leader = SteelLeaderGearModifiers.forAttachmentState(
                 SteelLeaderAttachment.has(rod),
                 config
         );
-        helper.assertTrue(Double.compare(FishingGearEffects.catchZoneAreaMultiplier(leader), 0.90) == 0,
-                "Fresh Steel Leader did not resolve canonical catch-zone modifier");
-        helper.assertTrue(Double.compare(FishingGearEffects.minigameSpeedMultiplier(leader), 1.05) == 0,
-                "Fresh Steel Leader did not resolve canonical minigame-speed modifier");
-        helper.assertTrue(Double.compare(FishingGearEffects.catchLossPreventionChance(leader), 0.90) == 0,
-                "Fresh Steel Leader did not resolve canonical catch-loss prevention");
+        helper.assertTrue(Double.compare(FishingGearEffects.catchZoneAreaMultiplier(leader), 0.95) == 0,
+                "Legacy Steel attachment did not migrate to Iron Leader catch-zone modifier");
+        helper.assertTrue(Double.compare(FishingGearEffects.minigameSpeedMultiplier(leader), 1.03) == 0,
+                "Legacy Steel attachment did not migrate to Iron Leader minigame-speed modifier");
+        helper.assertTrue(Double.compare(FishingGearEffects.catchLossPreventionChance(leader), 0.55) == 0,
+                "Legacy Steel attachment did not migrate to Iron Leader catch-loss prevention");
         helper.assertTrue(Double.compare(
                         leader.namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PROTECTION_SOURCES),
                         1.0
                 ) == 0,
-                "Fresh Steel Leader did not expose one canonical protection source");
+                "Migrated Iron Leader did not expose one canonical protection source");
 
         SteelLeaderAttachment.set(rod, false);
         helper.assertTrue(!SteelLeaderAttachment.has(rod),
-                "Current Steel Leader component could not be removed from a fresh rod");
+                "Legacy leader attachment component could not be removed from a fresh rod");
 
         FishingGearModifiers leviathan = TideborneFishingGearModifiers.leviathanBait(true);
         helper.assertTrue(Double.compare(leviathan.fishingLuck(), 15.0) == 0,
                 "Fresh Leviathan Bait did not provide +15 Fishing Luck");
-        helper.assertTrue(Double.compare(leviathan.traitLuck(), 8.0) == 0,
-                "Fresh Leviathan Bait did not provide +8 Trait Luck");
-        helper.assertTrue(Double.compare(leviathan.strengthMultiplier(), 1.15) == 0,
-                "Fresh Leviathan Bait did not provide Strength x1.15");
-        helper.assertTrue(Double.compare(leviathan.tempoMultiplier(), 1.15) == 0,
-                "Fresh Leviathan Bait did not provide Tempo x1.15");
+        helper.assertTrue(Double.compare(leviathan.traitLuck(), 4.0) == 0,
+                "Fresh Leviathan Bait did not provide +4 Trait Luck");
+        helper.assertTrue(Double.compare(leviathan.strengthMultiplier(), 1.25) == 0,
+                "Fresh Leviathan Bait did not provide Strength x1.25");
+        helper.assertTrue(Double.compare(leviathan.tempoMultiplier(), 1.20) == 0,
+                "Fresh Leviathan Bait did not provide Tempo x1.20");
         helper.assertTrue(leviathan.categoryRestriction().allows(TideborneFishingGearModifiers.FISH_CATCH_CATEGORY),
                 "Fresh Leviathan Bait did not allow the fish catch category");
         helper.assertTrue(!leviathan.categoryRestriction().allows("crate"),
@@ -131,18 +132,18 @@ public final class FreshWorldRegressionGameTests implements FabricGameTest {
         helper.complete();
     }
 
-    private static void assertNeutralSteelLeader(TestContext helper, FishingGearModifiers modifiers) {
+    private static void assertNeutralLegacyLeader(TestContext helper, FishingGearModifiers modifiers) {
         helper.assertTrue(Double.compare(FishingGearEffects.catchZoneAreaMultiplier(modifiers), 1.0) == 0,
-                "Fresh rod without Steel Leader changed catch-zone area");
+                "Fresh rod without a leader changed catch-zone area");
         helper.assertTrue(Double.compare(FishingGearEffects.minigameSpeedMultiplier(modifiers), 1.0) == 0,
-                "Fresh rod without Steel Leader changed minigame speed");
+                "Fresh rod without a leader changed minigame speed");
         helper.assertTrue(Double.compare(FishingGearEffects.catchLossPreventionChance(modifiers), 0.0) == 0,
-                "Fresh rod without Steel Leader added catch-loss prevention");
+                "Fresh rod without a leader added catch-loss prevention");
         helper.assertTrue(Double.compare(
                         modifiers.namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PROTECTION_SOURCES),
                         0.0
                 ) == 0,
-                "Fresh rod without Steel Leader exposed a protection source");
+                "Fresh rod without a leader exposed a protection source");
     }
 
     private static SpeciesProfile fixtureSpecies() {

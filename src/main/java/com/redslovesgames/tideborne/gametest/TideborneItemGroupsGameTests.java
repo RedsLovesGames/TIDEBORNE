@@ -39,7 +39,10 @@ public final class TideborneItemGroupsGameTests implements FabricGameTest {
 
         assertItems(helper, TideborneItemGroups.creativeItems(false, true),
                 SatchelRegistration.ANGLERS_SATCHEL,
-                TideboundItems.STEEL_LEADER,
+                TideboundItems.COPPER_LEADER,
+                TideboundItems.IRON_LEADER,
+                TideboundItems.GOLD_LEADER,
+                TideboundItems.DIAMOND_LEADER,
                 TideboundItems.SHARK_TOOTH_HOOK,
                 TideboundItems.CHUM_BUCKET,
                 TideboundItems.SHARK_TOOTH);
@@ -49,7 +52,10 @@ public final class TideborneItemGroupsGameTests implements FabricGameTest {
                 TideboundItems.KUJIRA_BONE_FISHING_ROD,
                 TideboundItems.TENTACLE_LINE,
                 TideboundItems.SWIFT_LINE,
-                TideboundItems.STEEL_LEADER,
+                TideboundItems.COPPER_LEADER,
+                TideboundItems.IRON_LEADER,
+                TideboundItems.GOLD_LEADER,
+                TideboundItems.DIAMOND_LEADER,
                 TideboundItems.SEAFARERS_HOOK,
                 TideboundItems.SHARK_TOOTH_HOOK,
                 TideboundItems.LEVIATHAN_BAIT,
@@ -71,8 +77,14 @@ public final class TideborneItemGroupsGameTests implements FabricGameTest {
                 "Kujira rod visibility did not follow Myths integration state");
         helper.assertTrue(current.contains(TideboundItems.LEVIATHAN_BAIT) == mythsActive,
                 "Leviathan Bait visibility did not follow Myths integration state");
-        helper.assertTrue(current.contains(TideboundItems.STEEL_LEADER) == apexActive,
-                "Steel Leader visibility did not follow Apex integration state");
+        helper.assertTrue(current.contains(TideboundItems.COPPER_LEADER) == apexActive,
+                "Copper Leader visibility did not follow Apex integration state");
+        helper.assertTrue(current.contains(TideboundItems.IRON_LEADER) == apexActive,
+                "Iron Leader visibility did not follow Apex integration state");
+        helper.assertTrue(current.contains(TideboundItems.GOLD_LEADER) == apexActive,
+                "Gold Leader visibility did not follow Apex integration state");
+        helper.assertTrue(current.contains(TideboundItems.DIAMOND_LEADER) == apexActive,
+                "Diamond Leader visibility did not follow Apex integration state");
         helper.assertTrue(current.contains(TideboundItems.CHUM_BUCKET) == apexActive,
                 "Chum Bucket visibility did not follow Apex integration state");
         helper.complete();
