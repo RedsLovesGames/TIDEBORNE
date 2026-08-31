@@ -158,9 +158,26 @@ No Stage 64 implementation failure remains after that run.
 
 The Stage 64 documentation closure is committed after the validated implementation head and does not change runtime behavior.
 
+## Post-Stage-64 Fishing Journal layout hotfix
+
+The canonical Fishing Journal right-page overflow shown after the Fishing System 2.0 UI expansion is fixed on `dev`.
+
+Runtime implementation head: `bba9fe969d1860fd6923e017babfd88b78e4d0e1`.
+
+The hotfix:
+
+- compacts Largest and Smallest record data into one two-column row while retaining full hover details;
+- reduces the canonical Best Specimen block to a bounded 38-pixel section;
+- keeps length, percentile, FishScore, Body Type, Condition, Pigmentation, Quality, and Perfect Catch visible or available through the compact presentation;
+- moves Perfect Catch into the Best Specimen heading so it no longer consumes a separate overflowing row;
+- reserves the journal footer by placing the Team Records button at book-local Y 240 with height 16, keeping the button inside the 260-pixel book instead of overlapping specimen data;
+- adds a source regression guard for compact stats layout and footer-button bounds.
+
+GitHub Actions validation run `33391874599` is the validation run for this hotfix. At documentation time, repository validation, the clean Java 21 Gradle build and unit tests, and all four optional-mod GameTest matrix entries had passed.
+
 ## Current execution gate
 
-Fishing System 2.0 through Stage 64 is complete on `dev`.
+Fishing System 2.0 through Stage 64 is complete on `dev`, including the post-Stage-64 Fishing Journal layout hotfix above.
 
 There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item. Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope, currently long-term licensing policy and future version compatibility.
 
