@@ -30,6 +30,12 @@ public final class TeamCanonicalJournalCapture {
         CURRENT_CATCH.remove();
     }
 
+    /** Returns the finalized server-owned catch specimen without exposing a mutable stack. */
+    public static Optional<SpecimenData> currentSpecimen() {
+        ItemStack stack = CURRENT_CATCH.get();
+        return stack == null || stack.isEmpty() ? Optional.empty() : CanonicalSpecimenStorage.read(stack);
+    }
+
     public static void capture(NbtCompound teamRoot, TidePlayerData before) {
         ItemStack stack = CURRENT_CATCH.get();
         if (stack == null || stack.isEmpty() || teamRoot == null || before == null) {
