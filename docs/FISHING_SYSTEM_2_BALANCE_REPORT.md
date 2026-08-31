@@ -135,3 +135,91 @@ The deterministic sweeps match the frozen Fishing System 2.0 probability model:
 - FishScore remains distributed across the intended 1-3000 range
 
 No obvious balance defect or specification violation was found, so Stage 49 changes no gameplay constants.
+
+# Stage 64 equipment and stacking audit
+
+Stage 64 extends the earlier probability simulation with deterministic coverage of the full built-in Tide/Tideborne fishing equipment path. This audit is about modifier ownership, progression shape, and stacking safety rather than changing the frozen specimen probability model above.
+
+## Catalog coverage
+
+The automated audit catalogs and exercises:
+
+- 5 built-in rod tiers;
+- 32 built-in Tide bobbers;
+- 7 built-in hooks;
+- 3 built-in bait entries;
+- Steel Leader line protection;
+- tagged third-party bobbers through the same bobber compatibility path;
+- representative full-kit combinations and degraded/corrupted/summoned catch states.
+
+## Rod and line progression
+
+The canonical rod reach and natural line-break progression covered by the audit is:
+
+| Rod tier | Cast length | Natural break risk | Base line protection |
+| --- | ---: | ---: | ---: |
+| Wood | 11 ft | 0.65 | 0.00 |
+| Iron | 13 ft | 0.43 | 0.05 |
+| Gold | 11 ft | 0.35 | 0.02 |
+| Diamond | 15 ft | 0.25 | 0.10 |
+| Netherite | 15 ft | 0.18 | 0.15 |
+
+The corresponding line progression covered by deterministic tests uses tier ranks `0/1/2/3/4`, strengths `2.0/3.5/2.8/5.0/6.5`, and tension limits `18/26/22/38/48`.
+
+Gold is intentionally not a strictly monotonic reach/protection upgrade over Iron. Diamond and Netherite own the strongest late-game safety profile.
+
+Steel Leader contributes `+0.14` line protection. Total line protection is applied through the canonical combat-power path and is capped at `0.35`. Tests verify that protection can only lower break risk and never raise it.
+
+## Bobbers
+
+All 32 built-in Tide bobbers share the audited baseline behavior:
+
+- wait-time multiplier `1.05`;
+- line-break multiplier `0.95`;
+- boss multiplier `1.0`;
+- direct FishScore delta `0`;
+- direct line-protection delta `0`.
+
+Tagged third-party bobbers continue to flow through the same compatibility handling rather than requiring hard class references or a separate scoring path.
+
+## Hooks and bait
+
+All built-in hooks are covered for their explicit timing and line-balance behavior. The audit verifies that hook effects stack through the intended modifier layer rather than duplicating calculations elsewhere.
+
+All built-in bait entries are covered for exactly one explicit timing rule. Leviathan Bait keeps its Fishing System 2.0 responsibilities separated by axis: species selection uses its Fishing Luck, specimen traits use Trait Luck, and fight difficulty uses the canonical fight profile.
+
+Leviathan boss encounter qualification is also tested against rod progression. The audited rod encounter scores are:
+
+| Rod | Boss encounter score |
+| --- | ---: |
+| Wood | 0.80 |
+| Iron | 0.98 |
+| Gold | 0.90 |
+| Diamond | 1.20 |
+| Netherite | 1.38 |
+
+Leviathan Bait applies the boss bait factor `1.55`. In the threshold tests, Leviathan Bait with Iron remains below the required boss threshold while Diamond reaches it. Worm and Insect bait do not become boss-qualified substitutes.
+
+## Stacking and FishScore ownership
+
+Representative full-kit tests prove that each modifier layer is applied once. Changing one input piece changes that source without double-counting unrelated sources.
+
+Equipment cannot directly author FishScore, natural percentile, final length, or other canonical specimen geometry. Gear may influence the systems it owns, such as species odds, trait odds, bite timing, fight behavior, or line safety. FishScore is still calculated once from the resulting canonical specimen.
+
+The audit explicitly verifies:
+
+- best and worst canonical FishScore extremes remain reachable independent of equipment inputs;
+- a full gear roll does not directly change pull difficulty or timeout through an unrelated scoring path;
+- quality and physical-length effects enter FishScore once through canonical specimen state;
+- started, degraded, corrupted, and master-catch states share one ordered score pipeline;
+- silent catch flow preserves canonical score and geometry;
+- summoned-catch penalty stacking is covered without duplicate application;
+- drop transfer delivers each resulting item once.
+
+## Stage 64 validation result
+
+Stage 64 implementation head `f6aac3e07a7ff7a0955427cc76605bdb94dad086` passed GitHub Actions run `33367391365`.
+
+The successful pipeline included clean build, unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke, client-connect smoke, production release JAR validation, artifact upload, and release publishing.
+
+No additional gameplay constant change was required by the final equipment/stacking audit.
