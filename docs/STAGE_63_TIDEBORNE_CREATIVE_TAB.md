@@ -1,6 +1,6 @@
 # Stage 63 - Tideborne Creative Tab
 
-Updated: 2026-08-30
+Updated: 2026-08-31
 
 ## Goal
 
@@ -12,6 +12,7 @@ Give Tideborne-owned items one dedicated Creative Mode tab without renaming or r
 - display name: `Tideborne`
 - icon: `tide_traits:anglers_satchel`
 - registration is common-side and is initialized only after the Satchel and Tideborne compatibility items have been registered.
+- the runtime entries and validation tests consume the same immutable visibility/order contract so the tested matrix cannot drift from the actual creative presentation.
 
 ## Item ownership and order
 
@@ -27,6 +28,13 @@ The tab is intentionally curated by gameplay role rather than raw registry order
 8. Chum Bucket and Shark Tooth, when Apex Waters integration is active
 
 The optional-mod visibility rules are deliberately preserved from the pre-Stage-63 vanilla creative-group injections. Items belonging to an inactive optional integration remain registered but are not advertised in the Tideborne creative tab.
+
+The exact expected matrices are:
+
+- no optional integrations: Satchel only;
+- Myths only: Satchel, Kujira rod, Tentacle Line, Swift Line, Seafarer's Hook, Leviathan Bait;
+- Apex only: Satchel, Steel Leader, Shark Tooth Hook, Chum Bucket, Shark Tooth;
+- Myths + Apex: Satchel, Kujira rod, Tentacle Line, Swift Line, Steel Leader, Seafarer's Hook, Shark Tooth Hook, Leviathan Bait, Chum Bucket, Shark Tooth.
 
 ## Duplicate removal
 
@@ -48,4 +56,31 @@ Native Tide items and Tide's own creative presentation are not modified.
 
 ## Validation
 
-A Fabric GameTest verifies that the `tideborne:tideborne` item group is registered at runtime and uses the actual Angler's Satchel item as its icon. The normal repository workflow additionally validates Java compilation, unit tests, all optional-mod GameTest matrices, dedicated-server/client-connect smoke behavior, and the production JAR.
+Final validated Stage 63 implementation head:
+
+- `24cc3a42e30f9dc8a51bf9abef469585e0d2b48b` - `test: lock creative tab compatibility matrix`
+
+GitHub Actions run `33360256194` is green on that head. It passed:
+
+- exact external dependency retrieval and repository/release-metadata validation;
+- Java 21 Gradle build and unit tests;
+- Fabric GameTests with no optional compatibility mods;
+- Fabric GameTests with Apex Waters only;
+- Fabric GameTests with Myths of the Sea only;
+- Fabric GameTests with Apex Waters and Myths of the Sea together;
+- dedicated-server/client-connect smoke validation;
+- production `tideborne-2.0.0.jar` validation;
+- final validation-count checks;
+- built-JAR artifact upload;
+- `TIDEBORN-2.0.0` release publication/refresh.
+
+The registered Stage 63 GameTests now verify:
+
+- `tideborne:tideborne` is registered at runtime;
+- the icon is the actual registered Angler's Satchel item;
+- all four Myths/Apex visibility combinations have the exact expected item count, identity, and stable order;
+- the live creative-item list follows the actual optional-integration activation flags.
+
+The refreshed `TIDEBORN-2.0.0` release targets
+`24cc3a42e30f9dc8a51bf9abef469585e0d2b48b`. Its published `tideborne-2.0.0.jar` has SHA-256
+`ff9ef2a8f8aa975336816ae56240302c31dcc777606bb1a88d23c947b799b937`.
