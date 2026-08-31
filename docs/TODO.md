@@ -2,12 +2,13 @@
 
 Updated: 2026-08-31
 
-Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, owned legacy-fish Journal backfill, canonical gear-registry hardening, and the dedicated Tideborne creative tab are complete on `dev`.
+Fishing System 2.0 implementation, legacy recovery tooling, final integration polish, owned legacy-fish Journal backfill, canonical gear-registry hardening, the dedicated Tideborne creative tab, and the Stage 64 record/balance audit are complete on `dev`.
 
 The authoritative behavior and validation record are documented in:
 
 - `docs/FISHING_SYSTEM_2_SPEC.md`
 - `docs/CURRENT_STATE.md`
+- `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`
 - `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`
 - `docs/STAGE_59_FISHING_UI_POLISH.md`
 - `docs/FISHING_RECOVERY.md`
@@ -51,6 +52,12 @@ The authoritative behavior and validation record are documented in:
   the Angler's Satchel as the tab icon, preserve optional-mod visibility rules, curate Tideborne
   gear by gameplay role, remove duplicate Tideborne entries from vanilla Tools/Ingredients, and
   lock the exact four-state Myths/Apex item matrix with registered GameTests.
+- [x] Complete Stage 64 canonical record and balance audit: persist a deterministic Best Specimen
+  per species, derive Team Top 15 from canonical Best Specimens, suppress duplicate canonical
+  record identity, make recovery rebuild record projections without replaying live-catch side
+  effects, drive records preview and Journal details from canonical specimen state, and cover the
+  built-in rods, lines, bobbers, hooks, bait, Steel Leader, Leviathan Bait, and representative
+  stacking paths with deterministic tests.
 
 Stages 60 and 61 are validated on implementation head
 `9619f756c9ecd61139acd5ffc687d68be61a4e04` by GitHub Actions run `33319707597`.
@@ -66,8 +73,12 @@ release refresh passed.
 Stage 63 is validated on implementation head
 `24cc3a42e30f9dc8a51bf9abef469585e0d2b48b` by GitHub Actions run `33360256194`. The build/unit
 suite, all four Fabric GameTest compatibility matrices, dedicated-server/client-connect smoke,
-production JAR validation, artifact upload, and release refresh passed. `TIDEBORN-2.0.0` now targets
-that implementation head.
+production JAR validation, artifact upload, and release refresh passed.
+
+Stage 64 implementation is validated on head
+`f6aac3e07a7ff7a0955427cc76605bdb94dad086` by GitHub Actions run `33367391365`. Clean build,
+unit tests, all four Fabric GameTest compatibility matrices, dedicated-server smoke,
+client-connect smoke, production JAR validation, artifact upload, and release publishing passed.
 
 No known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item remains.
 
