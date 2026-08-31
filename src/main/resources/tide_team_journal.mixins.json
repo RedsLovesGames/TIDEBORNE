@@ -8,6 +8,7 @@
     "TideUtilsMixin",
     "TideFishingHookMixin",
     "TeamProgressCanonicalJournalMixin",
+    "TopFishCanonicalIndexMixin",
     "ContributorCanonicalScorePayloadMixin",
     "RecordEventCanonicalScorePayloadMixin",
     "RecordHolderCanonicalJournalMixin",
