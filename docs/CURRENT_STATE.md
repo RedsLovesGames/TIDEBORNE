@@ -218,11 +218,44 @@ GitHub Actions run `33412166611` passed the full validation and publishing matri
 - artifact upload;
 - release publishing.
 
-The published `TIDEBORN-2.0.0` release now targets `fa465d26478ed9d7221bd43d3ff4262ca938b1da`. The refreshed `tideborne-2.0.0.jar` is 1,083,033 bytes with SHA-256 `1851e31daf7c3272e53318edd9e787898984ca9b8176232ba691edb22f0b3fb3`.
+The published `TIDEBORN-2.0.0` release at that point targeted `fa465d26478ed9d7221bd43d3ff4262ca938b1da`. That `tideborne-2.0.0.jar` snapshot was 1,083,033 bytes with SHA-256 `1851e31daf7c3272e53318edd9e787898984ca9b8176232ba691edb22f0b3fb3`.
+
+## Team Top 15 UI boundary refinement
+
+The Top Fish screen shown in the live screenshot has been tightened so the left-page leaderboard no longer crosses the book spine or hangs into the lower page edge.
+
+Runtime/test head: `3a5f29b3db22af4291a3c8095501c8a2f6681e4d`.
+
+The refinement:
+
+- moves the left-list right boundary to book-local X 196, leaving a clear margin before the center seam at X 200;
+- moves the list-panel bottom to book-local Y 240, leaving a bottom-page margin while still fitting fifteen rows;
+- uses fixed rank, icon, name, rarity, and right-aligned FishScore columns inside the bounded list area;
+- reduces the fish-name width and ellipsizes long names before they can collide with rarity or score columns;
+- clips the complete leaderboard list to its page-local panel bounds;
+- always renders rank slots 1 through 15, even when fewer than fifteen canonical records currently exist;
+- shows an empty dash for an unfilled canonical slot rather than fabricating a fish record;
+- keeps only actual canonical records selectable and keeps the existing canonical Team Top Fish limit of fifteen;
+- adds regression coverage for the fifteen-slot count, page/spine bounds, score-column bounds, empty-slot rendering, and clipping.
+
+GitHub Actions run `33419192475` passed the full validation and publishing matrix:
+
+- repository/dependency validation;
+- clean Java 21 Gradle build and unit tests;
+- Fabric GameTests with no optional compatibility mods;
+- Fabric GameTests with Apex Waters only;
+- Fabric GameTests with Myths of the Sea only;
+- Fabric GameTests with Apex Waters and Myths of the Sea together;
+- dedicated-server and client-connect smoke validation;
+- production release JAR validation;
+- artifact upload;
+- release publishing.
+
+The published `TIDEBORN-2.0.0` release now targets `3a5f29b3db22af4291a3c8095501c8a2f6681e4d`. The refreshed `tideborne-2.0.0.jar` is 1,083,351 bytes with SHA-256 `3e449deae3817ce931b36e1075e344b6bcc3ad23aa798b332580cb1f0b9b6740`.
 
 ## Current execution gate
 
-Fishing System 2.0 through Stage 64 is complete on `dev`, including the post-Stage-64 Fishing Journal layout hotfix and visual cleanup refinement above.
+Fishing System 2.0 through Stage 64 is complete on `dev`, including the post-Stage-64 Fishing Journal layout fixes, visual cleanup refinement, and Team Top 15 UI boundary refinement above.
 
 There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item. Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope, currently long-term licensing policy and future version compatibility.
 
