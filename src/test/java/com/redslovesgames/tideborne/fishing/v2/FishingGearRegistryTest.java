@@ -35,10 +35,23 @@ class FishingGearRegistryTest {
     }
 
     @Test
+    void currentTideBobbersAreExactCanonicalGearIdentities() {
+        assertEquals(32, FishingGearRegistry.supportedBobberIds().size());
+        assertTrue(FishingGearRegistry.isSupportedBobberId(Identifier.of("tide:red_bobber")));
+        assertTrue(FishingGearRegistry.isSupportedBobberId(Identifier.of("tide:enchanted_golden_apple_bobber")));
+        assertTrue(FishingGearRegistry.isSupportedBobberId(Identifier.of("tide:heart_bobber")));
+        assertTrue(FishingGearRegistry.isSupportedBobberId(Identifier.of("tide:duck_bobber")));
+        assertEquals(FishingGearRegistry.Slot.BOBBER,
+                FishingGearRegistry.resolveSlot(Identifier.of("tide:diamond_bobber")).orElseThrow());
+    }
+
+    @Test
     void unregisteredLookalikeIdsCannotInheritBehavior() {
         assertTrue(FishingGearRegistry.resolveId(Identifier.of("othermod", "diamond_line")).isEmpty());
         assertTrue(FishingGearRegistry.resolveId(Identifier.of("tide", "diamond_line_extra")).isEmpty());
         assertTrue(FishingGearRegistry.resolveId(Identifier.of("tidebound_compatibility", "swift_line_plus")).isEmpty());
+        assertTrue(FishingGearRegistry.resolveSlot(Identifier.of("othermod", "heart_bobber")).isEmpty());
+        assertTrue(FishingGearRegistry.resolveSlot(Identifier.of("tide", "heart_bobber_plus")).isEmpty());
     }
 
     @Test
