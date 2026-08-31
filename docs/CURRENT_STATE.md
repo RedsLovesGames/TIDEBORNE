@@ -186,11 +186,43 @@ GitHub Actions validation run `33391874599` passed the complete release matrix f
 - artifact upload;
 - release publishing.
 
-The published `TIDEBORN-2.0.0` release now targets `bba9fe969d1860fd6923e017babfd88b78e4d0e1`. The refreshed `tideborne-2.0.0.jar` is 1,080,731 bytes with SHA-256 `85f33f07a0b6f0006ab6697819296f13c170f2c3bae25f76de4fb7535ebe7bc4`.
+The published `TIDEBORN-2.0.0` release at that point targeted `bba9fe969d1860fd6923e017babfd88b78e4d0e1`. That `tideborne-2.0.0.jar` snapshot was 1,080,731 bytes with SHA-256 `85f33f07a0b6f0006ab6697819296f13c170f2c3bae25f76de4fb7535ebe7bc4`.
+
+## Fishing Journal visual cleanup refinement
+
+The follow-up visual cleanup requested from live in-game screenshots is complete on `dev`.
+
+Runtime implementation head: `fa465d26478ed9d7221bd43d3ff4262ca938b1da`.
+
+The refinement:
+
+- moves First Catch out of the lower stats stack and onto the Size badge row as a compact `FC` label at 75% text scale;
+- keeps the existing real-date versus in-game-day behavior when formatting First Catch;
+- removes the duplicated full-size First Catch row from the lower stats section, freeing vertical space;
+- places the Best Specimen divider above the heading with explicit padding so the divider no longer intersects the heading or score text;
+- separates `Best Specimen` and `PC Yes/No` into independently aligned header values;
+- replaces the previous per-axis rainbow text colors with one consistent journal palette: dark brown labels, muted sepia supporting text, cyan-blue canonical values, and gold only for exceptional trait states or a successful Perfect Catch;
+- keeps normal Body Type, Condition, Pigmentation, and Quality values visually consistent while highlighting only non-normal/special values;
+- adds regression coverage for the moved First Catch row, compact scaling, divider placement, footer bounds, and unified palette.
+
+GitHub Actions run `33412166611` passed the full validation and publishing matrix:
+
+- repository/dependency validation;
+- clean Java 21 Gradle build and unit tests;
+- Fabric GameTests with no optional compatibility mods;
+- Fabric GameTests with Apex Waters only;
+- Fabric GameTests with Myths of the Sea only;
+- Fabric GameTests with Apex Waters and Myths of the Sea together;
+- dedicated-server and client-connect smoke validation;
+- production release JAR validation;
+- artifact upload;
+- release publishing.
+
+The published `TIDEBORN-2.0.0` release now targets `fa465d26478ed9d7221bd43d3ff4262ca938b1da`. The refreshed `tideborne-2.0.0.jar` is 1,083,033 bytes with SHA-256 `1851e31daf7c3272e53318edd9e787898984ca9b8176232ba691edb22f0b3fb3`.
 
 ## Current execution gate
 
-Fishing System 2.0 through Stage 64 is complete on `dev`, including the post-Stage-64 Fishing Journal layout hotfix above.
+Fishing System 2.0 through Stage 64 is complete on `dev`, including the post-Stage-64 Fishing Journal layout hotfix and visual cleanup refinement above.
 
 There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item. Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope, currently long-term licensing policy and future version compatibility.
 
