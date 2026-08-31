@@ -141,6 +141,9 @@ public final class TopFishScreen extends Screen {
 
             NbtCompound tag = (NbtCompound)list.get(row);
             ItemStack stack = fishStack(tag.getString("fish"));
+            if (!stack.isEmpty()) {
+               CanonicalSpecimenStorage.restoreTransferData(tag, stack);
+            }
             graphics.drawItem(stack, left + ICON_X, rowY - 2);
             CanonicalRecordDisplay display = CanonicalRecordDisplay.from(tag).orElse(null);
             String name = stack.getName().getString();
