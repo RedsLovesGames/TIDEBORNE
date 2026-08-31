@@ -6,7 +6,6 @@
 package com.redslovesgames.tideteamjournal;
 
 import com.li64.tide.data.TideTags.Items;
-import com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry;
 import java.util.Map;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
@@ -23,7 +22,7 @@ public final class BobberBonuses {
    }
 
    public static BobberBonuses.Bonus get(ItemStack bobber) {
-      if (!bobber.isEmpty() && bobber.isIn(Items.BOBBERS) && FishingGearRegistry.isSupportedBobber(bobber)) {
+      if (!bobber.isEmpty() && bobber.isIn(Items.BOBBERS)) {
          Identifier id = Registries.ITEM.getId(bobber.getItem());
          return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT ? forClientId(id) : forId(id);
       } else {
@@ -33,15 +32,11 @@ public final class BobberBonuses {
 
    static BobberBonuses.Bonus forId(Identifier id) {
       ServerConfig.Values config = ServerConfig.get();
-      return !config.bobberBonusesEnabled || !FishingGearRegistry.isSupportedBobberId(id)
-         ? BobberBonuses.Bonus.NONE
-         : config.bobberBonuses.getOrDefault(id.toString(), config.fallbackBobberBonus);
+      return !config.bobberBonusesEnabled ? BobberBonuses.Bonus.NONE : config.bobberBonuses.getOrDefault(id.toString(), config.fallbackBobberBonus);
    }
 
    public static BobberBonuses.Bonus forClientId(Identifier id) {
-      return clientEnabled && FishingGearRegistry.isSupportedBobberId(id)
-         ? clientBonuses.getOrDefault(id, clientFallback)
-         : BobberBonuses.Bonus.NONE;
+      return clientEnabled ? clientBonuses.getOrDefault(id, clientFallback) : BobberBonuses.Bonus.NONE;
    }
 
    public static void updateClient(boolean enabled, BobberBonuses.Bonus fallback, Map<Identifier, BobberBonuses.Bonus> bonuses) {
