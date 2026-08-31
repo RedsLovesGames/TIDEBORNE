@@ -31,7 +31,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "com.redslovesgames.tideteamjournal.client.TeamStatsComponent")
 public abstract class TeamStatsPercentileMixin {
-   @Unique private static final int BEST_SECTION_HEIGHT = 53;
+   @Unique private static final int BASE_LINE_STEP = 9;
+   @Unique private static final int BEST_SECTION_HEIGHT = 38;
    @Shadow @Final private List<Text> lines;
    @Unique private FishStats tideTraits$stats;
    @Unique private Identifier tideTraits$speciesId;
@@ -68,62 +69,81 @@ public abstract class TeamStatsPercentileMixin {
             continue;
          }
 
-         if (index == largestIndex) {
-            String tooltip = this.tideTraits$drawRecordLine(
+         if (index == largestIndex && smallestIndex == largestIndex + 1) {
+            String tooltip = this.tideTraits$drawRecordColumn(
                graphics,
                font,
+               "L",
                "Largest",
                this.tideTraits$stats.getLargestCatch(),
                names.largest(),
                JournalSpecimenStore.LARGEST,
-               center,
+               x + 4,
                y + cursorY,
                mouseX,
                mouseY
             );
             hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
-         } else if (index == smallestIndex) {
-            String tooltip = this.tideTraits$drawRecordLine(
+            tooltip = this.tideTraits$drawRecordColumn(
                graphics,
                font,
+               "S",
                "Smallest",
                this.tideTraits$stats.getSmallestCatch(),
                names.smallest(),
                JournalSpecimenStore.SMALLEST,
-               center,
+               x + 88,
                y + cursorY,
                mouseX,
                mouseY
             );
             hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
-         } else {
-            String visible = this.lines.get(index).getString();
-            String tooltip = tideTraits$drawCentered(
-               graphics, font, visible, visible, center, y + cursorY, 166, 12620915, mouseX, mouseY
-            );
-            hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
+            cursorY += BASE_LINE_STEP;
+            index = smallestIndex;
+            continue;
          }
-         cursorY += 10;
+
+         String visible = this.lines.get(index).getString();
+         String tooltip = tideTraits$drawCentered(
+            graphics, font, visible, visible, center, y + cursorY, 166, 12620915, mouseX, mouseY
+         );
+         hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
+         cursorY += BASE_LINE_STEP;
       }
 
       if (best.isPresent()) {
          JournalSpecimenNetworkCodec.DisplaySpecimen specimen = best.orElseThrow();
-         cursorY += 2;
-         graphics.drawText(font, Text.literal("Best Specimen"), x + 4, y + cursorY, 0x725F43, false);
+         cursorY += 1;
+
+         String perfectCatch = specimen.perfectCatch() ? "Yes" : "No";
+         String heading = "Best Specimen  •  PC " + perfectCatch;
+         String tooltip = tideTraits$drawColumn(
+            graphics,
+            font,
+            heading,
+            "Best Specimen • Perfect Catch: " + perfectCatch,
+            x + 4,
+            y + cursorY,
+            166,
+            0x725F43,
+            mouseX,
+            mouseY
+         );
+         hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
          graphics.fill(x + 4, y + cursorY + 9, x + 170, y + cursorY + 10, 0x66725F43);
-         cursorY += 11;
+         cursorY += 10;
 
          String score = FishingUiFormat.fishScore(specimen.fishScore());
          String summary = FishingUiFormat.length(specimen.finalLength())
             + "  •  "
             + FishingUiFormat.percentile(specimen.finalPercentile())
-            + "  •  FishScore "
+            + "  •  Score "
             + score;
-         String tooltip = tideTraits$drawCentered(
+         tooltip = tideTraits$drawCentered(
             graphics, font, summary, summary, center, y + cursorY, 166, 0x43A8D8, mouseX, mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
-         cursorY += 10;
+         cursorY += 9;
 
          tooltip = tideTraits$drawColumn(
             graphics,
@@ -151,7 +171,7 @@ public abstract class TeamStatsPercentileMixin {
             mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
-         cursorY += 10;
+         cursorY += 9;
 
          tooltip = tideTraits$drawColumn(
             graphics,
@@ -179,13 +199,6 @@ public abstract class TeamStatsPercentileMixin {
             mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
-         cursorY += 10;
-
-         String perfectCatch = "Perfect Catch: " + (specimen.perfectCatch() ? "Yes" : "No");
-         tooltip = tideTraits$drawCentered(
-            graphics, font, perfectCatch, perfectCatch, center, y + cursorY, 166, 0x725F43, mouseX, mouseY
-         );
-         hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
       }
 
       if (hoveredTooltip != null) {
@@ -201,25 +214,26 @@ public abstract class TeamStatsPercentileMixin {
       }
 
       Optional<JournalSpecimenNetworkCodec.DisplaySpecimen> best = ClientJournalSpecimens.read(this.tideTraits$speciesId, JournalSpecimenStore.BEST);
-      int visibleBaseLines = this.lines.size();
-      if (this.tideTraits$stats.getAmountCaught() == 1
-         && this.tideTraits$stats.getLargestCatch() > 0.0
-         && this.lines.size() >= 2
-         && best.isPresent()) {
-         visibleBaseLines -= 2;
+      int visibleBaseRows = this.lines.size();
+      boolean hasRecordPair = this.tideTraits$stats.getLargestCatch() > 0.0 && this.lines.size() >= 2;
+      if (this.tideTraits$stats.getAmountCaught() == 1 && hasRecordPair && best.isPresent()) {
+         visibleBaseRows -= 2;
+      } else if (hasRecordPair) {
+         visibleBaseRows -= 1;
       }
-      callback.setReturnValue(visibleBaseLines * 10 + (best.isPresent() ? BEST_SECTION_HEIGHT : 0));
+      callback.setReturnValue(visibleBaseRows * BASE_LINE_STEP + (best.isPresent() ? BEST_SECTION_HEIGHT : 0));
    }
 
    @Unique
-   private String tideTraits$drawRecordLine(
+   private String tideTraits$drawRecordColumn(
       DrawContext graphics,
       TextRenderer font,
-      String label,
+      String shortLabel,
+      String fullLabel,
       double length,
       String holder,
       String recordKind,
-      int center,
+      int x,
       int y,
       int mouseX,
       int mouseY
@@ -227,11 +241,11 @@ public abstract class TeamStatsPercentileMixin {
       String percentile = ClientJournalSpecimens.read(this.tideTraits$speciesId, recordKind)
          .map(specimen -> FishingUiFormat.percentile(specimen.finalPercentile()))
          .orElse(FishingUiFormat.UNAVAILABLE);
-      String visible = label + ": " + FishingUiFormat.length(length) + "  •  " + percentile;
+      String visible = shortLabel + " " + FishingUiFormat.length(length) + " " + percentile;
       String full = holder == null || holder.isBlank()
-         ? visible
-         : label + ": " + FishingUiFormat.length(length) + "  •  " + holder + "  •  " + percentile;
-      return tideTraits$drawCentered(graphics, font, visible, full, center, y, 166, 12620915, mouseX, mouseY);
+         ? fullLabel + ": " + FishingUiFormat.length(length) + "  •  " + percentile
+         : fullLabel + ": " + FishingUiFormat.length(length) + "  •  " + holder + "  •  " + percentile;
+      return tideTraits$drawColumn(graphics, font, visible, full, x, y, 80, 12620915, mouseX, mouseY);
    }
 
    @Unique
@@ -251,7 +265,7 @@ public abstract class TeamStatsPercentileMixin {
       int textWidth = font.getWidth(fitted.text());
       int drawX = center - textWidth / 2;
       graphics.drawText(font, Text.literal(fitted.text()), drawX, y, color, false);
-      boolean hovered = mouseX >= center - width / 2 && mouseX < center + width / 2 && mouseY >= y && mouseY < y + 10;
+      boolean hovered = mouseX >= center - width / 2 && mouseX < center + width / 2 && mouseY >= y && mouseY < y + 9;
       return hovered && (fitted.clipped() || !tooltip.equals(visible)) ? tooltip : null;
    }
 
@@ -270,7 +284,7 @@ public abstract class TeamStatsPercentileMixin {
    ) {
       FittedText fitted = FishingUiLayout.ellipsize(visible, width, font::getWidth);
       graphics.drawText(font, Text.literal(fitted.text()), x, y, color, false);
-      boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 10;
+      boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 9;
       return hovered && (fitted.clipped() || !tooltip.equals(visible)) ? tooltip : null;
    }
 }
