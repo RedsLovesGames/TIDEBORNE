@@ -1,6 +1,6 @@
 # Current development state
 
-Updated: 2026-09-03
+Updated: 2026-09-04
 
 ## Baseline and branch
 
@@ -102,6 +102,27 @@ Canonical runtime authority includes:
 - exact namespaced canonical fishing-gear identity;
 - dedicated Tideborne creative tab and optional-mod visibility matrix.
 
+### Canonical internal fishing API
+
+The first post-2.0 architecture goal is now implemented on `dev` as `com.redslovesgames.tideborne.api.TideborneFishingApi`.
+
+Implementation head: `7631fb1f3493b709a2bc2e96d01d1c2dd7b3e910`.
+GitHub Actions run: `33861656348`.
+
+That facade provides the stable internal read/query boundary for:
+
+- canonical specimen reads from fish stacks and transfer/record NBT;
+- stored canonical FishScore and raw FishScore reads;
+- fishing-gear modifier queries and exact gear-profile lookup;
+- Tide species-profile lookup and stable profile enumeration;
+- canonical record comparison, replacement, specimen identity, highest team score, and Team Top Fish reads.
+
+The API returns the existing canonical `SpecimenData` and `SpeciesProfile` domain records rather than creating another representation. Covered feature code should prefer this facade over direct imports of canonical persistence, species-adapter, scoring, gear-registry, or record-index implementation classes.
+
+The initial implementation and focused unit tests passed the normal streamlined `dev` CI workflow. The API boundary and ownership rules are documented in `docs/TIDEBORNE_INTERNAL_API.md`.
+
+This stage does not perform a bulk migration of all existing UI or integration callers. Caller migration and the canonical specimen presentation layer remain separate follow-on work so the API boundary can stay small and independently validated.
+
 ### Real Tide balance simulator
 
 The authoritative tuning simulator now uses the live Tide 2.1.1 species catalog instead of the synthetic equal-rarity test pool.
@@ -134,6 +155,7 @@ Detailed implementation and validation records remain in:
 - `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`
 - `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`
 - `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` for the historical synthetic regression model
+- `docs/TIDEBORNE_INTERNAL_API.md`
 
 ## Current execution gate
 
@@ -143,4 +165,6 @@ Detailed implementation and validation records remain in:
 - the next public release must be produced from an explicit semantic-version tag matching `gradle.properties` exactly.
 - tagged releases run the fuller release validation path before publication.
 - real Fishing System 2.0 balance tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md` rather than the historical equal-rarity synthetic report.
+- new covered fishing read/query features should prefer `TideborneFishingApi` over direct implementation-layer reads.
+- the next architecture task is the canonical specimen presentation layer built on top of the new API boundary; do not perform a broad legacy cleanup first.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
