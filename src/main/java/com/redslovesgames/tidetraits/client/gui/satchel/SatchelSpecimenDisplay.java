@@ -3,6 +3,8 @@ package com.redslovesgames.tidetraits.client.gui.satchel;
 import com.redslovesgames.tideborne.api.TideborneFishingApi;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import net.fabricmc.api.EnvType;
@@ -43,12 +45,24 @@ final class SatchelSpecimenDisplay {
       return this.presentation;
    }
 
+   List<TraitDisplay> traits() {
+      return this.presentation.traits();
+   }
+
    double length() {
       return this.specimen.finalLength();
    }
 
+   String lengthLabel() {
+      return this.presentation.length();
+   }
+
    double percentile() {
       return this.specimen.finalPercentile();
+   }
+
+   String percentileLabel() {
+      return this.presentation.percentile();
    }
 
    SpecimenData.BodyType bodyType() {
