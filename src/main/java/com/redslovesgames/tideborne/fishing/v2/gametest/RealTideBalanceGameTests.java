@@ -33,9 +33,11 @@ import net.minecraft.world.biome.BiomeKeys;
 /** Runtime-backed balance smoke/report projection using Tide's live 1.21.1 fish catalog. */
 public final class RealTideBalanceGameTests implements FabricGameTest {
     private static final int DISTRIBUTION_CATCHES = 25_000;
+    private static final int SENSITIVITY_CATCHES = 15_000;
     private static final int PROGRESSION_TRIALS = 40;
     private static final int PROGRESSION_MAX_CATCHES = 2_000;
     private static final long DISTRIBUTION_SEED = 0x5449444542414C41L;
+    private static final long SENSITIVITY_SEED = 0x4C55434B56414C55L;
     private static final long PROGRESSION_SEED = 0x5245414C42414C32L;
 
     private final TideSpeciesProfileAdapter profiles = new TideSpeciesProfileAdapter();
@@ -97,18 +99,35 @@ public final class RealTideBalanceGameTests implements FabricGameTest {
                     PROGRESSION_MAX_CATCHES
             );
 
-            Map<CanonicalRarity, Double> shares = RealTideFishingSimulator.rarityShares(result);
-            System.out.printf(Locale.ROOT,
-                    "[REAL_BALANCE] gear=%s fishing_luck=%.2f trait_luck=%.2f catches=%d mean_score=%.2f p50=%d p90=%d p99=%d min=%d max=%d any_trait=%.6f perfect_specimen=%.6f perfect_catch=%.6f one_star=%.6f two_star=%.6f three_star=%.6f four_star=%.6f five_star=%.6f%n",
-                    gear.id(), gear.fishingLuck(), gear.traitLuck(), result.catches(), result.meanFishScore(), result.p50FishScore(), result.p90FishScore(), result.p99FishScore(), result.minFishScore(), result.maxFishScore(), result.anyTraitRate(), result.perfectSpecimenRate(), result.perfectCatchRate(),
-                    shares.getOrDefault(CanonicalRarity.ONE_STAR, 0.0), shares.getOrDefault(CanonicalRarity.TWO_STAR, 0.0), shares.getOrDefault(CanonicalRarity.THREE_STAR, 0.0), shares.getOrDefault(CanonicalRarity.FOUR_STAR, 0.0), shares.getOrDefault(CanonicalRarity.FIVE_STAR, 0.0));
+            printDistribution("gear", result);
             System.out.printf(Locale.ROOT,
                     "[REAL_BALANCE] progression gear=%s reachable=%d c25=%d c50=%d c75=%d c90=%d first4=%d first5=%d first_perfect=%d first_score2000=%d%n",
                     gear.id(), progression.reachableSpecies(), progression.medianCatchesTo25Percent(), progression.medianCatchesTo50Percent(), progression.medianCatchesTo75Percent(), progression.medianCatchesTo90Percent(), progression.medianCatchesToFirstFourStar(), progression.medianCatchesToFirstFiveStar(), progression.medianCatchesToFirstPerfectSpecimen(), progression.medianCatchesToFirstScore2000());
         }
 
+        List<RealTideFishingSimulator.GearProfile> sensitivity = List.of(
+                new RealTideFishingSimulator.GearProfile("luck0_trait0", 0.0, 0.0, 0.15),
+                new RealTideFishingSimulator.GearProfile("luck3_trait0", 3.0, 0.0, 0.15),
+                new RealTideFishingSimulator.GearProfile("luck18_trait0", 18.0, 0.0, 0.15),
+                new RealTideFishingSimulator.GearProfile("luck0_trait1", 0.0, 1.0, 0.15),
+                new RealTideFishingSimulator.GearProfile("luck0_trait2", 0.0, 2.0, 0.15),
+                new RealTideFishingSimulator.GearProfile("luck0_trait6", 0.0, 6.0, 0.15)
+        );
+        for (RealTideFishingSimulator.GearProfile profile : sensitivity) {
+            RealTideFishingSimulator.Result result = simulator.simulate(locations, profile, SENSITIVITY_SEED, SENSITIVITY_CATCHES);
+            printDistribution("sensitivity", result);
+        }
+
         hook.discard();
         helper.complete();
+    }
+
+    private static void printDistribution(String kind, RealTideFishingSimulator.Result result) {
+        Map<CanonicalRarity, Double> shares = RealTideFishingSimulator.rarityShares(result);
+        System.out.printf(Locale.ROOT,
+                "[REAL_BALANCE] %s=%s fishing_luck=%.2f trait_luck=%.2f catches=%d mean_score=%.2f p50=%d p90=%d p99=%d min=%d max=%d any_trait=%.6f perfect_specimen=%.6f perfect_catch=%.6f one_star=%.6f two_star=%.6f three_star=%.6f four_star=%.6f five_star=%.6f%n",
+                kind, result.gear().id(), result.gear().fishingLuck(), result.gear().traitLuck(), result.catches(), result.meanFishScore(), result.p50FishScore(), result.p90FishScore(), result.p99FishScore(), result.minFishScore(), result.maxFishScore(), result.anyTraitRate(), result.perfectSpecimenRate(), result.perfectCatchRate(),
+                shares.getOrDefault(CanonicalRarity.ONE_STAR, 0.0), shares.getOrDefault(CanonicalRarity.TWO_STAR, 0.0), shares.getOrDefault(CanonicalRarity.THREE_STAR, 0.0), shares.getOrDefault(CanonicalRarity.FOUR_STAR, 0.0), shares.getOrDefault(CanonicalRarity.FIVE_STAR, 0.0));
     }
 
     private RealTideFishingSimulator.LocationPool pool(
