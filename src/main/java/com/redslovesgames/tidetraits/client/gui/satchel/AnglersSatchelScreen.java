@@ -8,6 +8,8 @@ package com.redslovesgames.tidetraits.client.gui.satchel;
 import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
 import com.redslovesgames.tidetraits.compat.multiplayer.MultiplayerDiscoveryClient;
 import com.redslovesgames.tidetraits.compat.multiplayer.SharedDiscoveryAvailability;
 import com.redslovesgames.tidetraits.compat.multiplayer.SharedDiscoverySnapshot;
@@ -257,14 +259,22 @@ public final class AnglersSatchelScreen extends Screen {
          if (scannerEnabled) {
             if (canonical.isPresent()) {
                SatchelSpecimenDisplay specimen = canonical.get();
-               graphics.drawText(this.textRenderer, "FishScore " + specimen.scoreLabel(), x, y + 20, -12965349, false);
-               graphics.drawText(this.textRenderer, "Length " + FishingUiFormat.length(specimen.length()), x, y + 29, -12965349, false);
-               graphics.drawText(this.textRenderer, "Percentile " + FishingUiFormat.percentile(specimen.percentile()), x, y + 38, -12965349, false);
+               graphics.drawText(this.textRenderer, "FishScore " + specimen.scoreLabel(), x, y + 20, CanonicalSpecimenPresentation.SCORE_COLOR, false);
+               graphics.drawText(this.textRenderer, "Length " + specimen.lengthLabel(), x, y + 29, -12965349, false);
+               graphics.drawText(this.textRenderer, "Percentile " + specimen.percentileLabel(), x, y + 38, -12965349, false);
                graphics.drawText(this.textRenderer, "Traits", x, y + 49, -12965349, false);
-               graphics.drawText(this.textRenderer, "Body Type " + specimen.bodyTypeLabel(), x, y + 59, -12965349, false);
-               graphics.drawText(this.textRenderer, "Condition " + specimen.conditionLabel(), x, y + 68, -12965349, false);
-               graphics.drawText(this.textRenderer, "Pigment " + specimen.pigmentationLabel(), x, y + 77, -12965349, false);
-               graphics.drawText(this.textRenderer, "Quality " + specimen.qualityLabel(), x, y + 86, -12965349, false);
+               List<TraitDisplay> traits = specimen.traits();
+               for (int index = 0; index < traits.size(); index++) {
+                  TraitDisplay trait = traits.get(index);
+                  graphics.drawText(
+                     this.textRenderer,
+                     trait.shortLabel() + " " + trait.value(),
+                     x,
+                     y + 59 + index * 9,
+                     trait.color(),
+                     false
+                  );
+               }
             } else {
                graphics.drawTextWrapped(
                   this.textRenderer, Text.literal("Canonical specimen data is unavailable for this stored fish."), x, y + 24, 120, -9282236
