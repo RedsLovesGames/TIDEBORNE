@@ -5,13 +5,14 @@
  */
 package com.redslovesgames.tidetraits.mixin.client;
 
-import com.li64.tide.data.fishing.FishData;
-import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
-import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
-import com.redslovesgames.tidetraits.component.TideTraitsComponents;
+import com.redslovesgames.tideborne.api.TideborneFishingApi;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.player.PlayerEntity;
@@ -19,11 +20,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item.TooltipContext;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,23 +39,16 @@ public abstract class ItemStackMutationTooltipMixin {
    )
    private void tideTraits$appendMutationTooltip(TooltipContext context, PlayerEntity player, TooltipType flag, CallbackInfoReturnable<List<Text>> callback) {
       ItemStack stack = (ItemStack)(Object)this;
-      if (CanonicalSpecimenStorage.detectMigration(stack) != CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT) {
+      Optional<SpecimenData> canonicalSpecimen = TideborneFishingApi.readCurrentSpecimen(stack);
+      if (canonicalSpecimen.isEmpty()) {
          return;
       }
 
-      String speciesId = stack.get(TideTraitsComponents.SPECIMEN_SPECIES_ID);
-      Double finalLength = stack.get(TideTraitsComponents.SPECIMEN_FINAL_LENGTH);
-      Double finalPercentile = stack.get(TideTraitsComponents.SPECIMEN_FINAL_PERCENTILE);
-      String bodyType = stack.get(TideTraitsComponents.SPECIMEN_BODY_TYPE);
-      String condition = stack.get(TideTraitsComponents.SPECIMEN_CONDITION);
-      String pigmentation = stack.get(TideTraitsComponents.SPECIMEN_PIGMENTATION);
-      String quality = stack.get(TideTraitsComponents.SPECIMEN_QUALITY);
-      Boolean perfectCatch = stack.get(TideTraitsComponents.SPECIMEN_PERFECT_CATCH);
-      Integer fishScore = stack.get(TideTraitsComponents.SPECIMEN_FISH_SCORE);
-      if (speciesId == null || finalLength == null || finalPercentile == null || bodyType == null
-         || condition == null || pigmentation == null || quality == null || perfectCatch == null) {
-         return;
-      }
+      SpecimenData specimen = canonicalSpecimen.orElseThrow();
+      int rarityStars = TideborneFishingApi.resolveSpeciesProfile(specimen.speciesId())
+         .map(profile -> profile.rarity().stars())
+         .orElse(0);
+      CanonicalSpecimenPresentation.View presentation = CanonicalSpecimenPresentation.present(specimen, rarityStars);
 
       ArrayList<Text> original = new ArrayList<>((Collection<Text>)callback.getReturnValue());
       int insertionIndex = canonicalInsertionIndex(original);
@@ -64,27 +56,20 @@ public abstract class ItemStackMutationTooltipMixin {
       insertionIndex = Math.min(insertionIndex, original.size());
 
       List<Text> canonical = new ArrayList<>();
-      canonical.add(field("Species", titleCase(speciesPath(speciesId)), Formatting.AQUA));
-
-      Integer rarityStars = rarityStars(speciesId);
-      if (rarityStars != null) {
-         canonical.add(field("Rarity", "★".repeat(rarityStars), Formatting.GOLD));
+      canonical.add(field("Species", CanonicalSpecimenPresentation.trait(speciesPath(presentation.speciesId())), Formatting.AQUA));
+      if (!CanonicalSpecimenPresentation.UNAVAILABLE.equals(presentation.rarityStars())) {
+         canonical.add(field("Rarity", presentation.rarityStars(), Formatting.GOLD));
       }
-
-      canonical.add(field("Length", FishingUiFormat.length(finalLength), Formatting.AQUA));
-      canonical.add(field("Percentile", FishingUiFormat.percentile(finalPercentile), Formatting.AQUA));
-      canonical.add(field("Body Type", FishingUiFormat.trait(bodyType), traitColor(bodyType)));
-      canonical.add(field("Condition", FishingUiFormat.trait(condition), traitColor(condition)));
-      canonical.add(field("Pigmentation", FishingUiFormat.trait(pigmentation), traitColor(pigmentation)));
-
-      if ("perfect_specimen".equalsIgnoreCase(quality)) {
-         canonical.add(Text.literal("Perfect Specimen").formatted(Formatting.GOLD));
+      canonical.add(field("Length", presentation.length(), Formatting.AQUA));
+      canonical.add(field("Percentile", presentation.percentile(), Formatting.AQUA));
+      for (TraitDisplay trait : presentation.traits()) {
+         canonical.add(field(trait.label(), trait.value(), trait.color()));
       }
-      if (perfectCatch) {
+      if (presentation.perfectCatch()) {
          canonical.add(Text.literal("Perfect Catch").formatted(Formatting.AQUA));
       }
-      if (fishScore != null) {
-         canonical.add(field("FishScore", FishingUiFormat.fishScore(fishScore), Formatting.AQUA));
+      if (specimen.fishScore().isPresent()) {
+         canonical.add(field("FishScore", presentation.fishScore(), Formatting.AQUA));
       }
 
       original.addAll(insertionIndex, canonical);
@@ -96,20 +81,9 @@ public abstract class ItemStackMutationTooltipMixin {
          .append(Text.literal(value).formatted(valueColor));
    }
 
-   private static Formatting traitColor(String value) {
-      return "normal".equalsIgnoreCase(value) ? Formatting.GRAY : Formatting.LIGHT_PURPLE;
-   }
-
-   private static Integer rarityStars(String speciesId) {
-      Identifier id = Identifier.tryParse(speciesId);
-      if (id == null) {
-         return null;
-      }
-      Item speciesItem = Registries.ITEM.get(id);
-      return FishData.get(speciesItem)
-         .map(data -> data.profile().rarity().getNumStars())
-         .filter(stars -> stars >= 1 && stars <= 5)
-         .orElse(null);
+   private static MutableText field(String label, String value, int valueColor) {
+      return Text.literal(label + ": ").formatted(Formatting.GRAY)
+         .append(Text.literal(value).styled(style -> style.withColor(valueColor)));
    }
 
    private static int canonicalInsertionIndex(List<Text> tooltip) {
@@ -130,6 +104,7 @@ public abstract class ItemStackMutationTooltipMixin {
          || text.startsWith("Body Type:")
          || text.startsWith("Condition:")
          || text.startsWith("Pigmentation:")
+         || text.startsWith("Quality:")
          || text.startsWith("Fish Score:")
          || text.startsWith("FishScore:")
          || text.equals("Perfect Specimen")
@@ -141,9 +116,5 @@ public abstract class ItemStackMutationTooltipMixin {
       return separator >= 0 && separator + 1 < speciesId.length()
          ? speciesId.substring(separator + 1)
          : speciesId;
-   }
-
-   private static String titleCase(String id) {
-      return FishingUiFormat.trait(id);
    }
 }
