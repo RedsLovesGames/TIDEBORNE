@@ -42,6 +42,37 @@ class CanonicalSpecimenPresentationTest {
     }
 
     @Test
+    void historicalStringTraitsUseTheSameCanonicalProjection() {
+        List<CanonicalSpecimenPresentation.TraitDisplay> traits = CanonicalSpecimenPresentation.traits(
+                "giant",
+                "parasite_ridden",
+                "iridescent",
+                "perfect_specimen"
+        );
+
+        assertEquals(List.of(
+                CanonicalSpecimenPresentation.TraitAxis.BODY_TYPE,
+                CanonicalSpecimenPresentation.TraitAxis.CONDITION,
+                CanonicalSpecimenPresentation.TraitAxis.PIGMENTATION,
+                CanonicalSpecimenPresentation.TraitAxis.QUALITY
+        ), traits.stream().map(CanonicalSpecimenPresentation.TraitDisplay::axis).toList());
+        assertEquals("Giant", traits.get(0).value());
+        assertEquals("Parasite Ridden", traits.get(1).value());
+        assertEquals("Iridescent", traits.get(2).value());
+        assertEquals("Perfect Specimen", traits.get(3).value());
+        assertEquals(CanonicalSpecimenPresentation.BODY_TYPE_COLOR, traits.get(0).color());
+        assertEquals(CanonicalSpecimenPresentation.CONDITION_COLOR, traits.get(1).color());
+        assertEquals(CanonicalSpecimenPresentation.PIGMENTATION_COLOR, traits.get(2).color());
+        assertEquals(CanonicalSpecimenPresentation.QUALITY_COLOR, traits.get(3).color());
+
+        List<CanonicalSpecimenPresentation.TraitDisplay> missing = CanonicalSpecimenPresentation.unavailableTraits();
+        assertEquals(4, missing.size());
+        assertEquals(List.of("N/A", "N/A", "N/A", "N/A"), missing.stream()
+                .map(CanonicalSpecimenPresentation.TraitDisplay::value)
+                .toList());
+    }
+
+    @Test
     void formattingAndRaritySentinelsAreCentralized() {
         assertEquals("N/A", CanonicalSpecimenPresentation.fishScore(OptionalInt.empty()));
         assertEquals("N/A", CanonicalSpecimenPresentation.percentile(Double.NaN));
@@ -58,6 +89,7 @@ class CanonicalSpecimenPresentationTest {
     void canonicalTraitListIsImmutable() {
         CanonicalSpecimenPresentation.View view = CanonicalSpecimenPresentation.present(specimen(), 4);
         assertThrows(UnsupportedOperationException.class, () -> view.traits().clear());
+        assertThrows(UnsupportedOperationException.class, () -> CanonicalSpecimenPresentation.unavailableTraits().clear());
     }
 
     private static SpecimenData specimen() {
