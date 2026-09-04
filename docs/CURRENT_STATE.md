@@ -123,9 +123,9 @@ The facade is intentionally read/query-only. FishScore calculation remains owned
 
 The initial implementation and focused unit tests passed the normal streamlined `dev` CI workflow. Additional focused coverage validates transfer payload reads and canonical Team Top Fish ordering. The API boundary and ownership rules are documented in `docs/TIDEBORNE_INTERNAL_API.md`.
 
-### Canonical specimen presentation migration
+### Canonical specimen presentation
 
-The second post-2.0 architecture goal is now implemented as a shared read-only presentation contract in `com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation`, with consumer migration in progress.
+The second post-2.0 architecture goal is complete on `dev` as the shared read-only presentation contract `com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation`.
 
 The presentation contract owns:
 
@@ -139,20 +139,26 @@ The presentation contract owns:
 - immutable `TraitDisplay` and complete specimen `View` projections over the existing `SpecimenData` record;
 - compatibility-only projection of historical synchronized trait strings without creating a second specimen model.
 
-The shared presentation class remains common-side safe and contains no client-only rendering classes. `FishingUiFormat` is now only a thin client formatting adapter where client-specific utilities such as timestamps are still needed.
+The shared presentation class remains common-side safe and contains no client-only rendering classes. `FishingUiFormat` is now restricted to genuinely client-specific formatting, currently catch timestamps, and no longer exposes parallel specimen FishScore, length, percentile, trait, or unavailable-value formatting.
 
-Consumers already routed through the shared presentation contract include:
+Covered consumers routed through the shared presentation contract now include:
 
 - Fishing Journal Best Specimen trait rendering;
-- Satchel canonical specimen display and tooltip projection;
-- Team Top 15 list/detail specimen traits, FishScore, rarity, percentile, and length;
-- canonical team record display projection;
-- the normal fish ItemStack tooltip, which now reads a complete current canonical specimen through `TideborneFishingApi` instead of reconstructing specimen fields from components;
+- Team Top 15 and Top Fish list/detail presentation;
+- canonical team record projection and compact Team Records event rows;
+- Satchel canonical specimen projection, specimen detail panel, record badges, personal-record length summaries, and record FishScore labels;
+- the normal fish ItemStack tooltip, which reads a complete current canonical specimen through `TideborneFishingApi` instead of reconstructing specimen fields from components;
+- Tide fish-profile possible-size and recorded-FishScore overlay formatting;
 - operator `/tideborne fishing inspect` specimen output, including final percentile, final length, rarity, trait names/values, and FishScore.
 
-Focused source-safety and unit tests lock the tooltip, Top Fish, Satchel projection, record projection, and operator inspection paths to the canonical presentation layer.
+Focused source-safety and unit tests lock the tooltip, Top Fish, Satchel, team-record, fish-profile, and operator inspection paths to the canonical presentation layer. As a final sweep guard, removing specimen-formatting methods from `FishingUiFormat` forced compilation to identify the last two residual consumers, which were then migrated directly.
 
-Goal 2 and the UI-consumer migration remain open until the residual presentation call sites are inspected and consolidated. Known remaining work includes the Satchel detail panel's direct label/layout strings, compact Team Records event rows, and a final search for any HUD or inspection surface that still reconstructs specimen presentation locally. Mixin replacement work must not start before this presentation migration is green.
+Final Stage 1 validation head: `7e2498542cd21215c6c931cca208ff8b4337963b`.
+GitHub Actions run: `33892874198`.
+
+That normal `dev` run completed successfully, including the clean Gradle build/unit tests, normal no-optional-mod GameTests, production artifact validation, validation-count reporting, and CI artifact upload. Optional-mod matrices and dedicated-server smoke remained skipped under the intentionally streamlined normal-push policy.
+
+No meaningful independent specimen-presentation implementation is intentionally retained. Layout-specific positioning, clipping, localized screen text, and timestamp formatting remain client/UI responsibilities, while specimen values and semantics come from the canonical presentation layer.
 
 ### Real Tide balance simulator
 
@@ -197,6 +203,6 @@ Detailed implementation and validation records remain in:
 - tagged releases run the fuller release validation path before publication.
 - real Fishing System 2.0 balance tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md` rather than the historical equal-rarity synthetic report.
 - new covered fishing read/query features should prefer `TideborneFishingApi` over direct implementation-layer reads.
-- finish the canonical specimen presentation consumer migration and make it green before starting mixin inventory/replacement work.
+- canonical specimen presentation migration is complete; the active architecture stage is now Tide-targeting mixin inventory and replacement planning.
 - broad legacy cleanup remains after the mixin architecture pass, not before it.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
