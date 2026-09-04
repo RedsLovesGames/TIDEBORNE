@@ -2,21 +2,37 @@
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
-    echo "usage: $0 build/libs/tideborne-2.0.0.jar" >&2
+    echo "usage: $0 build/libs/tideborne-<version>.jar" >&2
     exit 2
 fi
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 artifact="$1"
-expected_name="tideborne-2.0.0.jar"
+expected_version="$(awk -F= '$1 == "mod_version" {print $2}' "$repo_root/gradle.properties" | tr -d '[:space:]')"
+expected_name="tideborne-${expected_version}.jar"
 
-test -f "$artifact"
-test "$(basename "$artifact")" = "$expected_name"
+if [[ ! "$expected_version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+    echo "gradle.properties mod_version is not an exact MAJOR.MINOR.PATCH semantic version: $expected_version" >&2
+    exit 1
+fi
+
+if [[ ! -f "$artifact" ]]; then
+    echo "Release artifact does not exist: $artifact" >&2
+    exit 1
+fi
+if [[ "$(basename "$artifact")" != "$expected_name" ]]; then
+    echo "Release artifact name mismatch: expected $expected_name, got $(basename "$artifact")" >&2
+    exit 1
+fi
 case "$artifact" in
     *-sources.jar|*-dev.jar) echo "Not a production artifact: $artifact" >&2; exit 1 ;;
 esac
 
 version="$(unzip -p "$artifact" fabric.mod.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
-test "$version" = "2.0.0"
+if [[ "$version" != "$expected_version" ]]; then
+    echo "Release artifact version mismatch: expected $expected_version, fabric.mod.json reports $version" >&2
+    exit 1
+fi
 
 unzip -l "$artifact" 'com/redslovesgames/tideborne/Tideborne.class' | grep 'Tideborne\.class' >/dev/null
 unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/v2/SpecimenGenerator.class' | grep 'SpecimenGenerator\.class' >/dev/null
@@ -72,5 +88,5 @@ if unzip -p "$artifact" 'com/redslovesgames/tideteamjournal/mixin/TeamProgressCa
     exit 1
 fi
 
-echo "Production release artifact passed: $artifact"
+echo "Production release artifact passed for Tideborne ${expected_version}: $artifact"
 sha256sum "$artifact"
