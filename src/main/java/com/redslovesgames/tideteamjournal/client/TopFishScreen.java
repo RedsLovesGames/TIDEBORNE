@@ -12,6 +12,7 @@ import com.redslovesgames.tideborne.client.ui.FishingUiLayout;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
 import java.util.List;
 import java.util.Optional;
@@ -36,11 +37,6 @@ public final class TopFishScreen extends Screen {
    private static final Identifier BG = Identifier.of("tide", "textures/gui/journal/journal_bg.png");
    private static final int TEXT = 5477982;
    private static final int MUTED = 6650722;
-   private static final int BODY_COLOR = 0xB36CE2;
-   private static final int CONDITION_COLOR = 0xD36B5D;
-   private static final int PIGMENT_COLOR = 0x4FAFD6;
-   private static final int QUALITY_COLOR = 0xD6A94F;
-   private static final int SCORE_COLOR = 0x43A8D8;
    private static final int TOP_FISH_SLOTS = 15;
    private static final int LIST_PANEL_LEFT = 28;
    private static final int LIST_PANEL_RIGHT = 196;
@@ -73,10 +69,6 @@ public final class TopFishScreen extends Screen {
          }
       }
       return ItemStack.EMPTY;
-   }
-
-   private static String stars(int count) {
-      return "★".repeat(Math.max(0, count));
    }
 
    @Override
@@ -149,16 +141,16 @@ public final class TopFishScreen extends Screen {
             String name = stack.getName().getString();
             FittedText fittedName = FishingUiLayout.ellipsize(name, NAME_WIDTH, this.textRenderer::getWidth);
             TideTextRenderer.draw(graphics, this.textRenderer, fittedName.text(), left + NAME_X, rowY + 2, TEXT);
-            String rarity = stars(tag.getInt("fish_stars"));
+            String rarity = CanonicalSpecimenPresentation.rarityStars(tag.getInt("fish_stars"));
             TideTextRenderer.draw(graphics, this.textRenderer, rarity, left + STARS_X, rowY + 2, MUTED);
-            String score = display == null ? FishingUiFormat.UNAVAILABLE : display.scoreLabel();
+            String score = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.scoreLabel();
             TideTextRenderer.draw(
                graphics,
                this.textRenderer,
                score,
                FishingUiLayout.rightAlignedX(left + SCORE_RIGHT_X, this.textRenderer.getWidth(score)),
                rowY + 2,
-               SCORE_COLOR
+               CanonicalSpecimenPresentation.SCORE_COLOR
             );
             if (fittedName.clipped()
                && mouseX >= left + LIST_ROW_LEFT
@@ -202,38 +194,89 @@ public final class TopFishScreen extends Screen {
       int columnWidth = 60;
 
       this.section(graphics, "Specimen", x, detailTop + 120);
-      String score = display == null ? FishingUiFormat.UNAVAILABLE : display.scoreLabel();
-      String rarity = stars(selected.getInt("fish_stars"));
-      String percentile = display == null ? FishingUiFormat.UNAVAILABLE : FishingUiFormat.percentile(display.percentile());
+      String score = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.scoreLabel();
+      String rarity = CanonicalSpecimenPresentation.rarityStars(selected.getInt("fish_stars"));
+      String percentile = display == null
+         ? CanonicalSpecimenPresentation.UNAVAILABLE
+         : CanonicalSpecimenPresentation.percentile(display.percentile());
       double lengthValue = display != null && Double.isFinite(display.length()) ? display.length() : selected.getDouble("length");
-      String length = FishingUiFormat.length(lengthValue);
+      String length = CanonicalSpecimenPresentation.length(lengthValue);
       this.label(graphics, "FishScore", leftColumn, detailTop + 132);
       this.label(graphics, "Stars", rightColumn, detailTop + 132);
-      this.drawValue(graphics, score, "FishScore: " + score, leftColumn, detailTop + 141, columnWidth, SCORE_COLOR, mouseX, mouseY);
-      this.drawValue(graphics, rarity.isBlank() ? FishingUiFormat.UNAVAILABLE : rarity,
-            "Stars: " + (rarity.isBlank() ? FishingUiFormat.UNAVAILABLE : rarity), rightColumn, detailTop + 141, columnWidth, MUTED, mouseX, mouseY);
+      this.drawValue(
+         graphics,
+         score,
+         "FishScore: " + score,
+         leftColumn,
+         detailTop + 141,
+         columnWidth,
+         CanonicalSpecimenPresentation.SCORE_COLOR,
+         mouseX,
+         mouseY
+      );
+      this.drawValue(graphics, rarity, "Stars: " + rarity, rightColumn, detailTop + 141, columnWidth, MUTED, mouseX, mouseY);
       this.label(graphics, "Percentile", leftColumn, detailTop + 151);
       this.label(graphics, "Length", rightColumn, detailTop + 151);
       this.drawValue(graphics, percentile, "Percentile: " + percentile, leftColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
       this.drawValue(graphics, length, "Length: " + length, rightColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
 
       this.section(graphics, "Traits", x, detailTop + 173);
-      String body = display == null ? FishingUiFormat.UNAVAILABLE : display.bodyTypeLabel();
-      String condition = display == null ? FishingUiFormat.UNAVAILABLE : display.conditionLabel();
-      String pigment = display == null ? FishingUiFormat.UNAVAILABLE : display.pigmentationLabel();
-      String quality = display == null ? FishingUiFormat.UNAVAILABLE : display.qualityLabel();
+      String body = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.bodyTypeLabel();
+      String condition = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.conditionLabel();
+      String pigment = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.pigmentationLabel();
+      String quality = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.qualityLabel();
       this.label(graphics, "Body Type", leftColumn, detailTop + 185);
       this.label(graphics, "Condition", rightColumn, detailTop + 185);
-      this.drawValue(graphics, body, "Body Type: " + body, leftColumn, detailTop + 194, columnWidth, BODY_COLOR, mouseX, mouseY);
-      this.drawValue(graphics, condition, "Condition: " + condition, rightColumn, detailTop + 194, columnWidth, CONDITION_COLOR, mouseX, mouseY);
+      this.drawValue(
+         graphics,
+         body,
+         "Body Type: " + body,
+         leftColumn,
+         detailTop + 194,
+         columnWidth,
+         CanonicalSpecimenPresentation.BODY_TYPE_COLOR,
+         mouseX,
+         mouseY
+      );
+      this.drawValue(
+         graphics,
+         condition,
+         "Condition: " + condition,
+         rightColumn,
+         detailTop + 194,
+         columnWidth,
+         CanonicalSpecimenPresentation.CONDITION_COLOR,
+         mouseX,
+         mouseY
+      );
       this.label(graphics, "Pigmentation", leftColumn, detailTop + 204);
       this.label(graphics, "Quality", rightColumn, detailTop + 204);
-      this.drawValue(graphics, pigment, "Pigmentation: " + pigment, leftColumn, detailTop + 213, columnWidth, PIGMENT_COLOR, mouseX, mouseY);
-      this.drawValue(graphics, quality, "Quality: " + quality, rightColumn, detailTop + 213, columnWidth, QUALITY_COLOR, mouseX, mouseY);
+      this.drawValue(
+         graphics,
+         pigment,
+         "Pigmentation: " + pigment,
+         leftColumn,
+         detailTop + 213,
+         columnWidth,
+         CanonicalSpecimenPresentation.PIGMENTATION_COLOR,
+         mouseX,
+         mouseY
+      );
+      this.drawValue(
+         graphics,
+         quality,
+         "Quality: " + quality,
+         rightColumn,
+         detailTop + 213,
+         columnWidth,
+         CanonicalSpecimenPresentation.QUALITY_COLOR,
+         mouseX,
+         mouseY
+      );
 
       this.section(graphics, "Catch Info", x, detailTop + 226);
       String catcher = selected.getString("catcher_name");
-      String catcherLabel = catcher.isBlank() ? FishingUiFormat.UNAVAILABLE : catcher;
+      String catcherLabel = catcher.isBlank() ? CanonicalSpecimenPresentation.UNAVAILABLE : catcher;
       long timestampValue = selected.contains("timestamp", 99) ? selected.getLong("timestamp") : -1L;
       String timestamp = FishingUiFormat.timestamp(timestampValue);
       String date = dateOnly(timestamp);
@@ -275,8 +318,8 @@ public final class TopFishScreen extends Screen {
    }
 
    private static String dateOnly(String timestamp) {
-      if (timestamp == null || timestamp.equals(FishingUiFormat.UNAVAILABLE)) {
-         return FishingUiFormat.UNAVAILABLE;
+      if (timestamp == null || timestamp.equals(CanonicalSpecimenPresentation.UNAVAILABLE)) {
+         return CanonicalSpecimenPresentation.UNAVAILABLE;
       }
       int comma = timestamp.indexOf(',');
       return comma > 0 ? timestamp.substring(0, comma) : timestamp;

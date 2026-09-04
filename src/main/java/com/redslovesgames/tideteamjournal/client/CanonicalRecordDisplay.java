@@ -1,6 +1,8 @@
 package com.redslovesgames.tideteamjournal.client;
 
-import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
+import com.redslovesgames.tideborne.api.TideborneFishingApi;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
 import java.util.Locale;
 import java.util.Optional;
@@ -21,6 +23,14 @@ public record CanonicalRecordDisplay(
         if (tag == null) {
             return Optional.empty();
         }
+
+        Optional<SpecimenData> canonical = TideborneFishingApi.readTransferredSpecimen(tag);
+        if (canonical.isPresent()) {
+            return Optional.of(from(canonical.orElseThrow()));
+        }
+
+        // Compatibility-only fallback for historical record rows that predate the complete
+        // canonical specimen transfer block. New records should always take the API path above.
         OptionalInt score = StoredFishScoreStorage.readCanonical(tag);
         String body = normalized(tag.getString("body_type"));
         String condition = normalized(tag.getString("condition"));
@@ -36,8 +46,20 @@ public record CanonicalRecordDisplay(
         return Optional.of(new CanonicalRecordDisplay(score, body, condition, pigmentation, quality, percentile, length));
     }
 
+    private static CanonicalRecordDisplay from(SpecimenData specimen) {
+        return new CanonicalRecordDisplay(
+                TideborneFishingApi.readFishScore(specimen),
+                normalized(specimen.bodyType().name()),
+                normalized(specimen.condition().name()),
+                normalized(specimen.pigmentation().name()),
+                normalized(specimen.specimenQuality().name()),
+                specimen.finalPercentile(),
+                specimen.finalLength()
+        );
+    }
+
     public String scoreLabel() {
-        return FishingUiFormat.fishScore(score);
+        return CanonicalSpecimenPresentation.fishScore(score);
     }
 
     public String bodyTypeLabel() {
@@ -61,6 +83,6 @@ public record CanonicalRecordDisplay(
     }
 
     private static String label(String value) {
-        return FishingUiFormat.trait(value);
+        return CanonicalSpecimenPresentation.trait(value);
     }
 }
