@@ -1,18 +1,23 @@
 package com.redslovesgames.tideborne.fishing.v2;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.redslovesgames.tidetraits.trait.TraitAxesRuntime;
 import java.io.IOException;
 import java.io.InputStream;
 import org.junit.jupiter.api.Test;
 
 class LegacyFishScoreRemovalTest {
     @Test
-    void reconstructedLegacyCalculatorIsGuardedByProductionMixin() throws IOException {
+    void reconstructedLegacyCalculatorStaysDisabledWithoutSelfMixin() throws IOException {
         String mixins = resource("/tide_traits.mixins.json");
-        assertTrue(mixins.contains("LegacyFishScoreCalculatorMixin"));
+        assertFalse(mixins.contains("LegacyFishScoreCalculatorMixin"));
+        assertEquals(-1.0, TraitAxesRuntime.score(null, 5, 99.0, 50.0, 40.0));
+        assertEquals(-1.0, TraitAxesRuntime.scoreFromParts(99.0, 5, "scarred", "giant", 50.0, 40.0));
     }
 
     @Test
