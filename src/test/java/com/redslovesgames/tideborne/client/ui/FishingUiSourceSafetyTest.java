@@ -90,16 +90,19 @@ class FishingUiSourceSafetyTest {
     }
 
     @Test
-    void bestSpecimenUsesOneConsistentPaletteWithSpecialHighlighting() throws IOException {
+    void bestSpecimenUsesCanonicalTraitPresentation() throws IOException {
         String stats = Files.readString(Path.of(AFFECTED_UI.get(4)));
-        assertTrue(stats.contains("LABEL_COLOR = 0x5A4634"));
-        assertTrue(stats.contains("MUTED_COLOR = 0x8C715A"));
-        assertTrue(stats.contains("VALUE_COLOR = 0x4FA8D8"));
-        assertTrue(stats.contains("HIGHLIGHT_COLOR = 0xD6A94F"));
-        assertTrue(stats.contains("tideTraits$traitColor"));
-        assertFalse(stats.contains("0xB36CE2"));
-        assertFalse(stats.contains("0xD36B5D"));
-        assertFalse(stats.contains("0x4FAFD6"));
+        assertTrue(stats.contains("CanonicalSpecimenPresentation.traits("));
+        assertTrue(stats.contains("TraitDisplay"));
+        assertTrue(stats.contains("trait.shortLabel()"));
+        assertTrue(stats.contains("trait.label()"));
+        assertTrue(stats.contains("trait.color()"));
+        assertFalse(stats.contains("FishingUiFormat.trait("));
+        assertFalse(stats.contains("tideTraits$traitColor"));
+        assertFalse(stats.contains("\"Body \""));
+        assertFalse(stats.contains("\"Cond \""));
+        assertFalse(stats.contains("\"Pig \""));
+        assertFalse(stats.contains("\"Qual \""));
     }
 
     @Test

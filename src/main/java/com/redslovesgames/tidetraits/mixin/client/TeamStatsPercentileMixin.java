@@ -6,12 +6,12 @@
 package com.redslovesgames.tidetraits.mixin.client;
 
 import com.li64.tide.data.player.FishStats;
-import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
-import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenNetworkCodec;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenStore;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
 import com.redslovesgames.tideteamjournal.RecordHolderStore;
 import com.redslovesgames.tideteamjournal.client.ClientJournalSpecimens;
 import com.redslovesgames.tideteamjournal.client.ClientRecordHolders;
@@ -123,6 +123,9 @@ public abstract class TeamStatsPercentileMixin {
 
       if (best.isPresent()) {
          JournalSpecimenNetworkCodec.DisplaySpecimen specimen = best.orElseThrow();
+         List<TraitDisplay> traits = CanonicalSpecimenPresentation.traits(
+            specimen.bodyType(), specimen.condition(), specimen.pigmentation(), specimen.specimenQuality()
+         );
          cursorY += 2;
          graphics.fill(x + 4, y + cursorY, x + 170, y + cursorY + 1, DIVIDER_COLOR);
          cursorY += 4;
@@ -157,10 +160,10 @@ public abstract class TeamStatsPercentileMixin {
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
          cursorY += 10;
 
-         String score = FishingUiFormat.fishScore(specimen.fishScore());
-         String summary = FishingUiFormat.length(specimen.finalLength())
+         String score = CanonicalSpecimenPresentation.fishScore(specimen.fishScore());
+         String summary = CanonicalSpecimenPresentation.length(specimen.finalLength())
             + "  •  "
-            + FishingUiFormat.percentile(specimen.finalPercentile())
+            + CanonicalSpecimenPresentation.percentile(specimen.finalPercentile())
             + "  •  Score "
             + score;
          tooltip = tideTraits$drawCentered(
@@ -169,58 +172,22 @@ public abstract class TeamStatsPercentileMixin {
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
          cursorY += 9;
 
-         tooltip = tideTraits$drawColumn(
-            graphics,
-            font,
-            "Body " + FishingUiFormat.trait(specimen.bodyType()),
-            "Body Type: " + FishingUiFormat.trait(specimen.bodyType()),
-            x + 4,
-            y + cursorY,
-            80,
-            tideTraits$traitColor(specimen.bodyType() != SpecimenData.BodyType.NORMAL),
-            mouseX,
-            mouseY
+         tooltip = tideTraits$drawTrait(
+            graphics, font, traits.get(0), x + 4, y + cursorY, mouseX, mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
-         tooltip = tideTraits$drawColumn(
-            graphics,
-            font,
-            "Cond " + FishingUiFormat.trait(specimen.condition()),
-            "Condition: " + FishingUiFormat.trait(specimen.condition()),
-            x + 88,
-            y + cursorY,
-            80,
-            tideTraits$traitColor(specimen.condition() != SpecimenData.Condition.NORMAL),
-            mouseX,
-            mouseY
+         tooltip = tideTraits$drawTrait(
+            graphics, font, traits.get(1), x + 88, y + cursorY, mouseX, mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
          cursorY += 9;
 
-         tooltip = tideTraits$drawColumn(
-            graphics,
-            font,
-            "Pig " + FishingUiFormat.trait(specimen.pigmentation()),
-            "Pigmentation: " + FishingUiFormat.trait(specimen.pigmentation()),
-            x + 4,
-            y + cursorY,
-            80,
-            tideTraits$traitColor(specimen.pigmentation() != SpecimenData.Pigmentation.NORMAL),
-            mouseX,
-            mouseY
+         tooltip = tideTraits$drawTrait(
+            graphics, font, traits.get(2), x + 4, y + cursorY, mouseX, mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
-         tooltip = tideTraits$drawColumn(
-            graphics,
-            font,
-            "Qual " + FishingUiFormat.trait(specimen.specimenQuality()),
-            "Quality: " + FishingUiFormat.trait(specimen.specimenQuality()),
-            x + 88,
-            y + cursorY,
-            80,
-            tideTraits$traitColor(specimen.specimenQuality() != SpecimenData.SpecimenQuality.NORMAL),
-            mouseX,
-            mouseY
+         tooltip = tideTraits$drawTrait(
+            graphics, font, traits.get(3), x + 88, y + cursorY, mouseX, mouseY
          );
          hoveredTooltip = tooltip != null ? tooltip : hoveredTooltip;
       }
@@ -266,18 +233,38 @@ public abstract class TeamStatsPercentileMixin {
       int mouseY
    ) {
       String percentile = ClientJournalSpecimens.read(this.tideTraits$speciesId, recordKind)
-         .map(specimen -> FishingUiFormat.percentile(specimen.finalPercentile()))
-         .orElse(FishingUiFormat.UNAVAILABLE);
-      String visible = shortLabel + " " + FishingUiFormat.length(length) + " " + percentile;
+         .map(specimen -> CanonicalSpecimenPresentation.percentile(specimen.finalPercentile()))
+         .orElse(CanonicalSpecimenPresentation.UNAVAILABLE);
+      String formattedLength = CanonicalSpecimenPresentation.length(length);
+      String visible = shortLabel + " " + formattedLength + " " + percentile;
       String full = holder == null || holder.isBlank()
-         ? fullLabel + ": " + FishingUiFormat.length(length) + "  •  " + percentile
-         : fullLabel + ": " + FishingUiFormat.length(length) + "  •  " + holder + "  •  " + percentile;
+         ? fullLabel + ": " + formattedLength + "  •  " + percentile
+         : fullLabel + ": " + formattedLength + "  •  " + holder + "  •  " + percentile;
       return tideTraits$drawColumn(graphics, font, visible, full, x, y, 80, MUTED_COLOR, mouseX, mouseY);
    }
 
    @Unique
-   private static int tideTraits$traitColor(boolean special) {
-      return special ? HIGHLIGHT_COLOR : VALUE_COLOR;
+   private static String tideTraits$drawTrait(
+      DrawContext graphics,
+      TextRenderer font,
+      TraitDisplay trait,
+      int x,
+      int y,
+      int mouseX,
+      int mouseY
+   ) {
+      return tideTraits$drawColumn(
+         graphics,
+         font,
+         trait.shortLabel() + " " + trait.value(),
+         trait.label() + ": " + trait.value(),
+         x,
+         y,
+         80,
+         trait.color(),
+         mouseX,
+         mouseY
+      );
    }
 
    @Unique

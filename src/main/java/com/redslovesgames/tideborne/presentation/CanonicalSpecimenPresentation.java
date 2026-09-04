@@ -26,23 +26,29 @@ public final class CanonicalSpecimenPresentation {
     private CanonicalSpecimenPresentation() {
     }
 
-    /** Stable display order for all canonical specimen trait axes. */
+    /** Stable display order, naming, abbreviation, and color for every canonical specimen trait axis. */
     public enum TraitAxis {
-        BODY_TYPE("Body Type", BODY_TYPE_COLOR),
-        CONDITION("Condition", CONDITION_COLOR),
-        PIGMENTATION("Pigmentation", PIGMENTATION_COLOR),
-        QUALITY("Quality", QUALITY_COLOR);
+        BODY_TYPE("Body Type", "Body", BODY_TYPE_COLOR),
+        CONDITION("Condition", "Cond", CONDITION_COLOR),
+        PIGMENTATION("Pigmentation", "Pig", PIGMENTATION_COLOR),
+        QUALITY("Quality", "Qual", QUALITY_COLOR);
 
         private final String label;
+        private final String shortLabel;
         private final int color;
 
-        TraitAxis(String label, int color) {
+        TraitAxis(String label, String shortLabel, int color) {
             this.label = label;
+            this.shortLabel = shortLabel;
             this.color = color;
         }
 
         public String label() {
             return label;
+        }
+
+        public String shortLabel() {
+            return shortLabel;
         }
 
         public int color() {
@@ -59,6 +65,10 @@ public final class CanonicalSpecimenPresentation {
 
         public String label() {
             return axis.label();
+        }
+
+        public String shortLabel() {
+            return axis.shortLabel();
         }
 
         public int color() {
@@ -113,11 +123,24 @@ public final class CanonicalSpecimenPresentation {
 
     public static List<TraitDisplay> traits(SpecimenData specimen) {
         Objects.requireNonNull(specimen, "specimen");
+        return traits(specimen.bodyType(), specimen.condition(), specimen.pigmentation(), specimen.specimenQuality());
+    }
+
+    /**
+     * Builds the same canonical trait projection for synchronized display records that intentionally
+     * carry only presentation-safe specimen fields rather than a full {@link SpecimenData} record.
+     */
+    public static List<TraitDisplay> traits(
+            SpecimenData.BodyType bodyType,
+            SpecimenData.Condition condition,
+            SpecimenData.Pigmentation pigmentation,
+            SpecimenData.SpecimenQuality quality
+    ) {
         return List.of(
-                new TraitDisplay(TraitAxis.BODY_TYPE, trait(specimen.bodyType())),
-                new TraitDisplay(TraitAxis.CONDITION, trait(specimen.condition())),
-                new TraitDisplay(TraitAxis.PIGMENTATION, trait(specimen.pigmentation())),
-                new TraitDisplay(TraitAxis.QUALITY, trait(specimen.specimenQuality()))
+                new TraitDisplay(TraitAxis.BODY_TYPE, trait(bodyType)),
+                new TraitDisplay(TraitAxis.CONDITION, trait(condition)),
+                new TraitDisplay(TraitAxis.PIGMENTATION, trait(pigmentation)),
+                new TraitDisplay(TraitAxis.QUALITY, trait(quality))
         );
     }
 
