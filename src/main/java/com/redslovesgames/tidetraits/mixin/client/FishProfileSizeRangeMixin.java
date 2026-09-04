@@ -8,9 +8,9 @@ package com.redslovesgames.tidetraits.mixin.client;
 import com.li64.tide.client.gui.screens.journal.FishProfile;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.fishing.SizeData;
-import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenNetworkCodec;
 import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenStore;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import com.redslovesgames.tideteamjournal.client.ClientJournalSpecimens;
 import com.redslovesgames.tidetraits.client.gui.journal.JournalRenderContext;
 import java.util.Optional;
@@ -64,11 +64,11 @@ public abstract class FishProfileSizeRangeMixin {
             SizeData size = this.data.size().orElseThrow();
             double low = size.recordLowCm().orElse(size.typicalLowCm() * 0.6);
             double high = size.recordHighCm();
-            String range = "Possible size: " + FishingUiFormat.length(low * 0.55) + " - " + FishingUiFormat.length(high * 1.3);
+            String range = "Possible size: " + CanonicalSpecimenPresentation.length(low * 0.55) + " - " + CanonicalSpecimenPresentation.length(high * 1.3);
             this.tideTraits$drawCenteredFit(graphics, Text.literal(range), center, y, 160);
 
             String score = this.tideTraits$recordedFishScore(speciesId);
-            String scoreLine = FishingUiFormat.UNAVAILABLE.equals(score)
+            String scoreLine = CanonicalSpecimenPresentation.UNAVAILABLE.equals(score)
                ? "No canonical specimen recorded"
                : "Recorded FishScore: " + score;
             this.tideTraits$drawCenteredFit(graphics, Text.literal(scoreLine), center, y + 11, 160);
@@ -86,7 +86,7 @@ public abstract class FishProfileSizeRangeMixin {
       OptionalInt largest = tideTraits$score(speciesId, JournalSpecimenStore.LARGEST);
       OptionalInt smallest = tideTraits$score(speciesId, JournalSpecimenStore.SMALLEST);
       if (largest.isEmpty() && smallest.isEmpty()) {
-         return FishingUiFormat.UNAVAILABLE;
+         return CanonicalSpecimenPresentation.UNAVAILABLE;
       }
       int low = largest.isPresent() && smallest.isPresent()
          ? Math.min(largest.getAsInt(), smallest.getAsInt())
@@ -94,7 +94,9 @@ public abstract class FishProfileSizeRangeMixin {
       int high = largest.isPresent() && smallest.isPresent()
          ? Math.max(largest.getAsInt(), smallest.getAsInt())
          : low;
-      return low == high ? FishingUiFormat.fishScore(low) : FishingUiFormat.fishScore(low) + " - " + FishingUiFormat.fishScore(high);
+      return low == high
+         ? CanonicalSpecimenPresentation.fishScore(low)
+         : CanonicalSpecimenPresentation.fishScore(low) + " - " + CanonicalSpecimenPresentation.fishScore(high);
    }
 
    @Unique
