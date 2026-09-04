@@ -96,10 +96,7 @@ public final class CanonicalSpecimenPresentation {
         }
 
         public TraitDisplay trait(TraitAxis axis) {
-            return traits.stream()
-                    .filter(value -> value.axis() == axis)
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Missing trait axis: " + axis));
+            return traitForAxis(traits, axis);
         }
     }
 
@@ -142,6 +139,39 @@ public final class CanonicalSpecimenPresentation {
                 new TraitDisplay(TraitAxis.PIGMENTATION, trait(pigmentation)),
                 new TraitDisplay(TraitAxis.QUALITY, trait(quality))
         );
+    }
+
+    /**
+     * Canonical trait projection for historical synchronized records that only contain string values.
+     * Keeping this compatibility path here prevents Journal/record UIs from reconstructing labels,
+     * ordering, or semantic colors themselves.
+     */
+    public static List<TraitDisplay> traits(
+            String bodyType,
+            String condition,
+            String pigmentation,
+            String quality
+    ) {
+        return List.of(
+                new TraitDisplay(TraitAxis.BODY_TYPE, trait(bodyType)),
+                new TraitDisplay(TraitAxis.CONDITION, trait(condition)),
+                new TraitDisplay(TraitAxis.PIGMENTATION, trait(pigmentation)),
+                new TraitDisplay(TraitAxis.QUALITY, trait(quality))
+        );
+    }
+
+    /** Canonical four-axis placeholder projection for missing/legacy specimen presentation. */
+    public static List<TraitDisplay> unavailableTraits() {
+        return traits((String)null, null, null, null);
+    }
+
+    public static TraitDisplay traitForAxis(List<TraitDisplay> traits, TraitAxis axis) {
+        Objects.requireNonNull(traits, "traits");
+        Objects.requireNonNull(axis, "axis");
+        return traits.stream()
+                .filter(value -> value.axis() == axis)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Missing trait axis: " + axis));
     }
 
     public static String fishScore(OptionalInt score) {
