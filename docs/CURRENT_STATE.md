@@ -116,7 +116,7 @@ These hooks should remain thin. Canonical fishing calculations, persistence form
 Stage 3 implementation/test head: `e55d19721bb8094c514df471d2d432540626b603`.
 GitHub Actions run: `33898441943`.
 
-At the time this state entry was written, dependency/repository validation and the clean Gradle build/unit-test step had passed, and the core no-optional-mod GameTests were running. The final Stage 3 gate is the completion of that exact workflow run.
+That exact normal `dev` run completed successfully. It passed dependency/checksum and repository/version validation, the clean Gradle build and unit tests, the core no-optional-mod GameTests, production JAR validation, final validation-count reporting, and CI artifact upload. The optional Apex/Myths matrices and dedicated-server smoke were intentionally skipped by the streamlined normal-push policy, and the release-publication job was skipped.
 
 `FishSatchelConversionMixin.java` remains present but unconfigured and is deferred to the next dead-code cleanup stage. `LegacyFishScoreCalculatorMixin` is also Tideborne-owned self-mixin debt rather than Tide compatibility debt and belongs in that following pass.
 
@@ -154,6 +154,6 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic
 - real Fishing System 2.0 tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`.
 - new covered fishing read/query features should prefer `TideborneFishingApi`.
 - canonical specimen presentation migration is complete.
-- Tide-targeting mixin inventory and focused Stage 3 reduction are implemented; the exact Stage 3 code validation run is `33898441943`.
-- after that validation gate, the next architecture stage is dead legacy/Tideborne-owned self-mixin/package cleanup, not further speculative removal of version-sensitive Tide hooks.
+- Tide-targeting mixin inventory and focused Stage 3 reduction are complete and validated by run `33898441943` at code head `e55d19721bb8094c514df471d2d432540626b603`.
+- the active architecture stage is now dead legacy/Tideborne-owned self-mixin/package cleanup, not further speculative removal of version-sensitive Tide hooks.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
