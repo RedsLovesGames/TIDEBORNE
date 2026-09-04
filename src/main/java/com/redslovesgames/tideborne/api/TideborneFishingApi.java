@@ -2,10 +2,7 @@ package com.redslovesgames.tideborne.api;
 
 import com.li64.tide.data.TideData;
 import com.li64.tide.data.fishing.FishData;
-import com.redslovesgames.tideborne.fishing.v2.CanonicalRarity;
-import com.redslovesgames.tideborne.fishing.v2.FishScoreV2Service;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
-import com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
@@ -26,12 +23,11 @@ import net.minecraft.nbt.NbtElement;
 /**
  * Small stable read/query facade for canonical Tideborne fishing state.
  *
- * <p>Feature code should prefer this boundary over reaching into persistence, scoring, gear,
+ * <p>Feature code should prefer this boundary over reaching into persistence, gear,
  * species-adapter, or record-index implementation classes. This facade does not create a second
  * specimen representation: it returns the existing canonical domain records unchanged.
  */
 public final class TideborneFishingApi {
-    private static final FishScoreV2Service FISH_SCORE = new FishScoreV2Service();
     private static final TideSpeciesProfileAdapter TIDE_SPECIES = new TideSpeciesProfileAdapter();
 
     private TideborneFishingApi() {
@@ -66,16 +62,6 @@ public final class TideborneFishingApi {
 
     public static OptionalDouble readRawFishScore(SpecimenData specimen) {
         return specimen == null ? OptionalDouble.empty() : specimen.rawFishScore();
-    }
-
-    /** Explicit score calculation for finalized specimen state. Read paths never reroll a specimen. */
-    public static FishScoreV2Service.Result calculateFishScore(CanonicalRarity rarity, SpecimenData specimen) {
-        return FISH_SCORE.calculate(rarity, specimen);
-    }
-
-    /** Resolves a registered Tide/Tideborne gear identity without exposing registry maps. */
-    public static Optional<FishingGearRegistry.GearProfile> resolveGearProfile(ItemStack stack) {
-        return FishingGearRegistry.resolve(stack);
     }
 
     public static double fishingLuck(FishingGearModifiers modifiers) {
