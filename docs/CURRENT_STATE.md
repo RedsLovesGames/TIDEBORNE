@@ -104,22 +104,24 @@ Canonical runtime authority includes:
 
 ### Canonical internal fishing API
 
-The first post-2.0 architecture goal is now implemented on `dev` as `com.redslovesgames.tideborne.api.TideborneFishingApi`.
+The first post-2.0 architecture goal is implemented on `dev` as `com.redslovesgames.tideborne.api.TideborneFishingApi`.
 
-Implementation head: `7631fb1f3493b709a2bc2e96d01d1c2dd7b3e910`.
-GitHub Actions run: `33861656348`.
+Initial implementation commit: `7631fb1f3493b709a2bc2e96d01d1c2dd7b3e910`.
+Initial GitHub Actions run: `33861656348`.
 
 That facade provides the stable internal read/query boundary for:
 
 - canonical specimen reads from fish stacks and transfer/record NBT;
 - stored canonical FishScore and raw FishScore reads;
-- fishing-gear modifier queries and exact gear-profile lookup;
+- stable fishing-gear modifier queries;
 - Tide species-profile lookup and stable profile enumeration;
 - canonical record comparison, replacement, specimen identity, highest team score, and Team Top Fish reads.
 
-The API returns the existing canonical `SpecimenData` and `SpeciesProfile` domain records rather than creating another representation. Covered feature code should prefer this facade over direct imports of canonical persistence, species-adapter, scoring, gear-registry, or record-index implementation classes.
+The API returns the existing canonical `SpecimenData` and `SpeciesProfile` domain records rather than creating another representation. Covered feature code should prefer this facade over direct imports of canonical persistence, species-adapter, gear-registry, or record-index implementation classes.
 
-The initial implementation and focused unit tests passed the normal streamlined `dev` CI workflow. The API boundary and ownership rules are documented in `docs/TIDEBORNE_INTERNAL_API.md`.
+The facade is intentionally read/query-only. FishScore calculation remains owned by `FishScoreV2Service`, and fishing-gear registry profiles remain owned by `FishingGearRegistry`; neither score calculation nor `FishingGearRegistry.GearProfile` is exported through the facade. This keeps the API from becoming a second authoring path or leaking implementation registry types.
+
+The initial implementation and focused unit tests passed the normal streamlined `dev` CI workflow. Additional focused coverage validates transfer payload reads and canonical Team Top Fish ordering. The API boundary and ownership rules are documented in `docs/TIDEBORNE_INTERNAL_API.md`.
 
 This stage does not perform a bulk migration of all existing UI or integration callers. Caller migration and the canonical specimen presentation layer remain separate follow-on work so the API boundary can stay small and independently validated.
 
