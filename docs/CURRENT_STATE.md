@@ -59,6 +59,27 @@ The old `TIDEBORN-2.0.0` name is retained only as the legacy 2.0.0 release ident
 
 GitHub's repository-level Immutable Releases feature is separate from the workflow. The workflow now refuses silent replacement on its own. Enabling GitHub Immutable Releases additionally prevents manual asset replacement and tag movement at the server level.
 
+### Streamlined CI validation
+
+The streamlined `dev` workflow introduced at `32f29b24f5cb777baf9f4228e3dd8e7c6e0c5cc5` was revalidated after making `scripts/validate_release_artifact.sh` semantic-version aware.
+
+Validated CI head: `3308ab5610ff121f13d12a03532c60c41c1f831e`.
+GitHub Actions run: `33831374450`.
+
+That normal `dev` push passed:
+
+- exact dependency fetch and checksum validation;
+- repository and semantic-version validation for Tideborne 2.0.1;
+- clean Gradle build and unit tests;
+- the 58-test core Fabric GameTest suite;
+- version-aware production JAR validation for `tideborne-2.0.1.jar`;
+- final validation-count reporting;
+- CI artifact upload.
+
+The optional-mod compatibility matrices and dedicated-server smoke are intentionally skipped on ordinary `dev` pushes and remain available for manual dispatch and tagged release validation. The `publish-release` job was skipped, confirming that a normal `dev` push is CI-only.
+
+After this validation, the public `TIDEBORN-2.0.0` release still targeted `6f1d2d0c67f38c5d5924f3c3572babe0fe6d2feb` and still exposed the same `tideborne-2.0.0.jar` artifact with SHA-256 `1f69f32fbb1bb85675dffddb5b585f33ab8f31a0495d31c3177a3f0d26190637`.
+
 ## Fishing System 2.0
 
 Fishing System 2.0 through Stage 64 is complete on `dev`, including the later Fishing Journal and Team Top 15 presentation fixes.
@@ -95,6 +116,7 @@ Detailed implementation and validation records remain in:
 
 - `dev` is the active development branch at version 2.0.1.
 - 2.0.0 is frozen to the exact published commit and artifact digest listed above.
-- `dev` pushes must run validation without publishing a GitHub Release.
+- normal `dev` pushes run the streamlined CI-only validation path and do not publish a GitHub Release.
 - the next public release must be produced from an explicit semantic-version tag matching `gradle.properties` exactly.
+- tagged releases run the fuller release validation path before publication.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
