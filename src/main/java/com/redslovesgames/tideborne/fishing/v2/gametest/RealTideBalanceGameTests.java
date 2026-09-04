@@ -42,7 +42,7 @@ public final class RealTideBalanceGameTests implements FabricGameTest {
     private final TideFishingContextAdapter contexts = new TideFishingContextAdapter();
     private final RealTideFishingSimulator simulator = new RealTideFishingSimulator();
 
-    @GameTest(templateName = "fabric-gametest-api-v1:empty", timeoutTicks = 600)
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void realTideCatalogBalanceProjection(TestContext helper) {
         ServerWorld overworld = helper.getWorld();
         ServerPlayerEntity player = helper.createMockCreativeServerPlayerInWorld();
