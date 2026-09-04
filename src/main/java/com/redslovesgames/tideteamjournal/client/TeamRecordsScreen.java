@@ -9,6 +9,9 @@ import com.redslovesgames.tideborne.client.LeaderboardMetricFilter;
 import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitAxis;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
 import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
 import com.redslovesgames.tideteamjournal.TeamProgressStore;
 import com.redslovesgames.tideteamjournal.network.TeamDataRequestPayload;
@@ -369,7 +372,7 @@ public final class TeamRecordsScreen extends Screen {
             FittedText fittedName = FishingUiLayout.ellipsize(name, 205, this.textRenderer::getWidth);
             TideTextRenderer.draw(graphics, this.textRenderer, fittedName.text(), x + 34, rowY, 5477982);
             String value = "fish_score".equals(this.metric)
-               ? FishingUiFormat.fishScore(StoredFishScoreStorage.readCanonical(entry))
+               ? CanonicalSpecimenPresentation.fishScore(StoredFishScoreStorage.readCanonical(entry))
                : Integer.toString(entry.getInt(this.metric));
             TideTextRenderer.draw(
                graphics,
@@ -450,11 +453,17 @@ public final class TeamRecordsScreen extends Screen {
       String eventName = Text.translatable("event.tide_team_journal." + event.type().name().toLowerCase()).getString();
       String firstLine = event.targetName() + " " + eventName + " " + this.fishName(event.fish());
       CanonicalRecordDisplay display = CanonicalRecordDisplay.from(tag).orElse(null);
-      String percentile = display == null ? FishingUiFormat.UNAVAILABLE : FishingUiFormat.percentile(display.percentile());
-      String body = display == null ? FishingUiFormat.UNAVAILABLE : display.bodyTypeLabel();
-      String condition = display == null ? FishingUiFormat.UNAVAILABLE : display.conditionLabel();
+      List<TraitDisplay> traits = display == null
+         ? CanonicalSpecimenPresentation.unavailableTraits()
+         : display.traits();
+      TraitDisplay body = CanonicalSpecimenPresentation.traitForAxis(traits, TraitAxis.BODY_TYPE);
+      TraitDisplay condition = CanonicalSpecimenPresentation.traitForAxis(traits, TraitAxis.CONDITION);
+      String percentile = CanonicalSpecimenPresentation.percentile(display == null ? Double.NaN : display.percentile());
       double length = display != null && Double.isFinite(display.length()) ? display.length() : event.newSize();
-      String secondLine = percentile + "  Body " + body + "  Condition " + condition + "  " + FishingUiFormat.length(length);
+      String secondLine = percentile
+         + "  " + body.shortLabel() + " " + body.value()
+         + "  " + condition.shortLabel() + " " + condition.value()
+         + "  " + CanonicalSpecimenPresentation.length(length);
       FittedText first = FishingUiLayout.ellipsize(firstLine, width - 6, this.textRenderer::getWidth);
       FittedText second = FishingUiLayout.ellipsize(secondLine, width - 6, this.textRenderer::getWidth);
 
@@ -466,11 +475,13 @@ public final class TeamRecordsScreen extends Screen {
          tooltip.add(Text.literal(firstLine));
          tooltip.add(Text.literal(secondLine));
          if (display != null) {
+            TraitDisplay pigmentation = CanonicalSpecimenPresentation.traitForAxis(traits, TraitAxis.PIGMENTATION);
+            TraitDisplay quality = CanonicalSpecimenPresentation.traitForAxis(traits, TraitAxis.QUALITY);
             tooltip.add(
                Text.literal(
                   "FishScore: " + display.scoreLabel()
-                     + "  Pigment: " + display.pigmentationLabel()
-                     + "  Quality: " + display.qualityLabel()
+                     + "  " + pigmentation.shortLabel() + ": " + pigmentation.value()
+                     + "  " + quality.shortLabel() + ": " + quality.value()
                )
             );
          }
