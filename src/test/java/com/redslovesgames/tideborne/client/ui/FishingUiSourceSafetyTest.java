@@ -106,6 +106,23 @@ class FishingUiSourceSafetyTest {
     }
 
     @Test
+    void topFishUsesCanonicalTraitPresentation() throws IOException {
+        String topFish = Files.readString(Path.of(AFFECTED_UI.get(1)));
+        assertTrue(topFish.contains("List<TraitDisplay> traits"));
+        assertTrue(topFish.contains("CanonicalSpecimenPresentation.unavailableTraits()"));
+        assertTrue(topFish.contains("display.traits()"));
+        assertTrue(topFish.contains("trait.label()"));
+        assertTrue(topFish.contains("trait.value()"));
+        assertTrue(topFish.contains("trait.color()"));
+        assertFalse(topFish.contains("CanonicalSpecimenPresentation.BODY_TYPE_COLOR"));
+        assertFalse(topFish.contains("CanonicalSpecimenPresentation.CONDITION_COLOR"));
+        assertFalse(topFish.contains("CanonicalSpecimenPresentation.PIGMENTATION_COLOR"));
+        assertFalse(topFish.contains("CanonicalSpecimenPresentation.QUALITY_COLOR"));
+        assertFalse(topFish.contains("\"Body Type\""));
+        assertFalse(topFish.contains("\"Pigmentation\""));
+    }
+
+    @Test
     void topFishUsesBoundedFifteenSlotTable() throws IOException {
         String topFish = Files.readString(Path.of(AFFECTED_UI.get(1)));
         int slots = constantValue(topFish, "TOP_FISH_SLOTS");
