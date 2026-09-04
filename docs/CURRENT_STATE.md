@@ -1,17 +1,18 @@
 # Current development state
 
-Updated: 2026-08-31
+Updated: 2026-09-03
 
 ## Baseline and branch
 
 - compatibility baseline: Tideborne 1.3.57
-- current release line: Tideborne 2.0.0
+- current published release: Tideborne 2.0.0
+- current development version: Tideborne 2.0.1
 - Minecraft: 1.21.1
 - Java: 21
 - Tide runtime target: 2.1.1
 - active development branch: `dev`
 - reconstruction branch: `reconstruct-1.3.57`
-- `main` remains untouched at `41e53b052660e04e546b07b305c5047b3f646675`
+- `main` remains untouched unless explicitly authorized
 - authoritative Fishing System 2.0 contract: `docs/FISHING_SYSTEM_2_SPEC.md`
 
 Frozen reconstruction anchors:
@@ -21,242 +22,79 @@ Frozen reconstruction anchors:
 - Tide 2.1.1 Fabric 1.21.1 SHA-256: `498a5e8dda940866c9b0decadf7960724ef489fb49215b30f70c18d12f07b1c8`
 - Apex Waters 1.1.1 Fabric 1.21.1 SHA-256: `00f1c5eaf5b7c2e79a2c64cdeac1a89f2430b2c9ab5f56043f148bde170dba37`
 
-Historical implementation details remain available in dedicated stage documents and Git history. This file records the current authoritative state.
+Historical stage-by-stage implementation details remain available in the dedicated stage documents and Git history. This file records the current authoritative state.
 
-## Fishing System 2.0 is complete
+## Exact published 2.0.0 build
 
-The current `dev` branch contains the completed Fishing System 2.0 implementation, its release validation, recovery/admin tooling, UI polish, canonical gear registry, creative-tab work, and the Stage 64 canonical-record and balance audit.
+The public 2.0.0 release is now treated as frozen legacy release state.
+
+- GitHub release/tag: `TIDEBORN-2.0.0`
+- exact release commit: `6f1d2d0c67f38c5d5924f3c3572babe0fe6d2feb`
+- artifact: `tideborne-2.0.0.jar`
+- artifact size: `1,087,782` bytes
+- artifact SHA-256: `1f69f32fbb1bb85675dffddb5b585f33ab8f31a0495d31c3177a3f0d26190637`
+
+That version, commit, filename, size, and digest tuple is the authoritative identity of the published 2.0.0 build. Future `dev` commits must not retarget the release or replace its JAR.
+
+## Release versioning policy
+
+Release publication was corrected on `dev` beginning with the 2.0.1 development line.
+
+`.github/workflows/build.yml` now follows these rules:
+
+- normal pushes to `dev`, `main`, and `reconstruct-1.3.57` are CI-only;
+- pull requests are CI-only;
+- manual workflow dispatch is CI-only;
+- public release publication is reachable only from an explicit numeric semantic-version tag such as `2.0.1`, `2.0.2`, or `2.1.0`;
+- `gradle.properties` must contain an exact `MAJOR.MINOR.PATCH` semantic version;
+- on a release tag, the tag text must exactly equal `mod_version`;
+- the checked-out commit must exactly equal the GitHub tag-event commit;
+- the release JAR is built and validated from that tagged commit;
+- the artifact filename is derived from the semantic version rather than hardcoded to 2.0.0;
+- a release is created only if no release with that tag already exists;
+- the workflow contains no release upload `--clobber` path and never edits or retargets an existing release;
+- release metadata records the exact commit SHA and JAR SHA-256.
+
+The old `TIDEBORN-2.0.0` name is retained only as the legacy 2.0.0 release identifier. New releases use the exact semantic version as the Git tag, for example `2.0.1`.
+
+GitHub's repository-level Immutable Releases feature is separate from the workflow. The workflow now refuses silent replacement on its own. Enabling GitHub Immutable Releases additionally prevents manual asset replacement and tag movement at the server level.
+
+## Fishing System 2.0
+
+Fishing System 2.0 through Stage 64 is complete on `dev`, including the later Fishing Journal and Team Top 15 presentation fixes.
 
 Canonical runtime authority includes:
 
-- server-owned Tide species selection using canonical Fishing Luck weighting and existing Tide eligibility restrictions;
+- server-owned Tide species selection using canonical Fishing Luck weighting and Tide eligibility restrictions;
 - one canonical natural specimen percentile/base-size sample per catch;
 - independent deterministic Body Type, Condition, Pigmentation, and Specimen Quality axes;
 - canonical final physical size and size-adjusted final percentile without a second specimen sample;
-- canonical Perfect Catch integration and Perfect Specimen behavior;
+- canonical Perfect Catch and Perfect Specimen behavior;
 - server-owned per-player, per-species Trait Momentum;
 - canonical FishScore V2 as the production score source;
 - canonical Strength, Tempo, line, Steel Leader, rod, hook, bait, and Leviathan Bait behavior;
 - canonical ItemStack, entity, bucket, display, Satchel, Journal, record, leaderboard, and network persistence/projection paths;
 - deterministic one-way migration for recoverable Tideborne 1.3.57 fish and saved-data representations;
-- guarded legacy compatibility paths that cannot reroll or overwrite current canonical V2 state.
-
-The final release validation for the core 2.0.0 implementation is documented in `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`.
-
-## Post-release stages 59 through 63 are complete
-
-Stage 59 established the shared canonical fishing presentation layer and corrected score-projection and layout issues across fishing-facing UI. Canonical specimen/FishScore state remains the read-only UI source of truth.
-
-Stage 60 added operator-only identity-preserving repair and explicitly confirmed destructive reroll tooling for legacy fish. Recovery details are documented in `docs/FISHING_RECOVERY.md`.
-
-Stage 61 closed remaining player-facing integration issues, including canonical progression for legitimate fish entering Tide's normal catch-accounting path and clearer Top Fish specimen details.
-
-The owned legacy-fish Journal backfill then filled missing canonical `latest` display snapshots from actual old fish a player still owns without replaying catch progression or unlocking uncaught species.
-
-Stage 62 hardened gear identity around one exact namespaced canonical fishing-gear registry. Runtime modifiers, advanced tooltips, and operator diagnostics resolve through the same registered identity instead of substring or display-name guesses.
-
-Stage 63 added the dedicated `tideborne:tideborne` Creative Mode tab with the Angler's Satchel icon, stable gameplay-role ordering, correct optional-mod visibility, and no duplicate Tideborne injection into vanilla Tools or Ingredients.
-
-Stage 63 implementation head `24cc3a42e30f9dc8a51bf9abef469585e0d2b48b` passed GitHub Actions run `33360256194`. Its published `tideborne-2.0.0.jar` snapshot had SHA-256 `ff9ef2a8f8aa975336816ae56240302c31dcc777606bb1a88d23c947b799b937` before the later Stage 64 release refresh.
-
-## Stage 64 canonical record and balance audit is complete
-
-Stage 64 closes the final Fishing System 2.0 record semantics, record-recovery safety, specimen projection, and built-in equipment/stacking audit.
-
-### Canonical Best Specimen
-
-`FishScoreLedger` persists one canonical Best Specimen per species. It is separate from the Journal's `latest` specimen snapshot and from historical largest/smallest aggregates.
-
-Best Specimen comparison is deterministic:
-
-1. higher FishScore;
-2. higher percentile;
-3. higher length;
-4. lower deterministic seed;
-5. older server catch timestamp;
-6. player UUID lexical order.
-
-Canonical record identity includes species, server catch timestamp, deterministic seed, FishScore rounded to six decimals, and player UUID. Duplicate canonical identity is suppressed.
-
-### Team Top 15
-
-Team Top 15 is derived from the canonical Best Specimen map and uses the same deterministic comparator.
-
-- the projection is capped at 15;
-- only one current canonical Best Specimen per species participates;
-- duplicate canonical record identity is blocked;
-- repeated catches of the same species remain valid history, but do not occupy multiple current Top 15 slots;
-- no second FishScore formula or `latest`-specimen reconstruction is used.
-
-This supersedes stale Top 12 wording from pre-Stage-64 documentation.
-
-### Replay-safe recovery
-
-`FishRecords.rebuildRecordsFromCatch` can rebuild durable record projections from an already-canonical catch without simulating a new live catch.
-
-Recovery may restore or improve:
-
-- per-player best FishScore;
-- canonical Best Specimen;
-- derived Team Top 15.
-
-It does not increment recent/total live-catch counters, does not advance challenge progress, and does not emit the normal catch listener/event signal used by live-catch reward paths.
-
-### Canonical UI projection
-
-The Team Records 3D preview is driven by the selected canonical specimen state. The Journal Best Specimen panel exposes FishScore, percentile, length, Body Type, Condition, Pigmentation, Quality, and Perfect Catch from canonical data.
-
-Regression coverage includes Iridescent pigmentation transfer through normal world/entity storage and record-preview state.
-
-### Equipment and stacking audit
-
-The deterministic Stage 64 audit covers:
-
-- all 5 built-in rod tiers;
-- all 32 built-in Tide bobbers;
-- all 7 built-in hooks;
-- all 3 built-in bait entries;
-- native/Tideborne line progression;
-- Steel Leader line protection;
-- Leviathan Bait boss reachability and Fishing System 2.0 modifier ownership;
-- tagged third-party bobber compatibility;
-- representative full-kit stacking, degraded/corrupted/summoned states, and drop transfer.
-
-Equipment cannot directly author FishScore or canonical specimen geometry. Each modifier layer is applied through its owning system, and FishScore is calculated once from final canonical specimen state.
-
-Detailed audit values and progression tables are in `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`.
-
-## Stage 64 validation
-
-Validated implementation head:
-
-- `f6aac3de1277500229428d37a69faf1c5eaf7d9a` - `test: register pigmentation render state GameTests`
-
-GitHub Actions run `33367391365` passed:
-
-- repository/dependency validation;
-- clean Java 21 Gradle build;
-- unit tests;
-- Fabric GameTests with no optional compatibility mods;
-- Fabric GameTests with Apex Waters only;
-- Fabric GameTests with Myths of the Sea only;
-- Fabric GameTests with Apex Waters and Myths of the Sea together;
-- dedicated-server smoke;
-- client-connect smoke;
-- production release JAR validation;
-- artifact upload;
-- release publishing.
-
-Published release state:
-
-- tag: `TIDEBORN-2.0.0`;
-- target commit: `f6aac3de1277500229428d37a69faf1c5eaf7d9a`;
-- artifact: `tideborne-2.0.0.jar`;
-- artifact SHA-256: `52ea877e4f32a36091910d6d0b70d279baf490f5e324b07e8ee5be451893c9ae`.
-
-No Stage 64 implementation failure remains after that run.
-
-The Stage 64 documentation closure is committed after the validated implementation head and does not change runtime behavior.
-
-## Post-Stage-64 Fishing Journal layout hotfix
-
-The canonical Fishing Journal right-page overflow shown after the Fishing System 2.0 UI expansion is fixed on `dev`.
-
-Runtime implementation head: `bba9fe969d1860fd6923e017babfd88b78e4d0e1`.
-
-The hotfix:
-
-- compacts Largest and Smallest record data into one two-column row while retaining full hover details;
-- reduces the canonical Best Specimen block to a bounded 38-pixel section;
-- keeps length, percentile, FishScore, Body Type, Condition, Pigmentation, Quality, and Perfect Catch visible or available through the compact presentation;
-- moves Perfect Catch into the Best Specimen heading so it no longer consumes a separate overflowing row;
-- reserves the journal footer by placing the Team Records button at book-local Y 240 with height 16, keeping the button inside the 260-pixel book instead of overlapping specimen data;
-- adds a source regression guard for compact stats layout and footer-button bounds.
-
-GitHub Actions validation run `33391874599` passed the complete release matrix for this hotfix:
-
-- repository/dependency validation;
-- clean Java 21 Gradle build and unit tests;
-- Fabric GameTests with no optional compatibility mods;
-- Fabric GameTests with Apex Waters only;
-- Fabric GameTests with Myths of the Sea only;
-- Fabric GameTests with Apex Waters and Myths of the Sea together;
-- dedicated-server and client-connect smoke validation;
-- production release JAR validation;
-- artifact upload;
-- release publishing.
-
-The published `TIDEBORN-2.0.0` release at that point targeted `bba9fe969d1860fd6923e017babfd88b78e4d0e1`. That `tideborne-2.0.0.jar` snapshot was 1,080,731 bytes with SHA-256 `85f33f07a0b6f0006ab6697819296f13c170f2c3bae25f76de4fb7535ebe7bc4`.
-
-## Fishing Journal visual cleanup refinement
-
-The follow-up visual cleanup requested from live in-game screenshots is complete on `dev`.
-
-Runtime implementation head: `fa465d26478ed9d7221bd43d3ff4262ca938b1da`.
-
-The refinement:
-
-- moves First Catch out of the lower stats stack and onto the Size badge row as a compact `FC` label at 75% text scale;
-- keeps the existing real-date versus in-game-day behavior when formatting First Catch;
-- removes the duplicated full-size First Catch row from the lower stats section, freeing vertical space;
-- places the Best Specimen divider above the heading with explicit padding so the divider no longer intersects the heading or score text;
-- separates `Best Specimen` and `PC Yes/No` into independently aligned header values;
-- replaces the previous per-axis rainbow text colors with one consistent journal palette: dark brown labels, muted sepia supporting text, cyan-blue canonical values, and gold only for exceptional trait states or a successful Perfect Catch;
-- keeps normal Body Type, Condition, Pigmentation, and Quality values visually consistent while highlighting only non-normal/special values;
-- adds regression coverage for the moved First Catch row, compact scaling, divider placement, footer bounds, and unified palette.
-
-GitHub Actions run `33412166611` passed the full validation and publishing matrix:
-
-- repository/dependency validation;
-- clean Java 21 Gradle build and unit tests;
-- Fabric GameTests with no optional compatibility mods;
-- Fabric GameTests with Apex Waters only;
-- Fabric GameTests with Myths of the Sea only;
-- Fabric GameTests with Apex Waters and Myths of the Sea together;
-- dedicated-server and client-connect smoke validation;
-- production release JAR validation;
-- artifact upload;
-- release publishing.
-
-The published `TIDEBORN-2.0.0` release at that point targeted `fa465d26478ed9d7221bd43d3ff4262ca938b1da`. That `tideborne-2.0.0.jar` snapshot was 1,083,033 bytes with SHA-256 `1851e31daf7c3272e53318edd9e787898984ca9b8176232ba691edb22f0b3fb3`.
-
-## Team Top 15 UI boundary refinement
-
-The Top Fish screen shown in the live screenshot has been tightened so the left-page leaderboard no longer crosses the book spine or hangs into the lower page edge.
-
-Runtime/test head: `3a5f29b3db22af4291a3c8095501c8a2f6681e4d`.
-
-The refinement:
-
-- moves the left-list right boundary to book-local X 196, leaving a clear margin before the center seam at X 200;
-- moves the list-panel bottom to book-local Y 240, leaving a bottom-page margin while still fitting fifteen rows;
-- uses fixed rank, icon, name, rarity, and right-aligned FishScore columns inside the bounded list area;
-- reduces the fish-name width and ellipsizes long names before they can collide with rarity or score columns;
-- clips the complete leaderboard list to its page-local panel bounds;
-- always renders rank slots 1 through 15, even when fewer than fifteen canonical records currently exist;
-- shows an empty dash for an unfilled canonical slot rather than fabricating a fish record;
-- keeps only actual canonical records selectable and keeps the existing canonical Team Top Fish limit of fifteen;
-- adds regression coverage for the fifteen-slot count, page/spine bounds, score-column bounds, empty-slot rendering, and clipping.
-
-GitHub Actions run `33419192475` passed the full validation and publishing matrix:
-
-- repository/dependency validation;
-- clean Java 21 Gradle build and unit tests;
-- Fabric GameTests with no optional compatibility mods;
-- Fabric GameTests with Apex Waters only;
-- Fabric GameTests with Myths of the Sea only;
-- Fabric GameTests with Apex Waters and Myths of the Sea together;
-- dedicated-server and client-connect smoke validation;
-- production release JAR validation;
-- artifact upload;
-- release publishing.
-
-The published `TIDEBORN-2.0.0` release now targets `3a5f29b3db22af4291a3c8095501c8a2f6681e4d`. The refreshed `tideborne-2.0.0.jar` is 1,083,351 bytes with SHA-256 `3e449deae3817ce931b36e1075e344b6bcc3ad23aa798b332580cb1f0b9b6740`.
+- guarded legacy compatibility paths that cannot reroll or overwrite current canonical V2 state;
+- canonical Best Specimen per species and derived Team Top 15 records;
+- replay-safe record recovery that does not replay live-catch side effects;
+- exact namespaced canonical fishing-gear identity;
+- dedicated Tideborne creative tab and optional-mod visibility matrix.
+
+Detailed implementation and validation records remain in:
+
+- `docs/FISHING_SYSTEM_2_SPEC.md`
+- `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`
+- `docs/STAGE_59_FISHING_UI_POLISH.md`
+- `docs/FISHING_RECOVERY.md`
+- `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`
+- `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`
+- `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`
 
 ## Current execution gate
 
-Fishing System 2.0 through Stage 64 is complete on `dev`, including the post-Stage-64 Fishing Journal layout fixes, visual cleanup refinement, and Team Top 15 UI boundary refinement above.
-
-There is no known Fishing System 2.0 blocker or unfinished Fishing System 2.0 implementation item. Remaining work in `docs/TODO.md` is intentionally outside the completed Fishing System 2.0 scope, currently long-term licensing policy and future version compatibility.
-
-Do not merge, rebase, or modify `main` unless explicitly authorized.
+- `dev` is the active development branch at version 2.0.1.
+- 2.0.0 is frozen to the exact published commit and artifact digest listed above.
+- `dev` pushes must run validation without publishing a GitHub Release.
+- the next public release must be produced from an explicit semantic-version tag matching `gradle.properties` exactly.
+- `main` must not be merged, rebased, or modified unless explicitly authorized.
