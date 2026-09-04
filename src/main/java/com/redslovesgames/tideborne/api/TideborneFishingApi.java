@@ -41,6 +41,20 @@ public final class TideborneFishingApi {
         return CanonicalSpecimenStorage.read(stack);
     }
 
+    /**
+     * Reads only a complete current-schema specimen without migrating or otherwise modifying the
+     * supplied stack. Client presentation code should prefer this method when it must stay
+     * decode-only.
+     */
+    public static Optional<SpecimenData> readCurrentSpecimen(ItemStack stack) {
+        if (stack == null
+                || stack.isEmpty()
+                || CanonicalSpecimenStorage.detectMigration(stack) != CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT) {
+            return Optional.empty();
+        }
+        return CanonicalSpecimenStorage.read(stack);
+    }
+
     /** Reads canonical specimen state from transfer/record NBT without mutation or legacy fallback. */
     public static Optional<SpecimenData> readTransferredSpecimen(NbtCompound source) {
         return CanonicalSpecimenStorage.readTransferData(source);
