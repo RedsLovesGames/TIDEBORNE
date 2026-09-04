@@ -7,7 +7,6 @@
     "ApplyFishEntityLengthFunctionMixin",
     "BucketableMixin",
     "FishDisplayPersistenceMixin",
-    "LegacyFishScoreCalculatorMixin",
     "MobBucketItemMixin",
     "MobSpecimenMixin",
     "TideFishingHookMixin",
