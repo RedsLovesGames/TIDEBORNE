@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.redslovesgames.tideborne.fishing.v2.CanonicalRarity;
-import com.redslovesgames.tideborne.fishing.v2.FishScoreV2Service;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
@@ -19,15 +17,11 @@ import org.junit.jupiter.api.Test;
 
 class TideborneFishingApiTest {
     @Test
-    void exposesStoredAndCalculatedFishScoreWithoutChangingSpecimen() {
+    void exposesStoredFishScoreWithoutChangingSpecimen() {
         SpecimenData specimen = specimen(80.0, 240.0, 1234);
 
         assertEquals(1234, TideborneFishingApi.readFishScore(specimen).orElseThrow());
         assertEquals(456.5, TideborneFishingApi.readRawFishScore(specimen).orElseThrow(), 0.0001);
-
-        FishScoreV2Service.Result expected = new FishScoreV2Service().calculate(CanonicalRarity.FOUR_STAR, specimen);
-        FishScoreV2Service.Result actual = TideborneFishingApi.calculateFishScore(CanonicalRarity.FOUR_STAR, specimen);
-        assertEquals(expected, actual);
         assertEquals(80.0, specimen.finalPercentile());
         assertEquals(240.0, specimen.finalLength());
     }
