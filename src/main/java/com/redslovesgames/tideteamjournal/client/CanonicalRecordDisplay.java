@@ -3,7 +3,10 @@ package com.redslovesgames.tideteamjournal.client;
 import com.redslovesgames.tideborne.api.TideborneFishingApi;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitAxis;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
 import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -62,27 +65,35 @@ public record CanonicalRecordDisplay(
         return CanonicalSpecimenPresentation.fishScore(score);
     }
 
+    /**
+     * Returns all record traits in the one canonical presentation order with shared labels and colors.
+     * This also covers compatibility-only string fields from historical synchronized records.
+     */
+    public List<TraitDisplay> traits() {
+        return CanonicalSpecimenPresentation.traits(bodyType, condition, pigmentation, quality);
+    }
+
+    public TraitDisplay trait(TraitAxis axis) {
+        return CanonicalSpecimenPresentation.traitForAxis(traits(), axis);
+    }
+
     public String bodyTypeLabel() {
-        return label(bodyType);
+        return trait(TraitAxis.BODY_TYPE).value();
     }
 
     public String conditionLabel() {
-        return label(condition);
+        return trait(TraitAxis.CONDITION).value();
     }
 
     public String pigmentationLabel() {
-        return label(pigmentation);
+        return trait(TraitAxis.PIGMENTATION).value();
     }
 
     public String qualityLabel() {
-        return label(quality);
+        return trait(TraitAxis.QUALITY).value();
     }
 
     private static String normalized(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-    }
-
-    private static String label(String value) {
-        return CanonicalSpecimenPresentation.trait(value);
     }
 }
