@@ -1,6 +1,6 @@
 # Tideborne post-2.0 backlog
 
-Updated: 2026-09-03
+Updated: 2026-09-04
 
 Fishing System 2.0 implementation, recovery tooling, integration polish, canonical gear identity, the dedicated Tideborne creative tab, Stage 64 record/balance work, and the release-versioning correction are complete on `dev`.
 
@@ -13,6 +13,15 @@ The authoritative current state is documented in `docs/CURRENT_STATE.md`.
 - [x] Validate server authority, multiplayer synchronization, optional-mod matrices, and dedicated-server behavior.
 - [x] Complete Stages 59 through 64 and the later Fishing Journal and Team Top 15 presentation fixes.
 - [x] Freeze the exact public 2.0.0 build identity in `docs/CURRENT_STATE.md`.
+
+## Post-2.0 architecture goals
+
+- [x] Create a small canonical Tideborne fishing API layer for specimen reads, stored FishScore reads, gear modifier queries, species profiles, and record reads. Boundary documented in `docs/TIDEBORNE_INTERNAL_API.md`.
+- [ ] Create one canonical specimen presentation layer for trait names/order, colors, length/percentile formatting, FishScore formatting, and rarity stars, then migrate covered UI consumers without rebuilding trait state per screen.
+- [ ] Inventory Tide-targeting mixins, replace avoidable mixins with stable APIs/shared integration where possible, and document the genuinely version-sensitive remainder.
+- [ ] Remove truly dead legacy calculations while preserving required migration reads, then review the historical `tideborne`, `tideboundcompatibility`, `tideteamjournal`, and `tidetraits` package split without a broad rewrite.
+
+Implementation order is intentional: canonical API first, presentation second, mixin cleanup third, legacy/package cleanup last. Do not clean old code first because the new boundaries make genuinely dead paths easier to identify safely.
 
 ## Release versioning
 
