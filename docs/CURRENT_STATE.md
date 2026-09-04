@@ -102,6 +102,28 @@ Canonical runtime authority includes:
 - exact namespaced canonical fishing-gear identity;
 - dedicated Tideborne creative tab and optional-mod visibility matrix.
 
+### Real Tide balance simulator
+
+The authoritative tuning simulator now uses the live Tide 2.1.1 species catalog instead of the synthetic equal-rarity test pool.
+
+Implementation head: `918b5fce07036b888cebb505ffec4faebeb1f0af`.
+GitHub Actions run: `33832555397`.
+Authoritative report: `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`.
+
+The runtime-backed harness:
+
+- loads all 106 Tide 2.1.1 fish from `TideData.FISH`;
+- runs each fish through Tide's real `shouldKeep(context)` eligibility and context modifiers;
+- preserves real rarity, encounter weight, size distribution, strength, and speed metadata through `TideSpeciesProfileAdapter`;
+- samples nine representative fishing contexts covering river, swamp/rain/night, warm ocean, deep ocean/night, frozen ocean, lush cave, dripstone cave, Nether lava, and End void fishing;
+- exposes 61 unique Tide species across that representative matrix;
+- measures rarity distribution, FishScore distribution, notable-trait frequency, Perfect Specimen frequency, Fishing Luck value, Trait Luck value, and catch-count progression;
+- uses controlled same-seed sensitivity runs to isolate Fishing Luck from Trait Luck.
+
+The validation run passed 282 unit tests and all 59 required core GameTests, including the real Tide balance projection. Production JAR validation and CI artifact upload also passed. The release publication job was skipped because this was a normal `dev` push.
+
+The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains useful as a deterministic synthetic probability/unit-regression record, but it is no longer the authoritative content-balance report for actual Tide gameplay.
+
 Detailed implementation and validation records remain in:
 
 - `docs/FISHING_SYSTEM_2_SPEC.md`
@@ -110,7 +132,8 @@ Detailed implementation and validation records remain in:
 - `docs/FISHING_RECOVERY.md`
 - `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`
 - `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`
-- `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`
+- `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`
+- `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` for the historical synthetic regression model
 
 ## Current execution gate
 
@@ -119,4 +142,5 @@ Detailed implementation and validation records remain in:
 - normal `dev` pushes run the streamlined CI-only validation path and do not publish a GitHub Release.
 - the next public release must be produced from an explicit semantic-version tag matching `gradle.properties` exactly.
 - tagged releases run the fuller release validation path before publication.
+- real Fishing System 2.0 balance tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md` rather than the historical equal-rarity synthetic report.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
