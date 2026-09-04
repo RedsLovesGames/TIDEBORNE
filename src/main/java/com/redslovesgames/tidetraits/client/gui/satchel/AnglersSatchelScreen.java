@@ -5,7 +5,6 @@
  */
 package com.redslovesgames.tidetraits.client.gui.satchel;
 
-import com.redslovesgames.tideborne.client.ui.FishingUiFormat;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout;
 import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
@@ -489,7 +488,9 @@ public final class AnglersSatchelScreen extends Screen {
 
    private void renderRecordBadge(DrawContext graphics, int x, int y, String icon, String label, ItemStack stack) {
       blit(graphics, statusIcon(icon), x, y, 7, 7);
-      String rawValue = stack.isEmpty() ? FishingUiFormat.UNAVAILABLE : stack.getName().getString() + " " + FishingUiFormat.length(length(stack));
+      String rawValue = stack.isEmpty()
+         ? CanonicalSpecimenPresentation.UNAVAILABLE
+         : stack.getName().getString() + " " + CanonicalSpecimenPresentation.length(length(stack));
       int valueWidth = Math.max(18, 155 - this.textRenderer.getWidth(label + " "));
       String value = this.textRenderer.trimToWidth(rawValue, valueWidth);
       graphics.drawText(this.textRenderer, label + " " + value, x + 11, y - 1, -12965349, false);
@@ -526,8 +527,8 @@ public final class AnglersSatchelScreen extends Screen {
          graphics.drawText(this.textRenderer, "No personal record yet", x, y + 10, -9282236, false);
       } else {
          PersonalRecordView stats = record.get();
-         graphics.drawText(this.textRenderer, "Personal largest: " + FishingUiFormat.length(stats.largest()), x, y + 10, -9282236, false);
-         graphics.drawText(this.textRenderer, "Personal smallest: " + FishingUiFormat.length(stats.smallest()), x, y + 19, -9282236, false);
+         graphics.drawText(this.textRenderer, "Personal largest: " + CanonicalSpecimenPresentation.length(stats.largest()), x, y + 10, -9282236, false);
+         graphics.drawText(this.textRenderer, "Personal smallest: " + CanonicalSpecimenPresentation.length(stats.smallest()), x, y + 19, -9282236, false);
       }
    }
 
@@ -1128,7 +1129,7 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private static String recordScoreLabel(ItemStack stack) {
-      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreLabel).orElse(FishingUiFormat.UNAVAILABLE);
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreLabel).orElse(CanonicalSpecimenPresentation.UNAVAILABLE);
    }
 
    private static boolean sameLength(double first, double second) {
