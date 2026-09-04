@@ -35,6 +35,8 @@ class SatchelSpecimenDisplayTest {
    void displayLabelsAndOrderComeFromCanonicalPresentation() {
       SatchelSpecimenDisplay display = SatchelSpecimenDisplay.fromCanonical(specimen(OptionalInt.of(2711)), 4);
 
+      assertEquals("47.8 cm", display.lengthLabel());
+      assertEquals("P99.1", display.percentileLabel());
       assertEquals("Giant", display.bodyTypeLabel());
       assertEquals("Scarred", display.conditionLabel());
       assertEquals("Iridescent", display.pigmentationLabel());
@@ -45,7 +47,8 @@ class SatchelSpecimenDisplayTest {
          CanonicalSpecimenPresentation.TraitAxis.CONDITION,
          CanonicalSpecimenPresentation.TraitAxis.PIGMENTATION,
          CanonicalSpecimenPresentation.TraitAxis.QUALITY
-      ), display.presentation().traits().stream().map(CanonicalSpecimenPresentation.TraitDisplay::axis).toList());
+      ), display.traits().stream().map(CanonicalSpecimenPresentation.TraitDisplay::axis).toList());
+      assertEquals(display.presentation().traits(), display.traits());
    }
 
    @Test
