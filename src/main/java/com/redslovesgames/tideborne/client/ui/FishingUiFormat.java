@@ -1,62 +1,47 @@
 package com.redslovesgames.tideborne.client.ui;
 
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.OptionalInt;
 
-/** Canonical player-facing formatting for Fishing System 2.0 display data. */
+/**
+ * Compatibility facade for existing Fishing System 2.0 UI formatting call sites.
+ *
+ * <p>Canonical specimen presentation semantics live in {@link CanonicalSpecimenPresentation}.
+ * New specimen-facing code should consume that layer directly.
+ */
 public final class FishingUiFormat {
-    public static final String UNAVAILABLE = "N/A";
+    public static final String UNAVAILABLE = CanonicalSpecimenPresentation.UNAVAILABLE;
     private static final DateTimeFormatter CATCH_DATE = DateTimeFormatter.ofPattern("M/d/yy, h:mm a", Locale.US);
 
     private FishingUiFormat() {
     }
 
     public static String fishScore(OptionalInt score) {
-        return score != null && score.isPresent() && score.getAsInt() > 0
-                ? Integer.toString(score.getAsInt())
-                : UNAVAILABLE;
+        return CanonicalSpecimenPresentation.fishScore(score);
     }
 
     public static String fishScore(int score) {
-        return score > 0 ? Integer.toString(score) : UNAVAILABLE;
+        return CanonicalSpecimenPresentation.fishScore(score);
     }
 
     public static String percentile(double percentile) {
-        return Double.isFinite(percentile) && percentile >= 0.0 && percentile <= 100.0
-                ? String.format(Locale.ROOT, "P%.1f", percentile)
-                : UNAVAILABLE;
+        return CanonicalSpecimenPresentation.percentile(percentile);
     }
 
     public static String length(double centimeters) {
-        if (!Double.isFinite(centimeters) || centimeters <= 0.0) {
-            return UNAVAILABLE;
-        }
-        return centimeters < 100.0
-                ? String.format(Locale.ROOT, "%.1f cm", centimeters)
-                : String.format(Locale.ROOT, "%.2f m", centimeters / 100.0);
+        return CanonicalSpecimenPresentation.length(centimeters);
     }
 
     public static String trait(Enum<?> value) {
-        return value == null ? UNAVAILABLE : trait(value.name());
+        return CanonicalSpecimenPresentation.trait(value);
     }
 
     public static String trait(String value) {
-        if (value == null || value.isBlank()) {
-            return UNAVAILABLE;
-        }
-        StringBuilder output = new StringBuilder();
-        for (String part : value.trim().toLowerCase(Locale.ROOT).replace('-', '_').split("_")) {
-            if (!part.isBlank()) {
-                if (!output.isEmpty()) {
-                    output.append(' ');
-                }
-                output.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
-            }
-        }
-        return output.isEmpty() ? UNAVAILABLE : output.toString();
+        return CanonicalSpecimenPresentation.trait(value);
     }
 
     public static String timestamp(long epochMillis) {
