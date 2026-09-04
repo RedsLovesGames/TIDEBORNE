@@ -17,7 +17,6 @@ The facade currently provides these groups of reads and queries:
 - specimen reads from `ItemStack` and canonical transfer/record NBT;
 - stored canonical FishScore and raw FishScore reads;
 - explicit fishing-gear modifier queries for Fishing Luck, Trait Luck, Strength, Tempo, Body Type chance, named additive/multiplier modifiers, and category/catch-pool restrictions;
-- exact registered fishing-gear profile lookup;
 - Tide species profile lookup by fish stack or namespaced species ID, plus stable species-profile enumeration;
 - canonical record comparison, record replacement, specimen-identity comparison, highest team score, and Team Top Fish reads.
 
@@ -29,7 +28,9 @@ The API does not own persistence formats. `CanonicalSpecimenStorage` remains the
 
 `readSpecimen(ItemStack)` may invoke the existing one-way legacy migration behavior owned by canonical storage. `readTransferredSpecimen(NbtCompound)` is a transfer/record read and does not add a second legacy fallback path.
 
-Stored FishScore reads return the score already attached to the canonical specimen. Read paths do not reroll percentile, size, traits, or specimen identity.
+Stored FishScore reads return the score already attached to the canonical specimen. Raw FishScore reads return the already-stored raw score when present. FishScore calculation remains owned by `FishScoreV2Service`; the read facade intentionally does not expose score calculation or create another score-authoring path. Read paths do not reroll percentile, size, traits, or specimen identity.
+
+Gear registry identity and profile records remain owned by `FishingGearRegistry`. The facade intentionally does not return `FishingGearRegistry.GearProfile`; covered feature code should use the stable modifier queries instead of depending on a registry implementation record.
 
 Species-profile reads are context-independent metadata lookups. They do not apply current biome, weather, bait, fishing-luck, or eligibility rules.
 
@@ -51,7 +52,7 @@ Do not add UI-specific reconstruction of trait state, FishScore, record ordering
 
 ## Scope boundary
 
-This API is intentionally not a replacement for the live catch pipeline. Server-authoritative catch generation, species selection, fight setup, Momentum mutation, persistence writes, and record writes remain owned by their existing application/integration services.
+This API is intentionally not a replacement for the live catch pipeline. Server-authoritative catch generation, species selection, fight setup, Momentum mutation, FishScore calculation, gear registration, persistence writes, and record writes remain owned by their existing application/integration services.
 
 Existing callers do not need to be migrated in one large rewrite. Migrate callers when touching the relevant feature or when a dedicated presentation/integration cleanup stage targets them.
 
@@ -59,4 +60,6 @@ Existing callers do not need to be migrated in one large rewrite. Migrate caller
 
 Initial implementation commit: `7631fb1f3493b709a2bc2e96d01d1c2dd7b3e910`.
 
-The implementation includes focused `TideborneFishingApiTest` coverage for stored/calculated score access, canonical gear queries, and canonical record ordering. The normal `dev` CI workflow for that commit completed successfully in GitHub Actions run `33861656348`.
+The implementation includes focused `TideborneFishingApiTest` coverage for stored/raw score reads, canonical gear queries, canonical record ordering, transfer payload reads, and Team Top Fish reads. The normal `dev` CI workflow for the initial implementation completed successfully in GitHub Actions run `33861656348`.
+
+The boundary was subsequently narrowed so it exposes only the intended stable read/query surface. FishScore calculation and `FishingGearRegistry.GearProfile` are deliberately kept behind their canonical owners rather than exported through the facade.
