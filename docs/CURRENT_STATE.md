@@ -160,6 +160,25 @@ That normal `dev` run completed successfully, including the clean Gradle build/u
 
 No meaningful independent specimen-presentation implementation is intentionally retained. Layout-specific positioning, clipping, localized screen text, and timestamp formatting remain client/UI responsibilities, while specimen values and semantics come from the canonical presentation layer.
 
+### Tide mixin inventory
+
+The third post-2.0 architecture stage, the Tide-targeting mixin inventory, is complete and documented in `docs/TIDE_MIXIN_INVENTORY.md`.
+
+The five active mixin configs currently register 41 mixins:
+
+- 21 target Tide classes directly;
+- 11 target vanilla Minecraft classes;
+- 8 target Tideborne-owned classes;
+- 1 targets Apex Waters through the optional compatibility plugin.
+
+The inventory therefore distinguishes actual Tide version coupling from general Mixin usage. The highest-risk Tide boundaries are the three `TideFishingHook` integrations, Team Journal takeover of `TidePlayerData.getOrCreate`/`syncTo`, exact Fish Catch Minigame constructor/call-site hooks, Fish Profile rendering with shadowed Tide fields/layout assumptions, Fish Display persistence, and the Angling Table/menu integration.
+
+Stage 3 replacement planning is now explicit. Strong candidates include moving journal display metadata off Tide's `SyncPlayerDataMsg` and onto a Tideborne-owned payload, verifying whether the legacy Tide FishScore calculator shim can be removed, moving bobber luck/lure behavior into the canonical gear modifier path, evaluating Fabric screen lifecycle APIs for the Team Records button, consolidating overlapping Fish Profile hooks, and consolidating overlapping catch-accounting hooks behind a shared Tideborne integration service.
+
+Mixins that remain necessary should become thin adapters into Tideborne-owned services. Stage 3 must preserve server authority, specimen identity, one-sample generation, FishScore V2, Momentum, minigame behavior, Satchel behavior, Journal/team records, and optional-mod classloading.
+
+`FishSatchelConversionMixin.java` still exists in source but is not configured by the active mixin configs. It is not an active Tide mixin and is deferred to the later dead-code/legacy cleanup pass rather than being silently restored.
+
 ### Real Tide balance simulator
 
 The authoritative tuning simulator now uses the live Tide 2.1.1 species catalog instead of the synthetic equal-rarity test pool.
@@ -193,6 +212,7 @@ Detailed implementation and validation records remain in:
 - `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`
 - `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` for the historical synthetic regression model
 - `docs/TIDEBORNE_INTERNAL_API.md`
+- `docs/TIDE_MIXIN_INVENTORY.md`
 
 ## Current execution gate
 
@@ -203,6 +223,7 @@ Detailed implementation and validation records remain in:
 - tagged releases run the fuller release validation path before publication.
 - real Fishing System 2.0 balance tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md` rather than the historical equal-rarity synthetic report.
 - new covered fishing read/query features should prefer `TideborneFishingApi` over direct implementation-layer reads.
-- canonical specimen presentation migration is complete; the active architecture stage is now Tide-targeting mixin inventory and replacement planning.
+- canonical specimen presentation migration is complete.
+- Tide-targeting mixin inventory and fragility classification are complete; the active architecture stage is now focused replacement/consolidation of avoidable Tide mixins according to `docs/TIDE_MIXIN_INVENTORY.md`.
 - broad legacy cleanup remains after the mixin architecture pass, not before it.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
