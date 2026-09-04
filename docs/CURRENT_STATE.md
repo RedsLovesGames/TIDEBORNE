@@ -26,7 +26,7 @@ Historical stage-by-stage implementation details remain available in the dedicat
 
 ## Exact published 2.0.0 build
 
-The public 2.0.0 release is now treated as frozen legacy release state.
+The public 2.0.0 release is frozen legacy release state.
 
 - GitHub release/tag: `TIDEBORN-2.0.0`
 - exact release commit: `6f1d2d0c67f38c5d5924f3c3572babe0fe6d2feb`
@@ -34,55 +34,19 @@ The public 2.0.0 release is now treated as frozen legacy release state.
 - artifact size: `1,087,782` bytes
 - artifact SHA-256: `1f69f32fbb1bb85675dffddb5b585f33ab8f31a0495d31c3177a3f0d26190637`
 
-That version, commit, filename, size, and digest tuple is the authoritative identity of the published 2.0.0 build. Future `dev` commits must not retarget the release or replace its JAR.
+Future `dev` commits must not retarget that release or replace its JAR.
 
 ## Release versioning policy
 
-Release publication was corrected on `dev` beginning with the 2.0.1 development line.
+`.github/workflows/build.yml` now keeps normal pushes and pull requests CI-only. Public release publication is reachable only from an explicit numeric semantic-version tag that exactly matches `gradle.properties`. Tagged publication validates the tagged commit itself, refuses an existing release/tag target, does not use `--clobber`, and records the exact commit and JAR digest.
 
-`.github/workflows/build.yml` now follows these rules:
+The old `TIDEBORN-2.0.0` name remains only as the legacy 2.0.0 release identifier. New releases use exact semantic versions such as `2.0.1`.
 
-- normal pushes to `dev`, `main`, and `reconstruct-1.3.57` are CI-only;
-- pull requests are CI-only;
-- manual workflow dispatch is CI-only;
-- public release publication is reachable only from an explicit numeric semantic-version tag such as `2.0.1`, `2.0.2`, or `2.1.0`;
-- `gradle.properties` must contain an exact `MAJOR.MINOR.PATCH` semantic version;
-- on a release tag, the tag text must exactly equal `mod_version`;
-- the checked-out commit must exactly equal the GitHub tag-event commit;
-- the release JAR is built and validated from that tagged commit;
-- the artifact filename is derived from the semantic version rather than hardcoded to 2.0.0;
-- a release is created only if no release with that tag already exists;
-- the workflow contains no release upload `--clobber` path and never edits or retargets an existing release;
-- release metadata records the exact commit SHA and JAR SHA-256.
-
-The old `TIDEBORN-2.0.0` name is retained only as the legacy 2.0.0 release identifier. New releases use the exact semantic version as the Git tag, for example `2.0.1`.
-
-GitHub's repository-level Immutable Releases feature is separate from the workflow. The workflow now refuses silent replacement on its own. Enabling GitHub Immutable Releases additionally prevents manual asset replacement and tag movement at the server level.
-
-### Streamlined CI validation
-
-The streamlined `dev` workflow introduced at `32f29b24f5cb777baf9f4228e3dd8e7c6e0c5cc5` was revalidated after making `scripts/validate_release_artifact.sh` semantic-version aware.
-
-Validated CI head: `3308ab5610ff121f13d12a03532c60c41c1f831e`.
-GitHub Actions run: `33831374450`.
-
-That normal `dev` push passed:
-
-- exact dependency fetch and checksum validation;
-- repository and semantic-version validation for Tideborne 2.0.1;
-- clean Gradle build and unit tests;
-- the 58-test core Fabric GameTest suite;
-- version-aware production JAR validation for `tideborne-2.0.1.jar`;
-- final validation-count reporting;
-- CI artifact upload.
-
-The optional-mod compatibility matrices and dedicated-server smoke are intentionally skipped on ordinary `dev` pushes and remain available for manual dispatch and tagged release validation. The `publish-release` job was skipped, confirming that a normal `dev` push is CI-only.
-
-After this validation, the public `TIDEBORN-2.0.0` release still targeted `6f1d2d0c67f38c5d5924f3c3572babe0fe6d2feb` and still exposed the same `tideborne-2.0.0.jar` artifact with SHA-256 `1f69f32fbb1bb85675dffddb5b585f33ab8f31a0495d31c3177a3f0d26190637`.
+The normal streamlined validation path was revalidated at `3308ab5610ff121f13d12a03532c60c41c1f831e`, GitHub Actions run `33831374450`. That run passed dependency/checksum validation, repository/version validation, clean Gradle build/unit tests, core GameTests, production JAR validation, final validation-count reporting, and CI artifact upload. Optional-mod matrices and dedicated-server smoke are intentionally not part of ordinary `dev` pushes.
 
 ## Fishing System 2.0
 
-Fishing System 2.0 through Stage 64 is complete on `dev`, including the later Fishing Journal and Team Top 15 presentation fixes.
+Fishing System 2.0 through Stage 64 is complete on `dev`, including later Fishing Journal and Team Top 15 presentation fixes.
 
 Canonical runtime authority includes:
 
@@ -102,106 +66,73 @@ Canonical runtime authority includes:
 - exact namespaced canonical fishing-gear identity;
 - dedicated Tideborne creative tab and optional-mod visibility matrix.
 
+## Post-2.0 architecture
+
 ### Canonical internal fishing API
 
-The first post-2.0 architecture goal is implemented on `dev` as `com.redslovesgames.tideborne.api.TideborneFishingApi`.
+`com.redslovesgames.tideborne.api.TideborneFishingApi` is the stable internal read/query boundary for canonical specimen reads, stored FishScore reads, fishing-gear modifier queries, Tide species profiles, and canonical record/Top Fish reads.
 
 Initial implementation commit: `7631fb1f3493b709a2bc2e96d01d1c2dd7b3e910`.
 Initial GitHub Actions run: `33861656348`.
+Boundary documentation: `docs/TIDEBORNE_INTERNAL_API.md`.
 
-That facade provides the stable internal read/query boundary for:
-
-- canonical specimen reads from fish stacks and transfer/record NBT;
-- stored canonical FishScore and raw FishScore reads;
-- stable fishing-gear modifier queries;
-- Tide species-profile lookup and stable profile enumeration;
-- canonical record comparison, replacement, specimen identity, highest team score, and Team Top Fish reads.
-
-The API returns the existing canonical `SpecimenData` and `SpeciesProfile` domain records rather than creating another representation. Covered feature code should prefer this facade over direct imports of canonical persistence, species-adapter, gear-registry, or record-index implementation classes.
-
-The facade is intentionally read/query-only. FishScore calculation remains owned by `FishScoreV2Service`, and fishing-gear registry profiles remain owned by `FishingGearRegistry`; neither score calculation nor `FishingGearRegistry.GearProfile` is exported through the facade. This keeps the API from becoming a second authoring path or leaking implementation registry types.
-
-The initial implementation and focused unit tests passed the normal streamlined `dev` CI workflow. Additional focused coverage validates transfer payload reads and canonical Team Top Fish ordering. The API boundary and ownership rules are documented in `docs/TIDEBORNE_INTERNAL_API.md`.
+The facade returns existing canonical domain records rather than creating a second representation. It is intentionally read/query-only. FishScore calculation remains owned by `FishScoreV2Service`, and fishing-gear registry authoring remains owned by `FishingGearRegistry`.
 
 ### Canonical specimen presentation
 
-The second post-2.0 architecture goal is complete on `dev` as the shared read-only presentation contract `com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation`.
+`com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation` is the shared read-only presentation contract for canonical trait order/names/colors, length, percentile, FishScore, and rarity stars.
 
-The presentation contract owns:
+Covered consumers include the Fishing Journal, Team Top 15/Top Fish, team records, Satchel detail/record views, normal fish tooltips, Tide Fish Profile overlays, and operator fishing inspection.
 
-- the stable canonical trait axis order: Body Type, Condition, Pigmentation, Quality;
-- full and short trait labels;
-- semantic trait colors;
-- canonical FishScore text;
-- canonical percentile text;
-- canonical length text;
-- canonical rarity-star text;
-- immutable `TraitDisplay` and complete specimen `View` projections over the existing `SpecimenData` record;
-- compatibility-only projection of historical synchronized trait strings without creating a second specimen model.
-
-The shared presentation class remains common-side safe and contains no client-only rendering classes. `FishingUiFormat` is now restricted to genuinely client-specific formatting, currently catch timestamps, and no longer exposes parallel specimen FishScore, length, percentile, trait, or unavailable-value formatting.
-
-Covered consumers routed through the shared presentation contract now include:
-
-- Fishing Journal Best Specimen trait rendering;
-- Team Top 15 and Top Fish list/detail presentation;
-- canonical team record projection and compact Team Records event rows;
-- Satchel canonical specimen projection, specimen detail panel, record badges, personal-record length summaries, and record FishScore labels;
-- the normal fish ItemStack tooltip, which reads a complete current canonical specimen through `TideborneFishingApi` instead of reconstructing specimen fields from components;
-- Tide fish-profile possible-size and recorded-FishScore overlay formatting;
-- operator `/tideborne fishing inspect` specimen output, including final percentile, final length, rarity, trait names/values, and FishScore.
-
-Focused source-safety and unit tests lock the tooltip, Top Fish, Satchel, team-record, fish-profile, and operator inspection paths to the canonical presentation layer. As a final sweep guard, removing specimen-formatting methods from `FishingUiFormat` forced compilation to identify the last two residual consumers, which were then migrated directly.
-
-Final Stage 1 validation head: `7e2498542cd21215c6c931cca208ff8b4337963b`.
+Final presentation validation head: `7e2498542cd21215c6c931cca208ff8b4337963b`.
 GitHub Actions run: `33892874198`.
 
-That normal `dev` run completed successfully, including the clean Gradle build/unit tests, normal no-optional-mod GameTests, production artifact validation, validation-count reporting, and CI artifact upload. Optional-mod matrices and dedicated-server smoke remained skipped under the intentionally streamlined normal-push policy.
+No meaningful independent specimen-presentation implementation is intentionally retained. Layout, clipping, localized screen text, and timestamps remain UI responsibilities while specimen semantics come from the canonical presentation layer.
 
-No meaningful independent specimen-presentation implementation is intentionally retained. Layout-specific positioning, clipping, localized screen text, and timestamp formatting remain client/UI responsibilities, while specimen values and semantics come from the canonical presentation layer.
+### Tide mixin inventory and Stage 3 reduction
 
-### Tide mixin inventory
+The mixin architecture is documented in `docs/TIDE_MIXIN_INVENTORY.md`.
 
-The third post-2.0 architecture stage, the Tide-targeting mixin inventory, is complete and documented in `docs/TIDE_MIXIN_INVENTORY.md`.
+A Stage 2 classification error was corrected during Stage 3: `LegacyFishScoreCalculatorMixin` targets Tideborne-owned `TraitAxesRuntime`, not Tide. The corrected pre-Stage-3 baseline was 41 configured mixins: 20 Tide targets, 11 vanilla targets, 9 Tideborne-owned targets, and 1 optional Apex Waters target.
 
-The five active mixin configs currently register 41 mixins:
+Stage 3 removes one actual Tide dependency and consolidates overlapping Team Journal lifecycle logic:
 
-- 21 target Tide classes directly;
-- 11 target vanilla Minecraft classes;
-- 8 target Tideborne-owned classes;
-- 1 targets Apex Waters through the optional compatibility plugin.
+- `tideteamjournal.mixin.client.SyncPlayerDataMsgMixin` is deleted and removed from the active config;
+- journal record-holder and canonical display-specimen metadata now arrive through Tideborne-owned `RecordHoldersPayload` instead of intercepting Tide's `SyncPlayerDataMsg.handle`;
+- `TeamJournalCatchBridge` now owns crate canonicalization, catch snapshots, post-save capture, record capture, and TeamProgressStore catch-context cleanup;
+- `tideteamjournal.mixin.TidePlayerDataMixin` and `tideteamjournal.mixin.TideUtilsMixin` remain only as Tide lifecycle adapters into that shared bridge.
 
-The inventory therefore distinguishes actual Tide version coupling from general Mixin usage. The highest-risk Tide boundaries are the three `TideFishingHook` integrations, Team Journal takeover of `TidePlayerData.getOrCreate`/`syncTo`, exact Fish Catch Minigame constructor/call-site hooks, Fish Profile rendering with shadowed Tide fields/layout assumptions, Fish Display persistence, and the Angling Table/menu integration.
+After the Stage 3 reduction, the active configuration contains 40 mixins:
 
-Stage 3 replacement planning is now explicit. Strong candidates include moving journal display metadata off Tide's `SyncPlayerDataMsg` and onto a Tideborne-owned payload, verifying whether the legacy Tide FishScore calculator shim can be removed, moving bobber luck/lure behavior into the canonical gear modifier path, evaluating Fabric screen lifecycle APIs for the Team Records button, consolidating overlapping Fish Profile hooks, and consolidating overlapping catch-accounting hooks behind a shared Tideborne integration service.
+- 19 Tide targets;
+- 11 vanilla Minecraft targets;
+- 9 Tideborne-owned targets;
+- 1 optional Apex Waters target.
 
-Mixins that remain necessary should become thin adapters into Tideborne-owned services. Stage 3 must preserve server authority, specimen identity, one-sample generation, FishScore V2, Momentum, minigame behavior, Satchel behavior, Journal/team records, and optional-mod classloading.
+The remaining Tide-targeting mixins are intentionally retained because they depend on lifecycle boundaries for which no behavior-equivalent stable replacement was proven in this pass. The explicit version-sensitive audit list includes TideFishingHook constructor/select/retrieve/invalidation call sites, Team Journal `TidePlayerData.getOrCreate`/`syncTo`, `TideUtils.tryLogCatch`, Fish Catch Minigame constructor/onFinish interception, Fish Profile rendering/component construction, Fish Display persistence/preview construction, Angling Table menu/screen extension, and `FishSelector.getResult`.
 
-`FishSatchelConversionMixin.java` still exists in source but is not configured by the active mixin configs. It is not an active Tide mixin and is deferred to the later dead-code/legacy cleanup pass rather than being silently restored.
+These hooks should remain thin. Canonical fishing calculations, persistence formats, presentation semantics, and Team Journal bookkeeping belong in Tideborne-owned services.
+
+Stage 3 implementation/test head: `e55d19721bb8094c514df471d2d432540626b603`.
+GitHub Actions run: `33898441943`.
+
+At the time this state entry was written, dependency/repository validation and the clean Gradle build/unit-test step had passed, and the core no-optional-mod GameTests were running. The final Stage 3 gate is the completion of that exact workflow run.
+
+`FishSatchelConversionMixin.java` remains present but unconfigured and is deferred to the next dead-code cleanup stage. `LegacyFishScoreCalculatorMixin` is also Tideborne-owned self-mixin debt rather than Tide compatibility debt and belongs in that following pass.
 
 ### Real Tide balance simulator
 
-The authoritative tuning simulator now uses the live Tide 2.1.1 species catalog instead of the synthetic equal-rarity test pool.
+The authoritative tuning simulator uses the live Tide 2.1.1 species catalog rather than the synthetic equal-rarity pool.
 
 Implementation head: `918b5fce07036b888cebb505ffec4faebeb1f0af`.
 GitHub Actions run: `33832555397`.
 Authoritative report: `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`.
 
-The runtime-backed harness:
+The runtime-backed harness loads all 106 Tide fish, preserves actual eligibility/rarity/weight/size/strength/speed metadata, samples representative environments, and measures rarity, FishScore, notable traits, Perfect Specimen, Fishing Luck, Trait Luck, and progression behavior. The validation run passed 282 unit tests and all 59 required core GameTests.
 
-- loads all 106 Tide 2.1.1 fish from `TideData.FISH`;
-- runs each fish through Tide's real `shouldKeep(context)` eligibility and context modifiers;
-- preserves real rarity, encounter weight, size distribution, strength, and speed metadata through `TideSpeciesProfileAdapter`;
-- samples nine representative fishing contexts covering river, swamp/rain/night, warm ocean, deep ocean/night, frozen ocean, lush cave, dripstone cave, Nether lava, and End void fishing;
-- exposes 61 unique Tide species across that representative matrix;
-- measures rarity distribution, FishScore distribution, notable-trait frequency, Perfect Specimen frequency, Fishing Luck value, Trait Luck value, and catch-count progression;
-- uses controlled same-seed sensitivity runs to isolate Fishing Luck from Trait Luck.
+The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic synthetic regression record, not the authoritative real-content tuning report.
 
-The validation run passed 282 unit tests and all 59 required core GameTests, including the real Tide balance projection. Production JAR validation and CI artifact upload also passed. The release publication job was skipped because this was a normal `dev` push.
-
-The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains useful as a deterministic synthetic probability/unit-regression record, but it is no longer the authoritative content-balance report for actual Tide gameplay.
-
-Detailed implementation and validation records remain in:
+## Detailed references
 
 - `docs/FISHING_SYSTEM_2_SPEC.md`
 - `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`
@@ -210,20 +141,19 @@ Detailed implementation and validation records remain in:
 - `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`
 - `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`
 - `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`
-- `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` for the historical synthetic regression model
+- `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`
 - `docs/TIDEBORNE_INTERNAL_API.md`
 - `docs/TIDE_MIXIN_INVENTORY.md`
 
 ## Current execution gate
 
 - `dev` is the active development branch at version 2.0.1.
-- 2.0.0 is frozen to the exact published commit and artifact digest listed above.
-- normal `dev` pushes run the streamlined CI-only validation path and do not publish a GitHub Release.
-- the next public release must be produced from an explicit semantic-version tag matching `gradle.properties` exactly.
-- tagged releases run the fuller release validation path before publication.
-- real Fishing System 2.0 balance tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md` rather than the historical equal-rarity synthetic report.
-- new covered fishing read/query features should prefer `TideborneFishingApi` over direct implementation-layer reads.
+- 2.0.0 remains frozen to the exact published commit and artifact digest above.
+- normal `dev` pushes are CI-only and do not publish releases.
+- the next public release must come from an explicit semantic-version tag matching `gradle.properties` exactly.
+- real Fishing System 2.0 tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`.
+- new covered fishing read/query features should prefer `TideborneFishingApi`.
 - canonical specimen presentation migration is complete.
-- Tide-targeting mixin inventory and fragility classification are complete; the active architecture stage is now focused replacement/consolidation of avoidable Tide mixins according to `docs/TIDE_MIXIN_INVENTORY.md`.
-- broad legacy cleanup remains after the mixin architecture pass, not before it.
+- Tide-targeting mixin inventory and focused Stage 3 reduction are implemented; the exact Stage 3 code validation run is `33898441943`.
+- after that validation gate, the next architecture stage is dead legacy/Tideborne-owned self-mixin/package cleanup, not further speculative removal of version-sensitive Tide hooks.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
