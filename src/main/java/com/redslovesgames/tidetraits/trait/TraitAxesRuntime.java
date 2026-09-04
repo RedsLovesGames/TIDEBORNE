@@ -299,18 +299,17 @@ public final class TraitAxesRuntime {
       return "perfect_specimen".equalsIgnoreCase(var0) ? 1.2 : 1.0;
    }
 
+   /**
+    * Legacy FishScore compatibility signature. Production Fishing System 2.0 scoring is owned by
+    * FishScoreV2Service, so this historical entry point stays disabled without a self-mixin.
+    */
    public static double score(ItemStack var0, int var1, double var2, double var4, double var6) {
-      return scoreFromParts(var2, var1, condition(var0), bodyType(var0), var4, var6);
+      return -1.0;
    }
 
+   /** Legacy parts-based FishScore compatibility signature. Never evaluates the pre-V2 formula. */
    public static double scoreFromParts(double var0, int var2, String var3, String var4, double var5, double var7) {
-      double var9 = clamp(Double.isFinite(var0) ? var0 : 0.0, 0.0, 100.0);
-      int var11 = Math.max(1, var2);
-      double var12 = (var11 - 1) * 62.5;
-      double var14 = var7 > 0.0 && Double.isFinite(var7) ? Math.min(300.0, 75.0 * Math.sqrt(var7 / 100.0)) : 0.0;
-      double var16 = var5 > 0.0 && Double.isFinite(var5) ? Math.min(150.0, 15.0 * (var5 / 100.0)) : 0.0;
-      double var18 = var9 * 5.0 + var12 + conditionBonus(var3) + var14 + var16 + bodyTypeBonus(var4, var9, var5, var7);
-      return var18 * perfectMultiplier(var3);
+      return -1.0;
    }
 
    public static String traitSummary(ItemStack var0) {
