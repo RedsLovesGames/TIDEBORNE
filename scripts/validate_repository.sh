@@ -23,8 +23,9 @@ for line in (root / "gradle.properties").read_text(encoding="utf-8").splitlines(
         key, value = line.split("=", 1)
         properties[key.strip()] = value.strip()
 
-if properties.get("mod_version") != "2.0.0":
-    raise SystemExit("gradle.properties mod_version must be 2.0.0")
+mod_version = properties.get("mod_version", "")
+if not re.fullmatch(r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)", mod_version):
+    raise SystemExit("gradle.properties mod_version must be an exact MAJOR.MINOR.PATCH semantic version")
 if fabric.get("version") != "${version}":
     raise SystemExit("fabric.mod.json must use the Gradle version placeholder")
 
@@ -76,6 +77,6 @@ main_text = main_entrypoint.read_text(encoding="utf-8")
 if re.search(r"(?m)^import\s+(?:net\.minecraft\.client|net\.fabricmc\.fabric\.api\.client)\.", main_text):
     raise SystemExit("The common Tideborne entrypoint imports a client-only API")
 
-print(f"Repository validation passed: {len(fqcn_sources)} top-level types, "
+print(f"Repository validation passed for Tideborne {mod_version}: {len(fqcn_sources)} top-level types, "
       f"{len(annotated_gametests)} registered GameTest classes, all mixins and entrypoints resolved")
 PY
