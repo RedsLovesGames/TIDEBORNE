@@ -13,6 +13,7 @@ import com.redslovesgames.tideborne.client.ui.FishingUiLayout.FittedText;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
+import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
 import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
 import java.util.List;
 import java.util.Optional;
@@ -221,58 +222,28 @@ public final class TopFishScreen extends Screen {
       this.drawValue(graphics, length, "Length: " + length, rightColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
 
       this.section(graphics, "Traits", x, detailTop + 173);
-      String body = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.bodyTypeLabel();
-      String condition = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.conditionLabel();
-      String pigment = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.pigmentationLabel();
-      String quality = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.qualityLabel();
-      this.label(graphics, "Body Type", leftColumn, detailTop + 185);
-      this.label(graphics, "Condition", rightColumn, detailTop + 185);
-      this.drawValue(
-         graphics,
-         body,
-         "Body Type: " + body,
-         leftColumn,
-         detailTop + 194,
-         columnWidth,
-         CanonicalSpecimenPresentation.BODY_TYPE_COLOR,
-         mouseX,
-         mouseY
-      );
-      this.drawValue(
-         graphics,
-         condition,
-         "Condition: " + condition,
-         rightColumn,
-         detailTop + 194,
-         columnWidth,
-         CanonicalSpecimenPresentation.CONDITION_COLOR,
-         mouseX,
-         mouseY
-      );
-      this.label(graphics, "Pigmentation", leftColumn, detailTop + 204);
-      this.label(graphics, "Quality", rightColumn, detailTop + 204);
-      this.drawValue(
-         graphics,
-         pigment,
-         "Pigmentation: " + pigment,
-         leftColumn,
-         detailTop + 213,
-         columnWidth,
-         CanonicalSpecimenPresentation.PIGMENTATION_COLOR,
-         mouseX,
-         mouseY
-      );
-      this.drawValue(
-         graphics,
-         quality,
-         "Quality: " + quality,
-         rightColumn,
-         detailTop + 213,
-         columnWidth,
-         CanonicalSpecimenPresentation.QUALITY_COLOR,
-         mouseX,
-         mouseY
-      );
+      List<TraitDisplay> traits = display == null
+         ? CanonicalSpecimenPresentation.unavailableTraits()
+         : display.traits();
+      for (int index = 0; index < traits.size(); index++) {
+         TraitDisplay trait = traits.get(index);
+         int columnX = index % 2 == 0 ? leftColumn : rightColumn;
+         int traitRow = index / 2;
+         int labelY = detailTop + 185 + traitRow * 19;
+         int valueY = labelY + 9;
+         this.label(graphics, trait.label(), columnX, labelY);
+         this.drawValue(
+            graphics,
+            trait.value(),
+            trait.label() + ": " + trait.value(),
+            columnX,
+            valueY,
+            columnWidth,
+            trait.color(),
+            mouseX,
+            mouseY
+         );
+      }
 
       this.section(graphics, "Catch Info", x, detailTop + 226);
       String catcher = selected.getString("catcher_name");
