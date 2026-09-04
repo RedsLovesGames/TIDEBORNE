@@ -30,7 +30,10 @@ public final class TideTeamJournalClient implements ClientModInitializer {
    public void onInitializeClient() {
       ClientConfig.load();
       RecordScoreboard.register();
-      ClientPlayNetworking.registerGlobalReceiver(RecordHoldersPayload.TYPE, (payload, context) -> ClientRecordHolders.update(payload.tag()));
+      ClientPlayNetworking.registerGlobalReceiver(RecordHoldersPayload.TYPE, (payload, context) -> {
+         ClientRecordHolders.update(payload.tag());
+         ClientJournalSpecimens.update(payload.tag());
+      });
       ClientPlayNetworking.registerGlobalReceiver(TeamDataPayload.TYPE, (payload, context) -> ClientTeamData.update(payload.tag()));
       ClientPlayNetworking.registerGlobalReceiver(RecordEventPayload.TYPE, (payload, context) -> {
          TeamProgressStore.RecordEvent event = TeamProgressStore.RecordEvent.fromTag(payload.tag());
