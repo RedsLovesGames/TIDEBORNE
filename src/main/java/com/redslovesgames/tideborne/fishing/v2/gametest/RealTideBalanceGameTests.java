@@ -74,7 +74,10 @@ public final class RealTideBalanceGameTests implements FabricGameTest {
                 pool("end_void", "The End, void fishing", base, biomeRegistry, BiomeKeys.THE_END, BiomeKeys.THE_END, World.END, "void", 60, 0.50F, 0, false, false)
         );
 
-        int catalogSize = TideData.FISH.get().size();
+        int catalogSize = 0;
+        for (FishData ignored : TideData.FISH.get().values()) {
+            catalogSize++;
+        }
         int reachable = locations.stream().flatMap(location -> location.species().stream()).map(SpeciesProfile::speciesId).collect(java.util.stream.Collectors.toSet()).size();
         helper.assertTrue(catalogSize >= 100, "Real Tide fish catalog unexpectedly small: " + catalogSize);
         helper.assertTrue(reachable > 0, "Representative real Tide context matrix produced no eligible species");
