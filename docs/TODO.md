@@ -2,7 +2,7 @@
 
 Updated: 2026-09-04
 
-Fishing System 2.0 implementation, recovery tooling, integration polish, canonical gear identity, the dedicated Tideborne creative tab, Stage 64 record/balance work, release-versioning correction, canonical internal fishing API, canonical specimen presentation migration, Tide-targeting mixin inventory, and the focused Tide mixin reduction pass are complete on `dev`.
+Fishing System 2.0 implementation, recovery tooling, integration polish, canonical gear identity, the dedicated Tideborne creative tab, Stage 64 record/balance work, release-versioning correction, canonical internal fishing API, canonical specimen presentation migration, Tide-targeting mixin inventory, focused Tide mixin reduction, and the legacy/package cleanup pass are complete on `dev`.
 
 The authoritative current state is documented in `docs/CURRENT_STATE.md`.
 
@@ -20,9 +20,9 @@ The authoritative current state is documented in `docs/CURRENT_STATE.md`.
 - [x] Create one canonical specimen presentation layer for trait names/order, colors, length/percentile formatting, FishScore formatting, and rarity stars, then migrate covered UI consumers without rebuilding trait state per screen.
 - [x] Inventory all active Tide-targeting mixins, separate Tide coupling from vanilla/Tideborne-owned/optional compatibility hooks, classify fragility, and document the genuinely version-sensitive remainder in `docs/TIDE_MIXIN_INVENTORY.md`.
 - [x] Replace or consolidate avoidable Tide mixins using stable Tideborne-owned/shared integration paths where behavior can be preserved. Journal specimen sync now uses a Tideborne-owned payload, Team Journal catch bookkeeping is centralized in `TeamJournalCatchBridge`, and the remaining Tide hooks are explicitly version-sensitive adapters.
-- [ ] Remove truly dead legacy calculations while preserving required migration reads, then review Tideborne-owned self-mixins and the historical `tideborne`, `tideboundcompatibility`, `tideteamjournal`, and `tidetraits` package split without a broad rewrite.
+- [x] Remove high-confidence dead legacy implementation while preserving required migration reads, remove the obsolete FishScore self-mixin and inactive Satchel mixin source, and document ownership of the historical package split without a broad rewrite. See `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md`.
 
-Implementation order is intentional: canonical API first, presentation second, mixin inventory third, mixin reduction fourth, legacy/package cleanup last. The remaining cleanup should use the established API, presentation, and integration boundaries rather than creating replacements for them.
+The architecture sequence is now complete. Future cleanup should follow the ownership boundaries established by the internal API, canonical presentation layer, mixin inventory, shared integration services, and Stage 4 package-ownership rules rather than starting a namespace-wide rewrite.
 
 ## Release versioning
 
