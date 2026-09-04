@@ -2,7 +2,7 @@
 
 Updated: 2026-09-04
 
-Fishing System 2.0 implementation, recovery tooling, integration polish, canonical gear identity, the dedicated Tideborne creative tab, Stage 64 record/balance work, release-versioning correction, canonical internal fishing API, canonical specimen presentation migration, Tide-targeting mixin inventory, focused Tide mixin reduction, and the legacy/package cleanup pass are complete on `dev`.
+Fishing System 2.0 implementation, recovery tooling, integration polish, canonical gear identity, the dedicated Tideborne creative tab, Stage 64 record/balance work, release-versioning correction, canonical internal fishing API, canonical specimen presentation migration, Tide-targeting mixin inventory, focused Tide mixin reduction, the legacy/package cleanup pass, and the existing Fishing System 2.0 gear-path audit are complete on `dev`.
 
 The authoritative current state is documented in `docs/CURRENT_STATE.md`.
 
@@ -13,6 +13,12 @@ The authoritative current state is documented in `docs/CURRENT_STATE.md`.
 - [x] Validate server authority, multiplayer synchronization, optional-mod matrices, and dedicated-server behavior.
 - [x] Complete Stages 59 through 64 and the later Fishing Journal and Team Top 15 presentation fixes.
 - [x] Freeze the exact public 2.0.0 build identity in `docs/CURRENT_STATE.md`.
+
+## Post-2.0 gear progression
+
+- [x] Audit all existing Fishing System 2.0 gear paths, IDs, modifiers, effect stages, canonical specimen boundaries, duplicated logic, hard-coded checks, Tide mixins, Satchel behavior, and APIs to preserve. See `docs/GEAR_PROGRESSION_AUDIT.md`.
+- [ ] Define the intended post-2.0 gear progression in a separate design step. Do not change gameplay until the coordinated design is frozen.
+- [ ] Implement the coordinated gear rework only after the design step, preserving server-authoritative specimen generation and the audited compatibility IDs/API boundaries.
 
 ## Post-2.0 architecture goals
 

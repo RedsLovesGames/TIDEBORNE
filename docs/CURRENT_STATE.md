@@ -66,6 +66,32 @@ Canonical runtime authority includes:
 - exact namespaced canonical fishing-gear identity;
 - dedicated Tideborne creative tab and optional-mod visibility matrix.
 
+## Post-2.0 gear progression audit
+
+The existing gear paths are now fully inventoried in `docs/GEAR_PROGRESSION_AUDIT.md`. This is a documentation-only audit and does not redesign or rebalance equipment.
+
+The audit covers:
+
+- all five core rod tiers and the specialized Kujira Bone rod path;
+- native and Tideborne line identities;
+- the seven specialty hooks plus Tide's neutral base hook;
+- all 32 supported bobber IDs and both bobber modifier layers;
+- Tide 2.1.1 native bait identities plus Leviathan Bait;
+- Copper, Iron/Steel, Gold, and Diamond leader tiers and the preserved `tidebound_compatibility:steel_leader` compatibility ID;
+- Leviathan Bait gating, fish-only selector integration, canonical modifier inputs, and historical boss setup projection;
+- upgraded Angler's Satchel catch delivery, protection, sorting, and legacy compatibility boundaries.
+
+The important ownership findings are:
+
+- no audited gear directly authors canonical natural percentile, FishScore, base/final size, or final canonical trait results;
+- Fishing Luck reaches species selection, while Trait Luck reaches `SpecimenGenerator` as an input to canonical trait probability handling;
+- current direct gear Trait Luck sources are the Amethyst Bobber, Echo Bobber, and Leviathan Bait;
+- bobber behavior is split between Team Journal's configurable Fishing Luck/Lure projection and Tideborne's selected V2 trait/fight/crate/retrieval modifiers;
+- line, leader, Leviathan, and Satchel behavior also cross explicit native Tide, compatibility-adapter, and canonical V2 ownership boundaries;
+- individual gear switches, exact item checks, and version-sensitive Tide mixins are documented so a later coordinated gear pass can consolidate behavior without bypassing the canonical specimen pipeline.
+
+Fresh validation was rerun against `f0819b9fc384a256a0d525e7df5e9578a6926652`, the last code-changing head. `465259e04580e14a2aed7d0d228e56dc7350a85a` differed from it only by `docs/CURRENT_STATE.md`, so the validated source tree is identical to the source audited here. GitHub Actions run `33900568570`, rerun build job `101124312757`, passed dependency/checksum validation, repository/version validation, `clean build`, 300 unit tests, all 59 required core GameTests, production JAR validation, validation-count reporting, and artifact upload. The validated `tideborne-2.0.1.jar` SHA-256 was `367491ca13f31bce3996097b688e596b5552b90c8199380023ec65c4498be5b4`. Optional-mod matrices and dedicated-server smoke remained skipped under the streamlined normal validation policy.
+
 ## Post-2.0 architecture
 
 ### Canonical internal fishing API
@@ -168,6 +194,7 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic
 - `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`
 - `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`
 - `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`
+- `docs/GEAR_PROGRESSION_AUDIT.md`
 - `docs/TIDEBORNE_INTERNAL_API.md`
 - `docs/TIDE_MIXIN_INVENTORY.md`
 - `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md`
@@ -182,6 +209,7 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic
 - new covered fishing read/query features should prefer `TideborneFishingApi`.
 - canonical specimen presentation migration is complete.
 - Tide-targeting mixin inventory, Stage 3 focused Tide reduction, and Stage 4 legacy/package cleanup are complete and validated.
+- the existing Fishing System 2.0 gear path audit is complete in `docs/GEAR_PROGRESSION_AUDIT.md`; the next gear step is design only and must not bypass canonical specimen ownership.
 - the planned post-2.0 architecture sequence is complete. Future cleanup should follow the documented ownership boundaries rather than begin a broad namespace rewrite.
-- remaining non-architecture backlog is the repository-level Immutable Releases setting, long-term source-distribution license decision, and future Minecraft/Fabric/Tide/optional-mod compatibility work as needed.
+- remaining non-architecture backlog is the repository-level Immutable Releases setting, long-term source-distribution license decision, future gear progression design/implementation, and future Minecraft/Fabric/Tide/optional-mod compatibility work as needed.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
