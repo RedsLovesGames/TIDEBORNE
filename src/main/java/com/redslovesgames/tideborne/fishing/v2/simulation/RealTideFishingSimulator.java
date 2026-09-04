@@ -7,7 +7,6 @@ import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesSelectionService;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -23,7 +22,7 @@ import java.util.SplittableRandom;
 /**
  * Monte Carlo balance simulator for context-normalized real Tide species pools.
  *
- * <p>The simulator deliberately does not own Tide fish definitions. Callers must build each
+ * <p>The simulator deliberately does not own Tide fish definitions. Callers build each
  * {@link LocationPool} by passing Tide's live {@code FishData} records through
  * {@code TideSpeciesProfileAdapter#adapt}. That boundary runs Tide's real
  * {@code FishData#shouldKeep(FishingContext)}, environmental weight modifiers, authoritative
@@ -35,6 +34,11 @@ public final class RealTideFishingSimulator {
     private final SpecimenGenerator specimens = new SpecimenGenerator();
 
     public Result simulate(List<LocationPool> locations, GearStage gear, long seed, int catches) {
+        Objects.requireNonNull(gear, "gear");
+        return simulate(locations, gear.profile(), seed, catches);
+    }
+
+    public Result simulate(List<LocationPool> locations, GearProfile gear, long seed, int catches) {
         requireLocations(locations);
         Objects.requireNonNull(gear, "gear");
         if (catches <= 0) throw new IllegalArgumentException("catches must be positive");
@@ -58,12 +62,7 @@ public final class RealTideFishingSimulator {
 
         for (int i = 0; i < catches; i++) {
             LocationPool location = locations.get(random.nextInt(locations.size()));
-            SpeciesProfile species = selector.select(
-                    location.species(),
-                    selectionContext,
-                    location.environment(),
-                    random
-            );
+            SpeciesProfile species = selector.select(location.species(), selectionContext, location.environment(), random);
             boolean didPerfectCatch = random.nextDouble() < gear.perfectCatchRate();
             SpecimenData specimen = specimens.generatePreFight(
                     species,
@@ -247,6 +246,16 @@ public final class RealTideFishingSimulator {
         }
     }
 
+    public record GearProfile(String id, double fishingLuck, double traitLuck, double perfectCatchRate) {
+        public GearProfile {
+            if (id == null || id.isBlank()) throw new IllegalArgumentException("gear id must not be blank");
+            if (!Double.isFinite(fishingLuck) || !Double.isFinite(traitLuck)) throw new IllegalArgumentException("luck must be finite");
+            if (!Double.isFinite(perfectCatchRate) || perfectCatchRate < 0.0 || perfectCatchRate > 1.0) {
+                throw new IllegalArgumentException("perfectCatchRate must be in [0,1]");
+            }
+        }
+    }
+
     /**
      * Representative progression stages. Native Tide luck is modeled as 0 or Luck of the Sea III;
      * Amethyst/Echo bobbers use their exact +1/+2 Trait Luck values; Leviathan Bait uses its exact
@@ -259,26 +268,21 @@ public final class RealTideFishingSimulator {
         LATEGAME_ECHO("lategame_echo", 3.0, 2.0, 0.15),
         ENDGAME_LEVIATHAN("endgame_leviathan", 18.0, 6.0, 0.15);
 
-        private final String id;
-        private final double fishingLuck;
-        private final double traitLuck;
-        private final double perfectCatchRate;
+        private final GearProfile profile;
 
         GearStage(String id, double fishingLuck, double traitLuck, double perfectCatchRate) {
-            this.id = id;
-            this.fishingLuck = fishingLuck;
-            this.traitLuck = traitLuck;
-            this.perfectCatchRate = perfectCatchRate;
+            this.profile = new GearProfile(id, fishingLuck, traitLuck, perfectCatchRate);
         }
 
-        public String id() { return id; }
-        public double fishingLuck() { return fishingLuck; }
-        public double traitLuck() { return traitLuck; }
-        public double perfectCatchRate() { return perfectCatchRate; }
+        public GearProfile profile() { return profile; }
+        public String id() { return profile.id(); }
+        public double fishingLuck() { return profile.fishingLuck(); }
+        public double traitLuck() { return profile.traitLuck(); }
+        public double perfectCatchRate() { return profile.perfectCatchRate(); }
     }
 
     public record Result(
-            GearStage gear,
+            GearProfile gear,
             int catches,
             Map<CanonicalRarity, Integer> rarityCounts,
             Map<String, Integer> speciesCounts,
