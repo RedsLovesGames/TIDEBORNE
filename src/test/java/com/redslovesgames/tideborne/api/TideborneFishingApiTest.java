@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import java.util.List;
@@ -78,9 +79,9 @@ class TideborneFishingApiTest {
 
     @Test
     void readsTeamTopFishInCanonicalBestFirstOrder() {
-        SpecimenData lower = specimen(65.0, 190.0, 700);
-        SpecimenData middle = specimen(78.0, 225.0, 1200);
-        SpecimenData higher = specimen(94.0, 280.0, 1900);
+        SpecimenData lower = specimen("tide:cod", 65.0, 190.0, 700);
+        SpecimenData middle = specimen("tide:tuna", 78.0, 225.0, 1200);
+        SpecimenData higher = specimen("tide:swordfish", 94.0, 280.0, 1900);
         NbtCompound teamRecords = new NbtCompound();
 
         assertTrue(CanonicalSpecimenRecordIndexer.indexTeamTopFish(
@@ -103,10 +104,14 @@ class TideborneFishingApiTest {
     }
 
     private static SpecimenData specimen(double percentile, double length, int fishScore) {
+        return specimen("tide:cod", percentile, length, fishScore);
+    }
+
+    private static SpecimenData specimen(String speciesId, double percentile, double length, int fishScore) {
         return new SpecimenData(
-                "tide:cod",
-                1,
-                1,
+                speciesId,
+                SpecimenGenerator.SCHEMA_VERSION,
+                SpecimenGenerator.GENERATION_VERSION,
                 fishScore,
                 percentile,
                 length,
