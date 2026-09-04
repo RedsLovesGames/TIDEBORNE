@@ -6,14 +6,12 @@
 package com.redslovesgames.tideteamjournal.mixin;
 
 import com.li64.tide.data.player.TidePlayerData;
-import com.redslovesgames.tideborne.fishing.v2.integration.CrateFishProgressionBridge;
+import com.redslovesgames.tideteamjournal.TeamJournalCatchBridge;
 import com.redslovesgames.tideteamjournal.TeamJournalService;
-import com.redslovesgames.tideteamjournal.TeamProgressStore;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -27,9 +25,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(value = TidePlayerData.class, remap = false)
 abstract class TidePlayerDataMixin {
-   @Unique
-   private TidePlayerData tideTeamJournal$beforeCatchData;
-
    @Inject(method = "getOrCreate", at = @At("HEAD"), cancellable = true)
    private static void tideTeamJournal$getTeamData(ServerPlayerEntity player, CallbackInfoReturnable<TidePlayerData> callback) {
       callback.setReturnValue(TeamJournalService.loadFor(player));
@@ -43,21 +38,12 @@ abstract class TidePlayerDataMixin {
    }
 
    @Inject(method = "logCatch", at = @At("HEAD"))
-   private void tideTeamJournal$snapshotBeforeCatch(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo callback) {
-      // Crate and other legitimate Tide award paths can reach Tide's normal accounting with a
-      // physical fish length but no Tideborne specimen payload. Normalize that stack first, then
-      // keep using the exact same Tide logCatch progression and Team Journal path as normal fish.
-      CrateFishProgressionBridge.ensureCanonicalForCatchAccounting(stack);
-      TeamProgressStore.tideborneBeginCatch(stack);
-      this.tideTeamJournal$beforeCatchData = new TidePlayerData(((TidePlayerData)(Object)this).getAsTag());
+   private void tideTeamJournal$beginCatch(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo callback) {
+      TeamJournalCatchBridge.beginDirectLog((TidePlayerData)(Object)this, stack);
    }
 
    @Inject(method = "logCatch", at = @At("TAIL"))
-   private void tideTeamJournal$captureRecordOwner(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo callback) {
-      TeamJournalService.captureCatch(
-         this.tideTeamJournal$beforeCatchData == null ? new TidePlayerData() : this.tideTeamJournal$beforeCatchData, (TidePlayerData)(Object)this, player
-      );
-      this.tideTeamJournal$beforeCatchData = null;
-      TeamProgressStore.tideborneClearCatch();
+   private void tideTeamJournal$finishCatch(ItemStack stack, ServerPlayerEntity player, World level, CallbackInfo callback) {
+      TeamJournalCatchBridge.finishDirectLog((TidePlayerData)(Object)this, player);
    }
 }
