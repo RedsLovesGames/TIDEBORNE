@@ -8,9 +8,13 @@ import com.redslovesgames.tideborne.fishing.v2.CanonicalRarity;
 import com.redslovesgames.tideborne.fishing.v2.FishScoreV2Service;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
+import net.minecraft.nbt.NbtCompound;
 import org.junit.jupiter.api.Test;
 
 class TideborneFishingApiTest {
@@ -65,6 +69,43 @@ class TideborneFishingApiTest {
         assertFalse(TideborneFishingApi.shouldReplaceBestRecord(higher, lower));
         assertTrue(TideborneFishingApi.sameSpecimenIdentity(higher, higher));
         assertFalse(TideborneFishingApi.sameSpecimenIdentity(higher, lower));
+    }
+
+    @Test
+    void readsCanonicalTransferPayloadWithoutReconstructingSpecimenState() {
+        SpecimenData specimen = specimen(88.0, 255.0, 1777);
+        NbtCompound transfer = new NbtCompound();
+        CanonicalSpecimenStorage.writeTransferData(transfer, specimen);
+
+        assertEquals(specimen, TideborneFishingApi.readTransferredSpecimen(transfer).orElseThrow());
+        assertTrue(TideborneFishingApi.readTransferredSpecimen(new NbtCompound()).isEmpty());
+        assertTrue(TideborneFishingApi.readTransferredSpecimen(null).isEmpty());
+    }
+
+    @Test
+    void readsTeamTopFishInCanonicalBestFirstOrder() {
+        SpecimenData lower = specimen(65.0, 190.0, 700);
+        SpecimenData middle = specimen(78.0, 225.0, 1200);
+        SpecimenData higher = specimen(94.0, 280.0, 1900);
+        NbtCompound teamRecords = new NbtCompound();
+
+        assertTrue(CanonicalSpecimenRecordIndexer.indexTeamTopFish(
+                teamRecords,
+                CanonicalSpecimenRecordIndexer.project(middle)
+        ));
+        assertTrue(CanonicalSpecimenRecordIndexer.indexTeamTopFish(
+                teamRecords,
+                CanonicalSpecimenRecordIndexer.project(lower)
+        ));
+        assertTrue(CanonicalSpecimenRecordIndexer.indexTeamTopFish(
+                teamRecords,
+                CanonicalSpecimenRecordIndexer.project(higher)
+        ));
+
+        assertEquals(List.of(higher, middle, lower), TideborneFishingApi.readTeamTopFish(teamRecords));
+        assertEquals(1900, TideborneFishingApi.highestTeamScore(teamRecords).orElseThrow());
+        assertTrue(TideborneFishingApi.readTeamTopFish(null).isEmpty());
+        assertTrue(TideborneFishingApi.highestTeamScore(null).isEmpty());
     }
 
     private static SpecimenData specimen(double percentile, double length, int fishScore) {
