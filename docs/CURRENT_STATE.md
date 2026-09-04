@@ -38,7 +38,7 @@ Future `dev` commits must not retarget that release or replace its JAR.
 
 ## Release versioning policy
 
-`.github/workflows/build.yml` now keeps normal pushes and pull requests CI-only. Public release publication is reachable only from an explicit numeric semantic-version tag that exactly matches `gradle.properties`. Tagged publication validates the tagged commit itself, refuses an existing release/tag target, does not use `--clobber`, and records the exact commit and JAR digest.
+`.github/workflows/build.yml` keeps normal pushes and pull requests CI-only. Public release publication is reachable only from an explicit numeric semantic-version tag that exactly matches `gradle.properties`. Tagged publication validates the tagged commit itself, refuses an existing release/tag target, does not use `--clobber`, and records the exact commit and JAR digest.
 
 The old `TIDEBORN-2.0.0` name remains only as the legacy 2.0.0 release identifier. New releases use exact semantic versions such as `2.0.1`.
 
@@ -95,30 +95,56 @@ The mixin architecture is documented in `docs/TIDE_MIXIN_INVENTORY.md`.
 
 A Stage 2 classification error was corrected during Stage 3: `LegacyFishScoreCalculatorMixin` targets Tideborne-owned `TraitAxesRuntime`, not Tide. The corrected pre-Stage-3 baseline was 41 configured mixins: 20 Tide targets, 11 vanilla targets, 9 Tideborne-owned targets, and 1 optional Apex Waters target.
 
-Stage 3 removes one actual Tide dependency and consolidates overlapping Team Journal lifecycle logic:
+Stage 3 removed one actual Tide dependency and consolidated overlapping Team Journal lifecycle logic:
 
-- `tideteamjournal.mixin.client.SyncPlayerDataMsgMixin` is deleted and removed from the active config;
+- `tideteamjournal.mixin.client.SyncPlayerDataMsgMixin` was deleted and removed from the active config;
 - journal record-holder and canonical display-specimen metadata now arrive through Tideborne-owned `RecordHoldersPayload` instead of intercepting Tide's `SyncPlayerDataMsg.handle`;
-- `TeamJournalCatchBridge` now owns crate canonicalization, catch snapshots, post-save capture, record capture, and TeamProgressStore catch-context cleanup;
+- `TeamJournalCatchBridge` owns crate canonicalization, catch snapshots, post-save capture, record capture, and TeamProgressStore catch-context cleanup;
 - `tideteamjournal.mixin.TidePlayerDataMixin` and `tideteamjournal.mixin.TideUtilsMixin` remain only as Tide lifecycle adapters into that shared bridge.
 
-After the Stage 3 reduction, the active configuration contains 40 mixins:
-
-- 19 Tide targets;
-- 11 vanilla Minecraft targets;
-- 9 Tideborne-owned targets;
-- 1 optional Apex Waters target.
-
-The remaining Tide-targeting mixins are intentionally retained because they depend on lifecycle boundaries for which no behavior-equivalent stable replacement was proven in this pass. The explicit version-sensitive audit list includes TideFishingHook constructor/select/retrieve/invalidation call sites, Team Journal `TidePlayerData.getOrCreate`/`syncTo`, `TideUtils.tryLogCatch`, Fish Catch Minigame constructor/onFinish interception, Fish Profile rendering/component construction, Fish Display persistence/preview construction, Angling Table menu/screen extension, and `FishSelector.getResult`.
-
-These hooks should remain thin. Canonical fishing calculations, persistence formats, presentation semantics, and Team Journal bookkeeping belong in Tideborne-owned services.
+After Stage 3, the active configuration contained 40 mixins: 19 Tide targets, 11 vanilla Minecraft targets, 9 Tideborne-owned targets, and 1 optional Apex Waters target.
 
 Stage 3 implementation/test head: `e55d19721bb8094c514df471d2d432540626b603`.
 GitHub Actions run: `33898441943`.
 
 That exact normal `dev` run completed successfully. It passed dependency/checksum and repository/version validation, the clean Gradle build and unit tests, the core no-optional-mod GameTests, production JAR validation, final validation-count reporting, and CI artifact upload. The optional Apex/Myths matrices and dedicated-server smoke were intentionally skipped by the streamlined normal-push policy, and the release-publication job was skipped.
 
-`FishSatchelConversionMixin.java` remains present but unconfigured and is deferred to the next dead-code cleanup stage. `LegacyFishScoreCalculatorMixin` is also Tideborne-owned self-mixin debt rather than Tide compatibility debt and belongs in that following pass.
+### Stage 4 legacy and package cleanup
+
+Stage 4 is complete. Detailed ownership and migration-preservation rules are documented in `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md`.
+
+High-confidence dead implementation removed in this pass:
+
+- `LegacyFishScoreCalculatorMixin` was removed from `tide_traits.mixins.json` and deleted from source;
+- `TraitAxesRuntime.score(...)` and `scoreFromParts(...)` remain only as compatibility signatures and now return `-1.0` directly, so the reconstructed pre-V2 FishScore formula is no longer hidden behind a Tideborne-owned self-mixin;
+- `FishSatchelConversionMixin.java` was deleted because it was already absent from every active mixin config and therefore had no runtime role.
+
+Production FishScore remains exclusively owned by `FishScoreV2Service`. Stage 4 does not remove legacy score storage keys, one-way score migration reads, legacy trait/body/condition components, legacy size recovery helpers, species/fight compatibility inputs, or stable registry/component/NBT/network/item/recipe identifiers that old saves or compatibility paths still require.
+
+The package review keeps the four historical roots because they still represent meaningful boundaries rather than cosmetic namespaces:
+
+- `com.redslovesgames.tideborne` is the canonical home for Fishing System 2.0 domain logic, services, internal APIs, presentation, and new shared architecture;
+- `com.redslovesgames.tideboundcompatibility` remains the external Tide and optional-mod integration boundary;
+- `com.redslovesgames.tideteamjournal` remains the Team Journal/FTB Teams persistence, records, UI, and networking subsystem;
+- `com.redslovesgames.tidetraits` remains the historical traits, Satchel, discovery, transfer, rendering, and persisted compatibility boundary.
+
+A broad package rewrite is intentionally rejected. New canonical Fishing System 2.0 behavior should live under `tideborne`, while the historical roots increasingly act as subsystem owners or adapters. Persisted identifiers must not move merely because Java packages do.
+
+Behavior-rich Tideborne-owned self-mixins remain where they still carry meaningful Team Journal indexing/projection/storage or cross-package compatibility behavior. They are internal architecture debt, not Tide version coupling, and should only be replaced when their owner classes can absorb the behavior with focused regression coverage. `TideTeamJournalServiceMixin` remains an explicit later focused bridge-cleanup candidate.
+
+After Stage 4, the active configuration contains 39 mixins:
+
+- 19 Tide targets;
+- 11 vanilla Minecraft targets;
+- 8 Tideborne-owned targets;
+- 1 optional Apex Waters target.
+
+Stage 4 validated code/test head: `f0819b9fc384a256a0d525e7df5e9578a6926652`.
+GitHub Actions run: `33900568570`.
+
+That exact normal `dev` run passed dependency/checksum validation, repository/version validation, clean Gradle build and unit tests, core no-optional-mod GameTests, production JAR validation, validation-count reporting, and CI artifact upload. The Apex/Myths optional matrices and dedicated-server smoke were intentionally skipped by normal-push policy, and release publication was skipped.
+
+The first Stage 4 validation attempt correctly exposed an outdated `LegacyFishScoreRemovalTest` that still asserted the removed self-mixin mechanism. The test was updated to assert the new compatibility contract instead: no registered legacy score self-mixin, both old score signatures disabled at `-1.0`, and Team Journal canonical score projection still registered. The successful run above validates the repaired contract.
 
 ### Real Tide balance simulator
 
@@ -144,6 +170,7 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic
 - `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`
 - `docs/TIDEBORNE_INTERNAL_API.md`
 - `docs/TIDE_MIXIN_INVENTORY.md`
+- `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md`
 
 ## Current execution gate
 
@@ -154,6 +181,7 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic
 - real Fishing System 2.0 tuning must use `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`.
 - new covered fishing read/query features should prefer `TideborneFishingApi`.
 - canonical specimen presentation migration is complete.
-- Tide-targeting mixin inventory and focused Stage 3 reduction are complete and validated by run `33898441943` at code head `e55d19721bb8094c514df471d2d432540626b603`.
-- the active architecture stage is now dead legacy/Tideborne-owned self-mixin/package cleanup, not further speculative removal of version-sensitive Tide hooks.
+- Tide-targeting mixin inventory, Stage 3 focused Tide reduction, and Stage 4 legacy/package cleanup are complete and validated.
+- the planned post-2.0 architecture sequence is complete. Future cleanup should follow the documented ownership boundaries rather than begin a broad namespace rewrite.
+- remaining non-architecture backlog is the repository-level Immutable Releases setting, long-term source-distribution license decision, and future Minecraft/Fabric/Tide/optional-mod compatibility work as needed.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
