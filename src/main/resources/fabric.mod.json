@@ -36,6 +36,7 @@
       "com.redslovesgames.tideborne.fishing.v2.gametest.OptionalCompatibilityRegressionGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.PigmentationGameTests",
       "com.redslovesgames.tideborne.fishing.v2.gametest.PigmentationRenderStateGameTests",
+      "com.redslovesgames.tideborne.fishing.v2.gametest.RealTideBalanceGameTests",
       "com.redslovesgames.tideborne.fishing.v2.FreshWorldRegressionGameTests",
       "com.redslovesgames.tideborne.fishing.v2.integration.CanonicalEntityTransferGameTests",
       "com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorageGameTests",
