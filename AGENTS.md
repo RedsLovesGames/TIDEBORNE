@@ -1,164 +1,186 @@
 # Tideborne development instructions
 
-This file is the first stop for humans and coding agents.
+This file is the first stop for humans and coding agents working on the maintained `dev` branch.
 
-## Project goal
+## Current project state
 
-Maintain Tideborne as a readable, testable Fabric 1.21.1 addon for Tide 2. The current branch reconstructs the authoritative 1.3.57 behavior before any new fishing-system redesign is implemented.
+Tideborne is a Fabric 1.21.1 addon for Tide 2. Fishing System 2.0 is implemented and is the current production architecture.
 
-## Source of truth
+Current branch policy:
 
-During reconstruction, authority is ordered as follows:
+- active development branch: `dev`
+- current development version: `2.0.1`
+- current published release: `2.0.0`
+- Minecraft: `1.21.1`
+- Java: `21`
+- Tide runtime target: `2.1.1`
+- do not modify, merge, rebase, or retarget `main` unless the user explicitly authorizes it
 
-1. The supplied Tideborne 1.3.57 release JAR.
-2. The supplied Tide 2.1.1 Fabric JAR for Tide APIs and runtime behavior.
-3. Existing persisted NBT/config/network formats recovered from bytecode and resources.
-4. Decompiled source only as a reconstruction aid. Decompiled source is not automatically correct or readable.
+`docs/CURRENT_STATE.md` is the authoritative record of what is implemented now. `docs/TODO.md` is the authoritative list of unfinished work.
 
-Do not invent behavior to fill a decompiler gap. Mark uncertainty and recover it from bytecode, resources, or tests.
+## Read only the context needed for the task
 
-## Non-negotiable reconstruction rule
+Do not read every Markdown file by default.
 
-Do not implement the planned Fishing System 2.0 while reconstructing or refactoring 1.3.57. Preserve behavior first. Structural refactors are allowed only when validated against the baseline.
+For normal development work, start with:
 
-## Build commands
+1. `AGENTS.md`
+2. `docs/CURRENT_STATE.md`
+3. `docs/TODO.md`
+4. the task-specific authoritative document named by `docs/INDEX.md`
 
-```bash
-./gradlew build
-./gradlew test
-./gradlew printBuildBaseline
-```
+Open reconstruction reports, historical stage reports, migration audits, old balance reports, or compatibility evidence only when the current task actually depends on them.
 
-For exact local Tide API validation, place the supplied JAR at:
+Historical documents are evidence and recovery material, not a competing source of current implementation instructions.
+
+## Current architecture rules
+
+Fishing System 2.0 is already implemented. Do not create a parallel replacement architecture unless an existing boundary is proven insufficient.
+
+Prefer the existing canonical boundaries:
+
+- `TideborneFishingApi` for covered canonical read/query access
+- `FishingGearRegistry` for exact gear identity and slot resolution
+- `FishingGearModifiers` for immutable composable gear modifiers
+- `FishingGearEffects` for named canonical gear effects
+- `SpeciesSelectionService` for canonical species weighting and selection inputs
+- `SpecimenGenerator` for canonical specimen construction
+- `FishScoreV2Service` for canonical FishScore calculation
+- `FightProfileService` for canonical fight transformation and minigame projection
+- `CanonicalCatchStateManager` and canonical storage services for catch lifecycle authority
+- `CanonicalSpecimenPresentation` for specimen display semantics
+
+Do not introduce a second specimen model, second FishScore calculator, second gear identity registry, second gear modifier authority, or UI-specific reconstruction of canonical specimen traits.
+
+## Fishing System 2.0 ownership
+
+Server-owned canonical flow is:
 
 ```text
-dev/libs/tide-fabric-1.21.1-2.1.1.jar
+fishing context and equipped gear
+        -> species eligibility and selection
+        -> canonical specimen generation
+        -> canonical FishScore
+        -> canonical fight projection
+        -> persistence, records, Journal, Satchel, networking, and presentation
 ```
 
-Then run:
+Gear may provide inputs to the canonical pipeline. Gear must not directly author natural percentile, canonical size, FishScore, canonical trait results, specimen seed, or specimen identity.
 
-```bash
-./gradlew verifyExactDependencies build
-```
-
-Optional Apex Waters compatibility source requires:
-
-```text
-dev/libs/apex-waters-fabric-1.21.1-1.1.1.jar
-```
+Client code may render, cache, preview, and request actions, but it must not be the source of truth for score, traits, records, inventory, XP, team progression, catch selection, or specimen generation.
 
 ## Package ownership
 
-Keep these domains separated:
+Keep these maintained ownership boundaries:
 
-- `com.redslovesgames.tideborne`: composition root, unified config, migration, commands, cross-module facade.
-- `com.redslovesgames.tidetraits`: specimen traits, size, discovery, rendering, Angler's Satchel.
-- `com.redslovesgames.tideteamjournal`: shared/team journal, records, scoreboards, record events.
-- `com.redslovesgames.tideboundcompatibility`: Tide equipment and optional-mod integration, including Apex Waters.
+- `com.redslovesgames.tideborne`: canonical Fishing System 2.0 domain logic, internal APIs, shared architecture, composition, migration coordination, and commands
+- `com.redslovesgames.tideboundcompatibility`: Tide and optional-mod integration adapters
+- `com.redslovesgames.tideteamjournal`: Team Journal, FTB Teams persistence, records, UI, and networking
+- `com.redslovesgames.tidetraits`: historical traits, Satchel, discovery, transfer, rendering, and persisted compatibility boundary
 
-Do not create new circular dependencies between those domains.
+Do not perform a namespace-wide package rewrite. New canonical Fishing System 2.0 behavior should normally live under `tideborne`; historical roots should increasingly act as subsystem owners or adapters where appropriate.
 
-## Refactor direction
+Do not create new circular dependencies between these domains.
 
-Prefer this dependency direction:
+## Persistence and compatibility safety
 
-```text
-entrypoints / mixins / networking / screens
-                 |
-                 v
-application services / domain services
-                 |
-                 v
-domain models / pure calculations
-                 |
-                 v
-persistence and external compatibility adapters
-```
-
-Minecraft classes should not leak into pure calculation code unless they are genuinely required.
-
-## Persistence safety
-
-Treat all of these as compatibility-sensitive public APIs:
+Treat the following as compatibility-sensitive public contracts:
 
 - NBT keys
 - saved-state file names
 - config keys
 - network payload IDs and wire fields
 - component IDs
-- item/entity IDs
+- item and entity IDs
+- recipe IDs
 - Fabric entrypoint class names
 - mixin config names
 - command names and permissions
+- external fish IDs
 
-Any change requires either backward compatibility or an explicit migration.
+Any change requires backward compatibility or an explicit migration.
+
+Preserve the historical `tidebound_compatibility:steel_leader` registry ID even though the current semantic tier is Iron Leader.
+
+Optional integrations must remain behind compatibility boundaries. Tideborne without an optional mod must never eagerly resolve that mod's classes.
 
 ## Mixin policy
 
-Mixins must be thin adapters. A mixin should capture/redirect/inject and then delegate to a named service. Do not place large gameplay algorithms inside mixin classes.
+Mixins are adapters, not gameplay owners.
 
-Every mixin should document:
+A mixin should capture, redirect, or inject and then delegate to a named service when practical. Do not put large gameplay algorithms inside mixin classes.
+
+For Tide-targeting mixins, use `docs/TIDE_MIXIN_INVENTORY.md` before changing targets or assumptions. The remaining Tide-targeting hooks are version-sensitive integration points unless the current architecture document says otherwise.
+
+Every new or materially changed mixin should document:
 
 - target class and method
-- why a normal Fabric event/API is insufficient
+- why a normal Fabric event or API is insufficient
 - expected failure mode if Tide changes
 - whether the mixin is required or optional
 
-## Client/server policy
+## Post-2.0 gear progression rule
 
-Server owns authoritative gameplay state. Client code may render, cache, preview, and request actions, but must not be the source of truth for score, traits, records, inventory, XP, or team progression.
+The existing gear-path audit is complete in `docs/GEAR_PROGRESSION_AUDIT.md`.
 
-## Compatibility policy
+The next gear work must extend and consolidate the existing gear architecture rather than blindly creating a new loadout stack.
 
-Optional integrations live behind a compatibility boundary. Loading Tideborne without the optional mod must never resolve that mod's classes eagerly.
+In particular:
 
-## Naming policy
+- prefer `FishingGearRegistry` over new scattered item/string checks
+- prefer `FishingGearModifiers` and `FishingGearEffects` over a second modifier model
+- extend `FightProfileService` or a clearly owned adjacent service when new fight dimensions are required
+- consolidate duplicated bobber, line, leader, and Leviathan ownership as those paths are migrated
+- preserve Tide-native eligibility/accessory behavior when it remains the correct owner
+- preserve server-authoritative specimen generation
+- freeze coordinated gear design before large gameplay rebalance work
 
-Replace decompiler names and generic utility names as they are understood. Prefer names that state domain intent, for example:
+## Validation routing
 
-- `SpecimenTraitRoller`
-- `FishPercentileService`
-- `SatchelUpgradeService`
-- `TeamRecordService`
+Do not run every validation layer after every small change.
 
-Avoid new `Utils`, `Helper`, `Manager2`, `Misc`, or catch-all classes.
+Use the cheapest gate that proves the changed behavior:
 
-## Function size and responsibilities
+- Markdown-only change: no Gradle validation required
+- pure formulas or data: targeted unit tests
+- multiple pure Java changes: `./gradlew test`
+- normal implementation change: `./gradlew build`
+- mixin, networking, persistence, server lifecycle, or runtime integration change: relevant GameTests plus `./gradlew build`
+- client presentation change: build plus a manual in-client check when visual correctness matters
+- major integration milestone: normal CI on `dev`
+- release candidate/tag: full release validation, optional compatibility matrices, and dedicated-server smoke
 
-As a default target:
+The active workflow is `.github/workflows/build.yml`. Normal `dev` pushes are CI-only. Public releases are created only from explicit semantic-version tags that match `gradle.properties`.
+
+Do not duplicate `build` with separate compile/test commands unless isolating a failure requires it.
+
+## Manual Minecraft checks
+
+Prefer human in-client validation for subjective or visual behavior such as:
+
+- screen layout and clipping
+- tooltip readability
+- animation/rendering
+- fishing feel
+- fight feel
+- menu usability
+
+Automated tests should cover deterministic rules, server authority, persistence, networking, compatibility boundaries, and regression-prone calculations.
+
+## Naming and structure
+
+Prefer names that state domain intent. Avoid new catch-all `Utils`, `Helper`, `Manager2`, `Misc`, or similarly vague classes.
+
+As a default:
 
 - keep public methods focused on one operation
-- extract calculations from screen/mixin/network code
+- extract calculations from screens, mixins, and networking code
 - keep config parsing separate from gameplay logic
 - keep serialization separate from domain decisions
-
-Large legacy methods may remain temporarily during reconstruction, but each should be listed in `docs/CURRENT_STATE.md` as a refactor target.
-
-## Validation before merging
-
-At minimum:
-
-1. `./gradlew build`
-2. unit tests pass
-3. Fabric GameTests pass when applicable
-4. client starts with Tide 2.1.1
-5. dedicated server starts with Tide 2.1.1
-6. no optional-mod classloading crash when Apex/Myths are absent
-7. saved data from 1.3.57 loads without loss
-8. network payload registration succeeds on both sides
-9. no mixin application errors
-
-See `docs/VALIDATION.md` for the full gate.
+- reuse canonical domain records instead of creating UI or compatibility copies
 
 ## Working-state discipline
 
-After every meaningful development pass update `docs/CURRENT_STATE.md` with:
+After a meaningful implementation pass, update `docs/CURRENT_STATE.md` when the verified state actually changed and update `docs/TODO.md` when backlog state changed.
 
-- exact baseline version
-- branch/commit
-- what is verified
-- what is still inferred
-- build status
-- next prioritized tasks
-
-This is intentionally redundant with issue tracking so a future agent can resume with a short prompt.
+Do not append historical stage narration to current-state files merely because a prompt completed. Keep current docs concise enough that the next agent can resume without rereading the repository's entire history.
