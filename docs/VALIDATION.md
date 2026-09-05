@@ -1,181 +1,252 @@
-# Validation gates
+# Tideborne validation gates
 
-## Current 2.0.0 CI gate
+Status: current validation policy for the maintained `dev` branch.
 
-`.github/workflows/build.yml` is the single active validation and release workflow for
-the maintained `dev` branch. It runs the following required gates in order:
+The goal is to prove the changed behavior with the cheapest appropriate gate, then rely on milestone and release validation for broad regression coverage.
 
-1. exact checksum verification for Tide, Apex Waters, Myths of the Sea, CERBON API,
-   and GeckoLib;
-2. repository metadata, entrypoint, mixin, and GameTest-registration validation;
-3. clean Java 21 build and the complete JUnit suite;
-4. Fabric GameTests with no optional mods, Apex only, Myths only, and both mods;
-5. production JAR validation and artifact upload;
-6. a release-only publish job with `contents: write`, after validation succeeds on a
-   `dev` push.
+## Active workflow
 
-The dedicated-server and client-connect smoke harness continues to collect diagnostics,
-but its known runner-only client-connect failure is non-blocking. It must not prevent the
-required build, GameTest, artifact-validation, artifact-upload, or release-publish gates.
+`.github/workflows/build.yml` is the single active GitHub Actions build and release workflow.
 
-The completed reconstruction workflows and the one-off release workflow were retired after
-their historical work completed. The reconstruction scripts remain in the repository as
-recovery tooling and are not part of continuous validation.
+### Normal `dev`, `main`, reconstruction-branch, and pull-request validation
 
-## Historical reconstruction gates
+When relevant source/build/workflow paths change, the normal workflow performs:
 
-Tideborne reconstruction is not complete just because Java compiles. The 1.3.57 baseline mixes persistence, networking, UI, mixins, Tide internals, and optional compatibility, so validation is layered.
+1. Java 21 setup
+2. exact external dependency fetch/checksum validation
+3. repository structure and release-metadata validation
+4. semantic version resolution
+5. `./gradlew clean build`
+6. core Fabric GameTests with no optional compatibility mods
+7. production release-artifact validation
+8. unit/GameTest count reporting
+9. CI artifact upload
 
-## Gate 1: static project checks
+A normal `dev` push is CI-only. It does not publish or replace a GitHub Release.
 
-Required:
+### Manual-dispatch and tagged validation
+
+Manual workflow dispatches and semantic-version tag builds additionally run:
+
+- GameTests with Apex Waters only
+- GameTests with Myths of the Sea only
+- GameTests with Apex Waters and Myths of the Sea together
+- dedicated-server smoke validation
+
+These expensive compatibility/runtime legs are intentionally not part of every ordinary `dev` push.
+
+### Release publication
+
+Public release publication occurs only for an explicit semantic-version tag handled by the workflow.
+
+The tag must match `gradle.properties` `mod_version` exactly. Publication validates the tagged commit, refuses to replace an existing release, uploads the versioned JAR, and records the commit and artifact digest.
+
+Normal branch pushes must never republish or overwrite an existing public release.
+
+## Local validation routing
+
+Do not run every validation layer after every change.
+
+### Documentation-only changes
+
+No Gradle validation is required unless the documentation change also modifies generated/configured behavior.
+
+Check only that references, versions, paths, and instructions are internally consistent.
+
+### Pure formulas or data tables
+
+Run focused unit tests for the affected calculation or data contract.
+
+Examples:
+
+- gear composition math
+- probability curves
+- FishScore calculations
+- progression/balance tables represented in code
+
+### Multiple pure Java changes
+
+Run:
 
 ```bash
-./gradlew clean build
+./gradlew test
 ```
 
-The build must use Java 21 and Minecraft 1.21.1.
+Use this when Minecraft runtime behavior is not involved.
 
-Also verify:
+### Normal implementation changes
 
-- no unresolved `class_*`, `method_*`, or `field_*` identifiers remain in maintained source
-- no decompiler error comments remain unexplained
-- no duplicate top-level classes
-- all `fabric.mod.json` entrypoints resolve
-- all mixin classes listed in mixin JSON exist
-- all required resources referenced by code exist
+Run:
 
-## Gate 2: exact dependency compile
+```bash
+./gradlew build
+```
 
-Place the authoritative Tide 2.1.1 Fabric JAR at:
+Gradle `build` already compiles the project and runs the normal unit-test suite. Do not automatically add a separate compile command and a separate full test command unless isolating a failure requires it.
+
+### Runtime integration changes
+
+For changes involving any of the following, run the relevant focused GameTests plus `./gradlew build`:
+
+- Tide-targeting mixins
+- vanilla gameplay mixins
+- networking or payload registration
+- persistence or migration
+- server lifecycle
+- canonical catch lifecycle
+- Satchel catch interception
+- Team Journal catch/record integration
+- optional-mod runtime boundaries
+
+Use the smallest relevant GameTest set during iteration. Let normal CI provide the broad core GameTest pass at the milestone commit.
+
+### Client presentation changes
+
+Run a normal build, then verify visual behavior manually in the Minecraft client when correctness depends on appearance or interaction.
+
+Examples:
+
+- screen layout
+- clipping
+- tooltip formatting
+- texture rendering
+- animation
+- menu usability
+- subjective fishing/fight feel
+
+Do not replace simple human visual inspection with repeated expensive automated client launches unless a reproducible runtime regression specifically requires automation.
+
+## Milestone validation
+
+Push a coherent implementation milestone to `dev` and use the normal CI result as the broad regression gate.
+
+A milestone should normally have:
+
+- passing `clean build`
+- passing unit tests
+- passing core no-optional-mod GameTests
+- valid production JAR
+- valid repository metadata
+- no unintended persisted-ID or payload changes
+
+## Release validation
+
+Before a public version tag, verify all release-sensitive behavior.
+
+Required release confidence includes:
+
+- normal build/unit tests
+- core GameTests
+- Apex-only GameTests
+- Myths-only GameTests
+- Apex + Myths GameTests
+- dedicated-server smoke
+- production artifact validation
+- exact semantic version/tag match
+- exact dependency/checksum validation
+- clean intended repository state
+- current `CURRENT_STATE.md` and `TODO.md`
+
+When the release candidate changes Tide mixins, networking, persistence, or multiplayer/server authority, perform the appropriate manual/runtime checks in addition to CI.
+
+## Exact local Tide dependency
+
+For exact local Tide 2.1.1 validation, place:
 
 ```text
 dev/libs/tide-fabric-1.21.1-2.1.1.jar
 ```
 
-Then run:
+Then run the needed Gradle task. The repository also provides:
 
 ```bash
-./gradlew verifyExactDependencies build
+./gradlew verifyExactDependencies
 ```
 
-The exact dependency artifact must match the recorded SHA-256 in `docs/RECONSTRUCTION.md`.
+CI fetches and verifies the required exact external artifacts automatically.
 
-## Gate 3: client smoke test
+## What automated tests should prove
 
-Run:
+Automated coverage should focus on deterministic and regression-prone contracts.
 
-```bash
-./gradlew runClient
-```
+### Canonical specimen domain
 
-Verify:
+Examples include:
 
-- title screen reaches a usable state
-- no mixin application errors
-- no missing entrypoint errors
-- Tideborne config opens
-- a world can load
-- Tide journal opens
-- Angler's Satchel opens
-- specimen tooltips render
-- mutation/trait textures render
+- deterministic trait RNG splitting
+- one natural percentile/base-size sample per specimen
+- Body Type selection and size transformation
+- Condition/Pigmentation/Quality independence
+- Trait Luck probability handling
+- canonical FishScore behavior
+- specimen persistence and transfer round trips
+- migration without canonical rerolls
 
-## Gate 4: dedicated server smoke test
+### Fishing gear
 
-Run:
+Examples include:
 
-```bash
-./gradlew runServer
-```
-
-Verify:
-
-- server reaches ready state
-- no client-only class is loaded server-side
-- Tideborne payloads register
-- saved-state services initialize
-- commands register
-- no optional-mod classes are resolved when optional mods are absent
-
-## Gate 5: GameTests and characterization tests
-
-Minimum characterization coverage before structural refactoring:
-
-### Specimen domain
-
-- percentile lookup is deterministic for the same fish data
-- Giant qualification and multiplier behavior
-- Dwarf qualification and multiplier behavior
-- Perfect Specimen qualification
-- Condition selection ordering/probabilities
-- Perfect Catch trait-luck behavior
-- physical length transformation
-- specimen NBT round trip
+- deterministic composition independent of input order
+- exact identity/slot resolution
+- stacking semantics
+- effect clamps and restrictions
+- fight/minigame projections
+- catch-loss behavior
+- no direct canonical percentile/FishScore/trait authoring by gear
 
 ### Satchel
 
-- capacity per level/upgrade
-- XP thresholds
-- insert/extract rules
-- protected fish behavior
-- sort behavior
-- upgrade migration
-- NBT round trip
+Examples include:
 
-### Team journal and records
+- storage/capacity rules
+- XP/upgrade behavior
+- insert/extract/protection/sorting rules
+- canonical specimen preservation
+- Auto Stow fallback behavior
+- persistence round trips
 
-- personal-to-team merge behavior
-- team record replacement rules
-- FishScore comparison
-- record holder persistence
-- event history/badge creation
-- migration from legacy keys
+### Team Journal and records
 
-### Tide compatibility
+Examples include:
 
-- Leviathan Bait fish-only selection path
-- Leviathan catch-area modifier
-- Leviathan speed modifier
-- line/hook modifier stacking
-- Steel Leader loss protection
-- chum state lifecycle
+- team merge behavior
+- canonical record comparison
+- Team Top Fish ordering
+- record-holder persistence
+- recovery/migration behavior
+- no independent FishScore calculation
 
-## Gate 6: persistence fixtures
+### Compatibility and server authority
 
-Create fixtures from actual 1.3.57 output for:
+Examples include:
 
-- player specimen data
-- Angler's Satchel NBT
-- team progress state
-- record holders
-- event history
-- config files
+- Leviathan fish-only selector behavior
+- line/hook/leader modifier integration
+- optional-mod absence safety
+- server-owned specimen generation
+- server-owned Momentum
+- client inability to author canonical catch state
 
-A refactor is rejected if it cannot load these fixtures without unintentional data loss.
+## Mixins
 
-## Gate 7: network compatibility
+Every new or materially changed mixin should have a clear target/purpose contract.
 
-Inventory every custom payload ID and field order. For each payload:
+For Tide-targeting mixins, consult `docs/TIDE_MIXIN_INVENTORY.md` and verify the relevant runtime path when target signatures or lifecycle assumptions change.
 
-- encode/decode round trip
-- server rejects malformed/unauthorized actions
-- client does not authoritatively change server-owned state
-- registration exists on the correct environment
+A successful Java compile is not sufficient proof for a changed mixin target.
 
-## Gate 8: mixin contract checks
+## Persistence fixtures and historical compatibility
 
-Every mixin must have a short contract comment describing target and purpose.
+The repository retains reconstruction and migration evidence from Tideborne 1.3.57.
 
-During runtime smoke tests verify:
+Use that material when changing compatibility-sensitive storage or migration code. Do not make every unrelated feature task reread or rerun reconstruction-era validation.
 
-- zero failed required injections
-- zero unexpected target warnings
-- optional Apex mixin config skips safely without Apex Waters
-- Tide 2.1.1 target signatures still match
+A refactor that touches persisted data is rejected if it causes unintended loss, rerolls canonical specimen identity, or breaks required legacy migration reads.
 
-## Refactor merge rule
+## Validation summary rule for coding agents
 
-A refactor should change structure without changing observable 1.3.57 behavior unless its pull request explicitly declares and tests a behavior fix.
+At the end of a task, report only the validation actually run and its result.
 
-The future Fishing System 2.0 is intentionally exempt from behavioral equivalence, but it should branch only after these baseline gates are in place.
+Do not claim client, dedicated-server, multiplayer, optional-mod, or release validation if it was not performed.
+
+Do not spend time running broader gates solely to make a task summary look more complete.
