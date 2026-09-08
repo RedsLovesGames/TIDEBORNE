@@ -1,4 +1,4 @@
-name: Prompt 1 Java 21 Validation
+name: Prompt 1 Lean Java 21 Validation
 
 on:
   push:
@@ -22,14 +22,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.12'
-      - name: Validate Prompt 1 migration
+      - name: Validate Prompt 1 migration directly
         shell: bash
         run: |
           set -euo pipefail
-          report=.github/prompt1_java21_validation.txt
+          report=.github/prompt1_lean_validation.txt
           : > "$report"
           echo "HEAD=$(git rev-parse HEAD)" >> "$report"
           echo "JAVA=$(java -version 2>&1 | head -1)" >> "$report"
@@ -39,32 +36,34 @@ jobs:
           echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
           echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
           echo "OWNERSHIP_TEST=$(find src/test/java -name 'JavaPackageOwnershipArchitectureTest.java' | wc -l)" >> "$report"
-          # Authoritative baseline retained CRLF in this helper. Normalize only the runner copy.
           sed -i 's/\r$//' scripts/fetch_ci_dependencies.sh
-          bash scripts/fetch_ci_dependencies.sh >> "$report" 2>&1
-          chmod +x gradlew
           set +e
+          bash scripts/fetch_ci_dependencies.sh > /tmp/deps.log 2>&1
+          deps_rc=$?
+          chmod +x gradlew
           ./gradlew compileJava --no-daemon > /tmp/compile.log 2>&1
           compile_rc=$?
           ./gradlew test --no-daemon > /tmp/test.log 2>&1
           test_rc=$?
           set -e
+          echo "DEPS_RC=$deps_rc" >> "$report"
           echo "COMPILE_RC=$compile_rc" >> "$report"
           echo "TEST_RC=$test_rc" >> "$report"
-          echo '== compile tail ==' >> "$report"
-          tail -120 /tmp/compile.log >> "$report"
-          echo '== test tail ==' >> "$report"
-          tail -120 /tmp/test.log >> "$report"
+          echo '== dependency tail ==' >> "$report"; tail -80 /tmp/deps.log >> "$report"
+          echo '== compile tail ==' >> "$report"; tail -160 /tmp/compile.log >> "$report"
+          echo '== test tail ==' >> "$report"; tail -160 /tmp/test.log >> "$report"
+          git checkout -- scripts/fetch_ci_dependencies.sh
           test "$(grep '^MAIN_JAVA=' "$report"|cut -d= -f2)" = 274
           test "$(grep '^TEST_JAVA=' "$report"|cut -d= -f2)" = 80
           test "$(grep '^FORBIDDEN_PATHS=' "$report"|cut -d= -f2)" = 0
           test "$(grep '^FORBIDDEN_DECLS=' "$report"|cut -d= -f2)" = 0
           test "$(grep '^OUTSIDE_ROOT=' "$report"|cut -d= -f2)" = 0
           test "$(grep '^OWNERSHIP_TEST=' "$report"|cut -d= -f2)" = 1
-          git checkout -- scripts/fetch_ci_dependencies.sh
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$report"
-          git commit -m 'test: validate Prompt 1 on Java 21'
+          git commit -m 'test: record lean Prompt 1 validation'
           git push origin HEAD:dev
-          exit $(( compile_rc != 0 || test_rc != 0 ))
+          test "$deps_rc" = 0
+          test "$compile_rc" = 0
+          test "$test_rc" = 0
