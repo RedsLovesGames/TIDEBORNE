@@ -1,0 +1,17 @@
+SOURCE_PRODUCTION=265
+SOURCE_TESTS=61
+== migration output ==
+{
+  "production_java_total": 265,
+  "test_java_total": 62,
+  "production_java_moved": 242,
+  "test_java_moved": 49,
+  "fqcn_moves": 291
+}
+AFTER_PRODUCTION=265
+AFTER_TESTS=62
+AUTHORITATIVE_PRODUCTION=274
+AUTHORITATIVE_TESTS=79
+MISSING_PRODUCTION=9
+MISSING_TESTS=18
+EXPECTED_FINAL_MOVE_COUNTS=251/67
