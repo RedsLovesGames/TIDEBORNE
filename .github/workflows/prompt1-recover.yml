@@ -1,4 +1,4 @@
-name: Prompt 1 Exact Contract Search
+name: Prompt 1 Blocker Inventory
 
 on:
   push:
@@ -9,63 +9,53 @@ permissions:
   contents: write
 
 jobs:
-  search:
+  inventory:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           ref: dev
           fetch-depth: 0
-      - name: Find source definitions only
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+      - name: Record compiler and ownership blocker inventory
         shell: bash
         run: |
-          set -euo pipefail
-          git fetch --all --tags --prune
-          report=.github/prompt1_exact_contract_search.txt
+          set -u
+          sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+          report=.github/prompt1_blocker_inventory.txt
           : > "$report"
           echo "HEAD=$(git rev-parse HEAD)" >> "$report"
-          for commit in $(git rev-list --all); do
-            for path in \
-              src/main/java/com/redslovesgames/tideborne/satchel/network/SatchelView.java \
-              src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelView.java \
-              src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/network/SatchelView.java; do
-              body="$(git show "$commit:$path" 2>/dev/null || true)"
-              if [ -n "$body" ] && printf '%s' "$body" | grep -q 'tackle'; then
-                echo "SATCHEL_VIEW_COMMIT=$commit PATH=$path" >> "$report"
-                printf '%s\n' "$body" | grep -n -C 4 'tackle' >> "$report"
-                break 2
-              fi
-            done
-          done
-          for commit in $(git rev-list --all); do
-            for path in \
-              src/main/java/com/redslovesgames/tideborne/satchel/SatchelGearSummary.java \
-              src/main/java/com/redslovesgames/tidetraits/satchel/SatchelGearSummary.java \
-              src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/SatchelGearSummary.java; do
-              body="$(git show "$commit:$path" 2>/dev/null || true)"
-              if [ -n "$body" ] && printf '%s' "$body" | grep -q 'archetypes'; then
-                echo "GEAR_SUMMARY_COMMIT=$commit PATH=$path" >> "$report"
-                printf '%s\n' "$body" | grep -n -C 8 'archetypes' >> "$report"
-                break 2
-              fi
-            done
-          done
-          for commit in $(git rev-list --all); do
-            for path in \
-              src/main/java/com/redslovesgames/tideborne/journal/BobberBonuses.java \
-              src/main/java/com/redslovesgames/tideteamjournal/BobberBonuses.java; do
-              body="$(git show "$commit:$path" 2>/dev/null || true)"
-              if [ -n "$body" ] && printf '%s' "$body" | grep -Eq 'static .* get\('; then
-                echo "BOBBER_BONUSES_COMMIT=$commit PATH=$path" >> "$report"
-                printf '%s\n' "$body" | grep -n -C 8 -E 'static .* get\(' >> "$report"
-                break 2
-              fi
-            done
-          done
+          sed -i 's/\r$//' scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh 2>/dev/null || true
+          chmod +x gradlew scripts/*.sh 2>/dev/null || true
+          bash scripts/fetch_ci_dependencies.sh >/tmp/deps.log 2>&1 || true
+          set +e
+          ./gradlew compileJava --no-daemon --console=plain >/tmp/compile.log 2>&1
+          compile=$?
+          bash scripts/validate_repository.sh >/tmp/validator.log 2>&1
+          validator=$?
+          set -e
+          echo "COMPILE_RC=$compile" >> "$report"
+          echo "VALIDATOR_RC=$validator" >> "$report"
+          echo "=== COMPILER ERRORS ===" >> "$report"
+          grep -E '(^|: )error:|cannot find symbol|constructor .* cannot be applied|symbol:|location:' /tmp/compile.log >> "$report" || true
+          echo "=== VALIDATOR ===" >> "$report"
+          cat /tmp/validator.log >> "$report"
+          echo "=== STRUCTURAL OWNERSHIP ===" >> "$report"
+          echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
+          echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
+          echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
+          echo "GEAR_ARCHETYPE_PLACEHOLDER_LINES=$(wc -l < src/main/java/com/redslovesgames/tideborne/fishing/gametest/GearArchetypeCases.java)" >> "$report"
+          git checkout -- scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh 2>/dev/null || true
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add "$report"
-          git commit -m 'test: record exact contract implementation search' || true
+          git commit -m 'test: record Prompt 1 blocker inventory' || true
           git push origin HEAD:dev
