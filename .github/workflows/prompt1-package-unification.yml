@@ -1,4 +1,4 @@
-name: Prompt 1 Astra Normalized Delta
+name: Prompt 1 Astra Delta List
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  compare:
+  emit:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -18,21 +18,12 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Classify substantive Astra differences
+      - name: Emit exact ordered delta file list
         shell: bash
         run: |
           set -euo pipefail
-          test "$GITHUB_REF" = "refs/heads/dev"
-          test "$(git branch --show-current)" = "dev"
-          test "$(git hash-object .github/astra_normalized.part-00)" = "d9fdca3d88ba1573113e0f92f1b0c16155ca50d9"
-          test "$(git hash-object .github/astra_normalized.part-01)" = "0e0835c8da719a1512e453f5a09191cb5cdc7c22"
-          test "$(git hash-object .github/astra_normalized.part-02)" = "59b2fbbe3800fe20e3e44e6e06eb6f2d949c1d36"
-          cat .github/astra_normalized.part-* | base64 -d > /tmp/astra_normalized.tsv.xz
-          echo '8f969c02e45714b6c38efbaeb6feb159ae77335bdb24921870c04f8d37bcdc4a  /tmp/astra_normalized.tsv.xz' | sha256sum -c -
-          xz -dc /tmp/astra_normalized.tsv.xz > /tmp/astra_normalized.tsv
-          echo 'fff0eb54aaecc2f3c1b3aba89314f3c7408d6a7ce471c4ad6febaf3c1f250607  /tmp/astra_normalized.tsv' | sha256sum -c -
-          cat .github/astra_manifest.part-* | base64 -d > /tmp/astra_manifest.tsv.xz
-          xz -dc /tmp/astra_manifest.tsv.xz > /tmp/astra_manifest.tsv
+          cat .github/astra_normalized.part-* | base64 -d | xz -dc > /tmp/astra_normalized.tsv
+          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/astra_manifest.tsv
           python3 - <<'PY'
           from pathlib import Path
           import hashlib, subprocess
@@ -43,36 +34,31 @@ jobs:
           for line in Path('/tmp/astra_manifest.tsv').read_text().splitlines():
               p,h,t,size=line.split('\t'); exact[p]=(h,t=='1',int(size))
           temp_prefixes=('.github/astra_manifest.part-','.github/astra_normalized.part-','.github/astra_payload.part-','.github/astra_delta.part-')
-          temp_exact={'.github/astra_text_payload.tar.xz','.github/package_unify.py.xz','.github/workflows/prompt1-package-unification.yml'}
+          temp_exact={'.github/astra_text_payload.tar.xz','.github/package_unify.py.xz','.github/astra_newlines.json.xz.b64','.github/workflows/prompt1-package-unification.yml'}
           tracked=set(subprocess.check_output(['git','ls-files'],text=True).splitlines())
           tracked={p for p in tracked if p not in temp_exact and not p.startswith(temp_prefixes)}
-          substantive=[]; newline_only=[]; exact_same=[]; binary_changed=[]
+          substantive=[]
           for p in sorted(set(exact)&tracked):
               b=Path(p).read_bytes()
-              if hashlib.sha256(b).hexdigest()==exact[p][0]:
-                  exact_same.append(p); continue
+              if hashlib.sha256(b).hexdigest()==exact[p][0]: continue
               if exact[p][1]:
                   try: s=b.decode('utf-8')
                   except UnicodeDecodeError:
                       substantive.append(p); continue
                   n=s.replace('\r\n','\n').replace('\r','\n').encode()
-                  if p in norm and hashlib.sha256(n).hexdigest()==norm[p][0]: newline_only.append(p)
-                  else: substantive.append(p)
-              else: binary_changed.append(p)
-          missing=sorted(set(exact)-tracked)
-          extra=sorted(tracked-set(exact))
-          print(f'EXACT_SAME={len(exact_same)}')
-          print(f'NEWLINE_ONLY={len(newline_only)}')
-          print(f'SUBSTANTIVE_CHANGED={len(substantive)}')
-          print(f'BINARY_CHANGED={len(binary_changed)}')
-          print(f'SNAPSHOT_ONLY={len(missing)}')
-          print(f'CURRENT_ONLY={len(extra)}')
-          print('=== SUBSTANTIVE_CHANGED ===')
-          for p in substantive: print(p)
-          print('=== BINARY_CHANGED ===')
-          for p in binary_changed: print(p)
-          print('=== SNAPSHOT_ONLY ===')
-          for p in missing: print(p)
-          print('=== NEWLINE_ONLY ===')
-          for p in newline_only: print(p)
+                  if p not in norm or hashlib.sha256(n).hexdigest()!=norm[p][0]: substantive.append(p)
+          missing=sorted(p for p in set(exact)-tracked if exact[p][1])
+          ordered=substantive+missing
+          assert len(substantive)==84, len(substantive)
+          assert len(missing)==37, len(missing)
+          assert len(ordered)==121, len(ordered)
+          Path('.github/astra_delta_files.txt').write_text('\n'.join(ordered)+'\n')
+          print('DELTA_FILES=121')
+          print('FIRST='+ordered[0])
+          print('LAST='+ordered[-1])
           PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/astra_delta_files.txt
+          git commit -m 'chore: stage ordered Astra delta file list'
+          git push origin HEAD:dev
