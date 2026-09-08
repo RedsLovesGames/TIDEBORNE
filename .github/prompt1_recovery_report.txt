@@ -1,0 +1,304 @@
+HEAD=4c469fb38ebfb7dac4eb58bc71a0179d5a184892
+== transport files ==
+astra_delta.part-00 12000
+astra_delta.part-01 12000
+astra_delta.part-02 12000
+astra_delta.part-03 12000
+astra_delta.part-04 9559
+astra_delta.tail-00 9000
+astra_delta.tail-01 9000
+astra_delta.tail-02 9000
+astra_delta.tailb-00 9500
+astra_delta.tailb-01 9500
+astra_delta.tailb-03 9500
+astra_delta.tailb-04 9500
+astra_delta.tailb-05 9500
+astra_delta.tailb-06 9500
+astra_delta.tailb-07 9500
+astra_delta_files.txt 9026
+astra_manifest.part-00 12000
+astra_manifest.part-01 12000
+astra_manifest.part-02 11288
+astra_newlines.json.xz.b64 7416
+astra_normalized.part-00 10000
+astra_normalized.part-01 10000
+astra_normalized.part-02 8220
+astra_text_payload.tar.xz 15009
+== package script ==
+from __future__ import annotations
+
+import json
+import re
+import shutil
+from collections import defaultdict
+from pathlib import Path
+
+ROOT = Path.cwd()
+MAIN = ROOT / 'src/main/java'
+TEST = ROOT / 'src/test/java'
+SRC_ROOTS = [MAIN, TEST]
+
+PACKAGE_RE = re.compile(r'(?m)^package\s+([\w.]+);')
+# Package-only tombstone sources exist, so filename is the fallback type name.
+TYPE_RE = re.compile(r'(?m)^(?:public\s+)?(?:(?:final|abstract|sealed|non-sealed)\s+)*(?:class|record|interface|enum)\s+(\w+)')
+IMPORT_RE = re.compile(r'(?m)^import\s+(static\s+)?([\w.*]+);')
+
+FORBIDDEN_ROOTS = (
+    'com.redslovesgames.tidetraits',
+    'com.redslovesgames.tideteamjournal',
+    'com.redslovesgames.tideboundcompatibility',
+)
+V2 = 'com.redslovesgames.tideborne.fishing.v2'
+
+
+def strip_test_suffix(name: str) -> str:
+    for suffix in ('GameTests', 'Tests', 'Test'):
+        if name.endswith(suffix):
+            return name[:-len(suffix)]
+    return name
+
+
+def fishing_v2_root_target(cls: str) -> str:
+    base = strip_test_suffix(cls)
+    if cls == 'FreshWorldRegressionGameTests':
+        # White-box GameTest directly exercises package-private TraitMomentumState.
+        return 'com.redslovesgames.tideborne.fishing.specimen'
+    if base == 'LegacyFishMigrationService':
+        return 'com.redslovesgames.tideborne.migration.legacy'
+    if base == 'TideFishingLineModifiers':
+        return 'com.redslovesgames.tideborne.fishing.tide'
+
+    specimen_exact = {
+        'CanonicalRarity', 'BodyTypeGenerator', 'ConditionGenerator', 'FishScoreV2Service',
+        'LogNormalSizeDistribution', 'NoPhysicalSizeDistribution', 'NormalDistributionMath',
+        'PigmentationGenerator', 'SizeDistribution', 'SpecimenData', 'SpecimenGenerator',
+        'SpecimenQualityService', 'TraitLuckProbabilityService', 'TraitMomentumProgression',
+        'TraitMomentumState', 'TraitMomentumStorage', 'TraitProbabilityService', 'TraitRandom',
+    }
+    gear_exact = {
+        'FishingGearEffects', 'FishingGearModifiers', 'FishingGearRegistry',
+    }
+    if base in specimen_exact:
+        return 'com.redslovesgames.tideborne.fishing.specimen'
+    if base in gear_exact:
+        return 'com.redslovesgames.tideborne.fishing.gear'
+    return 'com.redslovesgames.tideborne.fishing'
+
+
+def fishing_integration_target(cls: str) -> str:
+    base = strip_test_suffix(cls)
+    if base in {'CanonicalCatchStateManager', 'CanonicalSpecimenStorage', 'CatchSeedDeriver', 'LegacyItemStackMigration', 'CanonicalEntityTransfer'}:
+        return 'com.redslovesgames.tideborne.fishing.specimen'
+    if base in {'JournalSpecimenNetworkCodec', 'JournalSpecimenStore', 'CanonicalSpecimenRecordIndexer', 'LegacyJournalMigration', 'LegacyJournalPersistence'}:
+        # LegacyJournalMigrationTest intentionally stays here for package-private migrateLegacyRecord(...).
+        return 'com.redslovesgames.tideborne.journal'
+    if base in {'TideFishingContextAdapter', 'TideSpeciesProfileAdapter', 'TideSpeciesSelectionBridge', 'CrateFishProgressionBridge'}:
+        return 'com.redslovesgames.tideborne.fishing.tide'
+    if base.startswith('Legacy'):
+        return 'com.redslovesgames.tideborne.migration.legacy'
+    return 'com.redslovesgames.tideborne.fishing'
+
+
+def map_package(pkg: str, cls: str) -> str:
+    # Existing Tideborne packages outside fishing.v2 already satisfy the root-unification goal.
+    if pkg == 'com.redslovesgames.tideborne.migration':
+        return 'com.redslovesgames.tideborne.migration.legacy'
+
+    if pkg == V2:
+        return fishing_v2_root_target(cls)
+    if pkg.startswith(V2 + '.'):
+        tail = pkg[len(V2) + 1:]
+        if tail == 'integration':
+            return fishing_integration_target(cls)
+        if tail == 'gametest' or tail.startswith('gametest.'):
+            suffix = tail[len('gametest'):]
+            return 'com.redslovesgames.tideborne.fishing.gametest' + suffix
+        if tail == 'debug' or tail.startswith('debug.'):
+            suffix = tail[len('debug'):]
+            return 'com.redslovesgames.tideborne.fishing.debug' + suffix
+        if tail == 'simulation' or tail.startswith('simulation.'):
+            suffix = tail[len('simulation'):]
+            return 'com.redslovesgames.tideborne.fishing.simulation' + suffix
+        return 'com.redslovesgames.tideborne.fishing.' + tail
+
+    if pkg == 'com.redslovesgames.tidetraits':
+        return 'com.redslovesgames.tideborne.fishing'
+    if pkg.startswith('com.redslovesgames.tidetraits.'):
+        tail = pkg[len('com.redslovesgames.tidetraits.'):]
+        if tail == 'trait' or tail.startswith('trait.'):
+            suffix = tail[len('trait'):]
+            return 'com.redslovesgames.tideborne.fishing.specimen.legacy' + suffix
+        if tail == 'catching' or tail.startswith('catching.'):
+            suffix = tail[len('catching'):]
+            return 'com.redslovesgames.tideborne.fishing.specimen' + suffix
+        if tail == 'fish' or tail.startswith('fish.'):
+            suffix = tail[len('fish'):]
+            return 'com.redslovesgames.tideborne.fishing.specimen' + suffix
+        if tail == 'entity' or tail.startswith('entity.'):
+            suffix = tail[len('entity'):]
+            return 'com.redslovesgames.tideborne.fishing.specimen' + suffix
+        if tail == 'component' or tail.startswith('component.'):
+            suffix = tail[len('component'):]
+            return 'com.redslovesgames.tideborne.registry' + suffix
+        if tail == 'discovery' or tail.startswith('discovery.'):
+            suffix = tail[len('discovery'):]
+            return 'com.redslovesgames.tideborne.discovery' + suffix
+        if tail == 'compat.multiplayer' or tail.startswith('compat.multiplayer.'):
+            suffix = tail[len('compat.multiplayer'):]
+            return 'com.redslovesgames.tideborne.discovery.multiplayer' + suffix
+        if tail == 'satchel' or tail.startswith('satchel.'):
+            suffix = tail[len('satchel'):]
+            return 'com.redslovesgames.tideborne.satchel' + suffix
+        if tail == 'client.gui.journal' or tail.startswith('client.gui.journal.'):
+            suffix = tail[len('client.gui.journal'):]
+            return 'com.redslovesgames.tideborne.journal.client' + suffix
+        if tail == 'client.gui.satchel' or tail.startswith('client.gui.satchel.'):
+            suffix = tail[len('client.gui.satchel'):]
+            return 'com.redslovesgames.tideborne.satchel.client' + suffix
+        if tail == 'client.render' or tail.startswith('client.render.'):
+            suffix = tail[len('client.render'):]
+            return 'com.redslovesgames.tideborne.presentation.render' + suffix
+        if tail == 'client' or tail.startswith('client.'):
+            suffix = tail[len('client'):]
+            return 'com.redslovesgames.tideborne.presentation.client' + suffix
+        if tail == 'command' or tail.startswith('command.'):
+            suffix = tail[len('command'):]
+            return 'com.redslovesgames.tideborne.command' + suffix
+        if tail == 'config' or tail.startswith('config.'):
+            suffix = tail[len('config'):]
+            return 'com.redslovesgames.tideborne.config' + suffix
+        if tail == 'gametest' or tail.startswith('gametest.'):
+            suffix = tail[len('gametest'):]
+            return 'com.redslovesgames.tideborne.fishing.gametest' + suffix
+        if tail == 'mixin.client' or tail.startswith('mixin.client.'):
+            suffix = tail[len('mixin.client'):]
+            return 'com.redslovesgames.tideborne.mixin.specimen.client' + suffix
+        if tail == 'mixin' or tail.startswith('mixin.'):
+            suffix = tail[len('mixin'):]
+            return 'com.redslovesgames.tideborne.mixin.specimen' + suffix
+        if tail == 'resource' or tail.startswith('resource.'):
+            suffix = tail[len('resource'):]
+            return 'com.redslovesgames.tideborne.presentation.resource' + suffix
+        raise RuntimeError(f'Unclassified Tide Traits package {pkg} ({cls})')
+
+    if pkg == 'com.redslovesgames.tideteamjournal':
+        return 'com.redslovesgames.tideborne.journal'
+    if pkg.startswith('com.redslovesgames.tideteamjournal.'):
+        tail = pkg[len('com.redslovesgames.tideteamjournal.'):]
+        if tail == 'client' or tail.startswith('client.'):
+            suffix = tail[len('client'):]
+            return 'com.redslovesgames.tideborne.journal.client' + suffix
+        if tail == 'mixin.client' or tail.startswith('mixin.client.'):
+            suffix = tail[len('mixin.client'):]
+            return 'com.redslovesgames.tideborne.mixin.journal.client' + suffix
+        if tail == 'mixin' or tail.startswith('mixin.'):
+            suffix = tail[len('mixin'):]
+            return 'com.redslovesgames.tideborne.mixin.journal' + suffix
+        return 'com.redslovesgames.tideborne.journal.' + tail
+
+    if pkg == 'com.redslovesgames.tideboundcompatibility':
+        return 'com.redslovesgames.tideborne.compat'
+    if pkg.startswith('com.redslovesgames.tideboundcompatibility.'):
+        tail = pkg[len('com.redslovesgames.tideboundcompatibility.'):]
+        if tail == 'compat.apex' or tail.startswith('compat.apex.'):
+            suffix = tail[len('compat.apex'):]
+            return 'com.redslovesgames.tideborne.compat.apex' + suffix
+        if tail == 'client' or tail.startswith('client.'):
+            suffix = tail[len('client'):]
+            return 'com.redslovesgames.tideborne.presentation.client' + suffix
+        if tail == 'config' or tail.startswith('config.'):
+            suffix = tail[len('config'):]
+            return 'com.redslovesgames.tideborne.config' + suffix
+        if tail == 'entity' or tail.startswith('entity.'):
+            suffix = tail[len('entity'):]
+            return 'com.redslovesgames.tideborne.ecosystem' + suffix
+        if tail == 'fishing' or tail.startswith('fishing.'):
+            suffix = tail[len('fishing'):]
+            if strip_test_suffix(cls) == 'SharkCatchLoss':
+                return 'com.redslovesgames.tideborne.ecosystem' + suffix
+            return 'com.redslovesgames.tideborne.fishing.gear' + suffix
+        if tail == 'item' or tail.startswith('item.'):
+            suffix = tail[len('item'):]
+            if strip_test_suffix(cls) == 'ChumBucketItem':
+                return 'com.redslovesgames.tideborne.ecosystem' + suffix
+            return 'com.redslovesgames.tideborne.fishing.gear' + suffix
+        if tail == 'mixin.apex' or tail.startswith('mixin.apex.'):
+            suffix = tail[len('mixin.apex'):]
+            return 'com.redslovesgames.tideborne.mixin.compat.apex' + suffix
+        if tail == 'mixin' or tail.startswith('mixin.'):
+            suffix = tail[len('mixin'):]
+            return 'com.redslovesgames.tideborne.mixin.tide' + suffix
+        if tail == 'network' or tail.startswith('network.'):
+            suffix = tail[len('network'):]
+            return 'com.redslovesgames.tideborne.network' + suffix
+        if tail == 'registry' or tail.startswith('registry.'):
+            suffix = tail[len('registry'):]
+            return 'com.redslovesgames.tideborne.registry' + suffix
+        return 'com.redslovesgames.tideborne.compat.' + tail
+
+    return pkg
+
+
+def strip_comments_and_literals(text: str) -> str:
+    """Preserve newlines/rough token boundaries while removing comments and literals."""
+    out = []
+    i = 0
+    n = len(text)
+    state = 'code'
+    while i < n:
+        c = text[i]
+        nxt = text[i+1] if i + 1 < n else ''
+        if state == 'code':
+            if c == '/' and nxt == '/':
+                out.extend('  '); i += 2; state = 'line'; continue
+            if c == '/' and nxt == '*':
+                out.extend('  '); i += 2; state = 'block'; continue
+            if c == '"':
+                out.append(' '); i += 1; state = 'string'; continue
+            if c == "'":
+                out.append(' '); i += 1; state = 'char'; continue
+            out.append(c); i += 1; continue
+        if state == 'line':
+            if c == '\n': out.append('\n'); state = 'code'
+            else: out.append(' ')
+            i += 1; continue
+        if state == 'block':
+            if c == '*' and nxt == '/': out.extend('  '); i += 2; state = 'code'; continue
+            out.append('\n' if c == '\n' else ' '); i += 1; continue
+        if state in ('string', 'char'):
+            quote = '"' if state == 'string' else "'"
+            if c == '\\':
+                out.append(' '); i += 1
+                if i < n:
+                    out.append('\n' if text[i] == '\n' else ' '); i += 1
+                continue
+            if c == quote:
+                out.append(' '); i += 1; state = 'code'; continue
+            out.append('\n' if c == '\n' else ' '); i += 1
+    return ''.join(out)
+
+
+class Unit:
+    def __init__(self, path: Path, root: Path, text: str, pkg: str, cls: str):
+        self.path = path
+        self.root = root
+        self.text = text
+        self.pkg = pkg
+        self.cls = cls
+== text payload ==
+1924fd198b3eb7347ee4f4d0fb5431a8c5fb6a0f9347cf39e70f451c0dfcc388  .github/astra_text_payload.tar.xz
+drwxr-sr-x root/oai_shared   0 2026-09-08 16:35 ./
+-rw-r--r-- root/oai_shared 102453 2026-09-08 16:35 ./manifest.json
+== candidate assembled streams ==
+PATTERN=astra_delta.part-*
+57559 /tmp/candidate.b64
+base64 decode failed
+base64: invalid input
+PATTERN=astra_delta.part-* astra_delta.tail-*
+84559 /tmp/candidate.b64
+base64 decode failed
+base64: invalid input
+PATTERN=astra_delta.part-* astra_delta.tail-* astra_delta.tailb-*
+151059 /tmp/candidate.b64
+base64 decode failed
+base64: invalid input
