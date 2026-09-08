@@ -18,29 +18,38 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Remove Java paths absent from Astra manifest
+      - name: Dry-run established migration against pruned Astra shape
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf /tmp/probe && mkdir /tmp/probe
+          git archive HEAD | tar -x -C /tmp/probe
+          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
+          report=.github/prompt1_pruned_migration_probe.txt
+          {
+            echo "SOURCE_PRODUCTION=$(find /tmp/probe/src/main/java -type f -name '*.java' | wc -l)"
+            echo "SOURCE_TESTS=$(find /tmp/probe/src/test/java -type f -name '*.java' | wc -l)"
+            echo '== migration output =='
+          } > "$report"
+          (cd /tmp/probe && python3 /tmp/package_unify.py) >> "$report" 2>&1
+          echo "AFTER_PRODUCTION=$(find /tmp/probe/src/main/java -type f -name '*.java' | wc -l)" >> "$report"
+          echo "AFTER_TESTS=$(find /tmp/probe/src/test/java -type f -name '*.java' | wc -l)" >> "$report"
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          python3 - <<'PY'
+          python3 - <<'PY' >> "$report"
           from pathlib import Path
-          manifest=set()
-          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p=line.split('\t',1)[0]; manifest.add(p)
-          prod=sorted(p.as_posix() for p in Path('src/main/java').rglob('*.java') if p.as_posix() not in manifest)
-          tests=sorted(p.as_posix() for p in Path('src/test/java').rglob('*.java') if p.as_posix() not in manifest)
-          assert len(prod)==16,(len(prod),prod)
-          assert len(tests)==2,(len(tests),tests)
-          for p in prod+tests: Path(p).unlink()
-          out=[f'REMOVED_PRODUCTION_JAVA={len(prod)}',f'REMOVED_TEST_JAVA={len(tests)}','PRODUCTION:']+prod+['TESTS:']+tests
-          Path('.github/prompt1_manifest_extras_removed.txt').write_text('\n'.join(out)+'\n')
-          print('\n'.join(out))
-          assert sum(1 for _ in Path('src/main/java').rglob('*.java'))==265
-          assert sum(1 for _ in Path('src/test/java').rglob('*.java'))==61
+          manifest={line.split('\t',1)[0] for line in Path('/tmp/manifest.tsv').read_text().splitlines()}
+          prod=[p for p in manifest if p.startswith('src/main/java/') and p.endswith('.java')]
+          tests=[p for p in manifest if p.startswith('src/test/java/') and p.endswith('.java')]
+          missing_prod=sorted(p for p in prod if not Path(p).is_file())
+          missing_test=sorted(p for p in tests if not Path(p).is_file())
+          print('AUTHORITATIVE_PRODUCTION=',len(prod),sep='')
+          print('AUTHORITATIVE_TESTS=',len(tests),sep='')
+          print('MISSING_PRODUCTION=',len(missing_prod),sep='')
+          print('MISSING_TESTS=',len(missing_test),sep='')
+          print('EXPECTED_FINAL_MOVE_COUNTS=251/67')
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'chore: remove Java files absent from Astra baseline'
+          git add "$report"
+          git commit -m 'chore: probe pruned Prompt 1 migration counts'
           git push origin HEAD:dev
