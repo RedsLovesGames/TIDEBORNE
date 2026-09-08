@@ -18,23 +18,23 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Inspect compiled recovery sources
+      - name: Inspect Astra newline reconstruction map
         shell: bash
         run: |
           set -euo pipefail
-          report=.github/prompt1_bytecode_probe.txt
-          classes='GearArchetypeCases SatchelTackleScreen SatchelGearSummary SatchelLoadouts SatchelPreset SatchelTackleExchange SatchelTackleHandler TackleRenamePayload TackleViewPayload'
-          {
-            echo '== reference jar matches =='
-            for c in $classes; do
-              echo "-- $c --"
-              jar tf Tideborne-1.3.57-perfect-catch-trait-luck.jar | grep -F "$c" || true
-            done
-            echo '== all satchel/tackle classes in reference =='
-            jar tf Tideborne-1.3.57-perfect-catch-trait-luck.jar | grep -Ei 'satchel|tackle|archetype' | sort || true
-          } > "$report"
+          base64 -d .github/astra_newlines.json.xz.b64 | xz -dc > /tmp/newlines.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/newlines.json').read_text())
+          out=[f'TYPE={type(d).__name__}',f'COUNT={len(d)}']
+          for i,(k,v) in enumerate(d.items()):
+              if i>=20: break
+              out.append(f'{k}\t{type(v).__name__}\t{repr(v)[:1000]}')
+          Path('.github/prompt1_newline_probe.txt').write_text('\n'.join(out)+'\n')
+          PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$report"
-          git commit -m 'chore: probe compiled Astra gap sources'
+          git add .github/prompt1_newline_probe.txt
+          git commit -m 'chore: inspect Astra newline map'
           git push origin HEAD:dev
