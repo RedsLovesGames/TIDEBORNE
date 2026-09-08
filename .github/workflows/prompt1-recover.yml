@@ -1,10 +1,9 @@
-name: Prompt 1 Contract History Search
+name: Prompt 1 Exact Contract Search
 
 on:
   push:
     branches: [dev]
-    paths:
-      - '.github/workflows/prompt1-recover.yml'
+    paths: ['.github/workflows/prompt1-recover.yml']
 
 permissions:
   contents: write
@@ -19,34 +18,54 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Search exact reachable contracts
+      - name: Find source definitions only
         shell: bash
         run: |
           set -euo pipefail
           git fetch --all --tags --prune
-          report=.github/prompt1_contract_history.txt
+          report=.github/prompt1_exact_contract_search.txt
           : > "$report"
           echo "HEAD=$(git rev-parse HEAD)" >> "$report"
-          for term in 'tackle()' 'archetypes(' 'BobberBonuses.get('; do
-            echo "=== TERM: $term ===" >> "$report"
-            count=0
-            while read -r commit; do
-              matches="$(git grep -n -F "$term" "$commit" -- 'src/main/java/**/*.java' 2>/dev/null || true)"
-              if [ -n "$matches" ]; then
-                echo "COMMIT $commit" >> "$report"
-                printf '%s\n' "$matches" >> "$report"
-                count=$((count+1))
-                [ "$count" -ge 8 ] && break
+          for commit in $(git rev-list --all); do
+            for path in \
+              src/main/java/com/redslovesgames/tideborne/satchel/network/SatchelView.java \
+              src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelView.java \
+              src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/network/SatchelView.java; do
+              body="$(git show "$commit:$path" 2>/dev/null || true)"
+              if [ -n "$body" ] && printf '%s' "$body" | grep -q 'tackle'; then
+                echo "SATCHEL_VIEW_COMMIT=$commit PATH=$path" >> "$report"
+                printf '%s\n' "$body" | grep -n -C 4 'tackle' >> "$report"
+                break 2
               fi
-            done < <(git rev-list --all)
-            echo "MATCH_COMMITS=$count" >> "$report"
+            done
           done
-          echo "=== PATH HISTORY SatchelGearSummary ===" >> "$report"
-          git log --all --name-only --pretty='COMMIT %H' -- '*SatchelGearSummary.java' >> "$report" || true
-          echo "=== PATH HISTORY BobberBonuses ===" >> "$report"
-          git log --all --name-only --pretty='COMMIT %H' -- '*BobberBonuses.java' >> "$report" || true
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for commit in $(git rev-list --all); do
+            for path in \
+              src/main/java/com/redslovesgames/tideborne/satchel/SatchelGearSummary.java \
+              src/main/java/com/redslovesgames/tidetraits/satchel/SatchelGearSummary.java \
+              src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/SatchelGearSummary.java; do
+              body="$(git show "$commit:$path" 2>/dev/null || true)"
+              if [ -n "$body" ] && printf '%s' "$body" | grep -q 'archetypes'; then
+                echo "GEAR_SUMMARY_COMMIT=$commit PATH=$path" >> "$report"
+                printf '%s\n' "$body" | grep -n -C 8 'archetypes' >> "$report"
+                break 2
+              fi
+            done
+          done
+          for commit in $(git rev-list --all); do
+            for path in \
+              src/main/java/com/redslovesgames/tideborne/journal/BobberBonuses.java \
+              src/main/java/com/redslovesgames/tideteamjournal/BobberBonuses.java; do
+              body="$(git show "$commit:$path" 2>/dev/null || true)"
+              if [ -n "$body" ] && printf '%s' "$body" | grep -Eq 'static .* get\('; then
+                echo "BOBBER_BONUSES_COMMIT=$commit PATH=$path" >> "$report"
+                printf '%s\n' "$body" | grep -n -C 8 -E 'static .* get\(' >> "$report"
+                break 2
+              fi
+            done
+          done
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add "$report"
-          git commit -m 'test: record exact contract history search' || true
+          git commit -m 'test: record exact contract implementation search' || true
           git push origin HEAD:dev
