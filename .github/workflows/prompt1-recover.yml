@@ -18,35 +18,29 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Audit exact Astra baseline coverage
+      - name: Remove Java paths absent from Astra manifest
         shell: bash
         run: |
           set -euo pipefail
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib
-          entries=[]
+          manifest=set()
           for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p,h,t,s=line.split('\t'); entries.append((p,h,t=='1',int(s)))
-          exact=[]; missing=[]; mismatch=[]
-          for p,h,istext,size in entries:
-              q=Path(p)
-              if not q.is_file(): missing.append((p,h,size)); continue
-              b=q.read_bytes()
-              if len(b)==size and hashlib.sha256(b).hexdigest()==h: exact.append(p)
-              else: mismatch.append((p,h,size,hashlib.sha256(b).hexdigest(),len(b)))
-          out=[f'MANIFEST_FILES={len(entries)}',f'EXACT_FILES={len(exact)}',f'MISSING_FILES={len(missing)}',f'MISMATCH_FILES={len(mismatch)}']
-          out.append('MISSING:')
-          out += ['\t'.join(map(str,x)) for x in missing]
-          out.append('MISMATCH:')
-          out += ['\t'.join(map(str,x)) for x in mismatch]
-          Path('.github/prompt1_residual_gap.txt').write_text('\n'.join(out)+'\n')
-          print('\n'.join(out[:4]))
-          assert len(exact)+len(missing)+len(mismatch)==564
+              p=line.split('\t',1)[0]; manifest.add(p)
+          prod=sorted(p.as_posix() for p in Path('src/main/java').rglob('*.java') if p.as_posix() not in manifest)
+          tests=sorted(p.as_posix() for p in Path('src/test/java').rglob('*.java') if p.as_posix() not in manifest)
+          assert len(prod)==16,(len(prod),prod)
+          assert len(tests)==2,(len(tests),tests)
+          for p in prod+tests: Path(p).unlink()
+          out=[f'REMOVED_PRODUCTION_JAVA={len(prod)}',f'REMOVED_TEST_JAVA={len(tests)}','PRODUCTION:']+prod+['TESTS:']+tests
+          Path('.github/prompt1_manifest_extras_removed.txt').write_text('\n'.join(out)+'\n')
+          print('\n'.join(out))
+          assert sum(1 for _ in Path('src/main/java').rglob('*.java'))==265
+          assert sum(1 for _ in Path('src/test/java').rglob('*.java'))==61
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/prompt1_residual_gap.txt
-          git commit -m 'chore: audit residual Astra baseline gap'
+          git add -A
+          git commit -m 'chore: remove Java files absent from Astra baseline'
           git push origin HEAD:dev
