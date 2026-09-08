@@ -1,4 +1,4 @@
-name: Prompt 1 Blocker Inventory
+name: Prompt 1 Structural Status
 
 on:
   push:
@@ -9,53 +9,48 @@ permissions:
   contents: write
 
 jobs:
-  inventory:
+  status:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           ref: dev
           fetch-depth: 0
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.12'
-      - name: Record compiler and ownership blocker inventory
+      - name: Document provenance and run structural validator
         shell: bash
         run: |
           set -u
           sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
-          report=.github/prompt1_blocker_inventory.txt
+          marker='## Prompt 1 source-provenance status'
+          if ! grep -Fq "$marker" docs/CURRENT_STATE.md; then
+            cat >> docs/CURRENT_STATE.md <<'EOF'
+
+## Prompt 1 source-provenance status
+
+Prompt 1 Java package ownership migration is structurally complete: the established migration landed 251 production Java moves and 67 existing test Java moves, with the package-ownership architecture test enforcing the Tideborne root package. The exact byte-for-byte 564-file Astra baseline was **not** reconstructed. After all available recovery routes were exhausted, 75 authoritative file/hash entries remain unavailable. This is an accepted source-provenance limitation and is not a reason to repeat the package migration. See `docs/PROMPT_1_SOURCE_PROVENANCE.md`.
+
+Do not fabricate, approximate, regenerate, or silently replace unavailable authoritative files merely to satisfy the old exact-baseline requirement. At present the limitation also blocks complete validation because at least one unavailable source, `GearArchetypeCases.java`, is an active compile-time dependency and only its structural package placeholder is recoverable. Prompt 1 must not be declared fully validated until authoritative source for such live dependencies becomes available and the full Java 21 validation matrix passes.
+EOF
+          fi
+          sed -i 's/\r$//' scripts/validate_repository.sh 2>/dev/null || true
+          chmod +x scripts/validate_repository.sh
+          report=.github/prompt1_structural_status.txt
           : > "$report"
           echo "HEAD=$(git rev-parse HEAD)" >> "$report"
-          sed -i 's/\r$//' scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh 2>/dev/null || true
-          chmod +x gradlew scripts/*.sh 2>/dev/null || true
-          bash scripts/fetch_ci_dependencies.sh >/tmp/deps.log 2>&1 || true
           set +e
-          ./gradlew compileJava --no-daemon --console=plain >/tmp/compile.log 2>&1
-          compile=$?
           bash scripts/validate_repository.sh >/tmp/validator.log 2>&1
-          validator=$?
+          rc=$?
           set -e
-          echo "COMPILE_RC=$compile" >> "$report"
-          echo "VALIDATOR_RC=$validator" >> "$report"
-          echo "=== COMPILER ERRORS ===" >> "$report"
-          grep -E '(^|: )error:|cannot find symbol|constructor .* cannot be applied|symbol:|location:' /tmp/compile.log >> "$report" || true
-          echo "=== VALIDATOR ===" >> "$report"
+          echo "VALIDATOR_RC=$rc" >> "$report"
           cat /tmp/validator.log >> "$report"
-          echo "=== STRUCTURAL OWNERSHIP ===" >> "$report"
           echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
           echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
           echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
-          echo "GEAR_ARCHETYPE_PLACEHOLDER_LINES=$(wc -l < src/main/java/com/redslovesgames/tideborne/fishing/gametest/GearArchetypeCases.java)" >> "$report"
-          git checkout -- scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh 2>/dev/null || true
+          git checkout -- scripts/validate_repository.sh 2>/dev/null || true
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add "$report"
-          git commit -m 'test: record Prompt 1 blocker inventory' || true
+          git add docs/CURRENT_STATE.md "$report"
+          git commit -m 'docs: record Prompt 1 provenance and structural status' || true
           git push origin HEAD:dev
