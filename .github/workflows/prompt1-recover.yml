@@ -1,4 +1,4 @@
-name: Prompt 1 Recover Astra Transport
+name: Prompt 1 Exact Blob Recovery
 
 on:
   push:
@@ -18,38 +18,60 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Dry-run established migration against pruned Astra shape
+      - name: Scan every reachable blob for authoritative hashes
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/probe && mkdir /tmp/probe
-          git archive HEAD | tar -x -C /tmp/probe
-          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
-          report=.github/prompt1_pruned_migration_probe.txt
-          {
-            echo "SOURCE_PRODUCTION=$(find /tmp/probe/src/main/java -type f -name '*.java' | wc -l)"
-            echo "SOURCE_TESTS=$(find /tmp/probe/src/test/java -type f -name '*.java' | wc -l)"
-            echo '== migration output =='
-          } > "$report"
-          (cd /tmp/probe && python3 /tmp/package_unify.py) >> "$report" 2>&1
-          echo "AFTER_PRODUCTION=$(find /tmp/probe/src/main/java -type f -name '*.java' | wc -l)" >> "$report"
-          echo "AFTER_TESTS=$(find /tmp/probe/src/test/java -type f -name '*.java' | wc -l)" >> "$report"
+          report=.github/prompt1_blob_hash_recovery.txt
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          python3 - <<'PY' >> "$report"
+          python3 - <<'PY'
           from pathlib import Path
-          manifest={line.split('\t',1)[0] for line in Path('/tmp/manifest.tsv').read_text().splitlines()}
-          prod=[p for p in manifest if p.startswith('src/main/java/') and p.endswith('.java')]
-          tests=[p for p in manifest if p.startswith('src/test/java/') and p.endswith('.java')]
-          missing_prod=sorted(p for p in prod if not Path(p).is_file())
-          missing_test=sorted(p for p in tests if not Path(p).is_file())
-          print('AUTHORITATIVE_PRODUCTION=',len(prod),sep='')
-          print('AUTHORITATIVE_TESTS=',len(tests),sep='')
-          print('MISSING_PRODUCTION=',len(missing_prod),sep='')
-          print('MISSING_TESTS=',len(missing_test),sep='')
-          print('EXPECTED_FINAL_MOVE_COUNTS=251/67')
+          import hashlib
+          wanted=[]
+          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
+              p,h,t,s=line.split('\t')
+              f=Path(p)
+              if not f.is_file() or hashlib.sha256(f.read_bytes()).hexdigest()!=h:
+                  wanted.append((p,h,int(s)))
+          Path('/tmp/wanted.tsv').write_text(''.join(f'{p}\t{h}\t{s}\n' for p,h,s in wanted))
+          print('UNRESOLVED',len(wanted))
           PY
+          # Include pull request heads too, then inspect every reachable object by content.
+          git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*' || true
+          git rev-list --objects --all | awk '{print $1}' | sort -u > /tmp/objects.txt
+          python3 - <<'PY' > "$report"
+          from pathlib import Path
+          import subprocess, hashlib
+          wanted={h:(p,s) for p,h,s in (line.split('\t') for line in Path('/tmp/wanted.tsv').read_text().splitlines())}
+          wanted={h:(p,int(s)) for h,(p,s) in wanted.items()}
+          print('UNRESOLVED_START='+str(len(wanted)))
+          hits={}
+          objects=Path('/tmp/objects.txt').read_text().splitlines()
+          proc=subprocess.Popen(['git','cat-file','--batch'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+          assert proc.stdin and proc.stdout
+          for oid in objects:
+              proc.stdin.write((oid+'\n').encode()); proc.stdin.flush()
+              header=proc.stdout.readline().decode().strip().split()
+              if len(header)<3 or header[1]!='blob':
+                  if len(header)>=3:
+                      size=int(header[2]); proc.stdout.read(size); proc.stdout.read(1)
+                  continue
+              size=int(header[2]); data=proc.stdout.read(size); proc.stdout.read(1)
+              h=hashlib.sha256(data).hexdigest()
+              if h in wanted and h not in hits:
+                  p,expected_size=wanted[h]
+                  if size==expected_size:
+                      hits[h]=(p,oid,size)
+          proc.stdin.close(); proc.wait()
+          print('EXACT_BLOB_HITS='+str(len(hits)))
+          for h,(p,oid,size) in sorted(hits.items(), key=lambda x:x[1][0]):
+              print(f'HIT\t{p}\t{h}\t{oid}\t{size}')
+          for h,(p,size) in sorted(wanted.items(), key=lambda x:x[1][0]):
+              if h not in hits: print(f'MISS\t{p}\t{h}\t{size}')
+          PY
+          cat "$report"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$report"
-          git commit -m 'chore: probe pruned Prompt 1 migration counts'
+          git commit -m 'chore: scan reachable blobs for exact Astra files'
           git push origin HEAD:dev
