@@ -18,45 +18,60 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Search exact content duplicates
+      - name: Probe established package migration
+        shell: bash
+        run: |
+          set +e
+          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
+          report=.github/prompt1_migration_probe.txt
+          : > "$report"
+          echo '== script tail ==' >> "$report"
+          tail -n 180 /tmp/package_unify.py >> "$report"
+          echo '== source counts before ==' >> "$report"
+          printf 'prod_java=' >> "$report"; find src/main/java -type f -name '*.java' | wc -l >> "$report"
+          printf 'test_java=' >> "$report"; find src/test/java -type f -name '*.java' | wc -l >> "$report"
+          echo '== run ==' >> "$report"
+          python3 /tmp/package_unify.py >> "$report" 2>&1
+          rc=$?
+          echo "rc=$rc" >> "$report"
+          echo '== source counts after working tree ==' >> "$report"
+          printf 'prod_java=' >> "$report"; find src/main/java -type f -name '*.java' | wc -l >> "$report"
+          printf 'test_java=' >> "$report"; find src/test/java -type f -name '*.java' | wc -l >> "$report"
+          echo '== status summary ==' >> "$report"
+          git status --short >> "$report"
+          git reset --hard HEAD >/dev/null
+          git clean -fd >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # restore report after reset
+          echo "$rc" >/tmp/probe_rc
+          # rerun only report generation in an isolated worktree was lost by reset, so copy from temp is needed
+        
+      - name: Probe safely with worktree copy
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib, os
-          exact={}
-          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p,h,t,s=line.split('\t'); exact[p]=(h,t=='1',int(s))
-          # Use previously computed unresolved list.
-          lines=Path('.github/prompt1_gap.txt').read_text().splitlines()
-          i=lines.index('UNRESOLVED_FILES:')+1
-          unresolved=lines[i:]
-          by_hash={}
-          for root,dirs,files in os.walk('.'):
-              if root.startswith('./.git'): continue
-              for fn in files:
-                  q=Path(root)/fn
-                  try:b=q.read_bytes()
-                  except:continue
-                  by_hash.setdefault(hashlib.sha256(b).hexdigest(),[]).append(q.as_posix().removeprefix('./'))
-          out=[]
-          exists=0; missing=0; dup=0
-          for p in unresolved:
-              h,istext,size=exact[p]
-              cur=Path(p)
-              status='EXISTS' if cur.is_file() else 'MISSING_PATH'
-              exists += cur.is_file(); missing += not cur.is_file()
-              matches=[q for q in by_hash.get(h,[]) if q!=p]
-              if matches: dup+=1
-              out.append(f'{status}\t{p}\t{h}\t{size}\tDUP={";".join(matches)}')
-          header=[f'UNRESOLVED={len(unresolved)}',f'CURRENT_PATH_EXISTS={exists}',f'CURRENT_PATH_MISSING={missing}',f'EXACT_DUPLICATES={dup}']
-          Path('.github/prompt1_gap_detail.txt').write_text('\n'.join(header+out)+'\n')
-          print('\n'.join(header))
-          PY
+          rm -rf /tmp/probe && mkdir /tmp/probe
+          git archive HEAD | tar -x -C /tmp/probe
+          xz -dc .github/package_unify.py.xz >/tmp/package_unify.py
+          report=.github/prompt1_migration_probe.txt
+          {
+            echo '== source counts before =='
+            printf 'prod_java='; find /tmp/probe/src/main/java -type f -name '*.java' | wc -l
+            printf 'test_java='; find /tmp/probe/src/test/java -type f -name '*.java' | wc -l
+            echo '== run =='
+          } > "$report"
+          (cd /tmp/probe && python3 /tmp/package_unify.py) >> "$report" 2>&1 || rc=$?
+          echo "rc=${rc:-0}" >> "$report"
+          echo '== source counts after ==' >> "$report"
+          printf 'prod_java=' >> "$report"; find /tmp/probe/src/main/java -type f -name '*.java' | wc -l >> "$report"
+          printf 'test_java=' >> "$report"; find /tmp/probe/src/test/java -type f -name '*.java' | wc -l >> "$report"
+          echo '== changed count ==' >> "$report"
+          diff -qr --exclude='.github' . /tmp/probe | wc -l >> "$report" || true
+          echo '== missing Astra Java paths ==' >> "$report"
+          awk -F '\t' '$1=="MISSING_PATH" && $2 ~ /src\/(main|test)\/java\/.*\.java$/ {print $2}' .github/prompt1_gap_detail.txt >> "$report"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/prompt1_gap_detail.txt
-          git commit -m 'chore: search Astra gap duplicates'
+          git add "$report"
+          git commit -m 'chore: probe package migration gap'
           git push origin HEAD:dev
