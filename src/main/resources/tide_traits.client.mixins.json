@@ -1,6 +1,6 @@
 {
   "required": false,
-  "package": "com.redslovesgames.tidetraits.mixin.client",
+  "package": "com.redslovesgames.tideborne.mixin.specimen.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
     "FishDisplayBlockEntityMixin",

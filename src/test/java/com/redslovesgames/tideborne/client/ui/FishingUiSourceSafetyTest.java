@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test;
 
 class FishingUiSourceSafetyTest {
     private static final List<String> AFFECTED_UI = List.of(
-            "src/main/java/com/redslovesgames/tideteamjournal/client/TeamRecordsScreen.java",
-            "src/main/java/com/redslovesgames/tideteamjournal/client/TopFishScreen.java",
-            "src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/AnglersSatchelScreen.java",
-            "src/main/java/com/redslovesgames/tidetraits/mixin/client/FishProfileSizeRangeMixin.java",
+            "src/main/java/com/redslovesgames/tideborne/journal/client/TeamRecordsScreen.java",
+            "src/main/java/com/redslovesgames/tideborne/journal/client/TopFishScreen.java",
+            "src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java",
+            "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/FishProfileSizeRangeMixin.java",
             "src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/client/gui/journal/DiscoveryBadgesComponent.java",
-            "src/main/java/com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/mixin/client/TideFishProfileMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/mixin/client/ItemRendererMutationTintMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/client/render/MutationRendering.java"
+            "src/main/java/com/redslovesgames/tideborne/journal/client/DiscoveryBadgesComponent.java",
+            "src/main/java/com/redslovesgames/tideborne/mixin/journal/client/FishingJournalMixin.java",
+            "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/TideFishProfileMixin.java",
+            "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/ItemRendererMutationTintMixin.java",
+            "src/main/java/com/redslovesgames/tideborne/presentation/render/MutationRendering.java"
     );
 
     @Test
@@ -162,7 +162,7 @@ class FishingUiSourceSafetyTest {
         assertTrue(topFish.contains("SpecimenTransfer.stackToEntity(stack, entity);"));
 
         String fishDisplay = Files.readString(Path.of(
-                "src/main/java/com/redslovesgames/tidetraits/mixin/client/FishDisplayBlockEntityMixin.java"));
+                "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/FishDisplayBlockEntityMixin.java"));
         assertTrue(fishDisplay.contains("SpecimenTransfer.stackToEntity(displayStack, renderedEntity);"));
     }
 

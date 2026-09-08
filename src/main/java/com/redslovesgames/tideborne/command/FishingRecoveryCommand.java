@@ -1,11 +1,11 @@
 package com.redslovesgames.tideborne.command;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService;
-import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService.Result;
-import com.redslovesgames.tideborne.fishing.v2.integration.LegacyFishRecoveryService.Status;
-import com.redslovesgames.tideteamjournal.OwnedFishJournalBackfill;
-import com.redslovesgames.tideteamjournal.RecoveredSpecimenRecordService;
+import com.redslovesgames.tideborne.migration.legacy.LegacyFishRecoveryService;
+import com.redslovesgames.tideborne.migration.legacy.LegacyFishRecoveryService.Result;
+import com.redslovesgames.tideborne.migration.legacy.LegacyFishRecoveryService.Status;
+import com.redslovesgames.tideborne.journal.OwnedFishJournalBackfill;
+import com.redslovesgames.tideborne.journal.RecoveredSpecimenRecordService;
 import java.util.SplittableRandom;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;

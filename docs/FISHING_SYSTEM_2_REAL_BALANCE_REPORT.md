@@ -281,10 +281,10 @@ This is the real Tide-backed simulator, but it is not an exhaustive model of eve
 
 Implementation:
 
-- `src/main/java/com/redslovesgames/tideborne/fishing/v2/simulation/RealTideFishingSimulator.java`
-- `src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/RealTideBalanceGameTests.java`
-- `src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/TideSpeciesProfileAdapter.java`
-- `src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/TideFishingContextAdapter.java`
+- `src/main/java/com/redslovesgames/tideborne/fishing/simulation/RealTideFishingSimulator.java`
+- `src/main/java/com/redslovesgames/tideborne/fishing/gametest/RealTideBalanceGameTests.java`
+- `src/main/java/com/redslovesgames/tideborne/fishing/tide/TideSpeciesProfileAdapter.java`
+- `src/main/java/com/redslovesgames/tideborne/fishing/tide/TideFishingContextAdapter.java`
 
 Sampling configuration:
 

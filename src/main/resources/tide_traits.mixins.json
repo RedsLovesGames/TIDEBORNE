@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "com.redslovesgames.tidetraits.mixin",
+  "package": "com.redslovesgames.tideborne.mixin.specimen",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AnglersSatchelRecipeMixin",

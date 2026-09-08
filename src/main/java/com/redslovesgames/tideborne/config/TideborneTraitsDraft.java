@@ -5,9 +5,9 @@
  */
 package com.redslovesgames.tideborne.config;
 
-import com.redslovesgames.tidetraits.config.TideTraitsConfig;
-import com.redslovesgames.tidetraits.config.TideTraitsConfigManager;
-import com.redslovesgames.tidetraits.trait.FishMutation;
+import com.redslovesgames.tideborne.config.TideTraitsConfig;
+import com.redslovesgames.tideborne.config.TideTraitsConfigManager;
+import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;

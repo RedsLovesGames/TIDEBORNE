@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
-import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
-import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
-import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
-import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
+import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
+import com.redslovesgames.tideborne.fishing.specimen.SpecimenGenerator;
+import com.redslovesgames.tideborne.journal.CanonicalSpecimenRecordIndexer;
+import com.redslovesgames.tideborne.fishing.specimen.CanonicalSpecimenStorage;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;

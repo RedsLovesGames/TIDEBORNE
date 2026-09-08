@@ -157,3 +157,7 @@ When implementation state changes:
 - update the relevant current subsystem document if its contract changed
 
 Do not append a new historical narrative to every current document after every prompt. Put one-off historical detail in a stage/reference document only when it has long-term value.
+
+## Current Java package ownership
+
+Active production Java is owned by `com.redslovesgames.tideborne.*`. Canonical fishing code uses `tideborne.fishing` and feature children such as `fishing.specimen`, `fishing.gear`, and `fishing.tide`; Journal, Satchel, discovery, ecosystem, compatibility, presentation, networking, registry, mixin, and legacy migration code use their corresponding Tideborne feature packages. Historical serialized identifiers and resource namespaces remain intentionally unchanged for compatibility.

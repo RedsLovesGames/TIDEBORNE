@@ -1,7 +1,7 @@
 package com.redslovesgames.tideborne.presentation;
 
-import com.redslovesgames.tideborne.fishing.v2.CanonicalRarity;
-import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.specimen.CanonicalRarity;
+import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
