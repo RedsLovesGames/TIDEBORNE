@@ -18,43 +18,64 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Inspect staged Astra transport
+      - name: Deep recovery
         shell: bash
         run: |
           set -euo pipefail
-          report=.github/prompt1_recovery_report.txt
+          report=.github/prompt1_recovery_report2.txt
           : > "$report"
-          echo "HEAD=$(git rev-parse HEAD)" >> "$report"
-          echo "== transport files ==" >> "$report"
-          find .github -maxdepth 1 -type f -name 'astra_*' -printf '%f %s\n' | sort >> "$report"
-          echo "== package script ==" >> "$report"
-          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
-          sed -n '1,260p' /tmp/package_unify.py >> "$report"
-          echo "== text payload ==" >> "$report"
-          sha256sum .github/astra_text_payload.tar.xz >> "$report"
-          xz -dc .github/astra_text_payload.tar.xz | tar -tvf - >> "$report" || true
-          echo "== candidate assembled streams ==" >> "$report"
-          for pattern in 'astra_delta.part-*' 'astra_delta.part-* astra_delta.tail-*' 'astra_delta.part-* astra_delta.tail-* astra_delta.tailb-*'; do
-            rm -f /tmp/candidate.b64 /tmp/candidate.bin
-            for p in $pattern; do
-              for f in .github/$p; do
-                [ -f "$f" ] && cat "$f" >> /tmp/candidate.b64
-              done
-            done
-            echo "PATTERN=$pattern" >> "$report"
-            wc -c /tmp/candidate.b64 >> "$report"
-            if base64 -d /tmp/candidate.b64 > /tmp/candidate.bin 2>/tmp/b64err; then
-              sha256sum /tmp/candidate.bin >> "$report"
-              file /tmp/candidate.bin >> "$report"
-              xz -t /tmp/candidate.bin >> "$report" 2>&1 || true
-              xz -dc /tmp/candidate.bin 2>/dev/null | tar -tvf - >> "$report" 2>&1 || true
-            else
-              echo "base64 decode failed" >> "$report"
-              cat /tmp/b64err >> "$report"
-            fi
-          done
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$report"
-          git commit -m 'chore: inspect Astra recovery state'
-          git push origin HEAD:dev
+          mkdir -p /tmp/textpayload /tmp/partial
+          tar -xJf .github/astra_text_payload.tar.xz -C /tmp/textpayload
+          echo '== manifest summary ==' >> "$report"
+          python3 - <<'PY' >> "$report"
+          import json
+          from pathlib import Path
+          d=json.loads(Path('/tmp/textpayload/manifest.json').read_text())
+          print(type(d).__name__)
+          if isinstance(d,dict):
+              print('keys',sorted(d.keys()))
+              for k,v in d.items(): print(k,type(v).__name__,len(v) if isinstance(v,(list,dict)) else repr(v)[:200])
+              print('sample',repr(d)[:8000])
+          else:
+              print('len',len(d)); print('sample',repr(d[:5])[:8000])
+          PY
+          echo '== partial recovery ==' >> "$report"
+          cat .github/astra_delta.part-* .github/astra_delta.tail-* .github/astra_delta.tailb-00 .github/astra_delta.tailb-01 > /tmp/prefix.b64
+          python3 - <<'PY' >> "$report"
+          from pathlib import Path
+          import base64,hashlib
+          b=Path('/tmp/prefix.b64').read_bytes(); u=len(b)-len(b)%4
+          raw=base64.b64decode(b[:u],validate=False); Path('/tmp/prefix.xz').write_bytes(raw)
+          print('b64',len(b),'usable',u,'raw',len(raw),'sha256',hashlib.sha256(raw).hexdigest())
+          PY
+          set +e; xz -dc /tmp/prefix.xz > /tmp/prefix.tar 2>/tmp/xzerr; rc=$?; set -e
+          echo "xz_rc=$rc tar_bytes=$(wc -c < /tmp/prefix.tar)" >> "$report"; cat /tmp/xzerr >> "$report"
+          tar -tvf /tmp/prefix.tar >> "$report" 2>&1 || true
+          tar -xf /tmp/prefix.tar -C /tmp/partial 2>/dev/null || true
+          echo '== recovered hashes ==' >> "$report"
+          find /tmp/partial -type f -print0 | sort -z | while IFS= read -r -d '' f; do rel=${f#/tmp/partial/}; printf '%s\t' "$rel" >> "$report"; sha256sum "$f"|awk '{print $1}' >> "$report"; done
+          echo '== history matches ==' >> "$report"
+          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
+          python3 - <<'PY' >> "$report"
+          from pathlib import Path
+          import subprocess,hashlib
+          delta=set(Path('.github/astra_delta_files.txt').read_text().splitlines()); E=[]
+          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
+              p,h,t,s=line.split('\t')
+              if p in delta:E.append((p,h,int(s)))
+          found=[];missing=[]
+          for p,h,s in E:
+              try: revs=subprocess.check_output(['git','rev-list','--all','--',p],text=True).splitlines()
+              except: revs=[]
+              hit=''
+              for r in revs:
+                  try:data=subprocess.check_output(['git','show',f'{r}:{p}'],stderr=subprocess.DEVNULL)
+                  except:continue
+                  if hashlib.sha256(data).hexdigest()==h: hit=r; break
+              (found if hit else missing).append((p,h,s,hit))
+          print('delta',len(E),'found',len(found),'missing',len(missing))
+          for x in found: print('FOUND\t'+'\t'.join(map(str,x)))
+          for x in missing: print('MISSING\t'+'\t'.join(map(str,x)))
+          PY
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$report"; git commit -m 'chore: deepen Astra recovery'; git push origin HEAD:dev
