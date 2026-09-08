@@ -18,58 +18,48 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Restore exact Astra newline bytes
+      - name: Forensic recover Astra suffix chunks
         shell: bash
         run: |
           set -euo pipefail
+          report=.github/prompt1_suffix_recovery.txt
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          cat .github/astra_normalized.part-* | base64 -d | xz -dc > /tmp/normalized.tsv
-          base64 -d .github/astra_newlines.json.xz.b64 | xz -dc > /tmp/newlines.json
+          cat .github/astra_delta.tailb-03 .github/astra_delta.tailb-04 .github/astra_delta.tailb-05 .github/astra_delta.tailb-06 .github/astra_delta.tailb-07 > /tmp/suffix.b64
+          base64 -d /tmp/suffix.b64 > /tmp/suffix.bin
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib, json, re
-          exact={}
-          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p,h,t,s=line.split('\t'); exact[p]=(h,t=='1',int(s))
-          norm={}
-          for line in Path('/tmp/normalized.tsv').read_text().splitlines():
-              p,h,style=line.split('\t'); norm[p]=(h,style)
-          styles=json.loads(Path('/tmp/newlines.json').read_text())
-          def sha(b): return hashlib.sha256(b).hexdigest()
-          def expand_style(spec):
-              out=[]
-              for kind,count in re.findall(r'([RL])(\d*)',spec): out.extend([kind]*(int(count) if count else 1))
-              return out
-          def rebuild(normalized,spec):
-              parts=normalized.split(b'\n'); kinds=expand_style(spec)
-              assert len(kinds)==len(parts)-1,(len(kinds),len(parts)-1,spec)
-              data=bytearray(parts[0])
-              for kind,part in zip(kinds,parts[1:]):
-                  data += b'\r\n' if kind=='R' else b'\n'; data += part
-              return bytes(data)
-          applied=[]
-          for p,(nh,spec) in norm.items():
-              q=Path(p)
-              if not q.is_file() or p not in exact or p not in styles: continue
-              raw=q.read_bytes()
-              if sha(raw)==exact[p][0]: continue
-              try: txt=raw.decode('utf-8')
-              except UnicodeDecodeError: continue
-              n=txt.replace('\r\n','\n').replace('\r','\n').encode('utf-8')
-              if sha(n)!=nh: continue
-              rebuilt=rebuild(n,styles[p]); h,istext,size=exact[p]
-              assert sha(rebuilt)==h and len(rebuilt)==size,p
-              q.write_bytes(rebuilt); applied.append(p)
-          assert len(applied)==348,len(applied)
-          for p in applied:
-              h,istext,size=exact[p]; b=Path(p).read_bytes(); assert sha(b)==h and len(b)==size,p
-          Path('.github/prompt1_newlines_applied.txt').write_text('NEWLINE_MODE=R_CRLF_L_LF\nVERIFIED_EXACT_NEWLINE_FILES=348\n'+'\n'.join(applied)+'\n')
-          print('VERIFIED_EXACT_NEWLINE_FILES=348')
+          import lzma, hashlib, re
+          raw=Path('/tmp/suffix.bin').read_bytes()
+          results=[]
+          # LZMA2 dictionary reset/control bytes are >= 0xE0. Try likely reset points and common dict sizes.
+          dicts=[1<<20,2<<20,4<<20,8<<20,16<<20,32<<20,64<<20]
+          for off,b in enumerate(raw):
+              if b < 0xE0: continue
+              for ds in dicts:
+                  try:
+                      dec=lzma.LZMADecompressor(format=lzma.FORMAT_RAW,filters=[{'id':lzma.FILTER_LZMA2,'dict_size':ds}])
+                      out=dec.decompress(raw[off:])
+                  except lzma.LZMAError:
+                      continue
+                  if len(out) < 512: continue
+                  score=0
+                  if b'ustar' in out: score += 100
+                  score += out.count(b'src/')*10 + out.count(b'.java')*5 + out.count(b'package com.redslovesgames')*20
+                  printable=sum((c in b'\n\r\t' or 32 <= c < 127) for c in out[:min(len(out),20000)]) / min(len(out),20000)
+                  if score or printable > .85:
+                      results.append((score,len(out),printable,off,ds,out))
+          results.sort(key=lambda x:(x[0],x[1],x[2]),reverse=True)
+          lines=[f'SUFFIX_BYTES={len(raw)}',f'CANDIDATES={len(results)}']
+          for rank,(score,n,p,off,ds,out) in enumerate(results[:20],1):
+              op=Path(f'/tmp/suffix_candidate_{rank}.bin'); op.write_bytes(out)
+              lines.append(f'#{rank} score={score} bytes={n} printable={p:.3f} offset={off} dict={ds} sha256={hashlib.sha256(out).hexdigest()}')
+              sample=re.sub(rb'[^\x09\x0a\x0d\x20-\x7e]',b'.',out[:1200]).decode('ascii','replace')
+              lines.append(sample)
+          Path('.github/prompt1_suffix_recovery.txt').write_text('\n'.join(lines)+'\n')
+          print('\n'.join(lines[:25]))
           PY
-          # The Actions token cannot update existing workflow files. The build workflow was fully reconstructed and hash-verified above, but leave its Git blob untouched here.
-          git checkout -- .github/workflows/build.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'chore: restore verified Astra newline baseline'
+          git add "$report"
+          git commit -m 'chore: probe Astra suffix recovery'
           git push origin HEAD:dev
