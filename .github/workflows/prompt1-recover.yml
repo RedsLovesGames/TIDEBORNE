@@ -38,57 +38,38 @@ jobs:
           def sha(b): return hashlib.sha256(b).hexdigest()
           def expand_style(spec):
               out=[]
-              for kind,count in re.findall(r'([RL])(\d*)',spec):
-                  out.extend([kind]*(int(count) if count else 1))
+              for kind,count in re.findall(r'([RL])(\d*)',spec): out.extend([kind]*(int(count) if count else 1))
               return out
-          def rebuild(normalized,spec,swap=False):
-              parts=normalized.split(b'\n')
-              kinds=expand_style(spec)
+          def rebuild(normalized,spec):
+              parts=normalized.split(b'\n'); kinds=expand_style(spec)
               assert len(kinds)==len(parts)-1,(len(kinds),len(parts)-1,spec)
               data=bytearray(parts[0])
               for kind,part in zip(kinds,parts[1:]):
-                  crlf=(kind=='R') ^ swap
-                  data += b'\r\n' if crlf else b'\n'
-                  data += part
+                  data += b'\r\n' if kind=='R' else b'\n'; data += part
               return bytes(data)
-          # Determine R/L meaning from files whose authoritative exact bytes are already present.
-          vote=[]
-          for p,(nh,spec) in norm.items():
-              q=Path(p)
-              if not q.is_file() or p not in exact or p not in styles: continue
-              b=q.read_bytes()
-              if sha(b)!=exact[p][0]: continue
-              n=b.replace(b'\r\n',b'\n').replace(b'\r',b'\n')
-              if sha(n)!=nh: continue
-              vote.append((sha(rebuild(n,styles[p],False))==exact[p][0],sha(rebuild(n,styles[p],True))==exact[p][0],p))
-          normal=sum(a for a,b,p in vote); swapped=sum(b for a,b,p in vote)
-          assert normal!=swapped and max(normal,swapped)>0,(normal,swapped)
-          swap=swapped>normal
           applied=[]
           for p,(nh,spec) in norm.items():
               q=Path(p)
               if not q.is_file() or p not in exact or p not in styles: continue
               raw=q.read_bytes()
               if sha(raw)==exact[p][0]: continue
-              try:
-                  txt=raw.decode('utf-8')
-              except UnicodeDecodeError:
-                  continue
+              try: txt=raw.decode('utf-8')
+              except UnicodeDecodeError: continue
               n=txt.replace('\r\n','\n').replace('\r','\n').encode('utf-8')
               if sha(n)!=nh: continue
-              rebuilt=rebuild(n,styles[p],swap)
-              h,istext,size=exact[p]
+              rebuilt=rebuild(n,styles[p]); h,istext,size=exact[p]
               assert sha(rebuilt)==h and len(rebuilt)==size,p
               q.write_bytes(rebuilt); applied.append(p)
           assert len(applied)==348,len(applied)
-          # Final exact verification for all 348 reconstructed files.
           for p in applied:
               h,istext,size=exact[p]; b=Path(p).read_bytes(); assert sha(b)==h and len(b)==size,p
-          Path('.github/prompt1_newlines_applied.txt').write_text(f'NEWLINE_MODE={"SWAPPED" if swap else "R_CRLF_L_LF"}\nVERIFIED_EXACT_NEWLINE_FILES={len(applied)}\n'+'\n'.join(applied)+'\n')
+          Path('.github/prompt1_newlines_applied.txt').write_text('NEWLINE_MODE=R_CRLF_L_LF\nVERIFIED_EXACT_NEWLINE_FILES=348\n'+'\n'.join(applied)+'\n')
           print('VERIFIED_EXACT_NEWLINE_FILES=348')
           PY
+          # The Actions token cannot update existing workflow files. The build workflow was fully reconstructed and hash-verified above, but leave its Git blob untouched here.
+          git checkout -- .github/workflows/build.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'chore: restore exact Astra newline bytes'
+          git commit -m 'chore: restore verified Astra newline baseline'
           git push origin HEAD:dev
