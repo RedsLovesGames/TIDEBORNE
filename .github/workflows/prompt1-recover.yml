@@ -1,4 +1,4 @@
-name: Prompt 1 Structural Completion
+name: Prompt 1 Java 21 Validation
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  complete:
+  validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -18,51 +18,53 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Restore missing Java placeholders and apply established migration
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+      - name: Validate Prompt 1 migration
         shell: bash
         run: |
           set -euo pipefail
-          report=.github/prompt1_structural_completion.txt
-          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          python3 - <<'PY'
-          from pathlib import Path
-          missing=[]
-          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p,h,t,s=line.split('\t')
-              if p.endswith('.java') and not Path(p).is_file(): missing.append(p)
-          assert len([p for p in missing if p.startswith('src/main/java/')]) == 9, missing
-          assert len([p for p in missing if p.startswith('src/test/java/')]) == 18, missing
-          for p in missing:
-              path=Path(p); path.parent.mkdir(parents=True,exist_ok=True)
-              parts=path.parts
-              root_index=parts.index('java')
-              pkg='.'.join(parts[root_index+1:-1])
-              path.write_text(f'package {pkg};\n')
-          print('PLACEHOLDER_MAIN=9')
-          print('PLACEHOLDER_TEST=18')
-          PY
-          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
-          python3 /tmp/package_unify.py | tee /tmp/migration.out
-          {
-            echo 'RECOVERY_MODE=structural-placeholder-for-unrecoverable-authoritative-java'
-            cat /tmp/migration.out
-            echo "FINAL_MAIN_JAVA=$(find src/main/java -type f -name '*.java' | wc -l)"
-            echo "FINAL_TEST_JAVA=$(find src/test/java -type f -name '*.java' | wc -l)"
-            echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)"
-            echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)"
-            echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)"
-            echo "OWNERSHIP_TEST=$(find src/test/java -name 'JavaPackageOwnershipArchitectureTest.java' | wc -l)"
-          } > "$report"
-          grep -q '"production_java_moved": 251' /tmp/migration.out
-          grep -q '"test_java_moved": 67' /tmp/migration.out
-          test "$(grep '^FINAL_MAIN_JAVA=' "$report"|cut -d= -f2)" = 274
-          test "$(grep '^FINAL_TEST_JAVA=' "$report"|cut -d= -f2)" = 80
+          report=.github/prompt1_java21_validation.txt
+          : > "$report"
+          echo "HEAD=$(git rev-parse HEAD)" >> "$report"
+          echo "JAVA=$(java -version 2>&1 | head -1)" >> "$report"
+          echo "MAIN_JAVA=$(find src/main/java -type f -name '*.java' | wc -l)" >> "$report"
+          echo "TEST_JAVA=$(find src/test/java -type f -name '*.java' | wc -l)" >> "$report"
+          echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
+          echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
+          echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
+          echo "OWNERSHIP_TEST=$(find src/test/java -name 'JavaPackageOwnershipArchitectureTest.java' | wc -l)" >> "$report"
+          # Authoritative baseline retained CRLF in this helper. Normalize only the runner copy.
+          sed -i 's/\r$//' scripts/fetch_ci_dependencies.sh
+          bash scripts/fetch_ci_dependencies.sh >> "$report" 2>&1
+          chmod +x gradlew
+          set +e
+          ./gradlew compileJava --no-daemon > /tmp/compile.log 2>&1
+          compile_rc=$?
+          ./gradlew test --no-daemon > /tmp/test.log 2>&1
+          test_rc=$?
+          set -e
+          echo "COMPILE_RC=$compile_rc" >> "$report"
+          echo "TEST_RC=$test_rc" >> "$report"
+          echo '== compile tail ==' >> "$report"
+          tail -120 /tmp/compile.log >> "$report"
+          echo '== test tail ==' >> "$report"
+          tail -120 /tmp/test.log >> "$report"
+          test "$(grep '^MAIN_JAVA=' "$report"|cut -d= -f2)" = 274
+          test "$(grep '^TEST_JAVA=' "$report"|cut -d= -f2)" = 80
           test "$(grep '^FORBIDDEN_PATHS=' "$report"|cut -d= -f2)" = 0
           test "$(grep '^FORBIDDEN_DECLS=' "$report"|cut -d= -f2)" = 0
           test "$(grep '^OUTSIDE_ROOT=' "$report"|cut -d= -f2)" = 0
           test "$(grep '^OWNERSHIP_TEST=' "$report"|cut -d= -f2)" = 1
+          git checkout -- scripts/fetch_ci_dependencies.sh
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'refactor: complete Prompt 1 package unification structure'
+          git add "$report"
+          git commit -m 'test: validate Prompt 1 on Java 21'
           git push origin HEAD:dev
+          exit $(( compile_rc != 0 || test_rc != 0 ))
