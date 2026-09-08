@@ -18,51 +18,23 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Apply verified Astra prefix
+      - name: Inspect compiled recovery sources
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/partial && mkdir -p /tmp/partial
-          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          cat .github/astra_delta.part-* .github/astra_delta.tail-* .github/astra_delta.tailb-00 .github/astra_delta.tailb-01 > /tmp/prefix.b64
-          python3 - <<'PY'
-          from pathlib import Path
-          import base64
-          b=Path('/tmp/prefix.b64').read_bytes(); b=b[:len(b)-len(b)%4]
-          Path('/tmp/prefix.xz').write_bytes(base64.b64decode(b,validate=False))
-          PY
-          xz -dc /tmp/prefix.xz > /tmp/prefix.tar 2>/dev/null || true
-          tar -xf /tmp/prefix.tar -C /tmp/partial 2>/dev/null || true
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib, shutil
-          exact={}
-          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p,h,t,s=line.split('\t'); exact[p]=(h,int(s))
-          applied=[]
-          for q in sorted(Path('/tmp/partial').rglob('*')):
-              if not q.is_file(): continue
-              p=q.relative_to('/tmp/partial').as_posix()
-              if p not in exact: continue
-              b=q.read_bytes(); h,size=exact[p]
-              if hashlib.sha256(b).hexdigest()!=h or len(b)!=size: continue
-              dst=Path(p); dst.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(q,dst); applied.append(p)
-          assert len(applied)==45, len(applied)
-          # Exact duplicate for the only unresolved binary artifact.
-          src=Path('Tideborne-1.3.57-perfect-catch-trait-luck.jar')
-          dst=Path('reconstruction/reference/Tideborne-1.3.57-perfect-catch-trait-luck.jar')
-          h,size=exact[dst.as_posix()]
-          assert hashlib.sha256(src.read_bytes()).hexdigest()==h and src.stat().st_size==size
-          dst.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(src,dst)
-          # Verify every applied byte against the authoritative manifest.
-          for p in applied+[dst.as_posix()]:
-              h,size=exact[p]; b=Path(p).read_bytes()
-              assert hashlib.sha256(b).hexdigest()==h and len(b)==size, p
-          Path('.github/prompt1_verified_applied.txt').write_text('VERIFIED_EXACT_APPLIED=46\n'+'\n'.join(applied+[dst.as_posix()])+'\n')
-          print('VERIFIED_EXACT_APPLIED=46')
-          PY
+          report=.github/prompt1_bytecode_probe.txt
+          classes='GearArchetypeCases SatchelTackleScreen SatchelGearSummary SatchelLoadouts SatchelPreset SatchelTackleExchange SatchelTackleHandler TackleRenamePayload TackleViewPayload'
+          {
+            echo '== reference jar matches =='
+            for c in $classes; do
+              echo "-- $c --"
+              jar tf Tideborne-1.3.57-perfect-catch-trait-luck.jar | grep -F "$c" || true
+            done
+            echo '== all satchel/tackle classes in reference =='
+            jar tf Tideborne-1.3.57-perfect-catch-trait-luck.jar | grep -Ei 'satchel|tackle|archetype' | sort || true
+          } > "$report"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'chore: restore verified Astra baseline prefix'
+          git add "$report"
+          git commit -m 'chore: probe compiled Astra gap sources'
           git push origin HEAD:dev
