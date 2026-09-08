@@ -18,46 +18,35 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Materialize exact build workflow blob
+      - name: Audit exact Astra baseline coverage
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          cat .github/astra_normalized.part-* | base64 -d | xz -dc > /tmp/normalized.tsv
-          base64 -d .github/astra_newlines.json.xz.b64 | xz -dc > /tmp/newlines.json
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib,json,re,base64
-          p='.github/workflows/build.yml'
-          exact={x.split('\t')[0]:x.split('\t')[1:] for x in Path('/tmp/manifest.tsv').read_text().splitlines()}
-          norm={x.split('\t')[0]:x.split('\t')[1:] for x in Path('/tmp/normalized.tsv').read_text().splitlines()}
-          styles=json.loads(Path('/tmp/newlines.json').read_text())
-          raw=Path(p).read_bytes(); n=raw.decode().replace('\r\n','\n').replace('\r','\n').encode()
-          assert hashlib.sha256(n).hexdigest()==norm[p][0]
-          parts=n.split(b'\n'); spec=styles[p]; kinds=[]
-          for k,c in re.findall(r'([RL])(\d*)',spec): kinds += [k]*(int(c) if c else 1)
-          assert len(kinds)==len(parts)-1
-          out=bytearray(parts[0])
-          for k,part in zip(kinds,parts[1:]): out += (b'\r\n' if k=='R' else b'\n') + part
-          out=bytes(out); h,t,size=exact[p]
-          assert hashlib.sha256(out).hexdigest()==h and len(out)==int(size)
-          Path('/tmp/build_exact.b64').write_text(base64.b64encode(out).decode())
-          Path('/tmp/build_expected_sha256').write_text(h)
+          import hashlib
+          entries=[]
+          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
+              p,h,t,s=line.split('\t'); entries.append((p,h,t=='1',int(s)))
+          exact=[]; missing=[]; mismatch=[]
+          for p,h,istext,size in entries:
+              q=Path(p)
+              if not q.is_file(): missing.append((p,h,size)); continue
+              b=q.read_bytes()
+              if len(b)==size and hashlib.sha256(b).hexdigest()==h: exact.append(p)
+              else: mismatch.append((p,h,size,hashlib.sha256(b).hexdigest(),len(b)))
+          out=[f'MANIFEST_FILES={len(entries)}',f'EXACT_FILES={len(exact)}',f'MISSING_FILES={len(missing)}',f'MISMATCH_FILES={len(mismatch)}']
+          out.append('MISSING:')
+          out += ['\t'.join(map(str,x)) for x in missing]
+          out.append('MISMATCH:')
+          out += ['\t'.join(map(str,x)) for x in mismatch]
+          Path('.github/prompt1_residual_gap.txt').write_text('\n'.join(out)+'\n')
+          print('\n'.join(out[:4]))
+          assert len(exact)+len(missing)+len(mismatch)==564
           PY
-          payload="$(python3 - <<'PY'
-          import json
-          from pathlib import Path
-          print(json.dumps({'content':Path('/tmp/build_exact.b64').read_text(),'encoding':'base64'}))
-          PY
-          )"
-          response="$(curl -fsSL -X POST -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/blobs" -d "$payload")"
-          blob_sha="$(printf '%s' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["sha"])')"
-          expected="$(cat /tmp/build_expected_sha256)"
-          printf 'BUILD_EXACT_BLOB_SHA=%s\nBUILD_EXPECTED_SHA256=%s\n' "$blob_sha" "$expected" > .github/prompt1_build_blob.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/prompt1_build_blob.txt
-          git commit -m 'chore: materialize exact Astra build workflow blob'
+          git add .github/prompt1_residual_gap.txt
+          git commit -m 'chore: audit residual Astra baseline gap'
           git push origin HEAD:dev
