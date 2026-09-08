@@ -1,4 +1,4 @@
-name: Prompt 1 Astra Baseline Compare
+name: Prompt 1 Astra Normalized Delta
 
 on:
   push:
@@ -18,61 +18,61 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Verify complete Astra manifest and compare
+      - name: Classify substantive Astra differences
         shell: bash
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/dev"
           test "$(git branch --show-current)" = "dev"
-          test -f .github/astra_manifest.part-00
-          test -f .github/astra_manifest.part-01
-          test -f .github/astra_manifest.part-02
-          test "$(git hash-object .github/astra_manifest.part-00)" = "c0141f5f4407ed3fce1c0a634b605049b3b18c1d"
-          test "$(git hash-object .github/astra_manifest.part-01)" = "f7878d29c326d0803aead05428ff9a3b835bf404"
-          test "$(git hash-object .github/astra_manifest.part-02)" = "bcd3697546cd032db6b37205a92b956102236952"
+          test "$(git hash-object .github/astra_normalized.part-00)" = "d9fdca3d88ba1573113e0f92f1b0c16155ca50d9"
+          test "$(git hash-object .github/astra_normalized.part-01)" = "0e0835c8da719a1512e453f5a09191cb5cdc7c22"
+          test "$(git hash-object .github/astra_normalized.part-02)" = "59b2fbbe3800fe20e3e44e6e06eb6f2d949c1d36"
+          cat .github/astra_normalized.part-* | base64 -d > /tmp/astra_normalized.tsv.xz
+          echo '8f969c02e45714b6c38efbaeb6feb159ae77335bdb24921870c04f8d37bcdc4a  /tmp/astra_normalized.tsv.xz' | sha256sum -c -
+          xz -dc /tmp/astra_normalized.tsv.xz > /tmp/astra_normalized.tsv
+          echo 'fff0eb54aaecc2f3c1b3aba89314f3c7408d6a7ce471c4ad6febaf3c1f250607  /tmp/astra_normalized.tsv' | sha256sum -c -
           cat .github/astra_manifest.part-* | base64 -d > /tmp/astra_manifest.tsv.xz
-          echo 'a258fe40afbb33dea64581d6a58cc0e7b67df526c5ecbda2785d588666ee284e  /tmp/astra_manifest.tsv.xz' | sha256sum -c -
           xz -dc /tmp/astra_manifest.tsv.xz > /tmp/astra_manifest.tsv
-          echo '68dddda85828c8e931cfde8541f57c7f643e1b54650c97271d75d1b23b4f74f7  /tmp/astra_manifest.tsv' | sha256sum -c -
           python3 - <<'PY'
           from pathlib import Path
           import hashlib, subprocess
-
-          manifest = {}
+          norm={}
+          for line in Path('/tmp/astra_normalized.tsv').read_text().splitlines():
+              p,h,style=line.split('\t'); norm[p]=(h,style)
+          exact={}
           for line in Path('/tmp/astra_manifest.tsv').read_text().splitlines():
-              rel, sha, text, size = line.split('\t')
-              manifest[rel] = (sha, text == '1', int(size))
-          temp_prefixes = (
-              '.github/astra_manifest.part-',
-              '.github/astra_payload.part-',
-          )
-          temp_exact = {
-              '.github/astra_text_payload.tar.xz',
-              '.github/package_unify.py.xz',
-              '.github/workflows/prompt1-package-unification.yml',
-          }
-          tracked = set(subprocess.check_output(['git','ls-files'], text=True).splitlines())
-          tracked = {p for p in tracked if p not in temp_exact and not p.startswith(temp_prefixes)}
-          expected = set(manifest)
-          missing = sorted(expected - tracked)
-          extra = sorted(tracked - expected)
-          changed=[]; same=[]
-          for rel in sorted(expected & tracked):
-              sha = hashlib.sha256(Path(rel).read_bytes()).hexdigest()
-              (changed if sha != manifest[rel][0] else same).append(rel)
-          print(f'ASTRA_MANIFEST_FILES={len(expected)}')
-          print(f'CURRENT_NON_TEMP_TRACKED={len(tracked)}')
-          print(f'SAME={len(same)}')
-          print(f'CHANGED={len(changed)}')
+              p,h,t,size=line.split('\t'); exact[p]=(h,t=='1',int(size))
+          temp_prefixes=('.github/astra_manifest.part-','.github/astra_normalized.part-','.github/astra_payload.part-','.github/astra_delta.part-')
+          temp_exact={'.github/astra_text_payload.tar.xz','.github/package_unify.py.xz','.github/workflows/prompt1-package-unification.yml'}
+          tracked=set(subprocess.check_output(['git','ls-files'],text=True).splitlines())
+          tracked={p for p in tracked if p not in temp_exact and not p.startswith(temp_prefixes)}
+          substantive=[]; newline_only=[]; exact_same=[]; binary_changed=[]
+          for p in sorted(set(exact)&tracked):
+              b=Path(p).read_bytes()
+              if hashlib.sha256(b).hexdigest()==exact[p][0]:
+                  exact_same.append(p); continue
+              if exact[p][1]:
+                  try: s=b.decode('utf-8')
+                  except UnicodeDecodeError:
+                      substantive.append(p); continue
+                  n=s.replace('\r\n','\n').replace('\r','\n').encode()
+                  if p in norm and hashlib.sha256(n).hexdigest()==norm[p][0]: newline_only.append(p)
+                  else: substantive.append(p)
+              else: binary_changed.append(p)
+          missing=sorted(set(exact)-tracked)
+          extra=sorted(tracked-set(exact))
+          print(f'EXACT_SAME={len(exact_same)}')
+          print(f'NEWLINE_ONLY={len(newline_only)}')
+          print(f'SUBSTANTIVE_CHANGED={len(substantive)}')
+          print(f'BINARY_CHANGED={len(binary_changed)}')
           print(f'SNAPSHOT_ONLY={len(missing)}')
           print(f'CURRENT_ONLY={len(extra)}')
-          print('=== CHANGED ===')
-          for p in changed:
-              print(f'M\t{manifest[p][1]}\t{manifest[p][2]}\t{p}')
+          print('=== SUBSTANTIVE_CHANGED ===')
+          for p in substantive: print(p)
+          print('=== BINARY_CHANGED ===')
+          for p in binary_changed: print(p)
           print('=== SNAPSHOT_ONLY ===')
-          for p in missing:
-              print(f'A\t{manifest[p][1]}\t{manifest[p][2]}\t{p}')
-          print('=== CURRENT_ONLY ===')
-          for p in extra:
-              print(f'D\t{p}')
+          for p in missing: print(p)
+          print('=== NEWLINE_ONLY ===')
+          for p in newline_only: print(p)
           PY
