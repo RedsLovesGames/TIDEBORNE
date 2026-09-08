@@ -209,3 +209,9 @@ B01-B15 in `docs/CODE_CLEANUP_QUEUE.md` are complete. Physical-size record toler
 - the planned post-2.0 architecture sequence is complete. Future cleanup should follow the documented ownership boundaries rather than begin a broad namespace rewrite.
 - remaining non-architecture backlog is the repository-level Immutable Releases setting, long-term source-distribution license decision, gear statistical/manual validation and the default boss roster, and future Minecraft/Fabric/Tide/optional-mod compatibility work as needed.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.
+
+## Prompt 1 source-provenance status
+
+Prompt 1 Java package ownership migration is structurally complete: the established migration landed 251 production Java moves and 67 existing test Java moves, with the package-ownership architecture test enforcing the Tideborne root package. The exact byte-for-byte 564-file Astra baseline was **not** reconstructed. After all available recovery routes were exhausted, 75 authoritative file/hash entries remain unavailable. This is an accepted source-provenance limitation and is not a reason to repeat the package migration. See `docs/PROMPT_1_SOURCE_PROVENANCE.md`.
+
+Do not fabricate, approximate, regenerate, or silently replace unavailable authoritative files merely to satisfy the old exact-baseline requirement. At present the limitation also blocks complete validation because at least one unavailable source, `GearArchetypeCases.java`, is an active compile-time dependency and only its structural package placeholder is recoverable. Prompt 1 must not be declared fully validated until authoritative source for such live dependencies becomes available and the full Java 21 validation matrix passes.
