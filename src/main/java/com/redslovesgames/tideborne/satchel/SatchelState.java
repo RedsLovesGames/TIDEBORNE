@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
+import java.util.Optional;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
@@ -247,6 +249,20 @@ public final class SatchelState {
       NbtCompound trophy = copy.getCompound("trophy_protection").copy();
       trophy.putIntArray("protected_slots", slots.stream().filter(slot -> slot >= 0).sorted().toList());
       copy.put("trophy_protection", trophy);
+      return new SatchelState(copy);
+   }
+
+   public Optional<UUID> presetRod(int index) {
+      if (index < 0) return Optional.empty();
+      String key = "legacy_preset_rod_" + index;
+      return this.data.containsUuid(key) ? Optional.of(this.data.getUuid(key)) : Optional.empty();
+   }
+
+   public SatchelState withPresetRod(int index, UUID rodId) {
+      if (index < 0) throw new IllegalArgumentException("index must be non-negative");
+      NbtCompound copy = this.data.copy();
+      String key = "legacy_preset_rod_" + index;
+      if (rodId == null) copy.remove(key); else copy.putUuid(key, rodId);
       return new SatchelState(copy);
    }
 
