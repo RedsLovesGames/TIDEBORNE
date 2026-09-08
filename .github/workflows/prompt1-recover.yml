@@ -3,13 +3,14 @@ name: Prompt 1 Structural Status
 on:
   push:
     branches: [dev]
-    paths: ['.github/workflows/prompt1-recover.yml']
+    paths:
+      - '.github/workflows/prompt1-recover.yml'
 
 permissions:
   contents: write
 
 jobs:
-  status:
+  validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -18,21 +19,14 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Document provenance and run structural validator
+      - name: Record status
         shell: bash
         run: |
           set -u
-          sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
-          marker='## Prompt 1 source-provenance status'
-          if ! grep -Fq "$marker" docs/CURRENT_STATE.md; then
-            cat >> docs/CURRENT_STATE.md <<'EOF'
-
-## Prompt 1 source-provenance status
-
-Prompt 1 Java package ownership migration is structurally complete: the established migration landed 251 production Java moves and 67 existing test Java moves, with the package-ownership architecture test enforcing the Tideborne root package. The exact byte-for-byte 564-file Astra baseline was **not** reconstructed. After all available recovery routes were exhausted, 75 authoritative file/hash entries remain unavailable. This is an accepted source-provenance limitation and is not a reason to repeat the package migration. See `docs/PROMPT_1_SOURCE_PROVENANCE.md`.
-
-Do not fabricate, approximate, regenerate, or silently replace unavailable authoritative files merely to satisfy the old exact-baseline requirement. At present the limitation also blocks complete validation because at least one unavailable source, `GearArchetypeCases.java`, is an active compile-time dependency and only its structural package placeholder is recoverable. Prompt 1 must not be declared fully validated until authoritative source for such live dependencies becomes available and the full Java 21 validation matrix passes.
-EOF
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ripgrep
+          if ! grep -Fq '## Prompt 1 source-provenance status' docs/CURRENT_STATE.md; then
+            echo 'CiMjIFByb21wdCAxIHNvdXJjZS1wcm92ZW5hbmNlIHN0YXR1cwoKUHJvbXB0IDEgSmF2YSBwYWNrYWdlIG93bmVyc2hpcCBtaWdyYXRpb24gaXMgc3RydWN0dXJhbGx5IGNvbXBsZXRlOiB0aGUgZXN0YWJsaXNoZWQgbWlncmF0aW9uIGxhbmRlZCAyNTEgcHJvZHVjdGlvbiBKYXZhIG1vdmVzIGFuZCA2NyBleGlzdGluZyB0ZXN0IEphdmEgbW92ZXMsIHdpdGggdGhlIHBhY2thZ2Utb3duZXJzaGlwIGFyY2hpdGVjdHVyZSB0ZXN0IGVuZm9yY2luZyB0aGUgVGlkZWJvcm5lIHJvb3QgcGFja2FnZS4gVGhlIGV4YWN0IGJ5dGUtZm9yLWJ5dGUgNTY0LWZpbGUgQXN0cmEgYmFzZWxpbmUgd2FzICoqbm90KiogcmVjb25zdHJ1Y3RlZC4gQWZ0ZXIgYWxsIGF2YWlsYWJsZSByZWNvdmVyeSByb3V0ZXMgd2VyZSBleGhhdXN0ZWQsIDc1IGF1dGhvcml0YXRpdmUgZmlsZS9oYXNoIGVudHJpZXMgcmVtYWluIHVuYXZhaWxhYmxlLiBUaGlzIGlzIGFuIGFjY2VwdGVkIHNvdXJjZS1wcm92ZW5hbmNlIGxpbWl0YXRpb24gYW5kIGlzIG5vdCBhIHJlYXNvbiB0byByZXBlYXQgdGhlIHBhY2thZ2UgbWlncmF0aW9uLiBTZWUgYGRvY3MvUFJPTVBUXzFfU09VUkNFX1BST1ZFTkFOQ0UubWRgLgoKRG8gbm90IGZhYnJpY2F0ZSwgYXBwcm94aW1hdGUsIHJlZ2VuZXJhdGUsIG9yIHNpbGVudGx5IHJlcGxhY2UgdW5hdmFpbGFibGUgYXV0aG9yaXRhdGl2ZSBmaWxlcyBtZXJlbHkgdG8gc2F0aXNmeSB0aGUgb2xkIGV4YWN0LWJhc2VsaW5lIHJlcXVpcmVtZW50LiBBdCBwcmVzZW50IHRoZSBsaW1pdGF0aW9uIGFsc28gYmxvY2tzIGNvbXBsZXRlIHZhbGlkYXRpb24gYmVjYXVzZSBhdCBsZWFzdCBvbmUgdW5hdmFpbGFibGUgc291cmNlLCBgR2VhckFyY2hldHlwZUNhc2VzLmphdmFgLCBpcyBhbiBhY3RpdmUgY29tcGlsZS10aW1lIGRlcGVuZGVuY3kgYW5kIG9ubHkgaXRzIHN0cnVjdHVyYWwgcGFja2FnZSBwbGFjZWhvbGRlciBpcyByZWNvdmVyYWJsZS4gUHJvbXB0IDEgbXVzdCBub3QgYmUgZGVjbGFyZWQgZnVsbHkgdmFsaWRhdGVkIHVudGlsIGF1dGhvcml0YXRpdmUgc291cmNlIGZvciBzdWNoIGxpdmUgZGVwZW5kZW5jaWVzIGJlY29tZXMgYXZhaWxhYmxlIGFuZCB0aGUgZnVsbCBKYXZhIDIxIHZhbGlkYXRpb24gbWF0cml4IHBhc3Nlcy4K' | base64 -d >> docs/CURRENT_STATE.md
           fi
           sed -i 's/\r$//' scripts/validate_repository.sh 2>/dev/null || true
           chmod +x scripts/validate_repository.sh
@@ -40,7 +34,7 @@ EOF
           : > "$report"
           echo "HEAD=$(git rev-parse HEAD)" >> "$report"
           set +e
-          bash scripts/validate_repository.sh >/tmp/validator.log 2>&1
+          bash scripts/validate_repository.sh > /tmp/validator.log 2>&1
           rc=$?
           set -e
           echo "VALIDATOR_RC=$rc" >> "$report"
@@ -49,8 +43,8 @@ EOF
           echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
           echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
           git checkout -- scripts/validate_repository.sh 2>/dev/null || true
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add docs/CURRENT_STATE.md "$report"
-          git commit -m 'docs: record Prompt 1 provenance and structural status' || true
+          git commit -m 'docs: record Prompt 1 blocked validation status' || true
           git push origin HEAD:dev
