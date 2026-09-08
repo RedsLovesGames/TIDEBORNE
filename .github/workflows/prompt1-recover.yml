@@ -1,4 +1,4 @@
-name: Prompt 1 Package Unification
+name: Prompt 1 Final Validation
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  migrate:
+  validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -18,29 +18,45 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Apply established package migration
+      - name: Validate authoritative baseline accounting and migration
         shell: bash
         run: |
           set -euo pipefail
-          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
-          python3 /tmp/package_unify.py
-          report=.github/prompt1_migration_report.txt
+          report=.github/prompt1_final_validation.txt
           : > "$report"
-          echo "MIGRATION_HEAD=$(git rev-parse HEAD)" >> "$report"
-          echo "MAIN_JAVA=$(find src/main/java -type f -name '*.java' | wc -l)" >> "$report"
-          echo "TEST_JAVA=$(find src/test/java -type f -name '*.java' | wc -l)" >> "$report"
-          echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
-          echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
-          echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
-          echo '== package script tail ==' >> "$report"
-          tail -120 /tmp/package_unify.py >> "$report"
-          echo '== changed paths summary ==' >> "$report"
-          git status --short >> "$report"
-          test "$(grep '^FORBIDDEN_PATHS=' "$report" | cut -d= -f2)" = 0
-          test "$(grep '^FORBIDDEN_DECLS=' "$report" | cut -d= -f2)" = 0
-          test "$(grep '^OUTSIDE_ROOT=' "$report" | cut -d= -f2)" = 0
+          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
+          python3 - <<'PY' >> "$report"
+          from pathlib import Path
+          rows=[]
+          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
+              p,h,t,s=line.split('\t'); rows.append((p,h,t=='1',int(s)))
+          print('MANIFEST_FILES='+str(len(rows)))
+          main=[r for r in rows if r[0].startswith('src/main/java/') and r[0].endswith('.java')]
+          test=[r for r in rows if r[0].startswith('src/test/java/') and r[0].endswith('.java')]
+          print('MANIFEST_MAIN_JAVA='+str(len(main)))
+          print('MANIFEST_TEST_JAVA='+str(len(test)))
+          print('MANIFEST_JAVA_TOTAL='+str(len(main)+len(test)))
+          PY
+          echo "CURRENT_MAIN_JAVA=$(find src/main/java -type f -name '*.java' | wc -l)" >> "$report"
+          echo "CURRENT_TEST_JAVA=$(find src/test/java -type f -name '*.java' | wc -l)" >> "$report"
+          echo "OWNERSHIP_TEST=$(test -f src/test/java/com/redslovesgames/tideborne/architecture/JavaPackageOwnershipArchitectureTest.java && echo present || echo missing)" >> "$report"
+          echo "FORBIDDEN_PRODUCTION_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
+          echo "FORBIDDEN_PRODUCTION_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
+          echo "PRODUCTION_OUTSIDE_TIDEBORNE=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
+          echo '== gradle test ==' >> "$report"
+          chmod +x gradlew
+          ./gradlew test --no-daemon 2>&1 | tee /tmp/gradle-test.log
+          tail -80 /tmp/gradle-test.log >> "$report"
+          echo '== gradle build ==' >> "$report"
+          ./gradlew build --no-daemon 2>&1 | tee /tmp/gradle-build.log
+          tail -80 /tmp/gradle-build.log >> "$report"
+          test "$(grep '^MANIFEST_FILES=' "$report" | cut -d= -f2)" = 564
+          test "$(grep '^OWNERSHIP_TEST=' "$report" | cut -d= -f2)" = present
+          test "$(grep '^FORBIDDEN_PRODUCTION_PATHS=' "$report" | cut -d= -f2)" = 0
+          test "$(grep '^FORBIDDEN_PRODUCTION_DECLS=' "$report" | cut -d= -f2)" = 0
+          test "$(grep '^PRODUCTION_OUTSIDE_TIDEBORNE=' "$report" | cut -d= -f2)" = 0
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git commit -m 'refactor: unify active Java under Tideborne packages'
+          git add "$report"
+          git commit -m 'test: validate Prompt 1 package unification'
           git push origin HEAD:dev
