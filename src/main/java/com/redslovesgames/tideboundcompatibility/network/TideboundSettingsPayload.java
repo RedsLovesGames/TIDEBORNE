@@ -32,7 +32,11 @@ public record TideboundSettingsPayload(NbtCompound tag) implements CustomPayload
       tag.putBoolean("myths_active", mythsActive);
       tag.putBoolean("apex_active", apexActive);
       tag.putBoolean("leviathan_fish_only", v.leviathanBaitFishOnly);
-      tag.putInt("leviathan_fish_luck", v.leviathanBaitFishSelectionLuckBonus);
+      var bait = com.redslovesgames.tideboundcompatibility.fishing.TideborneFishingGearModifiers.leviathanBait(true);
+      tag.putInt("leviathan_fish_luck", (int) bait.fishingLuck());
+      tag.putInt("leviathan_trait_luck", (int) bait.traitLuck());
+      tag.putDouble("leviathan_strength", bait.strengthMultiplier());
+      tag.putDouble("leviathan_tempo", bait.tempoMultiplier());
       tag.putDouble("leviathan_speed", v.leviathanBaitMinigameSpeedMultiplier);
       tag.putDouble("leviathan_zone", v.leviathanBaitCatchZoneMultiplier);
       tag.putDouble("tentacle_zone", v.tentacleCatchZoneMultiplier);

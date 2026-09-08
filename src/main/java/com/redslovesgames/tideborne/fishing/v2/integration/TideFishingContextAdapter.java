@@ -10,7 +10,10 @@ public final class TideFishingContextAdapter {
     public FishingContext context(com.li64.tide.data.fishing.FishingContext tide) {
         return new FishingContext(
                 0.0,
-                tide.luck(),
+                // Native bait aggregation is queried, then attributed to the complete gear composition.
+                // Gold/enchantments/environment remain native and are not gear-clamped here.
+                tide.luck() - com.li64.tide.util.BaitUtils.getCombinedLuck(tide.rod())
+                        - com.redslovesgames.tideboundcompatibility.fishing.BobberGearModifiers.forHook(tide.hook()).fishingLuck(),
                 0.0,
                 Map.of(),
                 Map.of(),

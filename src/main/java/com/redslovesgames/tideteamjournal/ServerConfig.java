@@ -41,7 +41,7 @@ public final class ServerConfig {
       migrate(map,"tide:iron_bobber",0,2,0,0); migrate(map,"tide:diamond_bobber",1,2,0,0); migrate(map,"tide:netherite_bobber",2,2,0,1);
       migrate(map,"tide:amethyst_bobber",2,0,0,1); migrate(map,"tide:echo_bobber",0,3,0,1); migrate(map,"tide:chorus_bobber",1,1,0,3);
       migrate(map,"tide:feather_bobber",0,3,0,2); migrate(map,"tide:lichen_bobber",0,2,0,1); migrate(map,"tide:nautilus_bobber",2,0,1,0);
-      migrate(map,"tide:heart_bobber",3,0,1,2); migrate(map,"tide:grassy_bobber",1,1,0,0); migrate(map,"tide:duck_bobber",0,2,0,0);
+      migrate(map,"tide:heart_bobber",3,0,0,0); migrate(map,"tide:heart_bobber",1,2,0,0); migrate(map,"tide:grassy_bobber",1,1,0,0); migrate(map,"tide:duck_bobber",0,2,0,0);
    }
    private static void migrate(Map<String,BobberBonuses.Bonus> map,String id,int oldLuck,int oldLure,int newLuck,int newLure){BobberBonuses.Bonus b=map.get(id);if(b!=null&&b.luck()==oldLuck&&b.lureSpeed()==oldLure)map.put(id,new BobberBonuses.Bonus(newLuck,newLure));}
    private static BobberBonuses.Bonus clamp(BobberBonuses.Bonus b){return new BobberBonuses.Bonus(Math.max(0,Math.min(10,b.luck())),Math.max(0,Math.min(10,b.lureSpeed())));}
@@ -54,8 +54,13 @@ public final class ServerConfig {
       public boolean trackDiscoveries=true,trackLargestRecords=true,trackSmallestRecords=true,trackRepairs=true,bobberBonusesEnabled=true;
       public BobberBonuses.Bonus fallbackBobberBonus=new BobberBonuses.Bonus(0,1); public Map<String,BobberBonuses.Bonus> bobberBonuses=defaultBobbers();
       static Values defaults(){return new Values();}
-      private static Map<String,BobberBonuses.Bonus> defaultBobbers(){Map<String,BobberBonuses.Bonus> r=new LinkedHashMap<>();
-         for(String p:List.of("red_bobber","orange_bobber","yellow_bobber","lime_bobber","green_bobber","cyan_bobber","light_blue_bobber","blue_bobber","purple_bobber","magenta_bobber","pink_bobber","white_bobber","light_gray_bobber","gray_bobber","black_bobber","brown_bobber"))r.put("tide:"+p,new BobberBonuses.Bonus(0,1));
-         r.put("tide:golden_apple_bobber",new BobberBonuses.Bonus(2,2)); r.put("tide:enchanted_golden_apple_bobber",new BobberBonuses.Bonus(5,0)); r.put("tide:iron_bobber",new BobberBonuses.Bonus(0,0)); r.put("tide:golden_bobber",new BobberBonuses.Bonus(2,0)); r.put("tide:diamond_bobber",new BobberBonuses.Bonus(0,0)); r.put("tide:netherite_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:amethyst_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:echo_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:chorus_bobber",new BobberBonuses.Bonus(0,3)); r.put("tide:feather_bobber",new BobberBonuses.Bonus(0,2)); r.put("tide:lichen_bobber",new BobberBonuses.Bonus(0,1)); r.put("tide:nautilus_bobber",new BobberBonuses.Bonus(1,0)); r.put("tide:pearl_bobber",new BobberBonuses.Bonus(1,2)); r.put("tide:heart_bobber",new BobberBonuses.Bonus(1,2)); r.put("tide:grassy_bobber",new BobberBonuses.Bonus(0,0)); r.put("tide:duck_bobber",new BobberBonuses.Bonus(0,0)); return r;}
+      private static Map<String,BobberBonuses.Bonus> defaultBobbers(){
+         Map<String,BobberBonuses.Bonus> result=new LinkedHashMap<>();
+         for(var id:com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry.supportedBobberIds()){
+            var gear=com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry.bobberModifiers(id).orElseThrow();
+            result.put(id.toString(),new BobberBonuses.Bonus((int)gear.fishingLuck(),(int)gear.namedAdditiveModifier(com.redslovesgames.tideborne.fishing.v2.FishingGearEffects.LURE_BONUS)));
+         }
+         return result;
+      }
    }
 }

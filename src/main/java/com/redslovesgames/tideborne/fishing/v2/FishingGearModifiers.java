@@ -47,18 +47,12 @@ public record FishingGearModifiers(
         namedMultiplierModifiers = immutableNamedModifiers("namedMultiplierModifiers", namedMultiplierModifiers, true);
     }
 
+    private static final FishingGearModifiers NEUTRAL = new FishingGearModifiers(
+            0.0, 0.0, 1.0, 1.0, IdRestriction.unrestricted(), IdRestriction.unrestricted(),
+            Map.of(), Map.of(), Map.of());
+
     public static FishingGearModifiers neutral() {
-        return new FishingGearModifiers(
-                0.0,
-                0.0,
-                1.0,
-                1.0,
-                IdRestriction.unrestricted(),
-                IdRestriction.unrestricted(),
-                Map.of(),
-                Map.of(),
-                Map.of()
-        );
+        return NEUTRAL;
     }
 
     public static Builder builder() {
@@ -70,7 +64,10 @@ public record FishingGearModifiers(
         return compose(Arrays.asList(modifiers));
     }
 
-    /** Composes any number of modifier sets with input-order-independent results. */
+    /**
+     * Composes raw contributions with input-order-independent results. Consume the complete result
+     * through FishingGearEffects for global limits; clamping partial groups would lose tradeoffs.
+     */
     public static FishingGearModifiers compose(Collection<FishingGearModifiers> modifiers) {
         Objects.requireNonNull(modifiers, "modifiers");
 
@@ -209,6 +206,8 @@ public record FishingGearModifiers(
      * allow-list intentionally allows nothing. Denied IDs always win.
      */
     public record IdRestriction(boolean allowListActive, Set<String> allowedIds, Set<String> deniedIds) {
+        private static final IdRestriction UNRESTRICTED = new IdRestriction(false, Set.of(), Set.of());
+
         public IdRestriction {
             TreeSet<String> allowed = immutableIds("allowedIds", allowedIds);
             TreeSet<String> denied = immutableIds("deniedIds", deniedIds);
@@ -222,7 +221,7 @@ public record FishingGearModifiers(
         }
 
         public static IdRestriction unrestricted() {
-            return new IdRestriction(false, Set.of(), Set.of());
+            return UNRESTRICTED;
         }
 
         public static IdRestriction only(Collection<String> allowedIds) {
@@ -298,6 +297,18 @@ public record FishingGearModifiers(
         private final TreeMap<String, Double> namedMultiplierModifiers = new TreeMap<>();
 
         private Builder() {
+        }
+
+        public Builder trophyFightRelief(double fraction) {
+            return namedAdditiveModifier(FishingGearEffects.TROPHY_FIGHT_RELIEF, fraction);
+        }
+
+        public Builder targetWeight(String speciesTag, double multiplier) {
+            return namedMultiplierModifier(FishingGearEffects.TARGET_WEIGHT_PREFIX + requireKey(speciesTag), multiplier);
+        }
+
+        public Builder environmentWeight(String habitatTag, double multiplier) {
+            return namedMultiplierModifier(FishingGearEffects.ENVIRONMENT_WEIGHT_PREFIX + requireKey(habitatTag), multiplier);
         }
 
         public Builder fishingLuck(double value) {

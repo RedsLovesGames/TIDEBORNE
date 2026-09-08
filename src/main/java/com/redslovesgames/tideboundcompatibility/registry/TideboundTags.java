@@ -17,6 +17,8 @@ public final class TideboundTags {
    public static final TagKey<Item> LARGE_FISH = item("large_fish");
    public static final TagKey<Item> VERY_SMALL_FISH = item("very_small_fish");
    public static final TagKey<Item> PREDATORY_FISH = item("predatory_fish");
+   /** Eligible Tide fish items explicitly classified as Leviathan/boss targets by a datapack. */
+   public static final TagKey<Item> LEVIATHAN_TARGETS = item("leviathan_targets");
    public static final TagKey<Item> TUNA = item("tuna");
 
    private TideboundTags() {

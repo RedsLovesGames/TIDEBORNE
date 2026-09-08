@@ -59,7 +59,7 @@ final class TideboundFishingHud {
             }
 
             if (ClientTideboundSettings.bool("myths_active") && BaitUtils.hasBait(TideboundItems.LEVIATHAN_BAIT, hook.getRod())) {
-               rows.add(Text.literal("Leviathan Bait: trophy fish and tuna focus"));
+               rows.add(Text.literal("Leviathan Bait: fish-only pool; harder fight"));
             }
 
             if (ClientTideboundSettings.bool("apex_active")

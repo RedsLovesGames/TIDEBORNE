@@ -73,10 +73,11 @@ final class TideboundTooltips {
                      );
                      lines.add(
                         Text.translatable(
-                           "tooltip.tidebound_compatibility.leviathan_bait.difficulty",
-                           new Object[]{multiplier("leviathan_speed"), multiplier("leviathan_zone")}
+                           "tooltip.tidebound_compatibility.leviathan_bait.fight",
+                           new Object[]{multiplier("leviathan_strength"), multiplier("leviathan_tempo")}
                         )
                      );
+                     lines.add(Text.literal("Trait Luck: +" + ClientTideboundSettings.integer("leviathan_trait_luck")));
                      lines.add(Text.translatable("tooltip.tidebound_compatibility.leviathan_bait.conditions"));
                   }
                   default -> {

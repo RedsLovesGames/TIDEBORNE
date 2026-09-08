@@ -104,11 +104,14 @@ public final class CanonicalSpecimenStorage {
             return Optional.empty();
         }
         write(stack, migrated.get());
-        // Return the same normalized persisted representation that every later read sees.
-        // Provenance is runtime metadata and is intentionally not part of the ItemStack schema,
-        // so returning the pre-write migration object made the first read differ from all
-        // subsequent canonical reads even though the stored specimen was already stable.
+        // Provenance is runtime-only; return the normalized persisted representation on every read.
         return decode(new ComponentSource(stack));
+    }
+
+    /** Decode-only access: never migrates or modifies the supplied stack. */
+    public static Optional<SpecimenData> readCurrent(ItemStack stack) {
+        return detectMigration(stack) == MigrationState.CANONICAL_CURRENT
+                ? decode(new ComponentSource(stack)) : Optional.empty();
     }
 
     /** Explicitly classifies whether a stack requires migration without modifying it. */

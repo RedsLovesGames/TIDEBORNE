@@ -5,34 +5,16 @@
  */
 package com.redslovesgames.tideteamjournal;
 
-import com.li64.tide.data.TideTags.Items;
 import java.util.Map;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
+/** Display-only synchronized luck/lure values; server gear resolves through BobberGearModifiers. */
 public final class BobberBonuses {
    private static volatile Map<Identifier, BobberBonuses.Bonus> clientBonuses = Map.of();
    private static volatile BobberBonuses.Bonus clientFallback = new BobberBonuses.Bonus(0, 1);
    private static volatile boolean clientEnabled = true;
 
    private BobberBonuses() {
-   }
-
-   public static BobberBonuses.Bonus get(ItemStack bobber) {
-      if (!bobber.isEmpty() && bobber.isIn(Items.BOBBERS)) {
-         Identifier id = Registries.ITEM.getId(bobber.getItem());
-         return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT ? forClientId(id) : forId(id);
-      } else {
-         return BobberBonuses.Bonus.NONE;
-      }
-   }
-
-   static BobberBonuses.Bonus forId(Identifier id) {
-      ServerConfig.Values config = ServerConfig.get();
-      return !config.bobberBonusesEnabled ? BobberBonuses.Bonus.NONE : config.bobberBonuses.getOrDefault(id.toString(), config.fallbackBobberBonus);
    }
 
    public static BobberBonuses.Bonus forClientId(Identifier id) {

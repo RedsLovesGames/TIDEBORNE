@@ -23,11 +23,7 @@ public final class LeviathanBaitFishing {
       TideboundConfig.Values config = TideboundConfig.get();
       FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBait(isEnabledFor(hook, config));
       boolean fishOnly = LeviathanBaitRules.isFishOnlyCatchPool(modifiers);
-      CatchResult result = LeviathanBaitRules.selectCatch(
-         modifiers,
-         () -> manager.selectCatch(context),
-         () -> manager.getFishSelector().getResult(context)
-      );
+      CatchResult result = fishOnly ? manager.getFishSelector().getResult(context) : manager.selectCatch(context);
       if (!fishOnly) {
          return result;
       }
@@ -37,7 +33,7 @@ public final class LeviathanBaitFishing {
    }
 
    public static boolean isEnabledFor(TideFishingHook hook, TideboundConfig.Values config) {
-      return TideboundCompatibility.isMythsIntegrationActive()
+      return hook != null && config.enableMythsCompat && TideboundCompatibility.isMythsIntegrationActive()
          && config.leviathanBaitFishOnly
          && BaitUtils.hasBait(TideboundItems.LEVIATHAN_BAIT, hook.getRod());
    }

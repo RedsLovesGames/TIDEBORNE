@@ -5,7 +5,6 @@ import com.li64.tide.data.fishing.FishData;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
-import com.redslovesgames.tideborne.fishing.v2.integration.ApexWatersSpeciesProfileAdapter;
 import com.redslovesgames.tideborne.fishing.v2.integration.TideSpeciesProfileAdapter;
 import java.util.Set;
 import java.util.TreeSet;
@@ -18,6 +17,7 @@ import net.minecraft.test.TestContext;
 
 /** Runtime regression matrix for Tideborne's supported optional fishing compatibility mods. */
 public final class OptionalCompatibilityRegressionGameTests implements FabricGameTest {
+    private static final String APEX_MOD_ID = "apexwaters";
     private static final String MYTHS_MOD_ID = "myths_of_the_sea";
     private static final String APEX_VERSION = "1.1.1";
     private static final String MYTHS_VERSION = "1.3.0";
@@ -29,13 +29,13 @@ public final class OptionalCompatibilityRegressionGameTests implements FabricGam
         boolean expectedMyths = Boolean.parseBoolean(System.getProperty("tideborne.expectedMythsRuntime", "false"));
         FabricLoader loader = FabricLoader.getInstance();
 
-        helper.assertTrue(loader.isModLoaded(ApexWatersSpeciesProfileAdapter.MOD_ID) == expectedApex,
+        helper.assertTrue(loader.isModLoaded(APEX_MOD_ID) == expectedApex,
                 "Apex Waters runtime presence did not match the Stage 56 matrix");
         helper.assertTrue(loader.isModLoaded(MYTHS_MOD_ID) == expectedMyths,
                 "Myths of the Sea runtime presence did not match the Stage 56 matrix");
 
         if (expectedApex) {
-            String version = loader.getModContainer(ApexWatersSpeciesProfileAdapter.MOD_ID)
+            String version = loader.getModContainer(APEX_MOD_ID)
                     .orElseThrow()
                     .getMetadata()
                     .getVersion()
@@ -57,7 +57,7 @@ public final class OptionalCompatibilityRegressionGameTests implements FabricGam
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void optionalModsDoNotInventTideFishProfilesOrEligibility(TestContext helper) {
-        Set<String> apexSpecies = tideFishSpeciesIds(ApexWatersSpeciesProfileAdapter.MOD_ID);
+        Set<String> apexSpecies = tideFishSpeciesIds(APEX_MOD_ID);
         Set<String> mythsSpecies = tideFishSpeciesIds(MYTHS_MOD_ID);
 
         // Apex Waters 1.1.1 and Myths of the Sea 1.3.0 add aquatic entities/items,
@@ -68,11 +68,6 @@ public final class OptionalCompatibilityRegressionGameTests implements FabricGam
         helper.assertTrue(mythsSpecies.isEmpty(),
                 "Myths of the Sea unexpectedly registered Tide fish species: " + mythsSpecies);
 
-        ApexWatersSpeciesProfileAdapter apexAdapter = new ApexWatersSpeciesProfileAdapter();
-        helper.assertTrue(apexAdapter.tideCatchableSpeciesIds().isEmpty(),
-                "Apex Waters canonical profile audit unexpectedly exposed catchable species");
-        helper.assertTrue(apexAdapter.adapt(ApexWatersSpeciesProfileAdapter.GREAT_WHITE_SHARK_ENTITY_ID).isEmpty(),
-                "Apex Great White Shark entity was incorrectly adapted into a Tide fish profile");
         helper.complete();
     }
 
@@ -129,7 +124,7 @@ public final class OptionalCompatibilityRegressionGameTests implements FabricGam
     }
 
     private static boolean isOptionalNamespace(String speciesId) {
-        return speciesId.startsWith(ApexWatersSpeciesProfileAdapter.MOD_ID + ":")
+        return speciesId.startsWith(APEX_MOD_ID + ":")
                 || speciesId.startsWith(MYTHS_MOD_ID + ":");
     }
 }

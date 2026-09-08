@@ -117,12 +117,12 @@ public final class FreshWorldRegressionGameTests implements FabricGameTest {
                 "Legacy leader attachment component could not be removed from a fresh rod");
 
         FishingGearModifiers leviathan = TideborneFishingGearModifiers.leviathanBait(true);
-        helper.assertTrue(Double.compare(leviathan.fishingLuck(), 15.0) == 0,
-                "Fresh Leviathan Bait did not provide +15 Fishing Luck");
-        helper.assertTrue(Double.compare(leviathan.traitLuck(), 4.0) == 0,
-                "Fresh Leviathan Bait did not provide +4 Trait Luck");
-        helper.assertTrue(Double.compare(leviathan.strengthMultiplier(), 1.25) == 0,
-                "Fresh Leviathan Bait did not provide Strength x1.25");
+        helper.assertTrue(Double.compare(leviathan.fishingLuck(), 4.0) == 0,
+                "Fresh Leviathan Bait did not provide +4 Fishing Luck");
+        helper.assertTrue(Double.compare(leviathan.traitLuck(), 1.0) == 0,
+                "Fresh Leviathan Bait did not provide +1 Trait Luck");
+        helper.assertTrue(Double.compare(leviathan.strengthMultiplier(), 1.30) == 0,
+                "Fresh Leviathan Bait did not provide Strength x1.30");
         helper.assertTrue(Double.compare(leviathan.tempoMultiplier(), 1.20) == 0,
                 "Fresh Leviathan Bait did not provide Tempo x1.20");
         helper.assertTrue(leviathan.categoryRestriction().allows(TideborneFishingGearModifiers.FISH_CATCH_CATEGORY),

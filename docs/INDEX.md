@@ -15,6 +15,8 @@ When documents disagree, use this order unless a task explicitly asks for histor
 
 Source code and passing current tests remain the final implementation truth when documentation is stale.
 
+For intended post-2.0 gear behavior, `POST_2_0_GEAR_PROGRESSION_SPEC.md` is the frozen design authority. Source/audit differences identify implementation gaps; they do not override its values or identities. `CURRENT_STATE.md` distinguishes that design freeze from runtime completion.
+
 ## Default reading set
 
 For most coding tasks, read only:
@@ -34,6 +36,7 @@ Do not read every Markdown file by default.
 - `TODO.md`: unfinished work only
 - `ARCHITECTURE.md`: current package ownership, canonical service boundaries, and dependency direction
 - `VALIDATION.md`: current local/CI/release validation routing
+- [CODE_CLEANUP_QUEUE.md](CODE_CLEANUP_QUEUE.md): source-backed cleanup batches, deletion estimates, compatibility exclusions and performance validation gates
 
 ### Fishing System 2.0
 
@@ -45,14 +48,15 @@ The older `FISHING_SYSTEM_2_BALANCE_REPORT.md` is a deterministic synthetic regr
 
 ### Post-2.0 gear progression
 
-- `GEAR_PROGRESSION_AUDIT.md`: current inventory of rods, lines, hooks, bobbers, bait, leaders, Leviathan paths, Satchel behavior, duplicated ownership, hard-coded checks, and APIs to preserve
+- [POST_2_0_GEAR_PROGRESSION_SPEC.md](POST_2_0_GEAR_PROGRESSION_SPEC.md): authoritative frozen post-2.0 gear design, slot identities, archetypes, exact values, composed limits, canonical ownership rules, and source-backed implementation conflicts
+- `GEAR_PROGRESSION_AUDIT.md`: pre-rework inventory of rods, lines, hooks, bobbers, bait, leaders, Leviathan paths, Satchel behavior, duplicated ownership, hard-coded checks, and APIs to preserve
 
-Until a dedicated post-2.0 gear design/spec document is created and frozen, gear implementation should not invent a second registry/modifier architecture. Extend or consolidate the existing `FishingGearRegistry`, `FishingGearModifiers`, `FishingGearEffects`, `FightProfileService`, and related current boundaries first.
+The frozen gear mechanics and Satchel tackle manager are implemented; statistical measurements are complete in POST_2_0_GEAR_BALANCE_REPORT.md. Default boss targeting and full balance/manual acceptance remain open. Extend or consolidate the existing `FishingGearRegistry`, `FishingGearModifiers`, `FishingGearEffects`, `FightProfileService`, `TideborneFishingApi`, and canonical species/specimen boundaries. A parallel loadout/registry/modifier/resolver/specimen layer requires current-source proof that the existing architecture cannot represent a required effect.
 
 ### Mixins and compatibility
 
 - `TIDE_MIXIN_INVENTORY.md`: current mixin ownership/classification, remaining Tide coupling, and fragility notes
-- `STAGE_4_LEGACY_PACKAGE_CLEANUP.md`: current package-ownership rationale and preserved migration/legacy boundaries
+- `ARCHITECTURE.md`: current package-ownership rationale and preserved migration/legacy boundaries
 
 ### Recovery and reconstruction
 
@@ -67,7 +71,7 @@ The repository retains many stage reports and legacy audits because they are use
 
 Examples include:
 
-- `FISHING_SYSTEM_2_LEGACY_*_AUDIT.md`
+- `archive/LEGACY_MIGRATION_AND_FISHING_SYSTEM_2_AUDITS.md`
 - `STAGE_*` documents
 - older synthetic balance reports
 - one-off reconstruction reports
@@ -96,10 +100,10 @@ Read:
 - `AGENTS.md`
 - `CURRENT_STATE.md`
 - `TODO.md`
-- `ARCHITECTURE.md`
+- `POST_2_0_GEAR_PROGRESSION_SPEC.md`
 - `GEAR_PROGRESSION_AUDIT.md`
 
-Use `FISHING_SYSTEM_2_SPEC.md` only for canonical specimen/authority invariants that the gear redesign must preserve.
+Read affected source/tests to resolve the spec's implementation notes. Use `ARCHITECTURE.md` or `FISHING_SYSTEM_2_SPEC.md` only when an ownership or canonical invariant question needs additional context. Older gear values do not supersede the frozen post-2.0 contract.
 
 ### Specimen/FishScore change
 

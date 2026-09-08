@@ -27,13 +27,13 @@ public record FishingContext(
         return new FishingContext(0.0, 0.0, 0.0, Map.of(), Map.of(), Map.of());
     }
 
-    /** Adds the first-class luck axes supplied by one canonical gear modifier set. */
+    /** Adds one complete gear composition to a context containing only non-gear luck. */
     public FishingContext withGearModifiers(FishingGearModifiers modifiers) {
         Objects.requireNonNull(modifiers, "modifiers");
         return new FishingContext(
                 biteSpeed,
-                fishingLuck + modifiers.fishingLuck(),
-                traitLuck + modifiers.traitLuck(),
+                fishingLuck + FishingGearEffects.fishingLuck(modifiers),
+                traitLuck + FishingGearEffects.traitLuck(modifiers),
                 equipmentModifiers,
                 baitModifiers,
                 environmentModifiers

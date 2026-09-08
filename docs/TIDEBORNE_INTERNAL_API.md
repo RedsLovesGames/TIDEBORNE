@@ -1,6 +1,6 @@
 # Tideborne internal fishing API
 
-Updated: 2026-09-04
+Updated: 2026-09-07
 
 ## Purpose
 
@@ -27,6 +27,8 @@ The API does not create a second specimen model. It returns the existing `Specim
 The API does not own persistence formats. `CanonicalSpecimenStorage` remains the canonical storage/migration boundary and `CanonicalSpecimenRecordIndexer` remains the canonical record-ordering boundary. Feature code should normally reach those implementations through `TideborneFishingApi` instead of importing them directly.
 
 `readSpecimen(ItemStack)` may invoke the existing one-way legacy migration behavior owned by canonical storage. `readTransferredSpecimen(NbtCompound)` is a transfer/record read and does not add a second legacy fallback path.
+
+`readCurrentSpecimen(ItemStack)` is the decode-only client presentation boundary. It accepts complete current-schema/current-generation state and does not migrate legacy stacks or modify incomplete/newer payloads. Item tooltips use this operation.
 
 Stored FishScore reads return the score already attached to the canonical specimen. Raw FishScore reads return the already-stored raw score when present. FishScore calculation remains owned by `FishScoreV2Service`; the read facade intentionally does not expose score calculation or create another score-authoring path. Read paths do not reroll percentile, size, traits, or specimen identity.
 

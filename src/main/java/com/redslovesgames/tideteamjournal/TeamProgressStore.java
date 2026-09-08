@@ -1,18 +1,13 @@
-/*
- * RECONSTRUCTED SOURCE BASELINE
- * Recovered from Tideborne 1.3.57 bytecode.
- * See docs/RECONSTRUCTION.md before changing behavior.
- */
 package com.redslovesgames.tideteamjournal;
 
 import com.li64.tide.data.fishing.FishData;
-import com.li64.tide.data.fishing.SizeData;
-import com.li64.tide.data.item.TideItemData;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenStorage;
 import com.li64.tide.data.player.FishStats;
 import com.li64.tide.data.player.TidePlayerData;
 import com.li64.tide.data.player.TidePlayerData.FishPlayerData;
 import com.redslovesgames.tideborne.command.HistoryBadgeMeta;
-import com.redslovesgames.tidetraits.component.TideTraitsComponents;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
 import com.redslovesgames.tidetraits.trait.TraitAxesRuntime;
 import dev.ftb.mods.ftbteams.api.Team;
 import java.time.Instant;
@@ -20,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,13 +43,13 @@ public final class TeamProgressStore {
    private static final String CATCHES_KEY = "catches";
    private static final String SPECIES_KEY = "species";
    private static final String RECORD_EVENTS_KEY = "record_events";
-   private static final ThreadLocal TIDEBORNE_CURRENT_SCORE = new ThreadLocal();
-   private static final ThreadLocal TIDEBORNE_CURRENT_STARS = new ThreadLocal();
-   private static final Map TIDEBORNE_EVENT_SCORES = new HashMap();
-   private static final Map TIDEBORNE_EVENT_STARS = new HashMap();
-   private static final Map TIDEBORNE_CONTRIBUTOR_SCORES = new HashMap();
-   private static final ThreadLocal TIDEBORNE_CURRENT_FISH = new ThreadLocal();
-   private static final ThreadLocal TIDEBORNE_LAST_FISH = new ThreadLocal();
+   private static final ThreadLocal<Double> TIDEBORNE_CURRENT_SCORE = new ThreadLocal<>();
+   private static final ThreadLocal<Integer> TIDEBORNE_CURRENT_STARS = new ThreadLocal<>();
+   private static final Map<UUID, Integer> TIDEBORNE_EVENT_SCORES = new HashMap<>();
+   private static final Map<UUID, Integer> TIDEBORNE_EVENT_STARS = new HashMap<>();
+   private static final Map<UUID, Integer> TIDEBORNE_CONTRIBUTOR_SCORES = new HashMap<>();
+   private static final ThreadLocal<NbtCompound> TIDEBORNE_CURRENT_FISH = new ThreadLocal<>();
+   private static final ThreadLocal<NbtCompound> TIDEBORNE_LAST_FISH = new ThreadLocal<>();
 
    private TeamProgressStore() {
    }
@@ -77,7 +71,7 @@ public final class TeamProgressStore {
          changed = true;
       }
 
-      return changed;
+      return migrateStoredScores(root) | changed;
    }
 
    static List<TeamProgressStore.RecordEvent> recordCatch(
@@ -92,9 +86,9 @@ public final class TeamProgressStore {
       Set<String> caughtSpecies = new HashSet<>();
 
       for (Entry<RegistryEntry<Item>, FishPlayerData> entry : after.fishPlayerData.entrySet()) {
-         FishStats next = (FishStats)entry.getValue().stats.orElse(null);
+         FishStats next = entry.getValue().stats.orElse(null);
          if (next != null && !next.isEmpty()) {
-            FishStats previous = (FishStats)before.fishPlayerData.getOrDefault(entry.getKey(), new FishPlayerData(false, false, false, Optional.empty()))
+            FishStats previous = before.fishPlayerData.getOrDefault(entry.getKey(), new FishPlayerData(false, false, false, Optional.empty()))
                .stats
                .orElse(null);
             int previousCount = previous == null ? 0 : previous.getAmountCaught();
@@ -110,13 +104,13 @@ public final class TeamProgressStore {
          return List.of();
       }
 
-      NbtCompound var17 = contributor(root, playerId);
-      tideborneUpdateContributorFishScore(var17);
-      var17.putString("name", playerName);
-      var17.putInt("catches", saturatedAdd(var17.getInt("catches"), catchDelta));
-      Set<String> species = readStrings(var17, "species");
+      NbtCompound contribution = contributor(root, playerId);
+      tideborneUpdateContributorFishScore(contribution);
+      contribution.putString("name", playerName);
+      contribution.putInt("catches", saturatedAdd(contribution.getInt("catches"), catchDelta));
+      Set<String> species = readStrings(contribution, "species");
       species.addAll(caughtSpecies);
-      writeStrings(var17, "species", species);
+      writeStrings(contribution, "species", species);
       List<TeamProgressStore.RecordEvent> events = new ArrayList<>();
 
       for (RecordHolderStore.RecordChange change : RecordHolderStore.findRecordChanges(before, after)) {
@@ -145,7 +139,7 @@ public final class TeamProgressStore {
       }
 
       if (!events.isEmpty()) {
-         var17.putInt("record_events", saturatedAdd(var17.getInt("record_events"), events.size()));
+         contribution.putInt("record_events", saturatedAdd(contribution.getInt("record_events"), events.size()));
       }
 
       return List.copyOf(events);
@@ -175,6 +169,7 @@ public final class TeamProgressStore {
 
    static void mergeTrackedDataOnce(NbtCompound targetRoot, NbtCompound sourceRoot, int historyLimit) {
       ensureInitialized(targetRoot);
+      migrateStoredScores(sourceRoot);
       if (sourceRoot.contains("contributors", 10)) {
          if (sourceRoot.contains("tracking_started_ms", 4)) {
             targetRoot.putLong(
@@ -191,7 +186,10 @@ public final class TeamProgressStore {
             target.putString("name", source.getString("name"));
             target.putInt("catches", saturatedAdd(target.getInt("catches"), source.getInt("catches")));
             target.putInt("record_events", saturatedAdd(target.getInt("record_events"), source.getInt("record_events")));
-            target.putInt("fish_score", Math.max(target.getInt("fish_score"), source.getInt("fish_score")));
+            int score = Math.max(StoredFishScoreStorage.readCanonical(target).orElse(0),
+                  StoredFishScoreStorage.readCanonical(source).orElse(0));
+            StoredFishScoreStorage.writeCanonical(target, score);
+            target.putInt("fish_score", score);
             Set<String> species = readStrings(target, "species");
             species.addAll(readStrings(source, "species"));
             writeStrings(target, "species", species);
@@ -230,11 +228,11 @@ public final class TeamProgressStore {
 
       for (Entry<RegistryEntry<Item>, FishPlayerData> entry : journal.fishPlayerData.entrySet()) {
          FishPlayerData data = entry.getValue();
-         if (data.isUnlocked && FishData.get((Item)entry.getKey().value()).<Boolean>map(FishData::hasJournalEntry).orElse(false)) {
+         if (data.isUnlocked && FishData.get(entry.getKey().value()).map(FishData::hasJournalEntry).orElse(false)) {
             discovered++;
          }
 
-         totalCatches += data.stats.<Integer>map(FishStats::getAmountCaught).orElse(0).intValue();
+         totalCatches += data.stats.map(FishStats::getAmountCaught).orElse(0);
       }
 
       long available = Registries.ITEM
@@ -248,13 +246,13 @@ public final class TeamProgressStore {
       result.putLong("total_catches", totalCatches);
       result.putInt("discovered", discovered);
       result.putInt("available", (int)Math.min(2147483647L, available));
-      List<TeamProgressStore.Contributor> contributors = readContributors(root, team);
-      String contributorTags = metric == null ? "catches" : metric;
+      List<TeamProgressStore.Contributor> contributors = readInitializedContributors(root, team);
+      String sortMetric = metric == null ? "catches" : metric;
       Comparator<TeamProgressStore.Contributor> comparator;
-      if (contributorTags.equals("fish_score")) {
-         comparator = new FishScoreComparator();
+      if (sortMetric.equals("fish_score")) {
+         comparator = Comparator.comparingInt(TeamProgressStore::tideborneContributorFishScore);
       } else {
-         comparator = switch (contributorTags) {
+         comparator = switch (sortMetric) {
             case "species" -> Comparator.comparingInt(TeamProgressStore.Contributor::species);
             case "record_events" -> Comparator.comparingInt(TeamProgressStore.Contributor::recordEvents);
             case "active_records" -> Comparator.comparingInt(TeamProgressStore.Contributor::activeRecords);
@@ -263,9 +261,9 @@ public final class TeamProgressStore {
       }
 
       contributors.sort(comparator.reversed().thenComparing(TeamProgressStore.Contributor::name, String.CASE_INSENSITIVE_ORDER));
-      NbtList contributorTagsx = new NbtList();
-      contributors.stream().map(TeamProgressStore.Contributor::toTag).forEach(contributorTagsx::add);
-      result.put("contributors", contributorTagsx);
+      NbtList contributorTags = new NbtList();
+      contributors.stream().map(TeamProgressStore.Contributor::toTag).forEach(contributorTags::add);
+      result.put("contributors", contributorTags);
       List<TeamProgressStore.RecordEvent> history = config.historyEnabled ? readHistory(root) : List.of();
       if (fishFilter != null && !fishFilter.isBlank()) {
          history = history.stream().filter(event -> event.fish().equals(fishFilter)).toList();
@@ -288,8 +286,12 @@ public final class TeamProgressStore {
    }
 
    public static List<TeamProgressStore.Contributor> readContributors(NbtCompound root, Team team) {
-      tideborneClearContributorScores();
       ensureInitialized(root);
+      return readInitializedContributors(root, team);
+   }
+
+   private static List<TeamProgressStore.Contributor> readInitializedContributors(NbtCompound root, Team team) {
+      tideborneClearContributorScores();
       List<TeamProgressStore.Contributor> result = new ArrayList<>();
       NbtCompound contributors = root.getCompound("contributors");
 
@@ -385,315 +387,276 @@ public final class TeamProgressStore {
    }
 
    private static String key(RegistryEntry<Item> item) {
-      return Registries.ITEM.getId((Item)item.value()).toString();
+      return Registries.ITEM.getId(item.value()).toString();
    }
 
    private static int saturatedAdd(int first, int second) {
       return (int)Math.min(2147483647L, (long)first + second);
    }
 
-   public static int tideborneFishStars(ItemStack var0) {
+   public static int tideborneFishStars(ItemStack stack) {
       try {
-         Optional var1 = FishData.get(var0);
-         if (!var1.isEmpty()) {
-            String var2 = ((FishData)var1.get()).profile().rarity().toString().toLowerCase().replace('_', ' ');
-            if (!var2.equals("common")) {
-               if (!var2.equals("uncommon")) {
-                  if (!var2.equals("rare")) {
-                     if (!var2.equals("very rare") && !var2.equals("epic")) {
-                        if (!var2.equals("legendary")) {
-                           return 1;
-                        }
-
-                        return 5;
-                     }
-
-                     return 4;
-                  }
-
-                  return 3;
-               }
-
-               return 2;
-            }
-
-            return 1;
-         }
-      } catch (RuntimeException var4) {
+         return tideborneFishStarsFromData(FishData.get(stack).orElse(null));
+      } catch (RuntimeException ignored) {
+         return 0;
       }
-
-      return 0;
    }
 
-   public static double tideborneFishScore(ItemStack var0) {
-      if (TraitAxesRuntime.isCanonicalV2(var0)) {
-         Integer canonicalScore = (Integer)var0.get(TideTraitsComponents.SPECIMEN_FISH_SCORE);
-         if (canonicalScore != null) {
-            return canonicalScore.doubleValue();
-         }
-      }
-
-      int var1 = tideborneFishStars(var0);
-      if (var1 <= 0) {
-         return -1.0;
-      }
-
-      double var2 = (Double)var0.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0);
-      String var4 = (String)var0.getOrDefault(TideTraitsComponents.MUTATION, "normal");
-      double var5 = (Double)TideItemData.FISH_LENGTH.getOrDefault(var0, 0.0);
-      double var7 = var5;
-      Optional var9 = FishData.get(var0);
-      if (var9.isPresent()) {
-         Optional var10 = ((FishData)var9.get()).size();
-         if (var10.isPresent()) {
-            var7 = ((SizeData)var10.get()).recordHighCm();
-         }
-      }
-
-      return TraitAxesRuntime.score(var0, var1, var2, var5, var7);
+   public static double tideborneFishScore(ItemStack stack) {
+      SpecimenData specimen = CanonicalSpecimenStorage.read(stack).orElse(null);
+      return specimen != null && specimen.fishScore().isPresent() ? specimen.fishScore().getAsInt() : -1.0;
    }
 
-   public static void tideborneBeginCatch(ItemStack var0) {
+   public static void tideborneBeginCatch(ItemStack stack) {
+      TeamCanonicalJournalCapture.begin(stack);
       TIDEBORNE_LAST_FISH.remove();
-      double var1 = tideborneFishScore(var0);
-      if (!(var1 >= 0.0)) {
+      SpecimenData specimen = TeamCanonicalJournalCapture.currentSpecimen().orElse(null);
+      if (specimen == null || specimen.fishScore().isEmpty()) {
          tideborneClearCatch();
-      } else {
-         TIDEBORNE_CURRENT_SCORE.set(var1);
-         int var3 = tideborneFishStars(var0);
-         TIDEBORNE_CURRENT_STARS.set(var3);
-         NbtCompound var4 = new NbtCompound();
-         String var5 = Registries.ITEM.getId(var0.getItem()).toString();
-         var4.putString("fish", var5);
-         var4.putInt("fish_score", (int)Math.round(var1));
-         var4.putInt("fish_stars", var3);
-         double var6 = (Double)TideItemData.FISH_LENGTH.getOrDefault(var0, 0.0);
-         var4.putDouble("length", var6);
-         String var8 = TraitAxesRuntime.condition(var0);
-         var4.putString("mutation", var8);
-         var4.putString("condition", TraitAxesRuntime.condition(var0));
-         var4.putString("body_type", TraitAxesRuntime.bodyType(var0));
-         double var9 = (Double)var0.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0);
-         var4.putDouble("percentile", var9);
-         var4.putLong("nonce", System.nanoTime());
-         TIDEBORNE_CURRENT_FISH.set(var4);
-         HistoryBadgeMeta.capture(var4);
+         return;
       }
+      int score = specimen.fishScore().getAsInt();
+      int stars = tideborneFishStars(stack);
+      TIDEBORNE_CURRENT_SCORE.set((double) score);
+      TIDEBORNE_CURRENT_STARS.set(stars);
+      NbtCompound tag = new NbtCompound();
+      tag.putString("fish", Registries.ITEM.getId(stack.getItem()).toString());
+      tag.putInt("fish_score", score);
+      StoredFishScoreStorage.writeCanonical(tag, score);
+      tag.putInt("fish_stars", stars);
+      tag.putDouble("length", specimen.finalLength());
+      tag.putDouble("percentile", specimen.finalPercentile());
+      tag.putString("body_type", specimen.bodyType().name().toLowerCase(Locale.ROOT));
+      tag.putString("condition", specimen.condition().name().toLowerCase(Locale.ROOT));
+      tag.putString("mutation", tag.getString("condition"));
+      tag.putString("pigmentation", specimen.pigmentation().name().toLowerCase(Locale.ROOT));
+      tag.putString("quality", specimen.specimenQuality().name().toLowerCase(Locale.ROOT));
+      tag.putLong("nonce", System.nanoTime());
+      TIDEBORNE_CURRENT_FISH.set(tag);
+      HistoryBadgeMeta.capture(tag);
    }
 
+   /** Keep legacy history fallback after clear; canonical indexing expires after the second clear. */
    public static void tideborneClearCatch() {
-      NbtCompound var0 = (NbtCompound)TIDEBORNE_CURRENT_FISH.get();
-      if (var0 != null) {
-         TIDEBORNE_LAST_FISH.set(var0);
+      NbtCompound current = TIDEBORNE_CURRENT_FISH.get();
+      if (current != null) {
+         TIDEBORNE_LAST_FISH.set(current);
       }
 
       TIDEBORNE_CURRENT_SCORE.remove();
       TIDEBORNE_CURRENT_STARS.remove();
       TIDEBORNE_CURRENT_FISH.remove();
       HistoryBadgeMeta.finish();
+      TeamCanonicalJournalCapture.clear();
    }
 
    public static int tideborneCurrentFishScore() {
-      Double var0 = (Double)TIDEBORNE_CURRENT_SCORE.get();
-      return var0 == null ? -1 : (int)Math.round(var0);
+      Double score = TIDEBORNE_CURRENT_SCORE.get();
+      return score == null ? -1 : (int)Math.round(score);
    }
 
    public static int tideborneCurrentFishStars() {
-      Integer var0 = (Integer)TIDEBORNE_CURRENT_STARS.get();
-      return var0 == null ? 0 : var0;
+      Integer stars = TIDEBORNE_CURRENT_STARS.get();
+      return stars == null ? 0 : stars;
    }
 
-   public static void tideborneUpdateContributorFishScore(NbtCompound var0) {
-      int var1 = tideborneCurrentFishScore();
-      if (var1 >= 0) {
-         int var2 = var0.getInt("fish_score");
-         if (var1 > var2) {
-            var0.putInt("fish_score", var1);
-         }
-      }
+   public static void tideborneUpdateContributorFishScore(NbtCompound tag) {
+      StoredFishScoreStorage.updateBest(tag,
+            StoredFishScoreStorage.highestCanonicalScore(TIDEBORNE_CURRENT_FISH.get(), TIDEBORNE_LAST_FISH.get()));
+      syncLegacyMirror(tag);
    }
 
    public static void tideborneClearContributorScores() {
       TIDEBORNE_CONTRIBUTOR_SCORES.clear();
    }
 
-   public static void tideborneRegisterContributorFishScore(UUID var0, NbtCompound var1) {
-      TIDEBORNE_CONTRIBUTOR_SCORES.put(var0, StoredFishScoreStorage.readCanonical(var1).orElse(-1));
+   public static void tideborneRegisterContributorFishScore(UUID id, NbtCompound tag) {
+      migrateStoredScore(tag);
+      TIDEBORNE_CONTRIBUTOR_SCORES.put(id, StoredFishScoreStorage.readCanonical(tag).orElse(-1));
    }
 
-   public static int tideborneContributorFishScore(TeamProgressStore.Contributor var0) {
-      Integer var1 = (Integer)TIDEBORNE_CONTRIBUTOR_SCORES.get(var0.id());
-      return var1 == null ? -1 : var1;
+   public static int tideborneContributorFishScore(TeamProgressStore.Contributor contributor) {
+      Integer score = TIDEBORNE_CONTRIBUTOR_SCORES.get(contributor.id());
+      return score == null ? -1 : score;
    }
 
-   public static void tideborneRegisterEventMeta(TeamProgressStore.RecordEvent var0, NbtCompound var1) {
-      if (var1.getBoolean("fish_score")) {
-         TIDEBORNE_EVENT_SCORES.put(var0.id(), var1.getInt("fish_score"));
+   public static void tideborneRegisterEventMeta(TeamProgressStore.RecordEvent event, NbtCompound tag) {
+      migrateStoredScore(tag);
+      StoredFishScoreStorage.readCanonical(tag).ifPresent(score -> TIDEBORNE_EVENT_SCORES.put(event.id(), score));
+
+      if (tag.getBoolean("fish_stars")) {
+         TIDEBORNE_EVENT_STARS.put(event.id(), tag.getInt("fish_stars"));
       }
 
-      if (var1.getBoolean("fish_stars")) {
-         TIDEBORNE_EVENT_STARS.put(var0.id(), var1.getInt("fish_stars"));
+      HistoryBadgeMeta.register(event.id(), tag);
+   }
+
+   public static int tideborneEventFishScore(TeamProgressStore.RecordEvent event) {
+      Integer score = TIDEBORNE_EVENT_SCORES.get(event.id());
+      return score == null ? -1 : score;
+   }
+
+   public static int tideborneEventFishStars(TeamProgressStore.RecordEvent event) {
+      Integer stars = TIDEBORNE_EVENT_STARS.get(event.id());
+      return stars == null ? 0 : stars;
+   }
+
+   public static int tideborneEventFishScoreForWrite(TeamProgressStore.RecordEvent event) {
+      int score = tideborneCurrentFishScore();
+      if (score >= 0) {
+         return score;
       }
 
-      HistoryBadgeMeta.register(var0.id(), var1);
-   }
-
-   public static int tideborneEventFishScore(TeamProgressStore.RecordEvent var0) {
-      Integer var1 = (Integer)TIDEBORNE_EVENT_SCORES.get(var0.id());
-      return var1 == null ? -1 : var1;
-   }
-
-   public static int tideborneEventFishStars(TeamProgressStore.RecordEvent var0) {
-      Integer var1 = (Integer)TIDEBORNE_EVENT_STARS.get(var0.id());
-      return var1 == null ? 0 : var1;
-   }
-
-   public static int tideborneEventFishScoreForWrite(TeamProgressStore.RecordEvent var0) {
-      int var1 = tideborneCurrentFishScore();
-      if (var1 >= 0) {
-         return var1;
-      }
-
-      if (var0.type() != TeamProgressStore.EventType.REPAIR) {
-         NbtCompound var2 = (NbtCompound)TIDEBORNE_LAST_FISH.get();
-         if (var2 != null) {
-            return var2.getInt("fish_score");
+      if (event.type() != TeamProgressStore.EventType.REPAIR) {
+         NbtCompound last = TIDEBORNE_LAST_FISH.get();
+         if (last != null) {
+            return StoredFishScoreStorage.readCanonical(last).orElse(-1);
          }
       }
 
-      return tideborneEventFishScore(var0);
+      return tideborneEventFishScore(event);
    }
 
-   public static int tideborneEventFishStarsForWrite(TeamProgressStore.RecordEvent var0) {
-      int var1 = tideborneCurrentFishStars();
-      if (var1 > 0) {
-         return var1;
+   public static int tideborneEventFishStarsForWrite(TeamProgressStore.RecordEvent event) {
+      int stars = tideborneCurrentFishStars();
+      if (stars > 0) {
+         return stars;
       }
 
-      if (var0.type() != TeamProgressStore.EventType.REPAIR) {
-         NbtCompound var2 = (NbtCompound)TIDEBORNE_LAST_FISH.get();
-         if (var2 != null) {
-            return var2.getInt("fish_stars");
+      if (event.type() != TeamProgressStore.EventType.REPAIR) {
+         NbtCompound last = TIDEBORNE_LAST_FISH.get();
+         if (last != null) {
+            return last.getInt("fish_stars");
          }
       }
 
-      return tideborneEventFishStars(var0);
+      return tideborneEventFishStars(event);
    }
 
-   public static Text tideborneEnrichChat(Text var0, TeamProgressStore.RecordEvent var1) {
-      int var2 = tideborneEventFishScore(var1);
-      int var3 = tideborneEventFishStars(var1);
-      if (var2 < 0 && var3 <= 0) {
-         return var0;
+   public static Text tideborneEnrichChat(Text message, TeamProgressStore.RecordEvent event) {
+      int score = tideborneEventFishScore(event);
+      int stars = tideborneEventFishStars(event);
+      if (score < 0 && stars <= 0) {
+         return message;
       }
 
-      StringBuilder var4 = new StringBuilder("  [");
+      StringBuilder suffix = new StringBuilder("  [");
 
-      for (int var5 = 0; var5 < var3; var5++) {
-         var4.append("\u2605");
+      for (int star = 0; star < stars; star++) {
+         suffix.append("\u2605");
       }
 
-      if (var3 > 0 && var2 >= 0) {
-         var4.append(" | ");
+      if (stars > 0 && score >= 0) {
+         suffix.append(" | ");
       }
 
-      if (var2 >= 0) {
-         var4.append("Score ").append(var2);
+      if (score >= 0) {
+         suffix.append("Score ").append(score);
       }
 
-      var4.append("]");
-      return var0.copy().append(Text.literal(var4.toString()));
+      suffix.append("]");
+      return message.copy().append(Text.literal(suffix.toString()));
    }
 
-   public static Text tideborneFishScoreTooltip(ItemStack var0) {
-      double var1 = tideborneFishScore(var0);
-      if (!(var1 >= 0.0)) {
+   public static Text tideborneFishScoreTooltip(ItemStack stack) {
+      double score = tideborneFishScore(stack);
+      if (!(score >= 0.0)) {
          return null;
       }
 
-      int var3 = (int)Math.round(var1);
-      MutableText var4 = Text.literal("Fish Score: ").formatted(Formatting.GRAY);
-      return var4.append(Text.literal(Integer.toString(var3)).formatted(Formatting.AQUA));
+      int roundedScore = (int)Math.round(score);
+      MutableText label = Text.literal("Fish Score: ").formatted(Formatting.GRAY);
+      return label.append(Text.literal(Integer.toString(roundedScore)).formatted(Formatting.AQUA));
    }
 
-   public static int tideborneFishStarsFromData(FishData var0) {
-      if (var0 == null) {
+   public static int tideborneFishStarsFromData(FishData data) {
+      if (data == null) {
          return 0;
       }
+      return switch (data.profile().rarity().toString().toLowerCase().replace('_', ' ')) {
+         case "uncommon" -> 2;
+         case "rare" -> 3;
+         case "very rare", "epic" -> 4;
+         case "legendary" -> 5;
+         default -> 1;
+      };
+   }
 
-      String var1 = var0.profile().rarity().toString().toLowerCase().replace('_', ' ');
-      if (!var1.equals("common")) {
-         if (!var1.equals("uncommon")) {
-            if (!var1.equals("rare")) {
-               if (var1.equals("very rare") || var1.equals("epic")) {
-                  return 4;
-               } else {
-                  return !var1.equals("legendary") ? 1 : 5;
-               }
-            } else {
-               return 3;
-            }
-         } else {
-            return 2;
-         }
-      } else {
-         return 1;
+   public static double tideborneMutationBonus(String mutation) {
+      return TraitAxesRuntime.conditionBonus(mutation);
+   }
+
+   public static double tideborneFishScoreFromParts(double percentile, int stars, String mutation) {
+      return tideborneFishScoreFromParts(percentile, stars, mutation, 0.0, 0.0);
+   }
+
+   public static String tideborneFormatScore(double score) {
+      return score == Math.rint(score) ? Integer.toString((int)Math.round(score)) : String.format(Locale.ROOT, "%.1f", score);
+   }
+
+   public static double tideborneFishScoreFromParts(double percentile, int stars, String mutation, double length, double recordHigh) {
+      return TraitAxesRuntime.scoreFromParts(percentile, stars, mutation, "normal", length, recordHigh);
+   }
+
+   public static void tideborneRecordCurrentTopFish(NbtCompound root, UUID catcherId, String catcherName) {
+      migrateScoreList(root.getList("top_fish", NbtElement.COMPOUND_TYPE));
+      SpecimenData specimen = TeamCanonicalJournalCapture.currentSpecimen().orElse(null);
+      if (specimen == null || specimen.fishScore().isEmpty()) {
+         return;
       }
-   }
-
-   public static double tideborneMutationBonus(String var0) {
-      return TraitAxesRuntime.conditionBonus(var0);
-   }
-
-   public static double tideborneFishScoreFromParts(double var0, int var2, String var3) {
-      return tideborneFishScoreFromParts(var0, var2, var3, 0.0, 0.0);
-   }
-
-   public static String tideborneFormatScore(double var0) {
-      return var0 == Math.rint(var0) ? Integer.toString((int)Math.round(var0)) : String.format(Locale.ROOT, "%.1f", var0);
-   }
-
-   public static double tideborneFishScoreFromParts(double var0, int var2, String var3, double var4, double var6) {
-      return TraitAxesRuntime.scoreFromParts(var0, var2, var3, "normal", var4, var6);
-   }
-
-   public static void tideborneRecordCurrentTopFish(NbtCompound var0, UUID var1, String var2) {
-      NbtCompound var3 = (NbtCompound)TIDEBORNE_CURRENT_FISH.get();
-      if (var3 == null) {
-         var3 = (NbtCompound)TIDEBORNE_LAST_FISH.get();
+      NbtCompound candidate = CanonicalSpecimenRecordIndexer.project(specimen);
+      NbtCompound compatibility = TIDEBORNE_CURRENT_FISH.get();
+      if (compatibility == null) {
+         compatibility = TIDEBORNE_LAST_FISH.get();
       }
-
-      if (var3 != null) {
-         var3.putUuid("catcher_id", var1);
-         var3.putString("catcher_name", var2);
-         var3.putLong("timestamp", System.currentTimeMillis());
-         NbtList var4 = var0.getList("top_fish", 10);
-         NbtList var5 = new NbtList();
-         boolean var6 = false;
-         Iterator var7 = var4.iterator();
-
-         while (var7.hasNext() && var5.size() < 12) {
-            NbtCompound var8 = (NbtCompound)var7.next();
-            if (var8.getLong("nonce") == var3.getLong("nonce")) {
-               return;
-            }
-
-            if (!var6 && var3.getInt("fish_score") > var8.getInt("fish_score")) {
-               var5.add(var3);
-               var6 = true;
-            }
-
-            if (var5.size() < 12) {
-               var5.add(var8);
-            }
-         }
-
-         if (!var6 && var5.size() < 12) {
-            var5.add(var3);
-         }
-
-         var0.put("top_fish", var5);
+      if (compatibility != null) {
+         candidate.putInt("fish_stars", compatibility.getInt("fish_stars"));
       }
+      candidate.putUuid("catcher_id", catcherId);
+      candidate.putString("catcher_name", catcherName == null ? "" : catcherName);
+      candidate.putLong("timestamp", System.currentTimeMillis());
+      CanonicalSpecimenRecordIndexer.indexTeamTopFish(root, candidate);
+   }
+
+   private static boolean migrateStoredScores(NbtCompound root) {
+      if (root == null) {
+         return false;
+      }
+      boolean changed = false;
+      NbtCompound contributors = root.getCompound("contributors");
+      for (String key : contributors.getKeys()) {
+         if (contributors.contains(key, NbtElement.COMPOUND_TYPE)) {
+            changed |= migrateStoredScore(contributors.getCompound(key));
+         }
+      }
+      changed |= migrateScoreList(root.getList("history", NbtElement.COMPOUND_TYPE));
+      changed |= migrateScoreList(root.getList("top_fish", NbtElement.COMPOUND_TYPE));
+      return changed;
+   }
+
+   private static boolean migrateScoreList(NbtList list) {
+      boolean changed = false;
+      for (NbtElement element : list) {
+         if (element instanceof NbtCompound tag) {
+            changed |= migrateStoredScore(tag);
+         }
+      }
+      return changed;
+   }
+
+   private static boolean migrateStoredScore(NbtCompound tag) {
+      boolean changed = StoredFishScoreStorage.migrateLegacyScore(tag);
+      return syncLegacyMirror(tag) | changed;
+   }
+
+   /** Compatibility output only; canonical storage remains authoritative. */
+   private static boolean syncLegacyMirror(NbtCompound tag) {
+      int score = StoredFishScoreStorage.readCanonical(tag).orElse(0);
+      if (score <= 0 || tag.getInt("fish_score") == score) {
+         return false;
+      }
+      tag.putInt("fish_score", score);
+      return true;
    }
 
    public record Contributor(UUID id, String name, int catches, int species, int recordEvents, int activeRecords, boolean former) {
@@ -706,7 +669,9 @@ public final class TeamProgressStore {
          tag.putInt("record_events", this.recordEvents);
          tag.putInt("active_records", this.activeRecords);
          tag.putBoolean("former", this.former);
-         tag.putInt("fish_score", TeamProgressStore.tideborneContributorFishScore(this));
+         int score = TeamProgressStore.tideborneContributorFishScore(this);
+         tag.putInt("fish_score", score);
+         StoredFishScoreStorage.writeCanonical(tag, score);
          return tag;
       }
    }
@@ -744,16 +709,18 @@ public final class TeamProgressStore {
          tag.putDouble("previous_size", this.previousSize);
          tag.putLong("timestamp", this.timestamp);
          tag.putLong("game_time", this.gameTime);
-         tag.putInt("fish_score", TeamProgressStore.tideborneEventFishScoreForWrite(this));
+         int score = TeamProgressStore.tideborneEventFishScoreForWrite(this);
+         tag.putInt("fish_score", score);
          tag.putInt("fish_stars", TeamProgressStore.tideborneEventFishStarsForWrite(this));
          HistoryBadgeMeta.write(this.id(), tag);
+         StoredFishScoreStorage.writeCanonical(tag, score);
          return tag;
       }
 
       public static TeamProgressStore.RecordEvent fromTag(NbtCompound tag) {
-         TeamProgressStore.RecordEvent var10000;
+         TeamProgressStore.RecordEvent event;
          try {
-            var10000 = new TeamProgressStore.RecordEvent(
+            event = new TeamProgressStore.RecordEvent(
                tag.getUuid("id"),
                TeamProgressStore.EventType.valueOf(tag.getString("type")),
                tag.getUuid("actor_id"),
@@ -770,8 +737,8 @@ public final class TeamProgressStore {
             return null;
          }
 
-         TeamProgressStore.tideborneRegisterEventMeta(var10000, tag);
-         return var10000;
+         TeamProgressStore.tideborneRegisterEventMeta(event, tag);
+         return event;
       }
    }
 }

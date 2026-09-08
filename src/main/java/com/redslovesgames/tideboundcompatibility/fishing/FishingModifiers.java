@@ -8,7 +8,6 @@ import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.redslovesgames.tideborne.fishing.v2.FightProfileService;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearEffects;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
-import com.redslovesgames.tideborne.fishing.v2.TideFishingLineModifiers;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
 
@@ -28,8 +27,9 @@ public final class FishingModifiers {
       var canonical = CanonicalCatchStateManager.get(hook);
       if (canonical.isPresent()) {
          var fightProfile = canonical.get().fightProfile();
-         FishingGearModifiers allMinigameGear = FishingGearModifiers.compose(TideFishingLineModifiers.forLine(hook.getLine()), compatibilityGear);
-         projection = CANONICAL_FIGHTS.projectMinigame(fightProfile, allMinigameGear, Tide.SERVER_CONFIG.minigame.minigameDifficultyMultiplier);
+         FishingGearModifiers allMinigameGear = TideborneFishingGearModifiers.forCanonicalFight(hook, TideboundConfig.get());
+         projection = CANONICAL_FIGHTS.projectMinigame(canonical.get().species(), canonical.get().specimen(),
+                 allMinigameGear, Tide.SERVER_CONFIG.minigame.minigameDifficultyMultiplier);
          behavior = canonicalBehavior(fightProfile.behavior(), behavior);
       } else {
          projection = CANONICAL_FIGHTS.projectCompatibilityMinigame(area, speed, compatibilityGear);

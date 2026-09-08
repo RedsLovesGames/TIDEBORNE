@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideteamjournal;
 
+import com.redslovesgames.tidetraits.compat.multiplayer.PersonalTideJournal;
+
 import com.li64.tide.Tide;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.item.TideItemData;
@@ -49,9 +51,12 @@ public final class TeamJournalService {
    }
 
    public static TidePlayerData loadFor(ServerPlayerEntity player) {
+      PersonalTideJournal.markExtrasTrackerActive();
       try {
          TeamJournalService.TeamContext context = resolveAndMigrate(player);
-         return new TidePlayerData(readJournal(context.effectiveTeam()));
+         TidePlayerData data = new TidePlayerData(readJournal(context.effectiveTeam()));
+         PersonalTideJournal.markExtrasTeamData(data);
+         return data;
       } catch (RuntimeException exception) {
          TideTeamJournal.LOGGER
             .warn("Could not resolve the FTB team journal for {}; using native Tide data for this operation", player.getGameProfile().getName(), exception);
@@ -597,8 +602,7 @@ public final class TeamJournalService {
       Double length = (Double)TideItemData.FISH_LENGTH.getOptional(held).orElse(null);
       if (length != null && Double.isFinite(length) && !data.stats.isEmpty()) {
          double record = largest ? ((FishStats)data.stats.orElseThrow()).getLargestCatch() : ((FishStats)data.stats.orElseThrow()).getSmallestCatch();
-         double tolerance = Math.max(1.0E-6, Math.ulp(record) * 4.0);
-         return Math.abs(length - record) <= tolerance;
+         return RecordHolderStore.samePhysicalSize(length, record);
       } else {
          return false;
       }

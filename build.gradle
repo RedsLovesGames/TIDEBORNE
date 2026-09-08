@@ -127,7 +127,18 @@ java {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform { excludeTags 'gear-balance-report' }
+}
+
+tasks.register('gearBalanceReport', Test) {
+    group = 'verification'
+    description = 'Explicit deterministic post-2.0 aggregate balance validation (not part of build).'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform { includeTags 'gear-balance-report' }
+    maxHeapSize = '768m'
+    systemProperty 'tideborne.balance.output', layout.buildDirectory.file('gear-balance-results.md').get().asFile.absolutePath
+    outputs.upToDateWhen { false }
 }
 
 jar {

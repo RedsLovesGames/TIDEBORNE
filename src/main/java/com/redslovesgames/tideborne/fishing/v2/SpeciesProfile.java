@@ -17,9 +17,14 @@ public record SpeciesProfile(
         String behavior,
         SizeDistribution sizeDistribution,
         Set<String> traitEligibility,
-        Map<String, Double> traitAffinity
+        Map<String, Double> traitAffinity,
+        Set<String> targetTags
 ) {
     public SpeciesProfile {
+        targetTags = targetTags == null ? Set.of() : Collections.unmodifiableSet(new TreeSet<>(targetTags));
+        if (targetTags.stream().anyMatch(String::isBlank)) {
+            throw new IllegalArgumentException("target tags must not be blank");
+        }
         if (speciesId == null || speciesId.isBlank() || !speciesId.contains(":")) {
             throw new IllegalArgumentException("speciesId must be a namespaced ID");
         }
@@ -59,6 +64,14 @@ public record SpeciesProfile(
 
     public boolean isEligible(FishingEnvironment environment) {
         return eligibility.isEligible(environment);
+    }
+
+    /** Existing adapters remain source-compatible; target metadata is optional and not persisted. */
+    public SpeciesProfile(String speciesId, CanonicalRarity rarity, double encounterWeight,
+                          SpeciesEligibility eligibility, double strength, double tempo, String behavior,
+                          SizeDistribution sizeDistribution, Set<String> traitEligibility, Map<String, Double> traitAffinity) {
+        this(speciesId, rarity, encounterWeight, eligibility, strength, tempo, behavior, sizeDistribution,
+                traitEligibility, traitAffinity, Set.of());
     }
 }
 

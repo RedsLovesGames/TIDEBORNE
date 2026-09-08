@@ -11,7 +11,7 @@ Once reconstruction is complete, you should not need anything in this directory 
 With the authoritative 1.3.57 JAR available:
 
 ```bash
-python3 scripts/reconstruct_sources.py /path/to/Tideborne-1.3.57-perfect-catch-trait-luck.jar --force
+python3 scripts/reconstruct_sources.py reconstruction/reference/Tideborne-1.3.57-perfect-catch-trait-luck.jar --force
 ```
 
 The script validates the exact SHA-256 before touching `src/`.

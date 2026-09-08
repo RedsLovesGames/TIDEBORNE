@@ -5,6 +5,9 @@
  */
 package com.redslovesgames.tideteamjournal;
 
+import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenStore;
+import com.redslovesgames.tideborne.fishing.v2.integration.JournalSpecimenNetworkCodec;
+
 import com.li64.tide.data.player.FishStats;
 import com.li64.tide.data.player.TidePlayerData;
 import com.li64.tide.data.player.TidePlayerData.FishPlayerData;
@@ -30,6 +33,25 @@ public final class RecordHolderStore {
    private RecordHolderStore() {
    }
 
+   /** Tolerant physical records; strict aggregate holder changes below intentionally differ.
+    * Callers retain their availability and finite/positive catch validation.
+    */
+   public static boolean isLargerPhysicalRecord(double length, boolean hadRecord, double previous) {
+      return !hadRecord || length > previous + physicalSizeTolerance(previous);
+   }
+
+   public static boolean isSmallerPhysicalRecord(double length, boolean hadRecord, double previous) {
+      return !hadRecord || length < previous - physicalSizeTolerance(previous);
+   }
+
+   public static boolean samePhysicalSize(double length, double previous) {
+      return Double.isFinite(previous) && Math.abs(length - previous) <= physicalSizeTolerance(previous);
+   }
+
+   private static double physicalSizeTolerance(double previous) {
+      return Double.isFinite(previous) ? Math.max(1.0E-6, Math.ulp(previous) * 4.0) : 0.0;
+   }
+
    static boolean backfillPersonal(NbtCompound root, TidePlayerData journal, UUID playerId, String playerName) {
       NbtCompound records = records(root);
       boolean[] changed = new boolean[]{false};
@@ -49,6 +71,7 @@ public final class RecordHolderStore {
    }
 
    static boolean updateAfterCatch(NbtCompound root, TidePlayerData before, TidePlayerData after, UUID playerId, String playerName) {
+      JournalSpecimenStore.migrateLegacyJournal(root);
       NbtCompound records = records(root);
       NbtCompound beforeRecords = records.copy();
       records.getKeys().removeIf(key -> !hasSizedStats(after, key));
@@ -73,7 +96,9 @@ public final class RecordHolderStore {
          }
       }
 
-      return !beforeRecords.equals(records);
+      boolean changed = !beforeRecords.equals(records);
+      TeamCanonicalJournalCapture.capture(root, before);
+      return changed;
    }
 
    static boolean captureLoggedCatch(
@@ -191,6 +216,7 @@ public final class RecordHolderStore {
    static NbtCompound attachForClient(NbtCompound journal, NbtCompound teamRoot) {
       NbtCompound packetTag = journal.copy();
       packetTag.put("tide_team_journal_record_holders", records(teamRoot).copy());
+      JournalSpecimenNetworkCodec.attachDisplayData(packetTag, teamRoot);
       return packetTag;
    }
 

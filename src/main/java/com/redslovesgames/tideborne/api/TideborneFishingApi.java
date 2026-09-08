@@ -3,6 +3,8 @@ package com.redslovesgames.tideborne.api;
 import com.li64.tide.data.TideData;
 import com.li64.tide.data.fishing.FishData;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearEffects;
+import com.redslovesgames.tideborne.fishing.v2.FishingEnvironment;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalSpecimenRecordIndexer;
@@ -19,6 +21,7 @@ import java.util.TreeMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.registry.Registries;
 
 /**
  * Small stable read/query facade for canonical Tideborne fishing state.
@@ -47,12 +50,7 @@ public final class TideborneFishingApi {
      * decode-only.
      */
     public static Optional<SpecimenData> readCurrentSpecimen(ItemStack stack) {
-        if (stack == null
-                || stack.isEmpty()
-                || CanonicalSpecimenStorage.detectMigration(stack) != CanonicalSpecimenStorage.MigrationState.CANONICAL_CURRENT) {
-            return Optional.empty();
-        }
-        return CanonicalSpecimenStorage.read(stack);
+        return CanonicalSpecimenStorage.readCurrent(stack);
     }
 
     /** Reads canonical specimen state from transfer/record NBT without mutation or legacy fallback. */
@@ -80,6 +78,24 @@ public final class TideborneFishingApi {
 
     public static double fishingLuck(FishingGearModifiers modifiers) {
         return requireModifiers(modifiers).fishingLuck();
+    }
+
+    /** Effective values for a complete composition; existing raw query methods remain compatible. */
+    public static double effectiveGearFishingLuck(FishingGearModifiers modifiers) {
+        return FishingGearEffects.fishingLuck(modifiers);
+    }
+
+    public static double effectiveGearTraitLuck(FishingGearModifiers modifiers) {
+        return FishingGearEffects.traitLuck(modifiers);
+    }
+
+    public static double trophyFightRelief(FishingGearModifiers modifiers) {
+        return FishingGearEffects.trophyFightRelief(modifiers);
+    }
+
+    public static double speciesGearWeight(SpeciesProfile species, FishingEnvironment environment,
+                                          FishingGearModifiers modifiers, double nativeLuck) {
+        return FishingGearEffects.speciesWeightMultiplier(species, environment, modifiers, nativeLuck);
     }
 
     public static double traitLuck(FishingGearModifiers modifiers) {
@@ -139,6 +155,9 @@ public final class TideborneFishingApi {
             return Optional.empty();
         }
         for (FishData data : TideData.FISH.get().values()) {
+            if (data == null || !Registries.ITEM.getId(data.fish().value()).toString().equals(speciesId)) {
+                continue;
+            }
             Optional<SpeciesProfile> profile = adaptSpecies(data);
             if (profile.filter(value -> value.speciesId().equals(speciesId)).isPresent()) {
                 return profile;

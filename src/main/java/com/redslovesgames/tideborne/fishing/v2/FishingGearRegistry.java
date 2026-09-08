@@ -11,7 +11,8 @@ public final class FishingGearRegistry {
     private static final Map<Identifier, GearProfile> BY_ID = createProfiles();
     private static final Map<GearProfile, Identifier> BY_PROFILE = invertProfiles(BY_ID);
     private static final Set<GearProfile> PROFILES = registeredProfiles(BY_PROFILE);
-    private static final Set<Identifier> TIDE_BOBBER_IDS = createTideBobberIds();
+    private static final Map<Identifier, FishingGearModifiers> BOBBERS = createBobbers();
+    private static final Set<Identifier> TIDE_BOBBER_IDS = BOBBERS.keySet();
 
     private FishingGearRegistry() {}
 
@@ -32,6 +33,7 @@ public final class FishingGearRegistry {
     }
     public static Set<GearProfile> profiles() { return PROFILES; }
     public static Set<Identifier> supportedBobberIds() { return TIDE_BOBBER_IDS; }
+    public static Optional<FishingGearModifiers> bobberModifiers(Identifier id) { return Optional.ofNullable(BOBBERS.get(id)); }
     public static boolean isSupportedBobberId(Identifier itemId) { return itemId != null && TIDE_BOBBER_IDS.contains(itemId); }
     public static boolean isSupportedBobber(ItemStack stack) {
         return stack != null && !stack.isEmpty() && isSupportedBobberId(Registries.ITEM.getId(stack.getItem()));
@@ -43,6 +45,21 @@ public final class FishingGearRegistry {
         return TIDE_BOBBER_IDS.contains(itemId) ? Optional.of(Slot.BOBBER) : Optional.empty();
     }
 
+    /** Inventory compatibility uses canonical identities first, then Tide's native accessory tags. */
+    public static boolean accepts(Slot slot, ItemStack stack) {
+        if (stack == null || stack.isEmpty() || !stack.getItem().canBeNested()) return false;
+        Optional<Slot> exact = resolveSlot(Registries.ITEM.getId(stack.getItem()));
+        if (exact.isPresent()) return exact.get() == slot;
+        return switch (slot) {
+            case ROD -> stack.isIn(com.li64.tide.data.TideTags.Items.FISHING_RODS);
+            case LINE -> stack.isIn(com.li64.tide.data.TideTags.Items.LINES);
+            case HOOK -> stack.isIn(com.li64.tide.data.TideTags.Items.HOOKS);
+            case BOBBER -> stack.isIn(com.li64.tide.data.TideTags.Items.BOBBERS);
+            case BAIT -> com.li64.tide.util.BaitUtils.isBait(stack);
+            case ATTACHMENT -> false;
+        };
+    }
+
     private static Map<Identifier, GearProfile> createProfiles() {
         LinkedHashMap<Identifier, GearProfile> profiles = new LinkedHashMap<>();
         for (GearProfile profile : GearProfile.values()) {
@@ -51,16 +68,38 @@ public final class FishingGearRegistry {
         }
         return Collections.unmodifiableMap(profiles);
     }
-    private static Set<Identifier> createTideBobberIds() {
-        LinkedHashSet<Identifier> ids = new LinkedHashSet<>();
+    private static Map<Identifier, FishingGearModifiers> createBobbers() {
+        LinkedHashMap<Identifier, FishingGearModifiers> profiles = new LinkedHashMap<>();
         for (String path : List.of(
                 "red_bobber","orange_bobber","yellow_bobber","lime_bobber","green_bobber","cyan_bobber","light_blue_bobber","blue_bobber",
-                "purple_bobber","magenta_bobber","pink_bobber","white_bobber","light_gray_bobber","gray_bobber","black_bobber","brown_bobber",
-                "golden_apple_bobber","enchanted_golden_apple_bobber","iron_bobber","golden_bobber","diamond_bobber","netherite_bobber","amethyst_bobber",
-                "echo_bobber","chorus_bobber","feather_bobber","lichen_bobber","nautilus_bobber","pearl_bobber","heart_bobber","grassy_bobber","duck_bobber")) {
-            ids.add(Identifier.of("tide", path));
+                "purple_bobber","magenta_bobber","pink_bobber","white_bobber","light_gray_bobber","gray_bobber","black_bobber","brown_bobber")) {
+            profiles.put(Identifier.of("tide", path), bobber(0, 0, 1, 1, 1, 0));
         }
-        return Collections.unmodifiableSet(ids);
+        profiles.put(Identifier.of("tide", "golden_bobber"), bobber(2, 0, 0, 1, 1, 0));
+        profiles.put(Identifier.of("tide", "golden_apple_bobber"), bobber(2, 0, 2, 1, 1, 0));
+        profiles.put(Identifier.of("tide", "enchanted_golden_apple_bobber"), bobber(5, 0, 0, 1, 1, 0));
+        profiles.put(Identifier.of("tide", "iron_bobber"), bobber(0, 0, 0, 1.05, 1, .05));
+        profiles.put(Identifier.of("tide", "diamond_bobber"), bobber(0, 0, 0, 1.08, 1, .10));
+        profiles.put(Identifier.of("tide", "netherite_bobber"), bobber(0, 0, 1, 1.10, 1, .15));
+        profiles.put(Identifier.of("tide", "lichen_bobber"), bobber(0, 0, 1, 1.03, 1, 0));
+        profiles.put(Identifier.of("tide", "grassy_bobber"), bobber(0, 0, 0, 1.04, 1, 0));
+        profiles.put(Identifier.of("tide", "amethyst_bobber"), bobber(0, 1, 1, 1, 1, 0));
+        profiles.put(Identifier.of("tide", "echo_bobber"), bobber(0, 2, 1, .96, 1, 0));
+        profiles.put(Identifier.of("tide", "feather_bobber"), bobber(0, 0, 2, 1, 1, 0));
+        profiles.put(Identifier.of("tide", "chorus_bobber"), bobber(0, 0, 3, .94, 1, 0));
+        profiles.put(Identifier.of("tide", "duck_bobber"), bobber(0, 0, 0, 1, 1.10, 0));
+        profiles.put(Identifier.of("tide", "nautilus_bobber"), bobber(1, 0, 0, 1, 1.25, 0));
+        profiles.put(Identifier.of("tide", "heart_bobber"), bobber(0, 0, 0, .95, 1.40, 0));
+        profiles.put(Identifier.of("tide", "pearl_bobber"), bobber(1, 0, 2, 1, 1, 0));
+        return Collections.unmodifiableMap(profiles);
+    }
+    private static FishingGearModifiers bobber(double luck, double traits, double lure, double zone, double crate, double protection) {
+        return FishingGearModifiers.builder().fishingLuck(luck).traitLuck(traits)
+                .namedAdditiveModifier(FishingGearEffects.LURE_BONUS, lure)
+                .namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, zone)
+                .namedMultiplierModifier(FishingGearEffects.CRATE_WEIGHT_MULTIPLIER, crate)
+                .namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PREVENTION_CHANCE, protection)
+                .namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PROTECTION_SOURCES, protection > 0 ? 1 : 0).build();
     }
     private static Map<GearProfile, Identifier> invertProfiles(Map<Identifier, GearProfile> profiles) {
         EnumMap<GearProfile, Identifier> result = new EnumMap<>(GearProfile.class);
@@ -73,9 +112,26 @@ public final class FishingGearRegistry {
         return Collections.unmodifiableSet(result);
     }
 
-    public enum Origin { TIDE, TIDEBORNE }
+    public enum Origin { MINECRAFT, TIDE, TIDEBORNE }
     public enum Slot { LINE, HOOK, ROD, BAIT, ATTACHMENT, BOBBER }
     public enum GearProfile {
+        WOOD_ROD("minecraft","fishing_rod",Origin.MINECRAFT,Slot.ROD),
+        IRON_ROD("tide","iron_fishing_rod",Origin.TIDE,Slot.ROD),
+        GOLD_ROD("tide","golden_fishing_rod",Origin.TIDE,Slot.ROD),
+        DIAMOND_ROD("tide","diamond_fishing_rod",Origin.TIDE,Slot.ROD),
+        NETHERITE_ROD("tide","netherite_fishing_rod",Origin.TIDE,Slot.ROD),
+        TIDE_BASE_LINE("tide","fishing_line",Origin.TIDE,Slot.LINE),
+        TIDE_BASE_HOOK("tide","fishing_hook",Origin.TIDE,Slot.HOOK),
+        FIERY_HOOK("tide","fiery_hook",Origin.TIDE,Slot.HOOK),
+        PERMAFROST_HOOK("tide","permafrost_hook",Origin.TIDE,Slot.HOOK),
+        TWILIGHT_HOOK("tide","twilight_hook",Origin.TIDE,Slot.HOOK),
+        LAVAPROOF_HOOK("tide","lavaproof_hook",Origin.TIDE,Slot.HOOK),
+        VOID_HOOK("tide","void_hook",Origin.TIDE,Slot.HOOK),
+        NORMAL_BAIT("tide","bait",Origin.TIDE,Slot.BAIT),
+        LUCKY_BAIT("tide","lucky_bait",Origin.TIDE,Slot.BAIT),
+        MAGNETIC_BAIT("tide","magnetic_bait",Origin.TIDE,Slot.BAIT),
+        INCANDESCENT_BAIT("tide","incandescent_bait",Origin.TIDE,Slot.BAIT),
+        ABYSS_BAIT("tide","abyss_bait",Origin.TIDE,Slot.BAIT),
         TIDE_COPPER_LINE("tide","copper_line",Origin.TIDE,Slot.LINE),
         TIDE_IRON_LINE("tide","iron_line",Origin.TIDE,Slot.LINE),
         TIDE_GOLDEN_LINE("tide","golden_line",Origin.TIDE,Slot.LINE),
@@ -93,5 +149,40 @@ public final class FishingGearRegistry {
         private final Identifier itemId; private final Origin origin; private final Slot slot;
         GearProfile(String namespace,String path,Origin origin,Slot slot){this.itemId=Identifier.of(namespace,path);this.origin=origin;this.slot=slot;}
         public Identifier itemId(){return itemId;} public Origin origin(){return origin;} public Slot slot(){return slot;}
+
+        /** Additional targeting only. Native Tide still supplies bait luck/lure/crate effects. */
+        public FishingGearModifiers baitTargetModifiers() {
+            return switch (this) {
+                case INCANDESCENT_BAIT -> FishingGearModifiers.builder().targetWeight("warm", 1.40).build();
+                case ABYSS_BAIT -> FishingGearModifiers.builder().targetWeight("deep", 1.40).build();
+                default -> FishingGearModifiers.neutral();
+            };
+        }
+
+        /** Frozen rod contributions; native Gold luck is deliberately absent. */
+        public FishingGearModifiers rodModifiers() {
+            var builder = FishingGearModifiers.builder();
+            switch (this) {
+                case WOOD_ROD -> { }
+                case IRON_ROD -> builder.namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, 1.04);
+                case GOLD_ROD -> builder.namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, 0.97);
+                case DIAMOND_ROD -> builder.strengthMultiplier(0.92).trophyFightRelief(0.25);
+                case NETHERITE_ROD -> builder.tempoMultiplier(0.95).trophyFightRelief(0.10);
+                case KUJIRA_BONE_FISHING_ROD -> builder.strengthMultiplier(0.88).tempoMultiplier(1.10)
+                        .targetWeight("kujira_target", 1.35)
+                        .namedMultiplierModifier(FishingGearEffects.CRATE_WEIGHT_MULTIPLIER, 0.70);
+                default -> { return FishingGearModifiers.neutral(); }
+            }
+            double protection = switch (this) {
+                case IRON_ROD -> 0.05;
+                case GOLD_ROD -> 0.02;
+                case DIAMOND_ROD -> 0.10;
+                case NETHERITE_ROD -> 0.15;
+                default -> 0;
+            };
+            if (protection > 0) builder.namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PREVENTION_CHANCE, protection)
+                    .namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PROTECTION_SOURCES, 1);
+            return builder.build();
+        }
     }
 }

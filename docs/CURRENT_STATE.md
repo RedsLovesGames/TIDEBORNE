@@ -1,6 +1,6 @@
 # Current development state
 
-Updated: 2026-09-04
+Updated: 2026-09-08
 
 ## Baseline and branch
 
@@ -14,6 +14,7 @@ Updated: 2026-09-04
 - reconstruction branch: `reconstruct-1.3.57`
 - `main` remains untouched unless explicitly authorized
 - authoritative Fishing System 2.0 contract: `docs/FISHING_SYSTEM_2_SPEC.md`
+- authoritative frozen post-2.0 gear design: `docs/POST_2_0_GEAR_PROGRESSION_SPEC.md` (implemented; statistical study complete, default boss roster and full balance sign-off remain open)
 
 Frozen reconstruction anchors:
 
@@ -50,7 +51,7 @@ Fishing System 2.0 through Stage 64 is complete on `dev`, including later Fishin
 
 Canonical runtime authority includes:
 
-- server-owned Tide species selection using canonical Fishing Luck weighting and Tide eligibility restrictions;
+- server-owned Tide species selection using canonical Fishing Luck weighting and Tide eligibility restrictions; context-independent ID queries filter native item identity before adapting a profile;
 - one canonical natural specimen percentile/base-size sample per catch;
 - independent deterministic Body Type, Condition, Pigmentation, and Specimen Quality axes;
 - canonical final physical size and size-adjusted final percentile without a second specimen sample;
@@ -58,39 +59,37 @@ Canonical runtime authority includes:
 - server-owned per-player, per-species Trait Momentum;
 - canonical FishScore V2 as the production score source;
 - canonical Strength, Tempo, line, Steel Leader, rod, hook, bait, and Leviathan Bait behavior;
-- canonical ItemStack, entity, bucket, display, Satchel, Journal, record, leaderboard, and network persistence/projection paths;
+- canonical ItemStack, entity, bucket, display, Satchel, Journal, record, leaderboard, and network persistence/projection paths; Satchel reads copy migration candidates lazily and preserve caller/commit isolation; tackle handlers retain decoded presets for unchanged state/registries/resources and coalesce saves within inventory actions; decode-only ItemStack reads classify once inside canonical storage;
 - deterministic one-way migration for recoverable Tideborne 1.3.57 fish and saved-data representations;
-- guarded legacy compatibility paths that cannot reroll or overwrite current canonical V2 state;
-- canonical Best Specimen per species and derived Team Top 15 records;
+- guarded legacy compatibility paths that cannot reroll or overwrite current canonical V2 state; legacy empirical percentiles are sampled lazily per species and invalidated on data reload;
+- canonical Best Specimen per species and derived Team Top 15 records; client Journal records decode on packet receipt, Top Fish rows reuse snapshot projections, and its selected preview entity lasts until selection/data/world/resource changes;
 - replay-safe record recovery that does not replay live-catch side effects;
 - exact namespaced canonical fishing-gear identity;
 - dedicated Tideborne creative tab and optional-mod visibility matrix.
 
-## Post-2.0 gear progression audit
+## Post-2.0 gear convergence
 
-The existing gear paths are now fully inventoried in `docs/GEAR_PROGRESSION_AUDIT.md`. This is a documentation-only audit and does not redesign or rebalance equipment.
+Post-2.0 rods, lines, seven hooks, all 32 bobbers, normal/Leviathan bait, leaders and physical Satchel presets are implemented through the existing canonical registry, modifiers/effects, selector, generator and fight services. Seven freely composable archetypes are supported; labels and preset selection grant no bonuses. The [frozen spec](POST_2_0_GEAR_PROGRESSION_SPEC.md) records exact values and the [balance report](POST_2_0_GEAR_BALANCE_REPORT.md) records the completed 6.6-million-specimen controlled statistical study.
 
-The audit covers:
+Final source tracing found no active duplicate gear application or parallel specimen/loadout authority. Native bait/bobber luck is attributed before one capped species calculation; Gold native luck remains separate. Fight projection starts from species/specimen inputs, applies relief only to positive specimen surcharge, and consumes complete gear once. Trait Luck enters canonical generation; gear never writes specimen axes, identity or score. Persistence and server-owned Satchel/Journal/records/Top Fish/Momentum paths retain their existing contracts and migration readers.
 
-- all five core rod tiers and the specialized Kujira Bone rod path;
-- native and Tideborne line identities;
-- the seven specialty hooks plus Tide's neutral base hook;
-- all 32 supported bobber IDs and both bobber modifier layers;
-- Tide 2.1.1 native bait identities plus Leviathan Bait;
-- Copper, Iron/Steel, Gold, and Diamond leader tiers and the preserved `tidebound_compatibility:steel_leader` compatibility ID;
-- Leviathan Bait gating, fish-only selector integration, canonical modifier inputs, and historical boss setup projection;
-- upgraded Angler's Satchel catch delivery, protection, sorting, and legacy compatibility boundaries.
+Removed unused BobberBonuses.get/forId environment-based lookups; synchronized display values remain. Previously removed scalar hook-weight helpers and the redundant Leviathan catch-pool alias remain absent. LeaderAttachment's exact item checks intentionally translate physical items to persisted tiers; SteelLeaderGearModifiers remains the live Apex protection facade. Native eligibility/bait aggregation and noncanonical minigame fallback remain required adapters. Historical config keys, steel_leader ID and legacy readers remain intact.
 
-The important ownership findings are:
+The statistical measurements are complete, but **full seven-archetype balance sign-off is not**: the shipped Leviathan boss tag is empty; generic Leviathan bait value, routine protection/Tempo cap saturation, and skill-dependent failure/throughput remain documented limitations. Six archetypes show controlled directional benefits. No frozen values were retuned or fish roster invented. Prevention covers the existing Apex catch-loss event, not general minigame failure. Historical cast range/natural-break values remain reference-only; Swift/Tentacle affect fish movement, not bite timing.
 
-- no audited gear directly authors canonical natural percentile, FishScore, base/final size, or final canonical trait results;
-- Fishing Luck reaches species selection, while Trait Luck reaches `SpecimenGenerator` as an input to canonical trait probability handling;
-- current direct gear Trait Luck sources are the Amethyst Bobber, Echo Bobber, and Leviathan Bait;
-- bobber behavior is split between Team Journal's configurable Fishing Luck/Lure projection and Tideborne's selected V2 trait/fight/crate/retrieval modifiers;
-- line, leader, Leviathan, and Satchel behavior also cross explicit native Tide, compatibility-adapter, and canonical V2 ownership boundaries;
-- individual gear switches, exact item checks, and version-sensitive Tide mixins are documented so a later coordinated gear pass can consolidate behavior without bypassing the canonical specimen pipeline.
+Final local validation: Java 21 test, clean build, final build after cleanup, 336 unit tests (zero failures/errors), all 71 core GameTests, explicit gearBalanceReport and verifyExactDependencies passed. Core implementation/convergence is complete on dev; boss-roster resolution, practical balance acceptance and [manual Minecraft checks](POST_2_0_GEAR_MANUAL_CHECKLIST.md) remain open. Installed-optional-mod matrices and dedicated-server smoke belong to the compatibility/release gate and were not run in this pass. No push or CI run was performed.
 
-Fresh validation was rerun against `f0819b9fc384a256a0d525e7df5e9578a6926652`, the last code-changing head. `465259e04580e14a2aed7d0d228e56dc7350a85a` differed from it only by `docs/CURRENT_STATE.md`, so the validated source tree is identical to the source audited here. GitHub Actions run `33900568570`, rerun build job `101124312757`, passed dependency/checksum validation, repository/version validation, `clean build`, 300 unit tests, all 59 required core GameTests, production JAR validation, validation-count reporting, and artifact upload. The validated `tideborne-2.0.1.jar` SHA-256 was `367491ca13f31bce3996097b688e596b5552b90c8199380023ec65c4498be5b4`. Optional-mod matrices and dedicated-server smoke remained skipped under the streamlined normal validation policy.
+## Satchel tackle management (Prompt 7)
+
+The upgraded Satchel opens a physical tackle box with up to 12 user-created, optionally renamed presets. Each has six filtered slots: rod, line, hook, bobber, bait, and leader. Vanilla click/drag/shift-click interactions move actual ItemStacks and save immediately through AnglersSatchelStorage. Preset compartments are additive; existing catch capacity, storage, IDs, Auto-Stow, sorting, protection, and canonical catch migrations remain intact. Storage / Upgrades retains the active-Satchel control for Auto-Stow routing.
+
+Equip performs a server-owned swap against the rod opposite the Satchel. Empty pockets leave current equipment unchanged, including when exchanging rod bodies; displaced items return to the preset. Native default attachments never become free items. Additional bait slots survive partial changes; swaps exceeding either rod's native bait capacity are refused. Active casts, protected tackle, incompatible equipment, detached sessions, and customized leaders that cannot fit the existing tier-only attachment representation are rejected. Nonempty presets cannot be deleted.
+
+Physical presets persist names, UUIDs, six ItemStacks, and optional legacy references in additive Satchel state. Old saved references migrate once to named entries; uniquely referenced unprotected rods already in this Satchel move into the corresponding pocket. Missing/external/duplicate references remain recoverable, and original keys remain readable. Store an externally held referenced rod in loose Satchel storage and reopen to recover it. Unreadable preset data is refused without overwriting it.
+
+The screen shows six current-equipment icons and specialization labels derived through canonical gear modifiers. Selection and names grant no bonuses; modifier totals and specimen values are never persisted. Standard item tooltips remain the presentation boundary. Stacks synchronize through vanilla ScreenHandler slots; additive metadata/rename payloads validate session IDs and selected UUIDs. Existing storage version-2/3 wire fields remain readable; obsolete fixed-preset actions no longer mutate gear.
+
+Validation on the current working tree: gradlew.bat test passed 326 unit tests, then gradlew.bat build runGametest passed the build and all 70 core GameTests. Coverage includes physical persistence, malformed data, legacy migration, filtering, autosave, partial/rod swaps, bait capacity, stale sessions/rename, canonical roles, and existing catch/wire compatibility. Human in-client layout/usability checks remain pending. Optional compatibility matrices and dedicated-server smoke were not run. The convergence review above provides the latest validation.
 
 ## Post-2.0 architecture
 
@@ -108,7 +107,9 @@ The facade returns existing canonical domain records rather than creating a seco
 
 `com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation` is the shared read-only presentation contract for canonical trait order/names/colors, length, percentile, FishScore, and rarity stars.
 
-Covered consumers include the Fishing Journal, Team Top 15/Top Fish, team records, Satchel detail/record views, normal fish tooltips, Tide Fish Profile overlays, and operator fishing inspection.
+Covered consumers include the Fishing Journal, Team Top 15/Top Fish, team records, normal fish tooltips, Tide Fish Profile overlays, and operator fishing inspection.
+
+`TeamStatsComponent` owns the compact Journal stats renderer and required height directly, with one shared rule for the Largest/Smallest row. A single catch uses only the Best Specimen section when that server payload is available; otherwise its size records remain visible. First-catch information belongs to the discovery badges. The component reads updated canonical display and record-holder data without a self-mixin or an additional cache. Local Java 21 build validation passes 339 unit tests, including direct component height/payload-update checks. Human validation remains recommended for long names, clipping/tooltips, GUI scales and live Journal updates.
 
 Final presentation validation head: `7e2498542cd21215c6c931cca208ff8b4337963b`.
 GitHub Actions run: `33892874198`.
@@ -137,7 +138,7 @@ That exact normal `dev` run completed successfully. It passed dependency/checksu
 
 ### Stage 4 legacy and package cleanup
 
-Stage 4 is complete. Detailed ownership and migration-preservation rules are documented in `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md`.
+Stage 4 is complete. Detailed ownership and migration-preservation rules are documented in `docs/ARCHITECTURE.md`.
 
 High-confidence dead implementation removed in this pass:
 
@@ -156,13 +157,13 @@ The package review keeps the four historical roots because they still represent 
 
 A broad package rewrite is intentionally rejected. New canonical Fishing System 2.0 behavior should live under `tideborne`, while the historical roots increasingly act as subsystem owners or adapters. Persisted identifiers must not move merely because Java packages do.
 
-Behavior-rich Tideborne-owned self-mixins remain where they still carry meaningful Team Journal indexing/projection/storage or cross-package compatibility behavior. They are internal architecture debt, not Tide version coupling, and should only be replaced when their owner classes can absorb the behavior with focused regression coverage. `TideTeamJournalServiceMixin` remains an explicit later focused bridge-cleanup candidate.
+TeamProgressStore directly owns canonical stored-score reads, contributor/history serialization and merges, catch metadata and Top 15 indexing. The four canonical self-mixins are removed. Initialization preserves one-way score migration and dirty reporting; score-only history never acquires invented specimen identity. TeamCanonicalJournalCapture reuses one immutable decoded specimen through nested current/last catch cleanup. RecordHolderStore directly owns sidecar migration/capture and client projection. TeamJournalService activates personal/team tracking before resolution and marks only successful team data; native fallback remains unmarked.
 
-After Stage 4, the active configuration contains 39 mixins:
+The active configuration contains 31 mixins:
 
 - 19 Tide targets;
 - 11 vanilla Minecraft targets;
-- 8 Tideborne-owned targets;
+- 0 Tideborne-owned targets;
 - 1 optional Apex Waters target.
 
 Stage 4 validated code/test head: `f0819b9fc384a256a0d525e7df5e9578a6926652`.
@@ -170,7 +171,7 @@ GitHub Actions run: `33900568570`.
 
 That exact normal `dev` run passed dependency/checksum validation, repository/version validation, clean Gradle build and unit tests, core no-optional-mod GameTests, production JAR validation, validation-count reporting, and CI artifact upload. The Apex/Myths optional matrices and dedicated-server smoke were intentionally skipped by normal-push policy, and release publication was skipped.
 
-The first Stage 4 validation attempt correctly exposed an outdated `LegacyFishScoreRemovalTest` that still asserted the removed self-mixin mechanism. The test was updated to assert the new compatibility contract instead: no registered legacy score self-mixin, both old score signatures disabled at `-1.0`, and Team Journal canonical score projection still registered. The successful run above validates the repaired contract.
+The first Stage 4 validation attempt correctly exposed an outdated `LegacyFishScoreRemovalTest` that still asserted the removed self-mixin mechanism. The test was updated to assert the new compatibility contract instead: no registered legacy score self-mixin, both old score signatures disabled at `-1.0`, and direct Team Journal canonical score behavior. The successful run above validates the repaired contract.
 
 ### Real Tide balance simulator
 
@@ -187,17 +188,17 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic
 ## Detailed references
 
 - `docs/FISHING_SYSTEM_2_SPEC.md`
-- `docs/STAGE_57_58_FINAL_RELEASE_VALIDATION.md`
-- `docs/STAGE_59_FISHING_UI_POLISH.md`
 - `docs/FISHING_RECOVERY.md`
-- `docs/STAGE_60_61_RECOVERY_AND_FINAL_POLISH.md`
-- `docs/STAGE_63_TIDEBORNE_CREATIVE_TAB.md`
 - `docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md`
 - `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md`
 - `docs/GEAR_PROGRESSION_AUDIT.md`
 - `docs/TIDEBORNE_INTERNAL_API.md`
 - `docs/TIDE_MIXIN_INVENTORY.md`
-- `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md`
+- `docs/ARCHITECTURE.md`
+
+## Behavior-preserving cleanup
+
+B01-B15 in `docs/CODE_CLEANUP_QUEUE.md` are complete. Physical-size record tolerance is shared in RecordHolderStore; strict aggregate-holder and Best Specimen comparisons remain distinct. Gear composition reuses immutable neutral/constant values and identical bait-target collection without changing caps, BigDecimal rules, native bait behavior or optional gating. The final pass passed focused unit tests, all 78 core GameTests and the Java 21 build (352 unit tests, zero failures/errors/skips). Manual Minecraft visual/multiplayer acceptance remains a handoff; the queue contains no unfinished implementation.
 
 ## Current execution gate
 
@@ -209,7 +210,7 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` remains a deterministic
 - new covered fishing read/query features should prefer `TideborneFishingApi`.
 - canonical specimen presentation migration is complete.
 - Tide-targeting mixin inventory, Stage 3 focused Tide reduction, and Stage 4 legacy/package cleanup are complete and validated.
-- the existing Fishing System 2.0 gear path audit is complete in `docs/GEAR_PROGRESSION_AUDIT.md`; the next gear step is design only and must not bypass canonical specimen ownership.
+- gear mechanics, Satchel presets and deterministic archetype convergence review are complete; the spec records remaining boss-roster, statistical-balance and manual validation work.
 - the planned post-2.0 architecture sequence is complete. Future cleanup should follow the documented ownership boundaries rather than begin a broad namespace rewrite.
-- remaining non-architecture backlog is the repository-level Immutable Releases setting, long-term source-distribution license decision, future gear progression design/implementation, and future Minecraft/Fabric/Tide/optional-mod compatibility work as needed.
+- remaining non-architecture backlog is the repository-level Immutable Releases setting, long-term source-distribution license decision, gear statistical/manual validation and the default boss roster, and future Minecraft/Fabric/Tide/optional-mod compatibility work as needed.
 - `main` must not be merged, rebased, or modified unless explicitly authorized.

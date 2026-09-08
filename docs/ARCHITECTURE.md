@@ -85,6 +85,8 @@ Covered UI surfaces should consume this layer rather than reconstructing trait o
 
 Screens still own layout, clipping, localized labels, timestamps, and interaction behavior.
 
+`tideteamjournal.client.TeamStatsComponent` directly owns the compact Journal stats layout and its required height. Both use the same size-record visibility rule; specimen fields come from `ClientJournalSpecimens` and `CanonicalSpecimenPresentation`. Tide's Fish Profile component-insertion hook remains the external integration boundary.
+
 ## Composition and application root
 
 ### `com.redslovesgames.tideborne`
@@ -184,33 +186,23 @@ Policy:
 - mixins should adapt lifecycle or inaccessible state
 - gameplay calculations should live in named services
 - Tide-targeting mixins are treated as version-sensitive unless a stable seam is documented
-- Tideborne-owned self-mixins are internal architecture debt, not Tide coupling, and should be removed only when the owner can absorb the behavior with focused regression coverage
+- RecordHolderStore directly owns canonical sidecar migration/capture and client metadata projection; TeamJournalService marks team-backed data on successful resolution and preserves unmarked native fallback. TeamProgressStore score/index overlays remain internal architecture debt.
 
 Do not perform a broad mixin purge simply to reduce the count.
 
 ## Post-2.0 gear architecture
 
-The gear audit is complete in `docs/GEAR_PROGRESSION_AUDIT.md`.
+Post-2.0 gear progression and physical Satchel tackle management are implemented. Ownership is converged:
 
-Current gear behavior spans Tide-native behavior plus Tideborne-owned canonical projections and a few historical adapters. The redesign goal is consolidation, not replacement of the existing canonical layer.
+- FishingGearRegistry owns exact identity, slots and bobber defaults; FishingGearModifiers composes immutable inputs, and FishingGearEffects consumes complete contributions with shared caps.
+- TideborneFishingGearModifiers adapts native equipped items to encounter/fight/preview inputs. Native bait aggregation, eligibility and Gold luck stay native; attributed bait/bobber luck enters the canonical selector once.
+- SpeciesSelectionService owns capped metadata-based target/rarity weights. TideSpeciesSelectionBridge owns server generation; Trait Luck enters SpecimenGenerator, while FishScoreV2Service retains score authority.
+- FightProfileService projects species/specimen difficulty, positive-surcharge Trophy relief and composed equipment. The compatibility minigame fallback is used only without canonical catch state.
+- BobberGearModifiers captures server-configured values per cast. BobberBonuses retains synchronized display data. LeaderAttachment owns persisted-tier translation; SteelLeaderGearModifiers remains an Apex facade over canonical rod/bobber/leader protection.
+- SatchelPreset stores actual items, names/UUIDs and legacy references. SatchelTackleExchange plans item-conserving swaps; SatchelTackleHandler commits server inventory changes. SatchelGearSummary infers labels through canonical modifiers; no copied totals or parallel equipped state are persisted.
+- TideborneFishingApi remains the covered internal query boundary; CanonicalSpecimenPresentation owns specimen display semantics.
 
-Preserve and extend these seams first:
-
-- `FishingGearRegistry` for identity
-- `FishingGearModifiers` for composition
-- `FishingGearEffects` for named effects
-- `FightProfileService` for fight/minigame transformation
-- `TideborneFishingApi` for covered read/query access
-
-Known consolidation targets include:
-
-- bobber bonus ownership split between Team Journal and V2 modifiers
-- native and Tideborne line projections
-- leader persistence/tier/effect layering
-- Leviathan selection and modifier ownership
-- remaining individual hard-coded gear checks
-
-A new loadout or resolver abstraction should be introduced only if the existing registry/modifier/effect architecture cannot represent a proven requirement cleanly.
+No gear or UI path directly authors specimen percentile, size, axes, seed or score. Existing save/network IDs and migration readers remain. The seven archetypes are equipment combinations, not classes or preset bonuses. Statistical measurements are complete in POST_2_0_GEAR_BALANCE_REPORT.md; default boss targeting and practical all-seven balance acceptance remain open. See CURRENT_STATE.md for validation and limitations.
 
 ## Persistence and compatibility constraints
 

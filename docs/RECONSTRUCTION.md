@@ -6,7 +6,7 @@ The current source-recovery effort is based on these supplied artifacts:
 
 ### Tideborne
 
-- file: `Tideborne-1.3.57-perfect-catch-trait-luck.jar`
+- file: `reconstruction/reference/Tideborne-1.3.57-perfect-catch-trait-luck.jar`
 - version: `1.3.57`
 - SHA-256: `0c8cd9e9706c2e1cc0a6ca3708c050d5f1d501a0df63d75047188e9fb4b4c4f5`
 - Java bytecode target: Java 21

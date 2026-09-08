@@ -54,15 +54,17 @@ Do not broad-clean before implementation. For every subsystem, inspect only the 
 - final FishScore
 - provenance
 
-### Services
+### Canonical implementation owners
 
 - `SpeciesSelectionService`
 - `SpecimenGenerator`
 - `BodyTypeGenerator`
 - `FightProfileService`
-- `TraitGenerator`
+- `ConditionGenerator`
+- `PigmentationGenerator`
+- `TraitProbabilityService` and `TraitLuckProbabilityService`
 - `SpecimenQualityService`
-- `FishScoreService`
+- `FishScoreV2Service`
 
 Stable consumers such as the Satchel, Journal, records, history, networking, tooltips, and teams consume canonical `SpecimenData`. They must not independently reconstruct or reroll specimen state.
 
@@ -118,14 +120,16 @@ Fishing Luck changes relative fish rarity, not overall fish-catch probability. I
 
 ## Leviathan Bait
 
-- fish-only catches
-- +15 Fishing Luck
-- substantial Trait Luck
-- Strength x1.15
-- Tempo x1.15
-- better exceptional-specimen hunting
+Current post-2.0 equipment values are governed by [POST_2_0_GEAR_PROGRESSION_SPEC.md](POST_2_0_GEAR_PROGRESSION_SPEC.md). The implemented Leviathan contribution is:
 
-Remove the old `selection_quality +15` behavior.
+- fish-only catches
+- +4 Fishing Luck
+- +1 Trait Luck
+- Strength x1.30
+- Tempo x1.20
+- x2 boss target weight before the complete gear-weight cap
+
+The contribution requires enabled Myths integration and the existing fish-only config gate. The default boss target tag is currently empty; targeting is extensible without inventing encounters. The old `selection_quality +15` behavior is not used.
 
 ## Minigame and fight profile
 

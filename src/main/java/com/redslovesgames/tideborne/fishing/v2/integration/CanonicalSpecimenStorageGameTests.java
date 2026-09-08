@@ -9,6 +9,10 @@ import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
 import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
 import com.redslovesgames.tidetraits.component.TideTraitsComponents;
 import com.redslovesgames.tidetraits.entity.SpecimenTransfer;
+import com.redslovesgames.tideteamjournal.TeamProgressStore;
+import com.redslovesgames.tideteamjournal.TeamCanonicalJournalCapture;
+import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
+import java.util.UUID;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -20,6 +24,150 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 
 public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void directTeamOwnerOrdersFifteenUniqueCatchesAcrossPlayersAndReload(TestContext helper) {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        NbtCompound root = new NbtCompound();
+        NbtCompound firstContribution = new NbtCompound();
+        NbtCompound secondContribution = new NbtCompound();
+        long started = System.currentTimeMillis();
+        try {
+            for (int index = 1; index <= 18; index++) {
+                ItemStack stack = new ItemStack(Items.COD);
+                CanonicalSpecimenStorage.write(stack, specimen(index, 1000 + index));
+                TeamProgressStore.tideborneBeginCatch(stack);
+                helper.assertTrue(TeamProgressStore.tideborneFishScore(stack) == 1000 + index,
+                        "Direct score read recalculated stored score");
+                // The catch snapshot is immutable even if the delivered stack subsequently changes.
+                stack.set(TideTraitsComponents.SPECIMEN_FISH_SCORE, 9999);
+                TeamProgressStore.tideborneClearCatch();
+                TeamProgressStore.tideborneUpdateContributorFishScore(index % 2 == 0 ? secondContribution : firstContribution);
+                UUID catcher = index % 2 == 0 ? second : first;
+                TeamProgressStore.tideborneRecordCurrentTopFish(root, catcher, catcher.toString());
+                NbtCompound beforeReplay = root.copy();
+                TeamProgressStore.tideborneRecordCurrentTopFish(root, catcher, "duplicate");
+                helper.assertTrue(root.equals(beforeReplay), "Replay changed identity, catcher or timestamp");
+                TeamProgressStore.tideborneClearCatch();
+                root = root.copy(); // A newly decoded root has no operation-local state.
+            }
+            var top = root.getList("top_fish", 10);
+            helper.assertTrue(top.size() == 15, "Top Fish limit changed");
+            for (int index = 0; index < 15; index++) {
+                NbtCompound row = top.getCompound(index);
+                helper.assertTrue(row.getInt("canonical_fish_score") == 1018 - index, "Top Fish order changed");
+                helper.assertTrue(row.getLong("timestamp") >= started && row.getLong("timestamp") <= System.currentTimeMillis(),
+                        "Catch timestamp was lost");
+                helper.assertTrue(CanonicalSpecimenStorage.readTransferData(row).orElseThrow().deterministicSeed() == 18 - index,
+                        "Top Fish identity changed");
+            }
+            helper.assertTrue(top.getCompound(0).getUuid("catcher_id").equals(second), "Player ownership was mixed");
+            helper.assertTrue(StoredFishScoreStorage.readCanonical(firstContribution).orElseThrow() == 1017,
+                    "First player's score was mixed with second player's catch");
+            helper.assertTrue(StoredFishScoreStorage.readCanonical(secondContribution).orElseThrow() == 1018,
+                    "Second player's last-catch score was lost");
+        } finally {
+            TeamProgressStore.tideborneClearCatch();
+            TeamProgressStore.tideborneClearCatch();
+        }
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void directTeamOwnerRejectsIncompleteNewerAndScorelessCatchesWithoutReroll(TestContext helper) {
+        ItemStack valid = new ItemStack(Items.COD);
+        CanonicalSpecimenStorage.write(valid, specimen());
+        ItemStack scoreless = valid.copy();
+        scoreless.remove(TideTraitsComponents.SPECIMEN_FISH_SCORE);
+        ItemStack incomplete = valid.copy();
+        incomplete.remove(TideTraitsComponents.SPECIMEN_GENERATION_VERSION);
+        ItemStack newer = valid.copy();
+        newer.set(TideTraitsComponents.SPECIMEN_GENERATION_VERSION, SpecimenGenerator.GENERATION_VERSION + 1);
+        try {
+            for (ItemStack stack : java.util.List.of(scoreless, incomplete, newer)) {
+                ItemStack before = stack.copy();
+                TeamProgressStore.tideborneBeginCatch(valid);
+                TeamProgressStore.tideborneClearCatch();
+                TeamProgressStore.tideborneBeginCatch(stack);
+                helper.assertTrue(TeamProgressStore.tideborneFishScore(stack) == -1, "Invalid catch acquired a score");
+                helper.assertTrue(TeamProgressStore.tideborneCurrentFishScore() == -1, "Previous current score leaked");
+                NbtCompound root = new NbtCompound();
+                TeamProgressStore.tideborneRecordCurrentTopFish(root, UUID.randomUUID(), "scoreless");
+                helper.assertTrue(root.getList("top_fish", 10).isEmpty(), "Unscored catch entered Top Fish");
+                helper.assertTrue(ItemStack.areEqual(before, stack), "Read rerolled or repaired partial/newer data");
+                TeamProgressStore.tideborneClearCatch();
+                helper.assertTrue(TeamCanonicalJournalCapture.currentSpecimen().isEmpty(), "Canonical catch survived final clear");
+            }
+        } finally {
+            TeamProgressStore.tideborneClearCatch();
+            TeamProgressStore.tideborneClearCatch();
+        }
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void teamCatchRetainsCanonicalSpecimenAcrossNestedClearOnly(TestContext helper) {
+        var id = java.util.UUID.randomUUID();
+        ItemStack stack = new ItemStack(Items.COD);
+        CanonicalSpecimenStorage.write(stack, specimen());
+        var root = new NbtCompound();
+        com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneBeginCatch(stack);
+        helper.assertTrue(com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneCurrentFishScore()
+                == specimen().fishScore().orElseThrow(), "Catch score differs from canonical specimen");
+        com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneClearCatch();
+        helper.assertTrue(com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneCurrentFishScore() == -1,
+                "Cleared catch retained current score");
+        com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneRecordCurrentTopFish(root, id, "angler");
+        helper.assertTrue(root.getList("top_fish", 10).size() == 1, "Post-save indexing lost retained catch");
+        com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneRecordCurrentTopFish(root, id, "angler");
+        helper.assertTrue(root.getList("top_fish", 10).size() == 1, "Repeated indexing duplicated catch");
+        com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneClearCatch();
+        var nextRoot = new NbtCompound();
+        com.redslovesgames.tideteamjournal.TeamProgressStore.tideborneRecordCurrentTopFish(nextRoot, java.util.UUID.randomUUID(), "next");
+        helper.assertTrue(nextRoot.getList("top_fish", 10).isEmpty(), "Catch leaked into next player's indexing");
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void currentOnlyReadNeverMigratesOrRepairsInput(TestContext helper) {
+        ItemStack current = new ItemStack(Items.COD);
+        CanonicalSpecimenStorage.write(current, specimen());
+        helper.assertTrue(CanonicalSpecimenStorage.read(current).equals(CanonicalSpecimenStorage.readCurrent(current)),
+                "Current-only value differs from migrating read");
+        ItemStack legacy = new ItemStack(Items.COD);
+        legacy.set(TideTraitsComponents.MUTATION_SEED, 42L);
+        TideItemData.FISH_LENGTH.set(legacy, 35.0);
+        ItemStack incomplete = current.copy();
+        incomplete.remove(TideTraitsComponents.SPECIMEN_GENERATION_VERSION);
+        ItemStack newer = current.copy();
+        newer.set(TideTraitsComponents.SPECIMEN_GENERATION_VERSION, SpecimenGenerator.GENERATION_VERSION + 1);
+        for (ItemStack stack : java.util.List.of(legacy, incomplete, newer)) {
+            ItemStack before = stack.copy();
+            helper.assertTrue(com.redslovesgames.tideborne.api.TideborneFishingApi.readCurrentSpecimen(stack).isEmpty(),
+                    "Decode-only read accepted noncurrent data");
+            helper.assertTrue(ItemStack.areEqual(before, stack), "Decode-only read changed persisted data");
+        }
+        helper.complete();
+    }
+
+    @GameTest(templateName = "fabric-gametest-api-v1:empty")
+    public void speciesLookupPreservesRegisteredMetadata(TestContext helper) {
+        TideSpeciesProfileAdapter adapter = new TideSpeciesProfileAdapter();
+        for (FishData data : TideData.FISH.get().values()) {
+            SpeciesProfile expected = adapter.adaptForMigration(data);
+            SpeciesProfile actual = com.redslovesgames.tideborne.api.TideborneFishingApi
+                    .resolveSpeciesProfile(expected.speciesId()).orElseThrow();
+            helper.assertTrue(actual.speciesId().equals(expected.speciesId()), "Species lookup changed identity");
+            helper.assertTrue(expected.encounterWeight() == data.weight(), "Migration changed native selection weight");
+            helper.assertTrue(actual.encounterWeight() == expected.encounterWeight(), "Lookup changed selection weight");
+        }
+        helper.assertTrue(com.redslovesgames.tideborne.api.TideborneFishingApi.resolveSpeciesProfile("missing:fish").isEmpty(),
+                "Unknown species resolved a profile");
+        helper.assertTrue(com.redslovesgames.tideborne.api.TideborneFishingApi.resolveSpeciesProfile("invalid").isEmpty(),
+                "Malformed species resolved a profile");
+        helper.complete();
+    }
+
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void canonicalItemStackRoundTripPreservesEveryField(TestContext helper) {
         SpecimenData expected = specimen();
@@ -206,11 +354,15 @@ public final class CanonicalSpecimenStorageGameTests implements FabricGameTest {
     }
 
     private static SpecimenData specimen() {
+        return specimen(0x1234_5678_9ABCL, 2711);
+    }
+
+    private static SpecimenData specimen(long seed, int score) {
         return new SpecimenData("tide:cod", SpecimenGenerator.SCHEMA_VERSION, SpecimenGenerator.GENERATION_VERSION,
-                0x1234_5678_9ABCL, 97.25, 38.5, 47.75, 99.125, SpecimenData.BodyType.GIANT,
+                seed, 97.25, 38.5, 47.75, 99.125, SpecimenData.BodyType.GIANT,
                 SpecimenData.Condition.SCARRED, SpecimenData.Pigmentation.IRIDESCENT,
                 SpecimenData.SpecimenQuality.PERFECT_SPECIMEN, true, OptionalDouble.of(812.375),
-                OptionalInt.of(2711), SpecimenData.Provenance.generated());
+                OptionalInt.of(score), SpecimenData.Provenance.generated());
     }
 
     private static void assertPersistedFields(TestContext helper, SpecimenData expected, SpecimenData actual) {

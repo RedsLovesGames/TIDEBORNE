@@ -1,8 +1,8 @@
 # Tide mixin inventory and reduction status
 
-Updated: 2026-09-04
+Updated: 2026-09-08
 
-This document records the active mixin architecture after the Stage 2 inventory, Stage 3 Tide reduction, and Stage 4 internal cleanup. Version-sensitive Tide lifecycle hooks remain thin adapters. Tideborne-owned self-mixins are removed only when the owning class can preserve the behavior more directly and safely.
+Version-sensitive Tide lifecycle hooks remain thin adapters. The active configuration contains 31 mixins: 19 Tide targets, 11 vanilla targets, no Tideborne-owned targets and 1 optional Apex target. `TeamStatsComponent` directly owns Journal stats rendering and height; it requires no Tideborne-owned self-mixin. Tide's Fish Profile component-insertion hook remains necessary.
 
 ## Corrected baseline classification
 
@@ -49,14 +49,14 @@ Stage 4 removes one high-confidence Tideborne-owned self-mixin and one inactive 
    - It was already absent from every active mixin config, so it was dead source rather than an active runtime boundary.
    - Active Satchel conversion and storage paths are unchanged.
 
-The active configuration after Stage 4 contains 39 mixins:
+The historical configuration after Stage 4 contained 39 mixins:
 
 - 19 Tide targets;
 - 11 vanilla Minecraft targets;
 - 8 Tideborne-owned targets;
 - 1 optional Apex Waters target.
 
-Stage 4 package ownership and migration-preservation rules are documented in `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md`.
+Stage 4 package ownership and migration-preservation rules are documented in `docs/ARCHITECTURE.md`.
 
 ## Active Tide-targeting mixins
 
@@ -82,6 +82,22 @@ Stage 4 package ownership and migration-preservation rules are documented in `do
 | Fishing lifecycle / compatibility | `tideboundcompatibility.TideFishingHookMixin` | High | Retained. Perfect Catch, Momentum, Leviathan, scent, catch loss, and cleanup depend on Tide lifecycle ordering. |
 | Angling Table client UI | `tideboundcompatibility.AnglingTableScreenLeaderMixin` | Medium | Retained thin. Visual integration remains tied to Tide's Angling Table layout. |
 
+## Post-2.0 gear ownership review
+
+The gear rework retains these targets; no behavior-equivalent stable API replacement is proven:
+
+| Gear-affected adapter | Classification and current owner |
+| --- | --- |
+| Team Journal TideFishingHook constructor | Version-sensitive thin adapter: captures one server BobberGearModifiers snapshot and exposes native luck/lure; synchronized client values are display-only. |
+| FishSelectorMixin | Version-sensitive thin adapter to server TideSpeciesSelectionBridge/SpeciesSelectionService; native eligibility precedes capped weighting. |
+| FishCatchMinigameMixin | Version-sensitive constructor/message and finish timing; FishingModifiers delegates projection to FightProfileService. |
+| Compatibility TideFishingHookMixin | Version-sensitive lifecycle adapter for fish-only selection, catch finalization, Momentum and cleanup; Leviathan numbers remain canonical. |
+| CrateDataMixin | Thin return-value adapter to FishingModifiers/FishingGearEffects; native bait crate aggregation remains native. |
+| AnglingTableLeaderMixin / AnglingTableScreenLeaderMixin | Version-sensitive slot/UI adapters; persisted tier translation remains LeaderAttachment. Client layout does not author modifiers. |
+| Traits TideFishingHookMixin / TidePlayerDataMixin | Version-sensitive delivery/finalization boundaries; canonical storage and Satchel services retain specimen authority. |
+
+The optional Apex loss hook remains guarded by OptionalCompatMixinPlugin and consumes canonical protection. No new client-class reference or mixin target was introduced in the final pass. Unused bobber environment-based lookup methods were removed; config/payload migration and native fallback adapters remain.
+
 ## Genuinely version-sensitive Tide remainder
 
 The explicit Tide upgrade audit list remains:
@@ -101,9 +117,9 @@ Canonical fishing calculations, persistence formats, presentation rules, and Tea
 
 The 11 vanilla Minecraft-targeting mixins cover Satchel recipes, bucket/entity specimen transfer, vanilla rendering, tooltips, record badges, and vanilla screen access. They are not Tide version dependencies.
 
-The remaining 8 Tideborne-owned mixins are internal architecture debt, not Tide compatibility debt. Most are behavior-rich Team Journal projection/index/storage bridges. They should move into owner classes only when direct integration can preserve migration, record, network, and ordering semantics with focused coverage.
+B02 removed the final four Tideborne-owned self-mixins. TeamProgressStore directly owns canonical score/Top Fish behavior and contributor/history projection; TeamCanonicalJournalCapture retains the catch snapshot. Direct-owner tests and core GameTests cover migration, nested cleanup, canonical ordering and replay. No Tide target or injection timing changed; personal-record decisions now delegate to RecordHolderStore at the existing logCatch callback.
 
-`TideTeamJournalServiceMixin` remains an explicit cross-package cleanup candidate. Its fallback behavior crosses the historical `tidetraits` and `tideteamjournal` boundary, so it should be reconciled directly rather than removed as part of a broad namespace rewrite.
+TeamJournalService directly tracks successful team loads and leaves native fallback data unmarked.
 
 The single Apex Waters `GreatWhiteSharkMixin` remains optional-mod compatibility and stays guarded by `OptionalCompatMixinPlugin`.
 
@@ -122,4 +138,4 @@ Stages 3 and 4 preserve:
 - old-world migration reads and compatibility mirrors;
 - no new client-authoring path for canonical specimen state.
 
-Further cleanup should follow `docs/STAGE_4_LEGACY_PACKAGE_CLEANUP.md` rather than deleting historical readers or moving package trees solely for cosmetic consistency.
+Further cleanup should follow `docs/ARCHITECTURE.md` rather than deleting historical readers or moving package trees solely for cosmetic consistency.

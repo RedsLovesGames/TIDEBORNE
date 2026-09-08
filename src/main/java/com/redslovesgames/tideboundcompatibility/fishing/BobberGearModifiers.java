@@ -1,20 +1,29 @@
 package com.redslovesgames.tideboundcompatibility.fishing;
 
+import com.li64.tide.data.TideTags;
 import com.li64.tide.data.rods.CustomRodManager;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearEffects;
 import com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers;
+import com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry;
+import com.redslovesgames.tideteamjournal.BobberBonuses;
+import com.redslovesgames.tideteamjournal.ServerConfig;
+import java.util.TreeMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
-/** Fixed specialization effects for Tide bobbers. Fishing Luck/lure remain server-configured separately. */
+/** Server-configured canonical bobber contribution, captured once per cast. */
 public final class BobberGearModifiers {
     private BobberGearModifiers() {}
 
+    /** Thin hook adapter storage; no second modifier model or resolver. */
+    public interface HookSnapshot {
+        FishingGearModifiers tideborne$bobberModifiers();
+    }
+
     public static FishingGearModifiers forHook(TideFishingHook hook) {
-        if (hook == null) return FishingGearModifiers.neutral();
-        return forBobber(CustomRodManager.getBobber(hook.getRod()));
+        return hook instanceof HookSnapshot snapshot ? snapshot.tideborne$bobberModifiers() : FishingGearModifiers.neutral();
     }
 
     public static FishingGearModifiers forRod(ItemStack rod) {
@@ -24,35 +33,18 @@ public final class BobberGearModifiers {
 
     public static FishingGearModifiers forBobber(ItemStack bobber) {
         if (bobber == null || bobber.isEmpty()) return FishingGearModifiers.neutral();
-        Identifier id = Registries.ITEM.getId(bobber.getItem());
-        if (!"tide".equals(id.getNamespace())) return FishingGearModifiers.neutral();
-        return switch (id.getPath()) {
-            case "grassy_bobber" -> zone(1.04D);
-            case "lichen_bobber" -> zone(1.03D);
-            case "iron_bobber" -> FishingGearModifiers.compose(zone(1.05D), protection(0.05D));
-            case "diamond_bobber" -> FishingGearModifiers.compose(zone(1.08D), protection(0.10D));
-            case "netherite_bobber" -> FishingGearModifiers.compose(zone(1.10D), protection(0.15D));
-            case "amethyst_bobber" -> FishingGearModifiers.builder().traitLuck(1.0D).build();
-            case "echo_bobber" -> FishingGearModifiers.builder().traitLuck(2.0D).build();
-            case "duck_bobber" -> crate(1.10D);
-            case "nautilus_bobber" -> crate(1.25D);
-            case "heart_bobber" -> crate(1.40D);
-            default -> FishingGearModifiers.neutral();
-        };
+        return forId(Registries.ITEM.getId(bobber.getItem()), bobber.isIn(TideTags.Items.BOBBERS), ServerConfig.get());
     }
 
-    private static FishingGearModifiers zone(double multiplier) {
-        return FishingGearModifiers.builder().namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER, multiplier).build();
-    }
-
-    private static FishingGearModifiers crate(double multiplier) {
-        return FishingGearModifiers.builder().namedMultiplierModifier(FishingGearEffects.CRATE_WEIGHT_MULTIPLIER, multiplier).build();
-    }
-
-    private static FishingGearModifiers protection(double chance) {
-        return FishingGearModifiers.builder()
-                .namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PREVENTION_CHANCE, chance)
-                .namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PROTECTION_SOURCES, 1.0D)
-                .build();
+    public static FishingGearModifiers forId(Identifier id, boolean tagged, ServerConfig.Values config) {
+        if (!tagged) return FishingGearModifiers.neutral();
+        var base = FishingGearRegistry.bobberModifiers(id).orElseGet(FishingGearModifiers::neutral);
+        // Existing config keys override only luck/lure; specialization remains fixed as before.
+        var bonus = config.bobberBonusesEnabled
+                ? config.bobberBonuses.getOrDefault(id.toString(), config.fallbackBobberBonus) : BobberBonuses.Bonus.NONE;
+        var additive = new TreeMap<>(base.namedAdditiveModifiers());
+        additive.put(FishingGearEffects.LURE_BONUS, (double) bonus.lureSpeed());
+        return new FishingGearModifiers(bonus.luck(), base.traitLuck(), base.strengthMultiplier(), base.tempoMultiplier(),
+                base.categoryRestriction(), base.catchPoolRestriction(), base.bodyTypeChanceMultipliers(), additive, base.namedMultiplierModifiers());
     }
 }
