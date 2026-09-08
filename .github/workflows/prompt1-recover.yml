@@ -1,4 +1,4 @@
-name: Prompt 1 Verified Mixin Recovery
+name: Prompt 1 Transport Cleanup
 
 on:
   push:
@@ -10,64 +10,54 @@ permissions:
   contents: write
 
 jobs:
-  recover:
+  cleanup:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           ref: dev
           fetch-depth: 0
-      - name: Restore only exact validator-reported mixins
+      - name: Validate ownership and remove obsolete Prompt 1 transport machinery
         shell: bash
         run: |
-          set -u
+          set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq ripgrep
-          git fetch --all --tags --prune
-          verified=a4c7d01a2c761a9a52e6bcbe8ef361b2d46b33ce
           sed -i 's/\r$//' scripts/validate_repository.sh 2>/dev/null || true
           chmod +x scripts/validate_repository.sh
-          report=.github/prompt1_verified_mixin_recovery.txt
-          : > "$report"
-          echo "HEAD=$(git rev-parse HEAD)" >> "$report"
-          for attempt in $(seq 1 20); do
-            set +e
-            bash scripts/validate_repository.sh > /tmp/validator.log 2>&1
-            rc=$?
-            set -e
-            if [ "$rc" = 0 ]; then
-              echo 'VALIDATOR_RC=0' >> "$report"
-              cat /tmp/validator.log >> "$report"
-              break
-            fi
-            line="$(grep -m1 '^Missing mixin source from ' /tmp/validator.log || true)"
-            if [ -z "$line" ]; then
-              echo "VALIDATOR_RC=$rc" >> "$report"
-              cat /tmp/validator.log >> "$report"
-              break
-            fi
-            fqcn="${line##*: }"
-            path="src/main/java/${fqcn//./\/}.java"
-            echo "REPORTED=$path" >> "$report"
-            if git cat-file -e "$verified:$path" 2>/dev/null; then
-              mkdir -p "$(dirname "$path")"
-              git show "$verified:$path" > "$path"
-              echo "RESTORED_EXACT=$path FROM=$verified" >> "$report"
-            else
-              echo "UNAVAILABLE=$path" >> "$report"
-              echo "VALIDATOR_RC=$rc" >> "$report"
-              cat /tmp/validator.log >> "$report"
-              break
-            fi
-          done
-          echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
-          echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
-          echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
+          bash scripts/validate_repository.sh
           git checkout -- scripts/validate_repository.sh 2>/dev/null || true
+
+          forbidden_paths="$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)"
+          forbidden_decls="$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)"
+          outside_root="$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)"
+          test "$forbidden_paths" = 0
+          test "$forbidden_decls" = 0
+          test "$outside_root" = 0
+
+          rm -f .github/astra_delta.part-* \
+                .github/astra_delta.tail-* \
+                .github/astra_delta.tailb-* \
+                .github/astra_delta_files.txt \
+                .github/astra_manifest.part-* \
+                .github/astra_newlines.json.xz.b64 \
+                .github/astra_normalized.part-* \
+                .github/astra_text_payload.tar.xz \
+                .github/package_unify.py.xz \
+                .github/prompt1_satchel_patch.py
+          rm -f .github/workflows/prompt1-repair.yml
+          rm -f .github/workflows/prompt1-recover.yml
+
+          if find .github -maxdepth 1 -type f \( -name 'astra_delta*' -o -name 'astra_manifest*' -o -name 'astra_newlines*' -o -name 'astra_normalized*' -o -name 'astra_text_payload*' -o -name 'package_unify.py.xz' \) | grep -q .; then
+            echo 'Prompt 1 Astra transport machinery remains after cleanup' >&2
+            exit 1
+          fi
+          test ! -e .github/prompt1_satchel_patch.py
+          test ! -e .github/workflows/prompt1-repair.yml
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/main/java "$report"
-          git commit -m 'fix: restore validator-proven migrated mixin sources' || true
+          git add -A
+          git commit -m 'chore: remove Prompt 1 transport machinery'
           git push origin HEAD:dev
