@@ -1,4 +1,4 @@
-name: Prompt 1 Recover Astra Transport
+name: Prompt 1 Package Unification
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  recover:
+  migrate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -18,58 +18,29 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Restore exact Astra newline bytes
+      - name: Apply established package migration
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          cat .github/astra_normalized.part-* | base64 -d | xz -dc > /tmp/normalized.tsv
-          base64 -d .github/astra_newlines.json.xz.b64 | xz -dc > /tmp/newlines.json
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib, json, re
-          exact={}
-          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p,h,t,s=line.split('\t'); exact[p]=(h,t=='1',int(s))
-          norm={}
-          for line in Path('/tmp/normalized.tsv').read_text().splitlines():
-              p,h,style=line.split('\t'); norm[p]=(h,style)
-          styles=json.loads(Path('/tmp/newlines.json').read_text())
-          def sha(b): return hashlib.sha256(b).hexdigest()
-          def expand_style(spec):
-              out=[]
-              for kind,count in re.findall(r'([RL])(\d*)',spec): out.extend([kind]*(int(count) if count else 1))
-              return out
-          def rebuild(normalized,spec):
-              parts=normalized.split(b'\n'); kinds=expand_style(spec)
-              assert len(kinds)==len(parts)-1,(len(kinds),len(parts)-1,spec)
-              data=bytearray(parts[0])
-              for kind,part in zip(kinds,parts[1:]):
-                  data += b'\r\n' if kind=='R' else b'\n'; data += part
-              return bytes(data)
-          applied=[]
-          for p,(nh,spec) in norm.items():
-              q=Path(p)
-              if not q.is_file() or p not in exact or p not in styles: continue
-              raw=q.read_bytes()
-              if sha(raw)==exact[p][0]: continue
-              try: txt=raw.decode('utf-8')
-              except UnicodeDecodeError: continue
-              n=txt.replace('\r\n','\n').replace('\r','\n').encode('utf-8')
-              if sha(n)!=nh: continue
-              rebuilt=rebuild(n,styles[p]); h,istext,size=exact[p]
-              assert sha(rebuilt)==h and len(rebuilt)==size,p
-              q.write_bytes(rebuilt); applied.append(p)
-          assert len(applied)==348,len(applied)
-          for p in applied:
-              h,istext,size=exact[p]; b=Path(p).read_bytes(); assert sha(b)==h and len(b)==size,p
-          Path('.github/prompt1_newlines_applied.txt').write_text('NEWLINE_MODE=R_CRLF_L_LF\nVERIFIED_EXACT_NEWLINE_FILES=348\n'+'\n'.join(applied)+'\n')
-          print('VERIFIED_EXACT_NEWLINE_FILES=348')
-          PY
-          # The Actions token cannot update existing workflow files. The build workflow was fully reconstructed and hash-verified above, but leave its Git blob untouched here.
-          git checkout -- .github/workflows/build.yml
+          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
+          python3 /tmp/package_unify.py
+          report=.github/prompt1_migration_report.txt
+          : > "$report"
+          echo "MIGRATION_HEAD=$(git rev-parse HEAD)" >> "$report"
+          echo "MAIN_JAVA=$(find src/main/java -type f -name '*.java' | wc -l)" >> "$report"
+          echo "TEST_JAVA=$(find src/test/java -type f -name '*.java' | wc -l)" >> "$report"
+          echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
+          echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
+          echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
+          echo '== package script tail ==' >> "$report"
+          tail -120 /tmp/package_unify.py >> "$report"
+          echo '== changed paths summary ==' >> "$report"
+          git status --short >> "$report"
+          test "$(grep '^FORBIDDEN_PATHS=' "$report" | cut -d= -f2)" = 0
+          test "$(grep '^FORBIDDEN_DECLS=' "$report" | cut -d= -f2)" = 0
+          test "$(grep '^OUTSIDE_ROOT=' "$report" | cut -d= -f2)" = 0
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          git commit -m 'chore: restore verified Astra newline baseline'
+          git commit -m 'refactor: unify active Java under Tideborne packages'
           git push origin HEAD:dev
