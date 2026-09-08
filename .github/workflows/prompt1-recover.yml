@@ -1,4 +1,4 @@
-name: Prompt 1 Structural Status
+name: Prompt 1 Verified Mixin Recovery
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  validate:
+  recover:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -19,32 +19,55 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Record status
+      - name: Restore only exact validator-reported mixins
         shell: bash
         run: |
           set -u
           sudo apt-get update -qq
           sudo apt-get install -y -qq ripgrep
-          if ! grep -Fq '## Prompt 1 source-provenance status' docs/CURRENT_STATE.md; then
-            echo 'CiMjIFByb21wdCAxIHNvdXJjZS1wcm92ZW5hbmNlIHN0YXR1cwoKUHJvbXB0IDEgSmF2YSBwYWNrYWdlIG93bmVyc2hpcCBtaWdyYXRpb24gaXMgc3RydWN0dXJhbGx5IGNvbXBsZXRlOiB0aGUgZXN0YWJsaXNoZWQgbWlncmF0aW9uIGxhbmRlZCAyNTEgcHJvZHVjdGlvbiBKYXZhIG1vdmVzIGFuZCA2NyBleGlzdGluZyB0ZXN0IEphdmEgbW92ZXMsIHdpdGggdGhlIHBhY2thZ2Utb3duZXJzaGlwIGFyY2hpdGVjdHVyZSB0ZXN0IGVuZm9yY2luZyB0aGUgVGlkZWJvcm5lIHJvb3QgcGFja2FnZS4gVGhlIGV4YWN0IGJ5dGUtZm9yLWJ5dGUgNTY0LWZpbGUgQXN0cmEgYmFzZWxpbmUgd2FzICoqbm90KiogcmVjb25zdHJ1Y3RlZC4gQWZ0ZXIgYWxsIGF2YWlsYWJsZSByZWNvdmVyeSByb3V0ZXMgd2VyZSBleGhhdXN0ZWQsIDc1IGF1dGhvcml0YXRpdmUgZmlsZS9oYXNoIGVudHJpZXMgcmVtYWluIHVuYXZhaWxhYmxlLiBUaGlzIGlzIGFuIGFjY2VwdGVkIHNvdXJjZS1wcm92ZW5hbmNlIGxpbWl0YXRpb24gYW5kIGlzIG5vdCBhIHJlYXNvbiB0byByZXBlYXQgdGhlIHBhY2thZ2UgbWlncmF0aW9uLiBTZWUgYGRvY3MvUFJPTVBUXzFfU09VUkNFX1BST1ZFTkFOQ0UubWRgLgoKRG8gbm90IGZhYnJpY2F0ZSwgYXBwcm94aW1hdGUsIHJlZ2VuZXJhdGUsIG9yIHNpbGVudGx5IHJlcGxhY2UgdW5hdmFpbGFibGUgYXV0aG9yaXRhdGl2ZSBmaWxlcyBtZXJlbHkgdG8gc2F0aXNmeSB0aGUgb2xkIGV4YWN0LWJhc2VsaW5lIHJlcXVpcmVtZW50LiBBdCBwcmVzZW50IHRoZSBsaW1pdGF0aW9uIGFsc28gYmxvY2tzIGNvbXBsZXRlIHZhbGlkYXRpb24gYmVjYXVzZSBhdCBsZWFzdCBvbmUgdW5hdmFpbGFibGUgc291cmNlLCBgR2VhckFyY2hldHlwZUNhc2VzLmphdmFgLCBpcyBhbiBhY3RpdmUgY29tcGlsZS10aW1lIGRlcGVuZGVuY3kgYW5kIG9ubHkgaXRzIHN0cnVjdHVyYWwgcGFja2FnZSBwbGFjZWhvbGRlciBpcyByZWNvdmVyYWJsZS4gUHJvbXB0IDEgbXVzdCBub3QgYmUgZGVjbGFyZWQgZnVsbHkgdmFsaWRhdGVkIHVudGlsIGF1dGhvcml0YXRpdmUgc291cmNlIGZvciBzdWNoIGxpdmUgZGVwZW5kZW5jaWVzIGJlY29tZXMgYXZhaWxhYmxlIGFuZCB0aGUgZnVsbCBKYXZhIDIxIHZhbGlkYXRpb24gbWF0cml4IHBhc3Nlcy4K' | base64 -d >> docs/CURRENT_STATE.md
-          fi
+          git fetch --all --tags --prune
+          verified=a4c7d01a2c761a9a52e6bcbe8ef361b2d46b33ce
           sed -i 's/\r$//' scripts/validate_repository.sh 2>/dev/null || true
           chmod +x scripts/validate_repository.sh
-          report=.github/prompt1_structural_status.txt
+          report=.github/prompt1_verified_mixin_recovery.txt
           : > "$report"
           echo "HEAD=$(git rev-parse HEAD)" >> "$report"
-          set +e
-          bash scripts/validate_repository.sh > /tmp/validator.log 2>&1
-          rc=$?
-          set -e
-          echo "VALIDATOR_RC=$rc" >> "$report"
-          cat /tmp/validator.log >> "$report"
+          for attempt in $(seq 1 20); do
+            set +e
+            bash scripts/validate_repository.sh > /tmp/validator.log 2>&1
+            rc=$?
+            set -e
+            if [ "$rc" = 0 ]; then
+              echo 'VALIDATOR_RC=0' >> "$report"
+              cat /tmp/validator.log >> "$report"
+              break
+            fi
+            line="$(grep -m1 '^Missing mixin source from ' /tmp/validator.log || true)"
+            if [ -z "$line" ]; then
+              echo "VALIDATOR_RC=$rc" >> "$report"
+              cat /tmp/validator.log >> "$report"
+              break
+            fi
+            fqcn="${line##*: }"
+            path="src/main/java/${fqcn//./\/}.java"
+            echo "REPORTED=$path" >> "$report"
+            if git cat-file -e "$verified:$path" 2>/dev/null; then
+              mkdir -p "$(dirname "$path")"
+              git show "$verified:$path" > "$path"
+              echo "RESTORED_EXACT=$path FROM=$verified" >> "$report"
+            else
+              echo "UNAVAILABLE=$path" >> "$report"
+              echo "VALIDATOR_RC=$rc" >> "$report"
+              cat /tmp/validator.log >> "$report"
+              break
+            fi
+          done
           echo "FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
           echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
           echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
           git checkout -- scripts/validate_repository.sh 2>/dev/null || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/CURRENT_STATE.md "$report"
-          git commit -m 'docs: record Prompt 1 blocked validation status' || true
+          git add src/main/java "$report"
+          git commit -m 'fix: restore validator-proven migrated mixin sources' || true
           git push origin HEAD:dev
