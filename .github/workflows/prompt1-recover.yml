@@ -18,48 +18,46 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Forensic recover Astra suffix chunks
+      - name: Materialize exact build workflow blob
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          report=.github/prompt1_suffix_recovery.txt
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          cat .github/astra_delta.tailb-03 .github/astra_delta.tailb-04 .github/astra_delta.tailb-05 .github/astra_delta.tailb-06 .github/astra_delta.tailb-07 > /tmp/suffix.b64
-          base64 -d /tmp/suffix.b64 > /tmp/suffix.bin
+          cat .github/astra_normalized.part-* | base64 -d | xz -dc > /tmp/normalized.tsv
+          base64 -d .github/astra_newlines.json.xz.b64 | xz -dc > /tmp/newlines.json
           python3 - <<'PY'
           from pathlib import Path
-          import lzma, hashlib, re
-          raw=Path('/tmp/suffix.bin').read_bytes()
-          results=[]
-          # LZMA2 dictionary reset/control bytes are >= 0xE0. Try likely reset points and common dict sizes.
-          dicts=[1<<20,2<<20,4<<20,8<<20,16<<20,32<<20,64<<20]
-          for off,b in enumerate(raw):
-              if b < 0xE0: continue
-              for ds in dicts:
-                  try:
-                      dec=lzma.LZMADecompressor(format=lzma.FORMAT_RAW,filters=[{'id':lzma.FILTER_LZMA2,'dict_size':ds}])
-                      out=dec.decompress(raw[off:])
-                  except lzma.LZMAError:
-                      continue
-                  if len(out) < 512: continue
-                  score=0
-                  if b'ustar' in out: score += 100
-                  score += out.count(b'src/')*10 + out.count(b'.java')*5 + out.count(b'package com.redslovesgames')*20
-                  printable=sum((c in b'\n\r\t' or 32 <= c < 127) for c in out[:min(len(out),20000)]) / min(len(out),20000)
-                  if score or printable > .85:
-                      results.append((score,len(out),printable,off,ds,out))
-          results.sort(key=lambda x:(x[0],x[1],x[2]),reverse=True)
-          lines=[f'SUFFIX_BYTES={len(raw)}',f'CANDIDATES={len(results)}']
-          for rank,(score,n,p,off,ds,out) in enumerate(results[:20],1):
-              op=Path(f'/tmp/suffix_candidate_{rank}.bin'); op.write_bytes(out)
-              lines.append(f'#{rank} score={score} bytes={n} printable={p:.3f} offset={off} dict={ds} sha256={hashlib.sha256(out).hexdigest()}')
-              sample=re.sub(rb'[^\x09\x0a\x0d\x20-\x7e]',b'.',out[:1200]).decode('ascii','replace')
-              lines.append(sample)
-          Path('.github/prompt1_suffix_recovery.txt').write_text('\n'.join(lines)+'\n')
-          print('\n'.join(lines[:25]))
+          import hashlib,json,re,base64
+          p='.github/workflows/build.yml'
+          exact={x.split('\t')[0]:x.split('\t')[1:] for x in Path('/tmp/manifest.tsv').read_text().splitlines()}
+          norm={x.split('\t')[0]:x.split('\t')[1:] for x in Path('/tmp/normalized.tsv').read_text().splitlines()}
+          styles=json.loads(Path('/tmp/newlines.json').read_text())
+          raw=Path(p).read_bytes(); n=raw.decode().replace('\r\n','\n').replace('\r','\n').encode()
+          assert hashlib.sha256(n).hexdigest()==norm[p][0]
+          parts=n.split(b'\n'); spec=styles[p]; kinds=[]
+          for k,c in re.findall(r'([RL])(\d*)',spec): kinds += [k]*(int(c) if c else 1)
+          assert len(kinds)==len(parts)-1
+          out=bytearray(parts[0])
+          for k,part in zip(kinds,parts[1:]): out += (b'\r\n' if k=='R' else b'\n') + part
+          out=bytes(out); h,t,size=exact[p]
+          assert hashlib.sha256(out).hexdigest()==h and len(out)==int(size)
+          Path('/tmp/build_exact.b64').write_text(base64.b64encode(out).decode())
+          Path('/tmp/build_expected_sha256').write_text(h)
           PY
+          payload="$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          print(json.dumps({'content':Path('/tmp/build_exact.b64').read_text(),'encoding':'base64'}))
+          PY
+          )"
+          response="$(curl -fsSL -X POST -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "https://api.github.com/repos/${GITHUB_REPOSITORY}/git/blobs" -d "$payload")"
+          blob_sha="$(printf '%s' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["sha"])')"
+          expected="$(cat /tmp/build_expected_sha256)"
+          printf 'BUILD_EXACT_BLOB_SHA=%s\nBUILD_EXPECTED_SHA256=%s\n' "$blob_sha" "$expected" > .github/prompt1_build_blob.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$report"
-          git commit -m 'chore: probe Astra suffix recovery'
+          git add .github/prompt1_build_blob.txt
+          git commit -m 'chore: materialize exact Astra build workflow blob'
           git push origin HEAD:dev
