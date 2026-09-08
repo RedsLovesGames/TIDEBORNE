@@ -1,4 +1,4 @@
-name: Prompt 1 Package Unification
+name: Prompt 1 Astra Baseline Compare
 
 on:
   push:
@@ -10,233 +10,69 @@ permissions:
   contents: write
 
 jobs:
-  validate-and-commit:
+  compare:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
         with:
           ref: dev
           fetch-depth: 0
-
-      - name: Guard dev and record main
+      - name: Verify complete Astra manifest and compare
         shell: bash
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = "refs/heads/dev"
           test "$(git branch --show-current)" = "dev"
-          git fetch origin dev main
-          test "$(git rev-parse origin/dev)" = "$GITHUB_SHA"
-          git rev-parse origin/main > /tmp/main-before.sha
-          xz -dc .github/package_unify.py.xz > /tmp/package_unify.py
-          mkdir -p /tmp/astra_payload
-          tar -C /tmp/astra_payload -xJf .github/astra_text_payload.tar.xz
-
-      - name: Compare cleaned Astra snapshot to current dev
-        shell: bash
-        run: |
-          set -euo pipefail
+          test -f .github/astra_manifest.part-00
+          test -f .github/astra_manifest.part-01
+          test -f .github/astra_manifest.part-02
+          test "$(git hash-object .github/astra_manifest.part-00)" = "c0141f5f4407ed3fce1c0a634b605049b3b18c1d"
+          test "$(git hash-object .github/astra_manifest.part-01)" = "f7878d29c326d0803aead05428ff9a3b835bf404"
+          test "$(git hash-object .github/astra_manifest.part-02)" = "bcd3697546cd032db6b37205a92b956102236952"
+          cat .github/astra_manifest.part-* | base64 -d > /tmp/astra_manifest.tsv.xz
+          echo 'a258fe40afbb33dea64581d6a58cc0e7b67df526c5ecbda2785d588666ee284e  /tmp/astra_manifest.tsv.xz' | sha256sum -c -
+          xz -dc /tmp/astra_manifest.tsv.xz > /tmp/astra_manifest.tsv
+          echo '68dddda85828c8e931cfde8541f57c7f643e1b54650c97271d75d1b23b4f74f7  /tmp/astra_manifest.tsv' | sha256sum -c -
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib, json, subprocess
+          import hashlib, subprocess
 
-          manifest = json.loads(Path('/tmp/astra_payload/manifest.json').read_text())
-          temp = {
+          manifest = {}
+          for line in Path('/tmp/astra_manifest.tsv').read_text().splitlines():
+              rel, sha, text, size = line.split('\t')
+              manifest[rel] = (sha, text == '1', int(size))
+          temp_prefixes = (
+              '.github/astra_manifest.part-',
+              '.github/astra_payload.part-',
+          )
+          temp_exact = {
               '.github/astra_text_payload.tar.xz',
               '.github/package_unify.py.xz',
               '.github/workflows/prompt1-package-unification.yml',
           }
-          tracked = set(subprocess.check_output(['git','ls-files'], text=True).splitlines()) - temp
+          tracked = set(subprocess.check_output(['git','ls-files'], text=True).splitlines())
+          tracked = {p for p in tracked if p not in temp_exact and not p.startswith(temp_prefixes)}
           expected = set(manifest)
-          snapshot_only = sorted(expected - tracked)
-          current_only = sorted(tracked - expected)
-          changed = []
-          same = 0
+          missing = sorted(expected - tracked)
+          extra = sorted(tracked - expected)
+          changed=[]; same=[]
           for rel in sorted(expected & tracked):
-              data = Path(rel).read_bytes()
-              actual = hashlib.sha256(data).hexdigest()
-              if actual == manifest[rel]['sha256']:
-                  same += 1
-              else:
-                  changed.append(rel)
-          print(f'ASTRA_BASELINE_FILES={len(expected)}')
-          print(f'CURRENT_TRACKED_FILES={len(tracked)}')
-          print(f'BASELINE_SAME={same}')
-          print(f'BASELINE_CHANGED={len(changed)}')
-          print(f'BASELINE_SNAPSHOT_ONLY={len(snapshot_only)}')
-          print(f'BASELINE_CURRENT_ONLY={len(current_only)}')
-          print('Changed examples:')
-          for p in changed[:30]: print('  M', p)
-          print('Snapshot-only examples:')
-          for p in snapshot_only[:30]: print('  +', p)
-          print('Current-only examples:')
-          for p in current_only[:30]: print('  -', p)
-          with open('/tmp/baseline-compare.txt','w') as f:
-              f.write(f'ASTRA_BASELINE_FILES={len(expected)}\nCURRENT_TRACKED_FILES={len(tracked)}\nBASELINE_SAME={same}\nBASELINE_CHANGED={len(changed)}\nBASELINE_SNAPSHOT_ONLY={len(snapshot_only)}\nBASELINE_CURRENT_ONLY={len(current_only)}\n')
+              sha = hashlib.sha256(Path(rel).read_bytes()).hexdigest()
+              (changed if sha != manifest[rel][0] else same).append(rel)
+          print(f'ASTRA_MANIFEST_FILES={len(expected)}')
+          print(f'CURRENT_NON_TEMP_TRACKED={len(tracked)}')
+          print(f'SAME={len(same)}')
+          print(f'CHANGED={len(changed)}')
+          print(f'SNAPSHOT_ONLY={len(missing)}')
+          print(f'CURRENT_ONLY={len(extra)}')
+          print('=== CHANGED ===')
+          for p in changed:
+              print(f'M\t{manifest[p][1]}\t{manifest[p][2]}\t{p}')
+          print('=== SNAPSHOT_ONLY ===')
+          for p in missing:
+              print(f'A\t{manifest[p][1]}\t{manifest[p][2]}\t{p}')
+          print('=== CURRENT_ONLY ===')
+          for p in extra:
+              print(f'D\t{p}')
           PY
-
-      - name: Reconstruct exact cleaned Astra baseline
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib, json, shutil
-
-          manifest = json.loads(Path('/tmp/astra_payload/manifest.json').read_text())
-          out = Path('/tmp/astra_binary')
-          relocation = {
-              'reconstruction/reference/Tideborne-1.3.57-perfect-catch-trait-luck.jar':
-                  'Tideborne-1.3.57-perfect-catch-trait-luck.jar'
-          }
-          missing = []
-          for rel, meta in manifest.items():
-              if meta['text']:
-                  continue
-              candidates = [Path(rel)]
-              if rel in relocation:
-                  candidates.append(Path(relocation[rel]))
-              source = None
-              for candidate in candidates:
-                  if not candidate.is_file():
-                      continue
-                  data = candidate.read_bytes()
-                  if hashlib.sha256(data).hexdigest() == meta['sha256']:
-                      source = candidate
-                      break
-              if source is None:
-                  missing.append(rel)
-                  continue
-              dest = out / rel
-              dest.parent.mkdir(parents=True, exist_ok=True)
-              shutil.copy2(source, dest)
-          if missing:
-              raise SystemExit('Authoritative snapshot binary mismatch/missing: ' + ', '.join(missing))
-          PY
-
-          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -a /tmp/astra_payload/files/. .
-          cp -a /tmp/astra_binary/. .
-          chmod +x gradlew scripts/*.sh
-
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib, json
-          manifest = json.loads(Path('/tmp/astra_payload/manifest.json').read_text())
-          missing=[]; bad=[]
-          for rel, meta in manifest.items():
-              p=Path(rel)
-              if not p.is_file():
-                  missing.append(rel); continue
-              if hashlib.sha256(p.read_bytes()).hexdigest() != meta['sha256']:
-                  bad.append(rel)
-          if missing or bad:
-              raise SystemExit(f'Cleaned Astra baseline reconstruction mismatch. missing={missing} bad={bad}')
-          print(f'Authoritative cleaned Astra baseline reconstructed exactly: {len(manifest)} tracked-source files')
-          PY
-
-      - name: Apply Prompt 1 Java package ownership migration
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 /tmp/package_unify.py
-          cat /tmp/tideborne-package-ownership-summary.json
-
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.12'
-
-      - name: Fetch exact external validation dependencies
-        run: bash scripts/fetch_ci_dependencies.sh
-
-      - name: 1 repository structural validator
-        run: bash scripts/validate_repository.sh
-
-      - name: 2 unit and architecture tests
-        run: ./gradlew test --stacktrace
-
-      - name: 3 core GameTests without optional mods
-        run: ./gradlew runGametest --stacktrace
-
-      - name: 4 GameTests with Apex Waters only
-        run: ./gradlew runGametest -PincludeApexRuntime=true --stacktrace
-
-      - name: 5 GameTests with Myths of the Sea only
-        run: ./gradlew runGametest -PincludeMythsRuntime=true --stacktrace
-
-      - name: 6 GameTests with Apex Waters and Myths of the Sea
-        run: ./gradlew runGametest -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
-
-      - name: 7 dedicated-server smoke
-        run: bash scripts/dedicated_server_smoke.sh
-
-      - name: 8 authoritative Java 21 clean build
-        run: ./gradlew clean build --stacktrace
-
-      - name: 9 validate production release artifact
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="$(awk -F= '$1 == "mod_version" {print $2}' gradle.properties | tr -d '[:space:]')"
-          bash scripts/validate_release_artifact.sh "build/libs/tideborne-${version}.jar"
-
-      - name: 10 final forbidden-package scan and test count
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -R -n -E --include='*.java' '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java; then
-            echo 'Forbidden production Java package declaration remains.' >&2
-            exit 1
-          fi
-          if find src/main/java -type f -path '*/tideborne/fishing/v2/*' -print -quit | grep -q .; then
-            echo 'Forbidden /fishing/v2/ production source path remains.' >&2
-            exit 1
-          fi
-          unit_count="$(python3 - <<'PY'
-          import glob, xml.etree.ElementTree as ET
-          total=0
-          for p in glob.glob('build/test-results/test/*.xml'):
-              total += int(ET.parse(p).getroot().attrib.get('tests',0))
-          print(total)
-          PY
-          )"
-          gametest_count="$(grep -R -h -c '^[[:space:]]*@GameTest' src/main/java | awk '{sum += $1} END {print sum + 0}')"
-          test "$unit_count" -gt 0
-          test "$gametest_count" -gt 0
-          echo "UNIT_TEST_COUNT=$unit_count"
-          echo "REGISTERED_GAME_TEST_COUNT=$gametest_count"
-          cat /tmp/baseline-compare.txt
-          cat /tmp/tideborne-package-ownership-summary.json
-
-      - name: Commit validated package unification to dev
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin dev main
-          test "$(git rev-parse origin/dev)" = "$GITHUB_SHA"
-          test "$(git rev-parse origin/main)" = "$(cat /tmp/main-before.sha)"
-
-          test -z "$(find .github/workflows -maxdepth 1 -type f -name 'package-ownership-cleanup*.yml' -print -quit)"
-          test ! -e .github/workflows/prompt1-package-unification.yml
-          test ! -e .github/package_unify.py.xz
-          test ! -e .github/astra_text_payload.tar.xz
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          if git diff --cached --name-only | grep -E '^dev/libs/.*\.jar$'; then
-            echo 'Local dependency JARs must not be committed.' >&2
-            exit 1
-          fi
-          git status --short
-          git commit -m "refactor: unify Tideborne Java package ownership"
-          git push origin HEAD:dev
