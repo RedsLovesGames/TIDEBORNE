@@ -1,0 +1,67 @@
+HEAD=84d6be489499f4ac7f2c485b9dccebec1942b122
+COMPILE_RC=1
+VALIDATOR_RC=1
+=== COMPILER ERRORS ===
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/AnglersSatchelPersistenceGameTests.java:254: error: constructor SatchelView in record SatchelView cannot be applied to given types;
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/AnglersSatchelPersistenceGameTests.java:265: error: cannot find symbol
+  symbol:   method tackle()
+  location: variable decoded of type SatchelView
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/AnglersSatchelPersistenceGameTests.java:265: error: cannot find symbol
+  symbol:   method tackle()
+  location: variable decoded of type SatchelView
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:21: error: cannot find symbol
+  symbol:   variable GearArchetypeCases
+  location: class FishingGearRegistryGameTests
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:48: error: cannot find symbol
+  symbol:   variable GearArchetypeCases
+  location: class FishingGearRegistryGameTests
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:49: error: cannot find symbol
+  symbol:   variable GearArchetypeCases
+  location: class FishingGearRegistryGameTests
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:50: error: cannot find symbol
+  symbol:   variable GearArchetypeCases
+  location: class FishingGearRegistryGameTests
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:51: error: cannot find symbol
+  symbol:   variable GearArchetypeCases
+  location: class FishingGearRegistryGameTests
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:61: error: cannot find symbol
+  symbol:   method archetypes(FishingGearModifiers)
+  location: class SatchelGearSummary
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin.java:48: error: cannot find symbol
+  symbol:   method get(ItemStack)
+  location: class BobberBonuses
+      T extends ArgumentBuilder<S,T> declared in class ArgumentBuilder/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/AnglersSatchelPersistenceGameTests.java:254: error: constructor SatchelView in record SatchelView cannot be applied to given types;
+                                          ^/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:21: error: cannot find symbol
+    symbol:   variable GearArchetypeCases
+    location: class FishingGearRegistryGameTests
+  /home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:48: error: cannot find symbol
+    symbol:   variable GearArchetypeCases
+    location: class FishingGearRegistryGameTests
+  /home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:49: error: cannot find symbol
+    symbol:   variable GearArchetypeCases
+    location: class FishingGearRegistryGameTests
+  /home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:50: error: cannot find symbol
+    symbol:   variable GearArchetypeCases
+    location: class FishingGearRegistryGameTests
+  /home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:51: error: cannot find symbol
+    symbol:   variable GearArchetypeCases
+    location: class FishingGearRegistryGameTests/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/specimen/legacy/FishMutation.java:26: warning: [unchecked] unchecked method invocation: method comapFlatMap in interface Codec is applied to given types
+      S extends Object declared in class ArgumentBuilder/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/AnglersSatchelPersistenceGameTests.java:265: error: cannot find symbol
+    symbol:   method tackle()
+    location: variable decoded of type SatchelView
+  /home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/AnglersSatchelPersistenceGameTests.java:265: error: cannot find symbol
+    symbol:   method tackle()
+    location: variable decoded of type SatchelView
+  /home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/gametest/FishingGearRegistryGameTests.java:61: error: cannot find symbol
+    symbol:   method archetypes(FishingGearModifiers)
+    location: class SatchelGearSummary
+  /home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin.java:48: error: cannot find symbol
+    symbol:   method get(ItemStack)
+    location: class BobberBonuses/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/LegacyJournalPersistenceGameTests.java:27: warning: [removal] createMockCreativeServerPlayerInWorld() in TestContext has been deprecated and marked for removal
+=== VALIDATOR ===
+Missing mixin source from tide_traits.client.mixins.json: com.redslovesgames.tideborne.mixin.specimen.client.TeamStatsPercentileMixin
+=== STRUCTURAL OWNERSHIP ===
+FORBIDDEN_PATHS=0
+FORBIDDEN_DECLS=0
+OUTSIDE_ROOT=0
+GEAR_ARCHETYPE_PLACEHOLDER_LINES=1
