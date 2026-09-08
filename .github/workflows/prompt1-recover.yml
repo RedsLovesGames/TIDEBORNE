@@ -18,70 +18,66 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Tolerant recovery
+      - name: Compute exact Astra gap
         shell: bash
         run: |
-          set +e
-          set +o pipefail
-          set -u
-          report=.github/prompt1_recovery_report2.txt
-          : > "$report"; mkdir -p /tmp/textpayload /tmp/partial
-          echo '== text payload salvage ==' >> "$report"
-          xz -dc .github/astra_text_payload.tar.xz > /tmp/textpayload.tar 2>/tmp/txzerr; echo "xz_rc=$? bytes=$(wc -c < /tmp/textpayload.tar)" >> "$report"; cat /tmp/txzerr >> "$report"
-          tar -tvf /tmp/textpayload.tar >> "$report" 2>&1
-          tar -xf /tmp/textpayload.tar -C /tmp/textpayload 2>/tmp/ttarerr; echo "tar_rc=$?" >> "$report"; cat /tmp/ttarerr >> "$report"
-          if [ -f /tmp/textpayload/manifest.json ]; then
-            python3 - <<'PY' >> "$report"
-          import json
-          from pathlib import Path
-          d=json.loads(Path('/tmp/textpayload/manifest.json').read_text())
-          print('manifest_type',type(d).__name__)
-          if isinstance(d,dict):
-              print('keys',sorted(d.keys()))
-              for k,v in d.items(): print('FIELD',k,type(v).__name__,len(v) if isinstance(v,(list,dict)) else repr(v)[:300])
-              print('sample',repr(d)[:12000])
-          else:
-              print('len',len(d)); print('sample',repr(d[:5])[:12000])
-          PY
-          fi
-          echo '== partial delta salvage ==' >> "$report"
+          set -euo pipefail
+          rm -rf /tmp/partial && mkdir -p /tmp/partial
+          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
+          cat .github/astra_normalized.part-* | base64 -d | xz -dc > /tmp/normalized.tsv
+          base64 -d .github/astra_newlines.json.xz.b64 | xz -dc > /tmp/newlines.json
           cat .github/astra_delta.part-* .github/astra_delta.tail-* .github/astra_delta.tailb-00 .github/astra_delta.tailb-01 > /tmp/prefix.b64
-          python3 - <<'PY' >> "$report"
+          python3 - <<'PY'
           from pathlib import Path
-          import base64,hashlib
-          b=Path('/tmp/prefix.b64').read_bytes(); u=len(b)-len(b)%4
-          raw=base64.b64decode(b[:u],validate=False); Path('/tmp/prefix.xz').write_bytes(raw)
-          print('b64',len(b),'usable',u,'raw',len(raw),'sha256',hashlib.sha256(raw).hexdigest())
+          import base64
+          b=Path('/tmp/prefix.b64').read_bytes(); b=b[:len(b)-len(b)%4]
+          Path('/tmp/prefix.xz').write_bytes(base64.b64decode(b,validate=False))
           PY
-          xz -dc /tmp/prefix.xz > /tmp/prefix.tar 2>/tmp/pxzerr; echo "xz_rc=$? tar_bytes=$(wc -c < /tmp/prefix.tar)" >> "$report"; cat /tmp/pxzerr >> "$report"
-          tar -tvf /tmp/prefix.tar >> "$report" 2>&1
-          tar -xf /tmp/prefix.tar -C /tmp/partial 2>/tmp/ptarerr; echo "tar_rc=$?" >> "$report"; cat /tmp/ptarerr >> "$report"
-          echo '== recovered hashes ==' >> "$report"
-          find /tmp/partial -type f -print0 | sort -z | while IFS= read -r -d '' f; do rel=${f#/tmp/partial/}; printf '%s\t' "$rel" >> "$report"; sha256sum "$f"|awk '{print $1}' >> "$report"; done
-          echo '== history matches ==' >> "$report"
-          cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv 2>/tmp/merr; echo "manifest_rc=$? lines=$(wc -l < /tmp/manifest.tsv)" >> "$report"; cat /tmp/merr >> "$report"
-          python3 - <<'PY' >> "$report"
+          xz -dc /tmp/prefix.xz > /tmp/prefix.tar 2>/dev/null || true
+          tar -xf /tmp/prefix.tar -C /tmp/partial 2>/dev/null || true
+          python3 - <<'PY'
           from pathlib import Path
-          import subprocess,hashlib
-          delta=set(Path('.github/astra_delta_files.txt').read_text().splitlines()); E=[]
+          import hashlib,json
+          exact={}
           for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              z=line.split('\t')
-              if len(z)!=4: continue
-              p,h,t,s=z
-              if p in delta:E.append((p,h,int(s)))
-          found=[];missing=[]
-          for i,(p,h,s) in enumerate(E,1):
-              try: revs=subprocess.check_output(['git','rev-list','--all','--',p],text=True).splitlines()
-              except: revs=[]
-              hit=''
-              for r in revs:
-                  try:data=subprocess.check_output(['git','show',f'{r}:{p}'],stderr=subprocess.DEVNULL)
-                  except:continue
-                  if hashlib.sha256(data).hexdigest()==h: hit=r; break
-              (found if hit else missing).append((p,h,s,hit))
-          print('delta',len(E),'found',len(found),'missing',len(missing))
-          for x in found: print('FOUND\t'+'\t'.join(map(str,x)))
-          for x in missing: print('MISSING\t'+'\t'.join(map(str,x)))
+              p,h,t,s=line.split('\t'); exact[p]=(h,t=='1',int(s))
+          norm={}
+          for line in Path('/tmp/normalized.tsv').read_text().splitlines():
+              p,h,style=line.split('\t'); norm[p]=(h,style)
+          nl=json.loads(Path('/tmp/newlines.json').read_text())
+          delta=set(Path('.github/astra_delta_files.txt').read_text().splitlines())
+          def sha(b): return hashlib.sha256(b).hexdigest()
+          counts={'current_exact':0,'partial_exact':0,'normalized_recoverable':0,'unresolved':0}
+          unresolved=[]; partial=[]; normalized=[]
+          for p,(h,istext,size) in exact.items():
+              cur=Path(p)
+              if cur.is_file() and sha(cur.read_bytes())==h:
+                  counts['current_exact']+=1; continue
+              pp=Path('/tmp/partial')/p
+              if pp.is_file() and sha(pp.read_bytes())==h:
+                  counts['partial_exact']+=1; partial.append(p); continue
+              if istext and cur.is_file() and p in norm:
+                  try:s=cur.read_bytes().decode('utf-8')
+                  except UnicodeDecodeError:s=None
+                  if s is not None:
+                      n=s.replace('\r\n','\n').replace('\r','\n').encode()
+                      if sha(n)==norm[p][0]:
+                          counts['normalized_recoverable']+=1; normalized.append(p); continue
+              counts['unresolved']+=1; unresolved.append(p)
+          out=[]
+          out.append('MANIFEST_FILES='+str(len(exact)))
+          out.append('DELTA_FILES='+str(len(delta)))
+          for k,v in counts.items(): out.append(k.upper()+'='+str(v))
+          out.append('NEWLINE_MAP_TYPE='+type(nl).__name__)
+          out.append('NEWLINE_MAP_COUNT='+str(len(nl) if hasattr(nl,'__len__') else -1))
+          out.append('PARTIAL_EXACT_FILES:'); out += partial
+          out.append('NORMALIZED_RECOVERABLE_FILES:'); out += normalized
+          out.append('UNRESOLVED_FILES:'); out += unresolved
+          Path('.github/prompt1_gap.txt').write_text('\n'.join(out)+'\n')
+          print('\n'.join(out[:8])); print('UNRESOLVED',len(unresolved))
           PY
-          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$report"; git commit -m 'chore: salvage Astra transport'; git push origin HEAD:dev
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/prompt1_gap.txt
+          git commit -m 'chore: compute exact Astra recovery gap'
+          git push origin HEAD:dev
