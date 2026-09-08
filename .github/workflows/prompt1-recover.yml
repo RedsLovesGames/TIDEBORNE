@@ -18,66 +18,45 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Compute exact Astra gap
+      - name: Search exact content duplicates
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/partial && mkdir -p /tmp/partial
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          cat .github/astra_normalized.part-* | base64 -d | xz -dc > /tmp/normalized.tsv
-          base64 -d .github/astra_newlines.json.xz.b64 | xz -dc > /tmp/newlines.json
-          cat .github/astra_delta.part-* .github/astra_delta.tail-* .github/astra_delta.tailb-00 .github/astra_delta.tailb-01 > /tmp/prefix.b64
           python3 - <<'PY'
           from pathlib import Path
-          import base64
-          b=Path('/tmp/prefix.b64').read_bytes(); b=b[:len(b)-len(b)%4]
-          Path('/tmp/prefix.xz').write_bytes(base64.b64decode(b,validate=False))
-          PY
-          xz -dc /tmp/prefix.xz > /tmp/prefix.tar 2>/dev/null || true
-          tar -xf /tmp/prefix.tar -C /tmp/partial 2>/dev/null || true
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib,json
+          import hashlib, os
           exact={}
           for line in Path('/tmp/manifest.tsv').read_text().splitlines():
               p,h,t,s=line.split('\t'); exact[p]=(h,t=='1',int(s))
-          norm={}
-          for line in Path('/tmp/normalized.tsv').read_text().splitlines():
-              p,h,style=line.split('\t'); norm[p]=(h,style)
-          nl=json.loads(Path('/tmp/newlines.json').read_text())
-          delta=set(Path('.github/astra_delta_files.txt').read_text().splitlines())
-          def sha(b): return hashlib.sha256(b).hexdigest()
-          counts={'current_exact':0,'partial_exact':0,'normalized_recoverable':0,'unresolved':0}
-          unresolved=[]; partial=[]; normalized=[]
-          for p,(h,istext,size) in exact.items():
-              cur=Path(p)
-              if cur.is_file() and sha(cur.read_bytes())==h:
-                  counts['current_exact']+=1; continue
-              pp=Path('/tmp/partial')/p
-              if pp.is_file() and sha(pp.read_bytes())==h:
-                  counts['partial_exact']+=1; partial.append(p); continue
-              if istext and cur.is_file() and p in norm:
-                  try:s=cur.read_bytes().decode('utf-8')
-                  except UnicodeDecodeError:s=None
-                  if s is not None:
-                      n=s.replace('\r\n','\n').replace('\r','\n').encode()
-                      if sha(n)==norm[p][0]:
-                          counts['normalized_recoverable']+=1; normalized.append(p); continue
-              counts['unresolved']+=1; unresolved.append(p)
+          # Use previously computed unresolved list.
+          lines=Path('.github/prompt1_gap.txt').read_text().splitlines()
+          i=lines.index('UNRESOLVED_FILES:')+1
+          unresolved=lines[i:]
+          by_hash={}
+          for root,dirs,files in os.walk('.'):
+              if root.startswith('./.git'): continue
+              for fn in files:
+                  q=Path(root)/fn
+                  try:b=q.read_bytes()
+                  except:continue
+                  by_hash.setdefault(hashlib.sha256(b).hexdigest(),[]).append(q.as_posix().removeprefix('./'))
           out=[]
-          out.append('MANIFEST_FILES='+str(len(exact)))
-          out.append('DELTA_FILES='+str(len(delta)))
-          for k,v in counts.items(): out.append(k.upper()+'='+str(v))
-          out.append('NEWLINE_MAP_TYPE='+type(nl).__name__)
-          out.append('NEWLINE_MAP_COUNT='+str(len(nl) if hasattr(nl,'__len__') else -1))
-          out.append('PARTIAL_EXACT_FILES:'); out += partial
-          out.append('NORMALIZED_RECOVERABLE_FILES:'); out += normalized
-          out.append('UNRESOLVED_FILES:'); out += unresolved
-          Path('.github/prompt1_gap.txt').write_text('\n'.join(out)+'\n')
-          print('\n'.join(out[:8])); print('UNRESOLVED',len(unresolved))
+          exists=0; missing=0; dup=0
+          for p in unresolved:
+              h,istext,size=exact[p]
+              cur=Path(p)
+              status='EXISTS' if cur.is_file() else 'MISSING_PATH'
+              exists += cur.is_file(); missing += not cur.is_file()
+              matches=[q for q in by_hash.get(h,[]) if q!=p]
+              if matches: dup+=1
+              out.append(f'{status}\t{p}\t{h}\t{size}\tDUP={";".join(matches)}')
+          header=[f'UNRESOLVED={len(unresolved)}',f'CURRENT_PATH_EXISTS={exists}',f'CURRENT_PATH_MISSING={missing}',f'EXACT_DUPLICATES={dup}']
+          Path('.github/prompt1_gap_detail.txt').write_text('\n'.join(header+out)+'\n')
+          print('\n'.join(header))
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/prompt1_gap.txt
-          git commit -m 'chore: compute exact Astra recovery gap'
+          git add .github/prompt1_gap_detail.txt
+          git commit -m 'chore: search Astra gap duplicates'
           git push origin HEAD:dev
