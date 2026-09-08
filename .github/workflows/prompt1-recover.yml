@@ -1,4 +1,4 @@
-name: Prompt 1 Reachable Source Search
+name: Prompt 1 Compile Recheck
 
 on:
   push:
@@ -10,44 +10,46 @@ permissions:
   contents: write
 
 jobs:
-  search:
+  validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           ref: dev
           fetch-depth: 0
-      - name: Search all reachable repository history
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+      - name: Compile and validate
         shell: bash
         run: |
-          set -euo pipefail
-          git fetch --all --tags --prune
-          report=.github/prompt1_reachable_source_search.txt
+          set -u
+          sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+          report=.github/prompt1_compile_recheck.txt
           : > "$report"
           echo "HEAD=$(git rev-parse HEAD)" >> "$report"
-          echo "=== PATH HISTORY: SatchelSpecimenDisplay ===" >> "$report"
-          git log --all --name-only --pretty='COMMIT %H' -- '*SatchelSpecimenDisplay*' >> "$report" || true
-          echo "=== PATH HISTORY: TideTeamJournalServiceMixin ===" >> "$report"
-          git log --all --name-only --pretty='COMMIT %H' -- '*TideTeamJournalServiceMixin*' >> "$report" || true
-          echo "=== CONTENT HISTORY: SatchelSpecimenDisplay ===" >> "$report"
-          found=0
-          while read -r commit; do
-            matches="$(git grep -l 'SatchelSpecimenDisplay' "$commit" -- '*.java' 2>/dev/null || true)"
-            if [ -n "$matches" ]; then
-              echo "COMMIT $commit" >> "$report"
-              printf '%s\n' "$matches" >> "$report"
-              found=1
-            fi
-          done < <(git rev-list --all)
-          echo "SATCHEL_CONTENT_FOUND=$found" >> "$report"
-          echo "=== CURRENT TeamJournalService references ===" >> "$report"
-          git grep -n 'TeamJournalService' HEAD -- 'src/**/*.java' 'src/**/*.json' >> "$report" || true
-          echo "=== ALL OBJECT PATHS matching names ===" >> "$report"
-          git rev-list --objects --all | grep -E 'SatchelSpecimenDisplay|TideTeamJournalServiceMixin|TeamJournalService\.java' >> "$report" || true
+          sed -i 's/\r$//' scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh 2>/dev/null || true
+          chmod +x gradlew scripts/*.sh 2>/dev/null || true
+          set +e
+          bash scripts/fetch_ci_dependencies.sh >/tmp/deps.log 2>&1; deps=$?
+          ./gradlew compileJava --no-daemon --console=plain >/tmp/compile.log 2>&1; compile=$?
+          bash scripts/validate_repository.sh >/tmp/validator.log 2>&1; validator=$?
+          set -e
+          echo "DEPS_RC=$deps" >> "$report"
+          echo "COMPILE_RC=$compile" >> "$report"
+          echo "VALIDATOR_RC=$validator" >> "$report"
+          echo "=== COMPILE ===" >> "$report"; tail -180 /tmp/compile.log >> "$report"
+          echo "=== VALIDATOR ===" >> "$report"; cat /tmp/validator.log >> "$report"
+          git checkout -- scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh 2>/dev/null || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$report"
-          git commit -m 'test: record reachable missing-source search' || true
+          git commit -m 'test: record Prompt 1 compile recheck' || true
           git push origin HEAD:dev
+          [ "$deps" = 0 ] && [ "$compile" = 0 ] && [ "$validator" = 0 ]
