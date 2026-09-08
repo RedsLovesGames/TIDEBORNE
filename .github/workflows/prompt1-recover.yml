@@ -1,4 +1,4 @@
-name: Prompt 1 Exact Blob Recovery
+name: Prompt 1 Exact Archive Recovery
 
 on:
   push:
@@ -18,60 +18,54 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
-      - name: Scan every reachable blob for authoritative hashes
+      - name: Scan reachable archive members for authoritative hashes
         shell: bash
         run: |
           set -euo pipefail
-          report=.github/prompt1_blob_hash_recovery.txt
+          report=.github/prompt1_archive_hash_recovery.txt
           cat .github/astra_manifest.part-* | base64 -d | xz -dc > /tmp/manifest.tsv
-          python3 - <<'PY'
-          from pathlib import Path
-          import hashlib
-          wanted=[]
-          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
-              p,h,t,s=line.split('\t')
-              f=Path(p)
-              if not f.is_file() or hashlib.sha256(f.read_bytes()).hexdigest()!=h:
-                  wanted.append((p,h,int(s)))
-          Path('/tmp/wanted.tsv').write_text(''.join(f'{p}\t{h}\t{s}\n' for p,h,s in wanted))
-          print('UNRESOLVED',len(wanted))
-          PY
-          # Include pull request heads too, then inspect every reachable object by content.
           git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*' || true
-          git rev-list --objects --all | awk '{print $1}' | sort -u > /tmp/objects.txt
+          git rev-list --objects --all > /tmp/objects_with_paths.txt
           python3 - <<'PY' > "$report"
           from pathlib import Path
-          import subprocess, hashlib
-          wanted={h:(p,s) for p,h,s in (line.split('\t') for line in Path('/tmp/wanted.tsv').read_text().splitlines())}
-          wanted={h:(p,int(s)) for h,(p,s) in wanted.items()}
+          import subprocess, hashlib, io, zipfile
+          manifest=[]
+          for line in Path('/tmp/manifest.tsv').read_text().splitlines():
+              p,h,t,s=line.split('\t'); manifest.append((p,h,int(s)))
+          wanted={h:(p,s) for p,h,s in manifest if not Path(p).is_file() or hashlib.sha256(Path(p).read_bytes()).hexdigest()!=h}
           print('UNRESOLVED_START='+str(len(wanted)))
+          objects=[]
+          for line in Path('/tmp/objects_with_paths.txt').read_text(errors='replace').splitlines():
+              parts=line.split(' ',1); oid=parts[0]; path=parts[1] if len(parts)>1 else ''
+              if path.lower().endswith(('.jar','.zip')): objects.append((oid,path))
+          # Deduplicate object ids while preserving a representative historical path.
+          seen=set(); archives=[]
+          for oid,path in objects:
+              if oid not in seen: seen.add(oid); archives.append((oid,path))
+          print('ARCHIVE_BLOBS='+str(len(archives)))
           hits={}
-          objects=Path('/tmp/objects.txt').read_text().splitlines()
-          proc=subprocess.Popen(['git','cat-file','--batch'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-          assert proc.stdin and proc.stdout
-          for oid in objects:
-              proc.stdin.write((oid+'\n').encode()); proc.stdin.flush()
-              header=proc.stdout.readline().decode().strip().split()
-              if len(header)<3 or header[1]!='blob':
-                  if len(header)>=3:
-                      size=int(header[2]); proc.stdout.read(size); proc.stdout.read(1)
-                  continue
-              size=int(header[2]); data=proc.stdout.read(size); proc.stdout.read(1)
-              h=hashlib.sha256(data).hexdigest()
-              if h in wanted and h not in hits:
-                  p,expected_size=wanted[h]
-                  if size==expected_size:
-                      hits[h]=(p,oid,size)
-          proc.stdin.close(); proc.wait()
-          print('EXACT_BLOB_HITS='+str(len(hits)))
-          for h,(p,oid,size) in sorted(hits.items(), key=lambda x:x[1][0]):
-              print(f'HIT\t{p}\t{h}\t{oid}\t{size}')
-          for h,(p,size) in sorted(wanted.items(), key=lambda x:x[1][0]):
-              if h not in hits: print(f'MISS\t{p}\t{h}\t{size}')
+          for oid,path in archives:
+              try: data=subprocess.check_output(['git','cat-file','blob',oid],stderr=subprocess.DEVNULL)
+              except subprocess.CalledProcessError: continue
+              try: z=zipfile.ZipFile(io.BytesIO(data))
+              except Exception: continue
+              for info in z.infolist():
+                  if info.is_dir(): continue
+                  try: b=z.read(info)
+                  except Exception: continue
+                  h=hashlib.sha256(b).hexdigest()
+                  if h in wanted and h not in hits:
+                      target,size=wanted[h]
+                      if len(b)==size: hits[h]=(target,oid,path,info.filename,len(b))
+          print('EXACT_ARCHIVE_HITS='+str(len(hits)))
+          for h,(target,oid,path,member,size) in sorted(hits.items(),key=lambda x:x[1][0]):
+              print(f'HIT\t{target}\t{h}\t{oid}\t{path}\t{member}\t{size}')
+          for h,(target,size) in sorted(wanted.items(),key=lambda x:x[1][0]):
+              if h not in hits: print(f'MISS\t{target}\t{h}\t{size}')
           PY
           cat "$report"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$report"
-          git commit -m 'chore: scan reachable blobs for exact Astra files'
+          git commit -m 'chore: scan archives for exact Astra files'
           git push origin HEAD:dev
