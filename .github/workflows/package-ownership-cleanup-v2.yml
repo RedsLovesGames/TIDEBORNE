@@ -62,6 +62,18 @@ jobs:
               raise SystemExit('Could not patch historical Tide Traits trait ownership')
           script = script.replace(old, new, 1)
 
+          old_fresh = '''    if cls == "FreshWorldRegressionGameTests":\n        return "com.redslovesgames.tideborne.fishing.gametest"'''
+          new_fresh = '''    if cls == "FreshWorldRegressionGameTests":\n        return "com.redslovesgames.tideborne.fishing.specimen"'''
+          if old_fresh not in script:
+              raise SystemExit('Could not preserve FreshWorldRegressionGameTests package-private momentum access')
+          script = script.replace(old_fresh, new_fresh, 1)
+
+          old_legacy = '''    if base.startswith("Legacy"):\n        return "com.redslovesgames.tideborne.migration.legacy"'''
+          new_legacy = '''    if base == "LegacyItemStackMigration":\n        return "com.redslovesgames.tideborne.fishing.specimen"\n    if base.startswith("Legacy"):\n        return "com.redslovesgames.tideborne.migration.legacy"'''
+          if old_legacy not in script:
+              raise SystemExit('Could not preserve LegacyItemStackMigration package-private storage boundary')
+          script = script.replace(old_legacy, new_legacy, 1)
+
           old_no_type = '''    pm = package_re.search(text)\n    tm = type_re.search(text)\n    if not pm or not tm:\n        continue\n    old_pkg = pm.group(1)\n    cls = tm.group(1)'''
           new_no_type = '''    pm = package_re.search(text)\n    tm = type_re.search(text)\n    if not pm:\n        continue\n    old_pkg = pm.group(1)\n    cls = tm.group(1) if tm else path.stem'''
           if old_no_type not in script:
@@ -117,7 +129,7 @@ jobs:
                   return canonical_specimen
               return None
 
-          def repair_tree(root: Path, allow_test_types: bool) -> None:
+          def repair_tree(root: Path) -> None:
               if not root.exists():
                   return
               for path in sorted(root.rglob('*.java')):
@@ -158,15 +170,14 @@ jobs:
 
                   path.write_text(text, encoding='utf-8')
 
-          repair_tree(MAIN, False)
-          repair_tree(TEST, True)
+          repair_tree(MAIN)
+          repair_tree(TEST)
 
           validator = Path('scripts/validate_repository.sh')
           validator_text = validator.read_text(encoding='utf-8')
           validator_text = validator_text.replace(
-              "if rg -n '^package ",
-              "if grep -R -n -E --include='*.java' '^package ",
-              1,
+              'rg -n ',
+              "grep -R -n -E --include='*.java' ",
           )
           validator.write_text(validator_text, encoding='utf-8')
 
