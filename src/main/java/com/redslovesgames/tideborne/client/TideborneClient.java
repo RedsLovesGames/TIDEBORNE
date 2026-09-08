@@ -6,9 +6,9 @@
 package com.redslovesgames.tideborne.client;
 
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
-import com.redslovesgames.tideborne.presentation.client.TideboundCompatibilityClient;
-import com.redslovesgames.tideborne.journal.client.TideTeamJournalClient;
-import com.redslovesgames.tideborne.presentation.client.TideTraitsClient;
+import com.redslovesgames.tideboundcompatibility.client.TideboundCompatibilityClient;
+import com.redslovesgames.tideteamjournal.client.TideTeamJournalClient;
+import com.redslovesgames.tidetraits.client.TideTraitsClient;
 import net.fabricmc.api.ClientModInitializer;
 
 public final class TideborneClient implements ClientModInitializer {

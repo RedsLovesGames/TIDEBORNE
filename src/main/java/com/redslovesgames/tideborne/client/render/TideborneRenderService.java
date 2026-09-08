@@ -5,7 +5,7 @@
  */
 package com.redslovesgames.tideborne.client.render;
 
-import com.redslovesgames.tideborne.presentation.render.MutationRendering;
+import com.redslovesgames.tidetraits.client.render.MutationRendering;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.Identifier;

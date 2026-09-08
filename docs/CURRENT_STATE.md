@@ -148,9 +148,14 @@ High-confidence dead implementation removed in this pass:
 
 Production FishScore remains exclusively owned by `FishScoreV2Service`. Stage 4 does not remove legacy score storage keys, one-way score migration reads, legacy trait/body/condition components, legacy size recovery helpers, species/fight compatibility inputs, or stable registry/component/NBT/network/item/recipe identifiers that old saves or compatibility paths still require.
 
-Active Java ownership is unified under `com.redslovesgames.tideborne`. Canonical fishing uses `fishing` with `fishing.specimen`, `fishing.gear`, and `fishing.tide`; Team Journal uses `journal`; Satchel uses `satchel`; discovery, ecosystem, compatibility, presentation, networking, registry, mixins, and legacy migration use their corresponding feature packages. Historical specimen compatibility that still serves migration/codec needs is explicitly isolated under `fishing.specimen.legacy`.
+The package review keeps the four historical roots because they still represent meaningful boundaries rather than cosmetic namespaces:
 
-Persisted identifiers and historical resource namespaces do not move merely because Java packages do. The Java ownership cleanup therefore leaves old save/NBT/component/payload/registry/resource identifiers intact.
+- `com.redslovesgames.tideborne` is the canonical home for Fishing System 2.0 domain logic, services, internal APIs, presentation, and new shared architecture;
+- `com.redslovesgames.tideboundcompatibility` remains the external Tide and optional-mod integration boundary;
+- `com.redslovesgames.tideteamjournal` remains the Team Journal/FTB Teams persistence, records, UI, and networking subsystem;
+- `com.redslovesgames.tidetraits` remains the historical traits, Satchel, discovery, transfer, rendering, and persisted compatibility boundary.
+
+A broad package rewrite is intentionally rejected. New canonical Fishing System 2.0 behavior should live under `tideborne`, while the historical roots increasingly act as subsystem owners or adapters. Persisted identifiers must not move merely because Java packages do.
 
 TeamProgressStore directly owns canonical stored-score reads, contributor/history serialization and merges, catch metadata and Top 15 indexing. The four canonical self-mixins are removed. Initialization preserves one-way score migration and dirty reporting; score-only history never acquires invented specimen identity. TeamCanonicalJournalCapture reuses one immutable decoded specimen through nested current/last catch cleanup. RecordHolderStore directly owns sidecar migration/capture and client projection. TeamJournalService activates personal/team tracking before resolution and marks only successful team data; native fallback remains unmarked.
 

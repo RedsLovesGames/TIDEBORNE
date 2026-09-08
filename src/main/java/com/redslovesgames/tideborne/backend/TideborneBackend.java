@@ -6,12 +6,12 @@
 package com.redslovesgames.tideborne.backend;
 
 import com.li64.tide.data.player.TidePlayerData;
-import com.redslovesgames.tideborne.journal.TeamJournalService;
-import com.redslovesgames.tideborne.discovery.multiplayer.MultiplayerDiscoveryCompat;
-import com.redslovesgames.tideborne.discovery.multiplayer.PersonalTideJournal;
-import com.redslovesgames.tideborne.discovery.multiplayer.SharedDiscoverySnapshot;
-import com.redslovesgames.tideborne.discovery.DiscoveryManager;
-import com.redslovesgames.tideborne.discovery.DiscoverySnapshot;
+import com.redslovesgames.tideteamjournal.TeamJournalService;
+import com.redslovesgames.tidetraits.compat.multiplayer.MultiplayerDiscoveryCompat;
+import com.redslovesgames.tidetraits.compat.multiplayer.PersonalTideJournal;
+import com.redslovesgames.tidetraits.compat.multiplayer.SharedDiscoverySnapshot;
+import com.redslovesgames.tidetraits.discovery.DiscoveryManager;
+import com.redslovesgames.tidetraits.discovery.DiscoverySnapshot;
 import java.util.Optional;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;

@@ -3,8 +3,8 @@ package com.redslovesgames.tideborne.presentation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.redslovesgames.tideborne.fishing.specimen.CanonicalRarity;
-import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.CanonicalRarity;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalDouble;

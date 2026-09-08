@@ -12,7 +12,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.redslovesgames.tideborne.command.debug.FishingGearRegistryDebugCommand;
 import com.redslovesgames.tideborne.command.debug.SpecimenDebugCommand;
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
-import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;

@@ -5,7 +5,7 @@
  */
 package com.redslovesgames.tideborne.command;
 
-import com.redslovesgames.tideborne.journal.StoredFishScoreStorage;
+import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

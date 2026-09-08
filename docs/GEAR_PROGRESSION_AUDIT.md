@@ -65,7 +65,7 @@ The historical `docs/FISHING_SYSTEM_2_BALANCE_REPORT.md` is useful as a regressi
 
 ### `FishingGearModifiers`
 
-`com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers` is the composable modifier record used by the V2 layer.
+`com.redslovesgames.tideborne.fishing.v2.FishingGearModifiers` is the composable modifier record used by the V2 layer.
 
 It contains:
 
@@ -82,7 +82,7 @@ Composition adds luck and named additive values, multiplies fight/body-type/name
 
 ### `FishingGearRegistry`
 
-`com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry` is the exact namespaced identity registry. It should remain the stable identity/query boundary instead of spreading new string or item-instance checks.
+`com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry` is the exact namespaced identity registry. It should remain the stable identity/query boundary instead of spreading new string or item-instance checks.
 
 Current slots:
 
@@ -489,7 +489,7 @@ These checks are the primary places to revisit during a later coordinated gear r
 
 ## Mixins tied to gear behavior
 
-### `com.redslovesgames.tideborne.mixin.journal.TideFishingHookMixin`
+### `com.redslovesgames.tideteamjournal.mixin.TideFishingHookMixin`
 
 Purpose:
 
@@ -507,7 +507,7 @@ Stages:
 - fish selection;
 - bite timing.
 
-### `com.redslovesgames.tideborne.mixin.tide.TideFishingHookMixin`
+### `com.redslovesgames.tideboundcompatibility.mixin.TideFishingHookMixin`
 
 Purpose includes:
 
@@ -529,7 +529,7 @@ Stages:
 - specimen/catch lifecycle adapter;
 - retrieval.
 
-### `com.redslovesgames.tideborne.mixin.specimen.TideFishingHookMixin`
+### `com.redslovesgames.tidetraits.mixin.TideFishingHookMixin`
 
 Purpose includes:
 

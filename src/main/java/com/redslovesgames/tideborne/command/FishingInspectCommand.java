@@ -1,11 +1,11 @@
 package com.redslovesgames.tideborne.command;
 
-import com.redslovesgames.tideborne.fishing.SpeciesSelectionService;
-import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
-import com.redslovesgames.tideborne.fishing.specimen.SpecimenGenerator;
-import com.redslovesgames.tideborne.fishing.specimen.SpecimenQualityService;
-import com.redslovesgames.tideborne.fishing.specimen.TraitMomentumProgression;
-import com.redslovesgames.tideborne.fishing.specimen.CanonicalCatchStateManager;
+import com.redslovesgames.tideborne.fishing.v2.SpeciesSelectionService;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenGenerator;
+import com.redslovesgames.tideborne.fishing.v2.SpecimenQualityService;
+import com.redslovesgames.tideborne.fishing.v2.TraitMomentumProgression;
+import com.redslovesgames.tideborne.fishing.v2.integration.CanonicalCatchStateManager;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitAxis;
 import java.util.Locale;

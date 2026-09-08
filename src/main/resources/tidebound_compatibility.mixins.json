@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "com.redslovesgames.tideborne.mixin.tide",
+  "package": "com.redslovesgames.tideboundcompatibility.mixin",
   "refmap": "tidebound_compatibility.refmap.json",
   "compatibilityLevel": "JAVA_21",
   "mixins": [

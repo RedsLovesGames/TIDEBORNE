@@ -7,14 +7,14 @@ package com.redslovesgames.tideborne.client;
 
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
 import com.redslovesgames.tideborne.config.TideborneTraitsDraft;
-import com.redslovesgames.tideborne.presentation.client.ClientTideboundSettings;
-import com.redslovesgames.tideborne.presentation.client.TideboundClientConfig;
-import com.redslovesgames.tideborne.presentation.client.TideboundModMenu;
-import com.redslovesgames.tideborne.config.TideboundConfig;
-import com.redslovesgames.tideborne.journal.ServerConfig;
-import com.redslovesgames.tideborne.journal.client.ClientConfig;
-import com.redslovesgames.tideborne.config.TideTraitsConfigManager;
-import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
+import com.redslovesgames.tideboundcompatibility.client.ClientTideboundSettings;
+import com.redslovesgames.tideboundcompatibility.client.TideboundClientConfig;
+import com.redslovesgames.tideboundcompatibility.client.TideboundModMenu;
+import com.redslovesgames.tideboundcompatibility.config.TideboundConfig;
+import com.redslovesgames.tideteamjournal.ServerConfig;
+import com.redslovesgames.tideteamjournal.client.ClientConfig;
+import com.redslovesgames.tidetraits.config.TideTraitsConfigManager;
+import com.redslovesgames.tidetraits.trait.FishMutation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -227,7 +227,7 @@ public final class TideborneUnifiedConfigScreen {
 
    private static void sendFishingUpdate(String var0) {
       try {
-         Class var1 = Class.forName("com.redslovesgames.tideborne.network.TideboundSettingsUpdatePayload");
+         Class var1 = Class.forName("com.redslovesgames.tideboundcompatibility.network.TideboundSettingsUpdatePayload");
          Object var2 = var1.getConstructor(String.class).newInstance(var0);
          Class var3 = Class.forName("net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking");
 

@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "com.redslovesgames.tideborne.mixin.journal",
+  "package": "com.redslovesgames.tideteamjournal.mixin",
   "refmap": "tide_team_journal.refmap.json",
   "compatibilityLevel": "JAVA_21",
   "mixins": [

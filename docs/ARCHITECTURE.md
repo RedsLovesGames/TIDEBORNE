@@ -12,7 +12,7 @@ Do not solve local integration problems by creating parallel specimen, score, ge
 
 ## Canonical Fishing System 2.0 domain
 
-### `com.redslovesgames.tideborne.fishing`
+### `com.redslovesgames.tideborne.fishing.v2`
 
 This package owns the canonical fishing domain and pure calculations.
 
@@ -105,15 +105,27 @@ Domain algorithms should stay in the domain that owns them rather than accumulat
 
 ## Tide and optional-mod compatibility boundary
 
-### `com.redslovesgames.tideborne.fishing.tide` and `com.redslovesgames.tideborne.compat`
+### `com.redslovesgames.tideboundcompatibility`
 
-Tide-specific fishing adapters live under `fishing.tide`; optional-mod integration lives under `compat` (for example `compat.apex`). Gear-owned Tide equipment behavior lives under `fishing.gear`, while ecosystem behavior such as chum/shark handling lives under `ecosystem`. Version-sensitive Tide mixins live under `tideborne.mixin.tide` when no stable API/event seam can replace them.
+This package remains the external Tide and optional-mod integration boundary.
+
+Responsibilities include:
+
+- Tide fishing lifecycle adapters
+- Tide equipment integration
+- leader attachment persistence and migration
+- Leviathan Bait integration
+- Tide minigame projection bridges
+- optional Apex Waters and Myths of the Sea compatibility
+- compatibility networking and settings where still owned here
+
+Version-sensitive Tide mixins belong here when no stable API/event seam can replace them.
 
 Use `docs/TIDE_MIXIN_INVENTORY.md` before modifying Tide-targeting mixins.
 
 ## Team Journal boundary
 
-### `com.redslovesgames.tideborne.journal`
+### `com.redslovesgames.tideteamjournal`
 
 This subsystem owns:
 
@@ -129,13 +141,22 @@ Canonical specimen semantics and FishScore should be consumed from Fishing Syste
 
 Journal integration mixins should be thin lifecycle adapters into named services such as the shared catch bridge.
 
-## Satchel, discovery, presentation, and historical specimen compatibility
+## TideTraits and Satchel boundary
 
-### `com.redslovesgames.tideborne.satchel`, `com.redslovesgames.tideborne.discovery`, and `com.redslovesgames.tideborne.fishing.specimen.legacy`
+### `com.redslovesgames.tidetraits`
 
-Angler's Satchel ownership lives under `satchel`; discovery persistence lives under `discovery`; rendering/presentation helpers live under `presentation`; specimen transfer and canonical specimen logic live under `fishing.specimen`. Historical Tide Traits codec/model compatibility is isolated under `fishing.specimen.legacy` until later migration cleanup.
+This historical package remains a compatibility and subsystem boundary for:
 
-The Satchel is not a canonical specimen generator. It may store, sort, protect, summarize, and present canonical catches after generation. Legacy compatibility paths must remain guarded so they cannot reroll or overwrite a current canonical specimen.
+- Angler's Satchel storage and upgrades
+- discovery persistence
+- specimen transfer compatibility
+- legacy trait/size compatibility reads and guarded writes
+- rendering and generated specimen textures
+- post-catch Satchel behavior
+
+The Satchel is not a canonical specimen generator. It may store, sort, protect, summarize, and present canonical catches after generation.
+
+Legacy catch individualization paths must remain guarded so they cannot reroll or overwrite a current canonical V2 specimen.
 
 ## Dependency direction
 
@@ -154,7 +175,7 @@ canonical domain services and models
 persistence and external adapters
 ```
 
-Avoid mutually recursive dependencies between Tideborne feature packages. Prefer canonical API and presentation boundaries over cross-feature implementation reach-through.
+Avoid mutually recursive utility dependencies between `tideborne`, `tideteamjournal`, `tidetraits`, and `tideboundcompatibility`.
 
 ## Mixins
 
