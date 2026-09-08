@@ -46,6 +46,10 @@ Because `compileJava` fails, the following required gates cannot be truthfully r
 - release artifact validation: BLOCKED because no clean release artifact can be produced from the current recovered source
 - final forbidden-package/path scan: PASS, zero forbidden paths/declarations and zero production packages outside the Tideborne root
 
+## Temporary transport cleanup
+
+Prompt 1 recovery transport is no longer present on `dev`. The Astra delta chunks, manifest chunks, normalized/newline payloads, compressed package-unification helper, temporary Satchel patch helper, and all Prompt 1 recovery/package-unification workflows were removed after the final structural validator and ownership scan passed. The only workflow left under `.github/workflows` is the normal `build.yml` workflow. Forensic Prompt 1 text reports are retained as provenance evidence and are not executable transport machinery.
+
 ## Source-provenance limitation
 
 The exact byte-for-byte 564-file Astra baseline was not reconstructed. Seventy-five authoritative file/hash entries remain unavailable after the available recovery routes were exhausted. This is an accepted source-provenance limitation and does not invalidate the already-completed package ownership migration, but it currently prevents full Prompt 1 validation because at least one unavailable file is a live compile dependency.
