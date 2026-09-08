@@ -1,0 +1,267 @@
+HEAD=05bd6b88f565c0ec8fdd69ae7ae1a8642e3a6774
+DEPS_RC=0
+COMPILE_RC=1
+VALIDATOR_RC=1
+=== COMPILE FIRST 260 LINES ===
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.12/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Fabric Loom: 1.10.5
+Tideborne: compiling against exact local Tide 2.1.1 JAR
+Tideborne: Apex Waters remapped compile-only compatibility enabled
+:remapping 58 mods from modImplementation (java-api)
+
+duplicate input class net/fabricmc/fabric/mixin/tag/package-info, from /home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc.fabric-api/fabric-convention-tags-v2/2.12.0+c3656daa19/a7a86222c984c3262a6803db7beaad5a8ee5678/fabric-convention-tags-v2-2.12.0+c3656daa19.jar and /home/runner/.gradle/caches/modules-2/files-2.1/net.fabricmc.fabric-api/fabric-tag-api-v1/1.3.0+1eb36c0719/7c94346f2937d7b58833c9986e0651b07d71749e/fabric-tag-api-v1-1.3.0+1eb36c0719.jar
+
+> Configure project :
+:remapping 1 mods from modCompileOnly (java-api)
+
+> Task :compileJava
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/tide/AnglingTableLeaderMixin.java:20: warning: Mixin target com.li64.tide.client.gui.menus.AnglingTableMenu is public and should be specified in value
+@Mixin(targets = "com.li64.tide.client.gui.menus.AnglingTableMenu", remap = false)
+^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/tide/AnglingTableScreenLeaderMixin.java:20: warning: Mixin target com.li64.tide.client.gui.screens.AnglingTableScreen is public and should be specified in value
+@Mixin(targets = "com.li64.tide.client.gui.screens.AnglingTableScreen", remap = false)
+^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/specimen/AnglersSatchelRecipeMixin.java:19: warning: Mixin target net.minecraft.recipe.ShapedRecipe is public and should be specified in value
+@Mixin(targets = "net.minecraft.recipe.ShapedRecipe", remap = false)
+^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin.java:30: warning: Unable to determine descriptor for @Inject target method
+   @Inject(method = "registerGoals", at = @At("TAIL"))
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/journal/client/GuiGraphicsMixin.java:22: warning: Cannot find target method "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V" for @Inject.method="renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V" in net.minecraft.client.gui.DrawContext
+   @Inject(method = "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V", at = @At("TAIL"))
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin.java:34: warning: Cannot find target method "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;IIFLnet/minecraft/world/item/ItemStack;)V" for @Inject.method="<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;IIFLnet/minecraft/world/item/ItemStack;)V" in com.li64.tide.registries.entities.misc.fishing.TideFishingHook
+   @Inject(
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin.java:34: warning: Unable to locate obfuscation mapping for @Inject target <init>
+   @Inject(
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/FishProfileSizeRangeMixin.java:33: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/specimen/FishDisplayPersistenceMixin.java:15: warning: Unable to locate obfuscation mapping for @Shadow field
+    @Shadow
+    ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/specimen/TideFishingHookMixin.java:44: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin.java:25: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin.java:29: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/ecosystem/ChumBucketItem.java:41: warning: [unchecked] unchecked call to TypedActionResult(ActionResult,T) as a member of the raw type TypedActionResult
+      return new TypedActionResult(result, player.getStackInHand(hand));
+             ^
+  where T is a type-variable:
+    T extends Object declared in class TypedActionResult
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/ecosystem/ChumBucketItem.java:41: warning: [unchecked] unchecked conversion
+      return new TypedActionResult(result, player.getStackInHand(hand));
+             ^
+  required: TypedActionResult<ItemStack>
+  found:    TypedActionResult
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/client/TideborneUnifiedConfigScreen.java:231: warning: [unchecked] unchecked call to getConstructor(Class<?>...) as a member of the raw type Class
+         Object var2 = var1.getConstructor(String.class).newInstance(var0);
+                                          ^
+  where T is a type-variable:
+    T extends Object declared in class Class
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/specimen/legacy/FishMutation.java:26: warning: [unchecked] unchecked method invocation: method comapFlatMap in interface Codec is applied to given types
+      .comapFlatMap(
+                   ^
+  required: Function<? super A,? extends DataResult<? extends S>>,Function<? super S,? extends A>
+  found:    Function<String,DataResult<? extends FishMutation>>,Function<FishMutation,String>
+  where A,S are type-variables:
+    A extends Object declared in interface Codec
+    S extends Object declared in method <S>comapFlatMap(Function<? super A,? extends DataResult<? extends S>>,Function<? super S,? extends A>)
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/fishing/specimen/legacy/FishMutation.java:26: warning: [unchecked] unchecked conversion
+      .comapFlatMap(
+                   ^
+  required: Codec<FishMutation>
+  found:    Codec
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:245: error: cannot find symbol
+         Optional<SatchelSpecimenDisplay> canonical = SatchelSpecimenDisplay.from(stack);
+                  ^
+  symbol:   class SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:245: error: cannot find symbol
+         Optional<SatchelSpecimenDisplay> canonical = SatchelSpecimenDisplay.from(stack);
+                                                      ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:248: error: cannot find symbol
+         graphics.drawText(this.textRenderer, canonical.map(SatchelSpecimenDisplay::rarityStarsLabel).orElse("?"), x, y + 10, -12965349, false);
+                                                            ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:260: error: cannot find symbol
+               SatchelSpecimenDisplay specimen = canonical.get();
+               ^
+  symbol:   class SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:1124: error: cannot find symbol
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::length).orElse(0.0);
+             ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:1124: error: cannot find symbol
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::length).orElse(0.0);
+                                                    ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:1128: error: cannot find symbol
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreOrMissing).orElse(-1);
+             ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:1128: error: cannot find symbol
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreOrMissing).orElse(-1);
+                                                    ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:1132: error: cannot find symbol
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreLabel).orElse(CanonicalSpecimenPresentation.UNAVAILABLE);
+             ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java:1132: error: cannot find symbol
+      return SatchelSpecimenDisplay.from(stack).map(SatchelSpecimenDisplay::scoreLabel).orElse(CanonicalSpecimenPresentation.UNAVAILABLE);
+                                                    ^
+  symbol:   variable SatchelSpecimenDisplay
+  location: class AnglersSatchelScreen
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/network/SatchelRequestPayload.java:34: warning: [unchecked] unchecked conversion
+   public static final Id<SatchelRequestPayload> TYPE = new Id(Identifier.of("tide_traits", "anglers_satchel_request"));
+                                                        ^
+  required: Id<SatchelRequestPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/satchel/network/SatchelViewPayload.java:30: warning: [unchecked] unchecked conversion
+   public static final Id<SatchelViewPayload> TYPE = new Id(Identifier.of("tide_traits", "anglers_satchel_view"));
+                                                     ^
+  required: Id<SatchelViewPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/network/TideboundSettingsPayload.java:18: warning: [unchecked] unchecked conversion
+   public static final Id<TideboundSettingsPayload> TYPE = new Id(TideboundCompatibility.id("settings"));
+                                                           ^
+  required: Id<TideboundSettingsPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/network/TideboundSettingsResultPayload.java:15: warning: [unchecked] unchecked conversion
+   public static final Id<TideboundSettingsResultPayload> TYPE = new Id(TideboundCompatibility.id("settings_result"));
+                                                                 ^
+  required: Id<TideboundSettingsResultPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/network/SharkCatchLossPayload.java:15: warning: [unchecked] unchecked conversion
+   public static final Id<SharkCatchLossPayload> TYPE = new Id(TideboundCompatibility.id("shark_catch_loss"));
+                                                        ^
+  required: Id<SharkCatchLossPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/network/TideboundSettingsUpdatePayload.java:15: warning: [unchecked] unchecked conversion
+   public static final Id<TideboundSettingsUpdatePayload> TYPE = new Id(TideboundCompatibility.id("settings_update"));
+                                                                 ^
+  required: Id<TideboundSettingsUpdatePayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/presentation/client/TideboundFishingHud.java:49: warning: [deprecation] SteelLeaderAttachment in com.redslovesgames.tideborne.fishing.gear has been deprecated
+            if (ClientTideboundSettings.bool("apex_active") && SteelLeaderAttachment.hasOnHook(hook)) {
+                                                               ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/compat/apex/SharkScentManager.java:270: warning: [deprecation] isChunkLoaded(BlockPos) in WorldView has been deprecated
+                  if (level.isChunkLoaded(pos)
+                           ^
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/discovery/DiscoverySyncPayload.java:18: warning: [unchecked] unchecked conversion
+   public static final Id<DiscoverySyncPayload> TYPE = new Id(Identifier.of("tide_traits", "discovery_sync"));
+                                                       ^
+  required: Id<DiscoverySyncPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/discovery/multiplayer/SharedDiscoveryRequestPayload.java:16: warning: [unchecked] unchecked conversion
+   public static final Id<SharedDiscoveryRequestPayload> TYPE = new Id(Identifier.of("tide_traits", "shared_discovery_request"));
+                                                                ^
+  required: Id<SharedDiscoveryRequestPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/discovery/multiplayer/SharedDiscoverySyncPayload.java:18: warning: [unchecked] unchecked conversion
+   public static final Id<SharedDiscoverySyncPayload> TYPE = new Id(Identifier.of("tide_traits", "shared_discovery_sync"));
+                                                             ^
+  required: Id<SharedDiscoverySyncPayload>
+  found:    Id
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/discovery/DiscoveryNbt.java:74: warning: [unchecked] unchecked call to put(K,V) as a member of the raw type HashMap
+                  result.put(speciesId, new DiscoverySnapshot.SpeciesDiscoveries(mutations, sizeBands));
+                            ^
+  where K,V are type-variables:
+    K extends Object declared in class HashMap
+    V extends Object declared in class HashMap
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/discovery/DiscoveryNbt.java:79: warning: [unchecked] unchecked method invocation: constructor <init> in record DiscoverySnapshot is applied to given types
+         return result.isEmpty() ? DiscoverySnapshot.empty() : new DiscoverySnapshot(result);
+                                                               ^
+  required: Map<Identifier,SpeciesDiscoveries>
+  found:    LinkedHashMap
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/discovery/DiscoveryNbt.java:79: warning: [unchecked] unchecked conversion
+         return result.isEmpty() ? DiscoverySnapshot.empty() : new DiscoverySnapshot(result);
+                                                                                     ^
+  required: Map<Identifier,SpeciesDiscoveries>
+  found:    LinkedHashMap
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:168: warning: [unchecked] unchecked call to executes(Command<S>) as a member of the raw type ArgumentBuilder
+                     .executes(TideTeamJournal::reloadConfig)
+                              ^
+  where S,T are type-variables:
+    S extends Object declared in class ArgumentBuilder
+    T extends ArgumentBuilder<S,T> declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:168: warning: [unchecked] unchecked method invocation: method reloadConfig in class TideTeamJournal is applied to given types
+                     .executes(TideTeamJournal::reloadConfig)
+                               ^
+  required: CommandContext<ServerCommandSource>
+  found:    CommandContext
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:166: warning: [unchecked] unchecked method invocation: method then in class ArgumentBuilder is applied to given types
+               .then(
+                    ^
+  required: ArgumentBuilder<S,?>
+  found:    LiteralArgumentBuilder
+  where S is a type-variable:
+    S extends Object declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:167: warning: [unchecked] unchecked conversion
+                  (LiteralArgumentBuilder)((LiteralArgumentBuilder)CommandManager.literal("reload").requires(source -> source.hasPermissionLevel(2)))
+                  ^
+  required: ArgumentBuilder<S,?>
+  found:    LiteralArgumentBuilder
+  where S is a type-variable:
+    S extends Object declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:162: warning: [unchecked] unchecked method invocation: method then in class ArgumentBuilder is applied to given types
+                  .then((RequiredArgumentBuilder)CommandManager.argument("name", StringArgumentType.word()).executes(TideTeamJournal::member))
+                       ^
+  required: ArgumentBuilder<S,?>
+  found:    RequiredArgumentBuilder
+  where S is a type-variable:
+    S extends Object declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:162: warning: [unchecked] unchecked conversion
+                  .then((RequiredArgumentBuilder)CommandManager.argument("name", StringArgumentType.word()).executes(TideTeamJournal::member))
+                        ^
+  required: ArgumentBuilder<S,?>
+  found:    RequiredArgumentBuilder
+  where S is a type-variable:
+    S extends Object declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:149: warning: [unchecked] unchecked call to then(ArgumentBuilder<S,?>) as a member of the raw type ArgumentBuilder
+                                 .then(
+                                      ^
+  where S,T are type-variables:
+    S extends Object declared in class ArgumentBuilder
+    T extends ArgumentBuilder<S,T> declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:145: warning: [unchecked] unchecked method invocation: method then in class ArgumentBuilder is applied to given types
+                           .then(
+                                ^
+  required: ArgumentBuilder<S,?>
+  found:    RequiredArgumentBuilder
+  where S is a type-variable:
+    S extends Object declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:146: warning: [unchecked] unchecked conversion
+                              (RequiredArgumentBuilder)((RequiredArgumentBuilder)CommandManager.argument("fish", IdentifierArgumentType.identifier())
+                              ^
+  required: ArgumentBuilder<S,?>
+  found:    RequiredArgumentBuilder
+  where S is a type-variable:
+    S extends Object declared in class ArgumentBuilder
+/home/runner/work/TIDEBORNE/TIDEBORNE/src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java:139: warning: [unchecked] unchecked call to then(ArgumentBuilder<S,?>) as a member of the raw type ArgumentBuilder
+                        .then(
+                             ^
+  where S,T are type-variables:
+    S extends Object declared in class ArgumentBuilder
+=== VALIDATOR ===
+Missing mixin source from tide_traits.mixins.json: com.redslovesgames.tideborne.mixin.specimen.TideTeamJournalServiceMixin
