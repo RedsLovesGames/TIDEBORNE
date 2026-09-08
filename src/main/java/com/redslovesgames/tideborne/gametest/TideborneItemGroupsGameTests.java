@@ -1,9 +1,9 @@
 package com.redslovesgames.tideborne.gametest;
 
 import com.redslovesgames.tideborne.registry.TideborneItemGroups;
-import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
-import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
-import com.redslovesgames.tidetraits.satchel.SatchelRegistration;
+import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.registry.TideboundItems;
+import com.redslovesgames.tideborne.satchel.SatchelRegistration;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.item.Item;

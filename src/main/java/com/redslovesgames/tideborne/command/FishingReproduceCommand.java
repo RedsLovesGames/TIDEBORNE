@@ -2,10 +2,10 @@ package com.redslovesgames.tideborne.command;
 
 import com.li64.tide.data.TideData;
 import com.li64.tide.data.fishing.FishData;
-import com.redslovesgames.tideborne.fishing.v2.SpeciesProfile;
-import com.redslovesgames.tideborne.fishing.v2.SpecimenData;
-import com.redslovesgames.tideborne.fishing.v2.debug.DeterministicSpecimenDebug;
-import com.redslovesgames.tideborne.fishing.v2.integration.TideSpeciesProfileAdapter;
+import com.redslovesgames.tideborne.fishing.SpeciesProfile;
+import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
+import com.redslovesgames.tideborne.fishing.debug.DeterministicSpecimenDebug;
+import com.redslovesgames.tideborne.fishing.tide.TideSpeciesProfileAdapter;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalDouble;

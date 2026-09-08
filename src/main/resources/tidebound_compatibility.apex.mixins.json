@@ -1,7 +1,7 @@
 {
   "required": false,
-  "package": "com.redslovesgames.tideboundcompatibility.mixin.apex",
-  "plugin": "com.redslovesgames.tideboundcompatibility.mixin.OptionalCompatMixinPlugin",
+  "package": "com.redslovesgames.tideborne.mixin.compat.apex",
+  "plugin": "com.redslovesgames.tideborne.mixin.tide.OptionalCompatMixinPlugin",
   "refmap": "tidebound_compatibility.refmap.json",
   "compatibilityLevel": "JAVA_21",
   "mixins": [

@@ -6,11 +6,11 @@
 package com.redslovesgames.tideborne.command;
 
 import com.li64.tide.data.fishing.SizeData;
-import com.redslovesgames.tideteamjournal.TeamJournalService;
-import com.redslovesgames.tidetraits.catching.CatchTraitService;
-import com.redslovesgames.tidetraits.discovery.DiscoveryManager;
-import com.redslovesgames.tidetraits.fish.FishDescriptor;
-import com.redslovesgames.tidetraits.fish.FishSizeClass;
+import com.redslovesgames.tideborne.journal.TeamJournalService;
+import com.redslovesgames.tideborne.fishing.specimen.CatchTraitService;
+import com.redslovesgames.tideborne.discovery.DiscoveryManager;
+import com.redslovesgames.tideborne.fishing.specimen.FishDescriptor;
+import com.redslovesgames.tideborne.fishing.specimen.FishSizeClass;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.UUID;

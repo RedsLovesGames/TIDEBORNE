@@ -71,16 +71,11 @@ Client code may render, cache, preview, and request actions, but it must not be 
 
 ## Package ownership
 
-Keep these maintained ownership boundaries:
+Keep all active Java under `com.redslovesgames.tideborne` and use feature ownership beneath that root. Maintained boundaries include `fishing` (with `fishing.specimen`, `fishing.gear`, and `fishing.tide`), `satchel`, `journal`, `discovery`, `ecosystem`, `compat`, `config`, `presentation`, `command`, `network`, `registry`, `mixin`, and `migration.legacy`. Historical specimen compatibility may remain isolated under an explicitly legacy child package until its migration readers can be retired.
 
-- `com.redslovesgames.tideborne`: canonical Fishing System 2.0 domain logic, internal APIs, shared architecture, composition, migration coordination, and commands
-- `com.redslovesgames.tideboundcompatibility`: Tide and optional-mod integration adapters
-- `com.redslovesgames.tideteamjournal`: Team Journal, FTB Teams persistence, records, UI, and networking
-- `com.redslovesgames.tidetraits`: historical traits, Satchel, discovery, transfer, rendering, and persisted compatibility boundary
+Serialized/resource namespaces are separate from Java ownership. Historical IDs such as `tide_traits:*`, `tide_team_journal:*`, and `tidebound_compatibility:*` remain where compatibility requires them.
 
-Do not perform a namespace-wide package rewrite. New canonical Fishing System 2.0 behavior should normally live under `tideborne`; historical roots should increasingly act as subsystem owners or adapters where appropriate.
-
-Do not create new circular dependencies between these domains.
+Do not create new circular dependencies between feature domains.
 
 ## Persistence and compatibility safety
 
@@ -93,7 +88,7 @@ Treat the following as compatibility-sensitive public contracts:
 - component IDs
 - item and entity IDs
 - recipe IDs
-- Fabric entrypoint class names
+- valid Fabric entrypoint registrations and side-safe class paths
 - mixin config names
 - command names and permissions
 - external fish IDs

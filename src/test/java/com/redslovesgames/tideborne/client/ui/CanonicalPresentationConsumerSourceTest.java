@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 
 class CanonicalPresentationConsumerSourceTest {
     private static final Path SATCHEL = Path.of(
-            "src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/AnglersSatchelScreen.java");
+            "src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java");
     private static final Path FISH_PROFILE = Path.of(
-            "src/main/java/com/redslovesgames/tidetraits/mixin/client/FishProfileSizeRangeMixin.java");
+            "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/FishProfileSizeRangeMixin.java");
 
     @Test
     void satchelRecordPresentationUsesCanonicalFormatting() throws IOException {

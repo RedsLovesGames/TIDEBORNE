@@ -7,12 +7,12 @@ package com.redslovesgames.tideborne;
 
 import com.redslovesgames.tideborne.command.TideborneCommands;
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
-import com.redslovesgames.tideborne.migration.TideborneMigrationManager;
+import com.redslovesgames.tideborne.migration.legacy.TideborneMigrationManager;
 import com.redslovesgames.tideborne.registry.TideborneItemGroups;
-import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
-import com.redslovesgames.tideteamjournal.OwnedFishJournalBackfill;
-import com.redslovesgames.tideteamjournal.TideTeamJournal;
-import com.redslovesgames.tidetraits.TideTraits;
+import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.journal.OwnedFishJournalBackfill;
+import com.redslovesgames.tideborne.journal.TideTeamJournal;
+import com.redslovesgames.tideborne.fishing.TideTraits;
 import net.fabricmc.api.ModInitializer;
 
 public final class Tideborne implements ModInitializer {

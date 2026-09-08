@@ -1,6 +1,6 @@
 package com.redslovesgames.tideborne.command.debug;
 
-import com.redslovesgames.tideborne.fishing.v2.FishingGearRegistry;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 

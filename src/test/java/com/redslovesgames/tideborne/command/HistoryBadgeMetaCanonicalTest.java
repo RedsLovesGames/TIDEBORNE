@@ -2,7 +2,7 @@ package com.redslovesgames.tideborne.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.redslovesgames.tideteamjournal.StoredFishScoreStorage;
+import com.redslovesgames.tideborne.journal.StoredFishScoreStorage;
 import java.util.UUID;
 import net.minecraft.nbt.NbtCompound;
 import org.junit.jupiter.api.Test;

@@ -12,7 +12,7 @@ class ItemStackTooltipPresentationSourceTest {
     @Test
     void canonicalFishTooltipDoesNotReconstructSpecimenPresentation() throws IOException {
         String source = Files.readString(Path.of(
-                "src/main/java/com/redslovesgames/tidetraits/mixin/client/ItemStackMutationTooltipMixin.java"));
+                "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/ItemStackMutationTooltipMixin.java"));
 
         assertTrue(source.contains("TideborneFishingApi.readCurrentSpecimen(stack)"));
         assertTrue(source.contains("CanonicalSpecimenPresentation.present(specimen, rarityStars)"));

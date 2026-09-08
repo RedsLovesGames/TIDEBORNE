@@ -1,9 +1,9 @@
 package com.redslovesgames.tideborne.registry;
 
 import com.redslovesgames.tideborne.Tideborne;
-import com.redslovesgames.tideboundcompatibility.TideboundCompatibility;
-import com.redslovesgames.tideboundcompatibility.registry.TideboundItems;
-import com.redslovesgames.tidetraits.satchel.SatchelRegistration;
+import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.registry.TideboundItems;
+import com.redslovesgames.tideborne.satchel.SatchelRegistration;
 import java.util.*;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.item.*;

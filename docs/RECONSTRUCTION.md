@@ -44,7 +44,7 @@ Entrypoints:
 - common: `com.redslovesgames.tideborne.Tideborne`
 - client: `com.redslovesgames.tideborne.client.TideborneClient`
 - Mod Menu: `com.redslovesgames.tideborne.client.TideborneModMenu`
-- GameTest: `com.redslovesgames.tidetraits.gametest.TideTraitsGameTests`
+- GameTest: `com.redslovesgames.tideborne.fishing.gametest.TideTraitsGameTests`
 
 Mixin configs:
 

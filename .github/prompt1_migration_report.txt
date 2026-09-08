@@ -1,0 +1,553 @@
+MIGRATION_HEAD=eabf2363b0417f66b886864e17370e62c2fe5fbb
+MAIN_JAVA=281
+TEST_JAVA=64
+FORBIDDEN_PATHS=0
+FORBIDDEN_DECLS=0
+OUTSIDE_ROOT=0
+== package script tail ==
+fi
+'''
+    # Put the guard after strict shell mode if possible.
+    idx = validator_text.find('\n', validator_text.find('set -euo pipefail'))
+    if idx >= 0:
+        validator_text = validator_text[:idx+1] + guard + validator_text[idx+1:]
+    else:
+        validator_text = guard + '\n' + validator_text
+    validator.write_text(validator_text, encoding='utf-8')
+
+# Update current ownership documentation and source-architecture tests. Archived stage-history remains historical.
+legacy_arch = TEST / 'com/redslovesgames/tideborne/architecture/LegacyCleanupArchitectureTest.java'
+if legacy_arch.exists():
+    t = legacy_arch.read_text(encoding='utf-8')
+    t = t.replace('src/main/java/com/redslovesgames/tidetraits/mixin/LegacyFishScoreCalculatorMixin.java',
+                  'src/main/java/com/redslovesgames/tideborne/mixin/specimen/LegacyFishScoreCalculatorMixin.java')
+    t = t.replace('src/main/java/com/redslovesgames/tidetraits/mixin/FishSatchelConversionMixin.java',
+                  'src/main/java/com/redslovesgames/tideborne/mixin/specimen/FishSatchelConversionMixin.java')
+    legacy_arch.write_text(t, encoding='utf-8')
+
+agents = ROOT / 'AGENTS.md'
+if agents.exists():
+    t = agents.read_text(encoding='utf-8')
+    section_start = t.find('## Package ownership')
+    section_end = t.find('## Persistence and compatibility safety', section_start)
+    if section_start >= 0 and section_end > section_start:
+        replacement = """## Package ownership\n\nKeep all active Java under `com.redslovesgames.tideborne` and use feature ownership beneath that root. Maintained boundaries include `fishing` (with `fishing.specimen`, `fishing.gear`, and `fishing.tide`), `satchel`, `journal`, `discovery`, `ecosystem`, `compat`, `config`, `presentation`, `command`, `network`, `registry`, `mixin`, and `migration.legacy`. Historical specimen compatibility may remain isolated under an explicitly legacy child package until its migration readers can be retired.\n\nSerialized/resource namespaces are separate from Java ownership. Historical IDs such as `tide_traits:*`, `tide_team_journal:*`, and `tidebound_compatibility:*` remain where compatibility requires them.\n\nDo not create new circular dependencies between feature domains.\n\n"""
+        t = t[:section_start] + replacement + t[section_end:]
+    t = t.replace('- Fabric entrypoint class names\n', '- valid Fabric entrypoint registrations and side-safe class paths\n')
+    agents.write_text(t, encoding='utf-8')
+
+arch_doc = ROOT / 'docs/ARCHITECTURE.md'
+if arch_doc.exists():
+    t = arch_doc.read_text(encoding='utf-8')
+    t = t.replace('### `com.redslovesgames.tideborne.fishing.v2`', '### `com.redslovesgames.tideborne.fishing`')
+    compat_start = t.find('## Tide and optional-mod compatibility boundary')
+    journal_start = t.find('## Team Journal boundary', compat_start)
+    if compat_start >= 0 and journal_start > compat_start:
+        compat = """## Tide and optional-mod compatibility boundary\n\n### `com.redslovesgames.tideborne.fishing.tide` and `com.redslovesgames.tideborne.compat`\n\nTide-specific fishing adapters live under `fishing.tide`; optional-mod integration lives under `compat` (for example `compat.apex`). Gear-owned Tide equipment behavior lives under `fishing.gear`, while ecosystem behavior such as chum/shark handling lives under `ecosystem`. Version-sensitive Tide mixins live under `tideborne.mixin.tide` when no stable API/event seam can replace them.\n\nUse `docs/TIDE_MIXIN_INVENTORY.md` before modifying Tide-targeting mixins.\n\n"""
+        t = t[:compat_start] + compat + t[journal_start:]
+    t = t.replace('### `com.redslovesgames.tideteamjournal`', '### `com.redslovesgames.tideborne.journal`')
+    traits_start = t.find('## TideTraits and Satchel boundary')
+    dep_start = t.find('## Dependency direction', traits_start)
+    if traits_start >= 0 and dep_start > traits_start:
+        traits = """## Satchel, discovery, presentation, and historical specimen compatibility\n\n### `com.redslovesgames.tideborne.satchel`, `com.redslovesgames.tideborne.discovery`, and `com.redslovesgames.tideborne.fishing.specimen.legacy`\n\nAngler's Satchel ownership lives under `satchel`; discovery persistence lives under `discovery`; rendering/presentation helpers live under `presentation`; specimen transfer and canonical specimen logic live under `fishing.specimen`. Historical Tide Traits codec/model compatibility is isolated under `fishing.specimen.legacy` until later migration cleanup.\n\nThe Satchel is not a canonical specimen generator. It may store, sort, protect, summarize, and present canonical catches after generation. Legacy compatibility paths must remain guarded so they cannot reroll or overwrite a current canonical specimen.\n\n"""
+        t = t[:traits_start] + traits + t[dep_start:]
+    t = t.replace('Avoid mutually recursive utility dependencies between `tideborne`, `tideteamjournal`, `tidetraits`, and `tideboundcompatibility`.',
+                  'Avoid mutually recursive dependencies between Tideborne feature packages. Prefer canonical API and presentation boundaries over cross-feature implementation reach-through.')
+    arch_doc.write_text(t, encoding='utf-8')
+
+current = ROOT / 'docs/CURRENT_STATE.md'
+if current.exists():
+    t = current.read_text(encoding='utf-8')
+    start = t.find('The package review keeps the four historical roots')
+    end_marker = 'TeamProgressStore directly owns canonical stored-score reads'
+    end = t.find(end_marker, start)
+    if start >= 0 and end > start:
+        replacement = """Active Java ownership is unified under `com.redslovesgames.tideborne`. Canonical fishing uses `fishing` with `fishing.specimen`, `fishing.gear`, and `fishing.tide`; Team Journal uses `journal`; Satchel uses `satchel`; discovery, ecosystem, compatibility, presentation, networking, registry, mixins, and legacy migration use their corresponding feature packages. Historical specimen compatibility that still serves migration/codec needs is explicitly isolated under `fishing.specimen.legacy`.\n\nPersisted identifiers and historical resource namespaces do not move merely because Java packages do. The Java ownership cleanup therefore leaves old save/NBT/component/payload/registry/resource identifiers intact.\n\n"""
+        t = t[:start] + replacement + t[end:]
+    current.write_text(t, encoding='utf-8')
+
+todo = ROOT / 'docs/TODO.md'
+if todo.exists():
+    t = todo.read_text(encoding='utf-8')
+    t = t.replace('remove the obsolete FishScore self-mixin and inactive Satchel mixin source, and document ownership of the historical package split without a broad rewrite.',
+                  'remove the obsolete FishScore self-mixin and inactive Satchel mixin source, then unify active Java ownership under `com.redslovesgames.tideborne` while preserving serialized compatibility identities.')
+    t = t.replace('The architecture sequence is now complete. Future cleanup should follow the ownership boundaries established by the internal API, canonical presentation layer, mixin inventory, shared integration services, and Stage 4 package-ownership rules rather than starting a namespace-wide rewrite.',
+                  'The architecture sequence is now complete. Future cleanup should follow the unified Tideborne feature ownership established by the internal API, canonical presentation layer, mixin inventory, and shared integration services. Serialized namespace/resource migration remains separate work and is not implied by Java package ownership.')
+    todo.write_text(t, encoding='utf-8')
+
+# Concise current-ownership documentation only where appropriate.
+ownership_note = '''\n## Current Java package ownership\n\nActive production Java is owned by `com.redslovesgames.tideborne.*`. Canonical fishing code uses `tideborne.fishing` and feature children such as `fishing.specimen`, `fishing.gear`, and `fishing.tide`; Journal, Satchel, discovery, ecosystem, compatibility, presentation, networking, registry, mixin, and legacy migration code use their corresponding Tideborne feature packages. Historical serialized identifiers and resource namespaces remain intentionally unchanged for compatibility.\n'''
+for rel in ('docs/INDEX.md',):
+    path = ROOT / rel
+    if not path.exists():
+        continue
+    text = path.read_text(encoding='utf-8')
+    if '## Current Java package ownership' not in text:
+        path.write_text(text.rstrip() + '\n' + ownership_note, encoding='utf-8')
+
+# Remove empty old directories.
+for root in SRC_ROOTS:
+    for rel in (
+        'com/redslovesgames/tidetraits',
+        'com/redslovesgames/tideteamjournal',
+        'com/redslovesgames/tideboundcompatibility',
+        'com/redslovesgames/tideborne/fishing/v2',
+    ):
+        base = root / rel
+        if base.exists():
+            for d in sorted([p for p in base.rglob('*') if p.is_dir()], key=lambda p: len(p.parts), reverse=True):
+                try: d.rmdir()
+                except OSError: pass
+            try: base.rmdir()
+            except OSError: pass
+
+# Final source ownership scan.
+violations = []
+for path in MAIN.rglob('*.java'):
+    text = path.read_text(encoding='utf-8')
+    pm = PACKAGE_RE.search(text)
+    if not pm:
+        continue
+    pkg = pm.group(1)
+    if any(pkg == p or pkg.startswith(p + '.') for p in FORBIDDEN_ROOTS) or pkg == V2 or pkg.startswith(V2 + '.'):
+        violations.append(f'{path}: {pkg}')
+    if '/tideborne/fishing/v2/' in path.as_posix():
+        violations.append(f'{path}: legacy path')
+if violations:
+    raise RuntimeError('Forbidden ownership remains:\n' + '\n'.join(violations))
+
+summary = {
+    'production_java_total': sum(1 for _ in MAIN.rglob('*.java')),
+    'test_java_total': sum(1 for _ in TEST.rglob('*.java')),
+    'production_java_moved': sum(1 for u in units if u.root == MAIN and u.path != u.new_path),
+    'test_java_moved': sum(1 for u in units if u.root == TEST and u.path != u.new_path),
+    'fqcn_moves': len(fqcn_map),
+}
+Path('/tmp/tideborne-package-ownership-summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(summary, indent=2))
+== changed paths summary ==
+ M .github/astra_delta_files.txt
+ M .github/prompt1_gap.txt
+ M .github/prompt1_gap_detail.txt
+ M .github/prompt1_newlines_applied.txt
+ M .github/prompt1_recovery_report2.txt
+ M .github/prompt1_verified_applied.txt
+ M AGENTS.md
+ M docs/ARCHITECTURE.md
+ M docs/CURRENT_STATE.md
+ M docs/FISHING_SYSTEM_2_REAL_BALANCE_REPORT.md
+ M docs/GEAR_PROGRESSION_AUDIT.md
+ M docs/INDEX.md
+ M docs/RECONSTRUCTION.md
+ M docs/TODO.md
+ M scripts/validate_repository.sh
+ M src/main/java/com/redslovesgames/tideborne/Tideborne.java
+ M src/main/java/com/redslovesgames/tideborne/api/TideborneFishingApi.java
+ M src/main/java/com/redslovesgames/tideborne/backend/TideborneBackend.java
+ M src/main/java/com/redslovesgames/tideborne/client/LeaderboardMetricFilter.java
+ M src/main/java/com/redslovesgames/tideborne/client/TideborneClient.java
+ M src/main/java/com/redslovesgames/tideborne/client/TideborneModMenu.java
+ M src/main/java/com/redslovesgames/tideborne/client/TideborneUnifiedConfigScreen.java
+ M src/main/java/com/redslovesgames/tideborne/client/render/TideborneRenderService.java
+ M src/main/java/com/redslovesgames/tideborne/client/ui/FishingUiFormat.java
+ M src/main/java/com/redslovesgames/tideborne/client/ui/FishingUiLayout.java
+ M src/main/java/com/redslovesgames/tideborne/command/FishingInspectCommand.java
+ M src/main/java/com/redslovesgames/tideborne/command/FishingRecoveryCommand.java
+ M src/main/java/com/redslovesgames/tideborne/command/FishingReproduceCommand.java
+ M src/main/java/com/redslovesgames/tideborne/command/HistoryBadgeBackfill.java
+ M src/main/java/com/redslovesgames/tideborne/command/HistoryBadgeMeta.java
+ M src/main/java/com/redslovesgames/tideborne/command/TideborneCommandUi.java
+ M src/main/java/com/redslovesgames/tideborne/command/TideborneCommands.java
+ M src/main/java/com/redslovesgames/tideborne/command/debug/FishingGearRegistryDebugCommand.java
+ M src/main/java/com/redslovesgames/tideborne/command/debug/SpecimenDebugCommand.java
+ M src/main/java/com/redslovesgames/tideborne/config/TideborneConfigBackend.java
+ M src/main/java/com/redslovesgames/tideborne/config/TideborneTraitsDraft.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/BodyTypeGenerator.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/CanonicalRarity.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/ConditionGenerator.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FightProfile.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FightProfileService.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FishScoreV2Service.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FishingContext.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FishingEnvironment.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FishingGearEffects.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FishingGearModifiers.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FishingGearRegistry.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/FreshWorldRegressionGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/LegacyFishMigrationService.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/LogNormalSizeDistribution.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/NoPhysicalSizeDistribution.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/NormalDistributionMath.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/PigmentationGenerator.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/SizeDistribution.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/SpeciesEligibility.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/SpeciesProfile.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/SpeciesSelectionService.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/SpecimenData.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/SpecimenGenerator.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/SpecimenQualityService.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/TideFishingLineModifiers.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/TraitLuckProbabilityService.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/TraitMomentumProgression.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/TraitMomentumState.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/TraitMomentumStorage.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/TraitProbabilityService.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/TraitRandom.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/debug/DeterministicSpecimenDebug.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/AnglersSatchelPersistenceGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/CanonicalFishingGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/FishDisplayPersistenceGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/FishingGearRegistryGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/OptionalCompatibilityRegressionGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/PigmentationGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/PigmentationRenderStateGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/RealTideBalanceGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/ApexWatersSpeciesProfileAdapter.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalCatchStateManager.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalEntityTransferGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalSpecimenRecordIndexer.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalSpecimenStorage.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalSpecimenStorageGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CatchSeedDeriver.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CrateFishProgressionBridge.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/CrateFishProgressionBridgeGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/JournalSpecimenNetworkCodec.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/JournalSpecimenStore.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/LegacyEntityBucketMigrationGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/LegacyFishRecoveryGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/LegacyFishRecoveryService.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/LegacyItemStackMigration.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/LegacyJournalPersistenceGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/LegacyPersistenceMigration.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/TideFishingContextAdapter.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/TideSpeciesProfileAdapter.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/integration/TideSpeciesSelectionBridge.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/simulation/FishingSimulator.java
+ D src/main/java/com/redslovesgames/tideborne/fishing/v2/simulation/RealTideFishingSimulator.java
+ M src/main/java/com/redslovesgames/tideborne/gametest/TideborneItemGroupsGameTests.java
+ D src/main/java/com/redslovesgames/tideborne/migration/TideborneMigrationManager.java
+ M src/main/java/com/redslovesgames/tideborne/presentation/CanonicalSpecimenPresentation.java
+ M src/main/java/com/redslovesgames/tideborne/registry/TideborneItemGroups.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/TideboundCompatibility.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/client/ClientTideboundSettings.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/client/TideboundClientConfig.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/client/TideboundCompatibilityClient.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/client/TideboundFishingHud.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/client/TideboundGuideScreen.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/client/TideboundModMenu.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/client/TideboundTooltips.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/compat/apex/ApexCompat.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/compat/apex/SharkFoodGoal.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/compat/apex/SharkScentManager.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/compat/apex/TideFishTargetGoal.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/config/TideboundConfig.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/entity/ChumProjectileEntity.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/AnglingTableLeaderSupport.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/BobberGearModifiers.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/FishingModifiers.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/LeaderAttachment.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/LeaderGearModifiers.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/LeaderTier.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/LeviathanBaitFishing.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/LeviathanBaitHook.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/LeviathanBaitRules.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/SharkCatchLoss.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/SteelLeaderAttachment.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/SteelLeaderGearModifiers.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/fishing/TideborneFishingGearModifiers.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/item/ChumBucketItem.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/item/KujiraBoneFishingRodItem.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/AnglingTableLeaderMixin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/AnglingTableScreenLeaderMixin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/CrateDataMixin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/FishCatchMinigameMixin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/FishSelectorMixin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/OptionalCompatMixinPlugin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/TideFishingHookMixin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/mixin/apex/GreatWhiteSharkMixin.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/network/SharkCatchLossPayload.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/network/TideboundSettingsPayload.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/network/TideboundSettingsResultPayload.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/network/TideboundSettingsUpdatePayload.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/registry/TideboundEntities.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/registry/TideboundItems.java
+ D src/main/java/com/redslovesgames/tideboundcompatibility/registry/TideboundTags.java
+ D src/main/java/com/redslovesgames/tideteamjournal/BobberBonuses.java
+ D src/main/java/com/redslovesgames/tideteamjournal/FishScoreComparator.java
+ D src/main/java/com/redslovesgames/tideteamjournal/JournalMerger.java
+ D src/main/java/com/redslovesgames/tideteamjournal/OwnedFishJournalBackfill.java
+ D src/main/java/com/redslovesgames/tideteamjournal/RecordHolderStore.java
+ D src/main/java/com/redslovesgames/tideteamjournal/RecoveredSpecimenRecordIndexer.java
+ D src/main/java/com/redslovesgames/tideteamjournal/RecoveredSpecimenRecordService.java
+ D src/main/java/com/redslovesgames/tideteamjournal/ServerConfig.java
+ D src/main/java/com/redslovesgames/tideteamjournal/StoredFishScoreStorage.java
+ D src/main/java/com/redslovesgames/tideteamjournal/TeamCanonicalJournalCapture.java
+ D src/main/java/com/redslovesgames/tideteamjournal/TeamJournalCatchBridge.java
+ D src/main/java/com/redslovesgames/tideteamjournal/TeamJournalService.java
+ D src/main/java/com/redslovesgames/tideteamjournal/TeamProgressStore.java
+ D src/main/java/com/redslovesgames/tideteamjournal/TideTeamJournal.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/CanonicalRecordDisplay.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/ClientConfig.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/ClientConfigScreen.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/ClientJournalSpecimens.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/ClientRecordFishMarkers.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/ClientRecordHolders.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/ClientServerSettings.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/ClientTeamData.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/RecordScoreboard.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/TeamRecordsScreen.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/TeamStatsComponent.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/TideJournalButton.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/TidePalette.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/TideTeamJournalClient.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/TideTextRenderer.java
+ D src/main/java/com/redslovesgames/tideteamjournal/client/TopFishScreen.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/ContributorCanonicalScorePayloadMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/RecordEventCanonicalScorePayloadMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/RecordHolderCanonicalJournalMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/RecordHolderNetworkProjectionMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/TeamProgressCanonicalJournalMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/TideFishingHookMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/TidePlayerDataMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/TideUtilsMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/TopFishCanonicalIndexMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/client/FishProfileMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/client/FishingJournalMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/client/GuiGraphicsMixin.java
+ D src/main/java/com/redslovesgames/tideteamjournal/mixin/client/ScreenAccessor.java
+ D src/main/java/com/redslovesgames/tideteamjournal/network/BobberSettingsPayload.java
+ D src/main/java/com/redslovesgames/tideteamjournal/network/OpenTeamRecordsPayload.java
+ D src/main/java/com/redslovesgames/tideteamjournal/network/RecordEventPayload.java
+ D src/main/java/com/redslovesgames/tideteamjournal/network/RecordHoldersPayload.java
+ D src/main/java/com/redslovesgames/tideteamjournal/network/TeamDataPayload.java
+ D src/main/java/com/redslovesgames/tideteamjournal/network/TeamDataRequestPayload.java
+ D src/main/java/com/redslovesgames/tidetraits/TideTraits.java
+ D src/main/java/com/redslovesgames/tidetraits/catching/CatchTraitService.java
+ D src/main/java/com/redslovesgames/tidetraits/catching/PerfectCatchTraitBoost.java
+ D src/main/java/com/redslovesgames/tidetraits/client/TideTraitsClient.java
+ D src/main/java/com/redslovesgames/tidetraits/client/gui/journal/DiscoveryBadgesComponent.java
+ D src/main/java/com/redslovesgames/tidetraits/client/gui/journal/JournalRenderContext.java
+ D src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/AnglersSatchelScreen.java
+ D src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/SatchelClientNetworking.java
+ D src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/SatchelSpecimenDisplay.java
+ D src/main/java/com/redslovesgames/tidetraits/client/render/MutationRendering.java
+ D src/main/java/com/redslovesgames/tidetraits/client/render/MutationTextureCache.java
+ D src/main/java/com/redslovesgames/tidetraits/command/CommandInputs.java
+ D src/main/java/com/redslovesgames/tidetraits/command/TideTraitsCommands.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/MultiplayerDiscoveryClient.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/MultiplayerDiscoveryCompat.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/PersonalTideJournal.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/ReflectiveFtbTeamsBridge.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/SharedDiscoveryAvailability.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/SharedDiscoveryNbt.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/SharedDiscoveryRequestPayload.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/SharedDiscoverySnapshot.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/SharedDiscoverySyncPayload.java
+ D src/main/java/com/redslovesgames/tidetraits/compat/multiplayer/WarningThrottle.java
+ D src/main/java/com/redslovesgames/tidetraits/component/TideTraitsComponents.java
+ D src/main/java/com/redslovesgames/tidetraits/config/TideTraitsConfig.java
+ D src/main/java/com/redslovesgames/tidetraits/config/TideTraitsConfigManager.java
+ D src/main/java/com/redslovesgames/tidetraits/discovery/DiscoveryClient.java
+ D src/main/java/com/redslovesgames/tidetraits/discovery/DiscoveryManager.java
+ D src/main/java/com/redslovesgames/tidetraits/discovery/DiscoveryNbt.java
+ D src/main/java/com/redslovesgames/tidetraits/discovery/DiscoverySnapshot.java
+ D src/main/java/com/redslovesgames/tidetraits/discovery/DiscoverySyncPayload.java
+ D src/main/java/com/redslovesgames/tidetraits/discovery/DiscoveryTotals.java
+ D src/main/java/com/redslovesgames/tidetraits/entity/SpecimenEntity.java
+ D src/main/java/com/redslovesgames/tidetraits/entity/SpecimenTransfer.java
+ D src/main/java/com/redslovesgames/tidetraits/fish/EmpiricalFishDistribution.java
+ D src/main/java/com/redslovesgames/tidetraits/fish/FishDescriptor.java
+ D src/main/java/com/redslovesgames/tidetraits/fish/FishDescriptorManager.java
+ D src/main/java/com/redslovesgames/tidetraits/fish/FishPercentileService.java
+ D src/main/java/com/redslovesgames/tidetraits/fish/FishSizeClass.java
+ D src/main/java/com/redslovesgames/tidetraits/fish/SnapshotParentResolver.java
+ D src/main/java/com/redslovesgames/tidetraits/fish/SpecimenSizeService.java
+ D src/main/java/com/redslovesgames/tidetraits/gametest/LegacySizeGenerationGameTests.java
+ D src/main/java/com/redslovesgames/tidetraits/gametest/TideTraitsGameTests.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/AnglersSatchelRecipeMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/ApplyFishEntityLengthFunctionMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/BucketableMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/FishDisplayPersistenceMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/MobBucketItemMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/MobSpecimenMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/TideFishingHookMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/TideItemBucketMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/TidePlayerDataMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/TideTeamJournalServiceMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/FishDisplayBlockEntityMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/FishProfileSizeRangeMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/ItemRendererMutationTintMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/ItemStackMutationTooltipMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/LivingEntityRendererMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/MinecraftMutationRenderingMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/TideFishProfileMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/mixin/client/TideFishRendererMixin.java
+ D src/main/java/com/redslovesgames/tidetraits/resource/TextureCacheLimits.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/AnglersSatchelItem.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/AnglersSatchelRecipeSupport.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/AnglersSatchelStorage.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/AtomicXpTransaction.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelAutomaticProtection.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelCapacity.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelCapacityLevel.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelFeature.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelInsertionPlan.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelProtectionPolicy.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelProtectionRule.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelPurchaseResult.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelPurchaseService.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelRegistration.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelService.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelSortConfiguration.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelSortDescriptor.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelSortDirection.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelSortKey.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelSortRule.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelSorter.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelState.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/SatchelTraitSortData.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/TideSatchelSortMetadataResolver.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/PersonalRecordView.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelFeatureView.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelNetworkStatus.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelNetworking.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelRequestPayload.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelRequestValidator.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelView.java
+ D src/main/java/com/redslovesgames/tidetraits/satchel/network/SatchelViewPayload.java
+ D src/main/java/com/redslovesgames/tidetraits/trait/DeterministicValues.java
+ D src/main/java/com/redslovesgames/tidetraits/trait/FishMutation.java
+ D src/main/java/com/redslovesgames/tidetraits/trait/MutationSelector.java
+ D src/main/java/com/redslovesgames/tidetraits/trait/SpecimenData.java
+ D src/main/java/com/redslovesgames/tidetraits/trait/TraitAxesRuntime.java
+ M src/main/resources/fabric.mod.json
+ M src/main/resources/tide_team_journal.mixins.json
+ M src/main/resources/tide_traits.client.mixins.json
+ M src/main/resources/tide_traits.mixins.json
+ M src/main/resources/tidebound_compatibility.apex.mixins.json
+ M src/main/resources/tidebound_compatibility.mixins.json
+ M src/test/java/com/redslovesgames/tideborne/api/TideborneFishingApiTest.java
+ M src/test/java/com/redslovesgames/tideborne/architecture/LegacyCleanupArchitectureTest.java
+ M src/test/java/com/redslovesgames/tideborne/assets/LeaderTextureParityTest.java
+ M src/test/java/com/redslovesgames/tideborne/client/ui/CanonicalPresentationConsumerSourceTest.java
+ M src/test/java/com/redslovesgames/tideborne/client/ui/FishingUiFormatTest.java
+ M src/test/java/com/redslovesgames/tideborne/client/ui/FishingUiLayoutTest.java
+ M src/test/java/com/redslovesgames/tideborne/client/ui/FishingUiSourceSafetyTest.java
+ M src/test/java/com/redslovesgames/tideborne/client/ui/ItemStackTooltipPresentationSourceTest.java
+ M src/test/java/com/redslovesgames/tideborne/command/FishingInspectPresentationSourceTest.java
+ M src/test/java/com/redslovesgames/tideborne/command/HistoryBadgeMetaCanonicalTest.java
+ M src/test/java/com/redslovesgames/tideborne/command/TideborneCommandsRedirectTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/BodyTypeGeneratorTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/CanonicalRarityTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/ConditionGeneratorTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/FightProfileServiceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/FishScoreV2ServiceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/FishingContextTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/FishingGearBalanceMatrixTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/FishingGearModifiersTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/FishingGearRegistryStackingTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/FishingGearRegistryTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/LegacyFishMigrationServiceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/LegacyFishScoreRemovalTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/LegacySpeciesFightRemovalTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/LeviathanBaitCatchPoolTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/LeviathanBaitModifiersTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/LogNormalSizeDistributionTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/NoPhysicalSizeDistributionTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/PerfectCatchBodyTypeTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/PigmentationGeneratorTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/ServerAuthorityPayloadTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/SpeciesSelectionServiceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/SpecimenFishScorePersistenceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/SpecimenGeneratorTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/SpecimenQualityServiceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/SteelLeaderGearModifiersTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/TideFishingLineModifiersTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/TideborneFishingGearModifiersTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/TraitLuckProbabilityServiceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/TraitMomentumProgressionTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/TraitMomentumStateTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/TraitProbabilityServiceTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/TraitRandomTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/debug/DeterministicSpecimenDebugTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/ApexWatersSpeciesProfileAdapterTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalCatchStateManagerTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalSpecimenRecordIndexerTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/CanonicalSpecimenStorageTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/CatchSeedDeriverTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/JournalSpecimenNetworkCodecTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/JournalSpecimenStoreTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/LegacyJournalMigrationTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/integration/TideSpeciesProfileAdapterTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/simulation/FishingBalanceSimulationTest.java
+ D src/test/java/com/redslovesgames/tideborne/fishing/v2/simulation/FishingSimulatorTest.java
+ M src/test/java/com/redslovesgames/tideborne/presentation/CanonicalSpecimenPresentationTest.java
+ D src/test/java/com/redslovesgames/tideboundcompatibility/TideboundCompatibilityCommandTest.java
+ D src/test/java/com/redslovesgames/tideteamjournal/MixinReductionArchitectureTest.java
+ D src/test/java/com/redslovesgames/tideteamjournal/RecoveredSpecimenRecordIndexerTest.java
+ D src/test/java/com/redslovesgames/tideteamjournal/StoredFishScoreStorageTest.java
+ D src/test/java/com/redslovesgames/tideteamjournal/client/CanonicalJournalDisplayTest.java
+ D src/test/java/com/redslovesgames/tideteamjournal/client/TeamRecordsPresentationSourceTest.java
+ D src/test/java/com/redslovesgames/tidetraits/client/gui/satchel/SatchelSpecimenDisplayTest.java
+?? .github/prompt1_migration_report.txt
+?? src/main/java/com/redslovesgames/tideborne/command/CommandInputs.java
+?? src/main/java/com/redslovesgames/tideborne/command/TideTraitsCommands.java
+?? src/main/java/com/redslovesgames/tideborne/compat/
+?? src/main/java/com/redslovesgames/tideborne/config/TideTraitsConfig.java
+?? src/main/java/com/redslovesgames/tideborne/config/TideTraitsConfigManager.java
+?? src/main/java/com/redslovesgames/tideborne/config/TideboundConfig.java
+?? src/main/java/com/redslovesgames/tideborne/discovery/
+?? src/main/java/com/redslovesgames/tideborne/ecosystem/
+?? src/main/java/com/redslovesgames/tideborne/fishing/ApexWatersSpeciesProfileAdapter.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/FightProfile.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/FightProfileService.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/FishingContext.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/FishingEnvironment.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/SpeciesEligibility.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/SpeciesProfile.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/SpeciesSelectionService.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/TideTraits.java
+?? src/main/java/com/redslovesgames/tideborne/fishing/debug/
+?? src/main/java/com/redslovesgames/tideborne/fishing/gametest/
+?? src/main/java/com/redslovesgames/tideborne/fishing/gear/
+?? src/main/java/com/redslovesgames/tideborne/fishing/simulation/
+?? src/main/java/com/redslovesgames/tideborne/fishing/specimen/
+?? src/main/java/com/redslovesgames/tideborne/fishing/tide/
+?? src/main/java/com/redslovesgames/tideborne/journal/
+?? src/main/java/com/redslovesgames/tideborne/migration/legacy/
+?? src/main/java/com/redslovesgames/tideborne/mixin/
+?? src/main/java/com/redslovesgames/tideborne/network/
+?? src/main/java/com/redslovesgames/tideborne/presentation/client/
+?? src/main/java/com/redslovesgames/tideborne/presentation/render/
+?? src/main/java/com/redslovesgames/tideborne/presentation/resource/
+?? src/main/java/com/redslovesgames/tideborne/registry/TideTraitsComponents.java
+?? src/main/java/com/redslovesgames/tideborne/registry/TideboundEntities.java
+?? src/main/java/com/redslovesgames/tideborne/registry/TideboundItems.java
+?? src/main/java/com/redslovesgames/tideborne/registry/TideboundTags.java
+?? src/main/java/com/redslovesgames/tideborne/satchel/
+?? src/test/java/com/redslovesgames/tideborne/architecture/JavaPackageOwnershipArchitectureTest.java
+?? src/test/java/com/redslovesgames/tideborne/compat/
+?? src/test/java/com/redslovesgames/tideborne/fishing/ApexWatersSpeciesProfileAdapterTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/FightProfileServiceTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/FishingContextTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/FishingGearBalanceMatrixTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/FishingGearRegistryStackingTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/LegacyFishScoreRemovalTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/LegacySpeciesFightRemovalTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/LeviathanBaitCatchPoolTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/LeviathanBaitModifiersTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/PerfectCatchBodyTypeTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/ServerAuthorityPayloadTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/SpeciesSelectionServiceTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/SpecimenFishScorePersistenceTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/SteelLeaderGearModifiersTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/TideborneFishingGearModifiersTest.java
+?? src/test/java/com/redslovesgames/tideborne/fishing/debug/
+?? src/test/java/com/redslovesgames/tideborne/fishing/gear/
+?? src/test/java/com/redslovesgames/tideborne/fishing/simulation/
+?? src/test/java/com/redslovesgames/tideborne/fishing/specimen/
+?? src/test/java/com/redslovesgames/tideborne/fishing/tide/
+?? src/test/java/com/redslovesgames/tideborne/journal/
+?? src/test/java/com/redslovesgames/tideborne/migration/
+?? src/test/java/com/redslovesgames/tideborne/satchel/

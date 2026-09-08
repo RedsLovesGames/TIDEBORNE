@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Java package ownership guard
+if grep -R -n -E --include='*.java' '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java; then
+    echo 'Historical Java package ownership remains in active production source.' >&2
+    exit 1
+fi
+if find src/main/java/com/redslovesgames/tideborne/fishing -type d -path '*/v2' -print -quit 2>/dev/null | grep -q .; then
+    echo 'Fishing v2 source path remains in active production source.' >&2
+    exit 1
+fi
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
