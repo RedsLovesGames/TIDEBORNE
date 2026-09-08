@@ -1,0 +1,114 @@
+name: One-shot Tideborne package ownership cleanup v2
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/package-ownership-cleanup-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Guard dev only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/dev"
+          test "$(git branch --show-current)" = "dev"
+          git fetch origin dev
+          test "$(git rev-parse origin/dev)" = "$GITHUB_SHA"
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+
+      - name: Fetch exact external compile dependencies
+        run: bash scripts/fetch_ci_dependencies.sh
+
+      - name: Run corrected ownership migration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path('.github/workflows/package-ownership-cleanup.yml').read_text(encoding='utf-8')
+          start = workflow.index("          python3 - <<'PY'\n") + len("          python3 - <<'PY'\n")
+          end = workflow.index("\n          PY\n", start)
+          lines = workflow[start:end].splitlines()
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in lines) + '\n'
+
+          old = '''        if tail == "trait" or tail.startswith("trait."):\n            suffix = tail[len("trait"):]\n            return "com.redslovesgames.tideborne.fishing.specimen" + suffix'''
+          new = '''        if tail == "trait" or tail.startswith("trait."):\n            suffix = tail[len("trait"):]\n            return "com.redslovesgames.tideborne.fishing.specimen.legacy" + suffix'''
+          if old not in script:
+              raise SystemExit('Could not patch historical Tide Traits trait ownership')
+          script = script.replace(old, new, 1)
+          Path('/tmp/package_migration.py').write_text(script, encoding='utf-8')
+          PY
+          python3 /tmp/package_migration.py
+
+      - name: Structural validation
+        run: ./scripts/validate_repository.sh
+
+      - name: Unit and architecture tests
+        run: ./gradlew test --stacktrace
+
+      - name: GameTests without optional mods
+        run: ./gradlew runGametest --stacktrace
+
+      - name: GameTests with Apex Waters
+        run: ./gradlew runGametest -PincludeApexRuntime=true --stacktrace
+
+      - name: GameTests with Myths of the Sea
+        run: ./gradlew runGametest -PincludeMythsRuntime=true --stacktrace
+
+      - name: GameTests with Apex Waters and Myths of the Sea
+        run: ./gradlew runGametest -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
+
+      - name: Dedicated-server smoke
+        run: ./scripts/dedicated_server_smoke.sh
+
+      - name: Authoritative Java 21 build
+        run: ./gradlew clean build --stacktrace
+
+      - name: Validate release artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F= '$1 == "mod_version" {print $2}' gradle.properties | tr -d '[:space:]')"
+          ./scripts/validate_release_artifact.sh "build/libs/tideborne-${version}.jar"
+
+      - name: Commit validated cleanup to dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat /tmp/tideborne-package-cleanup-summary.json
+          git fetch origin dev
+          test "$(git rev-parse origin/dev)" = "$GITHUB_SHA"
+          rm .github/workflows/package-ownership-cleanup.yml
+          rm .github/workflows/package-ownership-cleanup-v2.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git status --short
+          git diff --cached --check
+          git commit -m "refactor: unify Tideborne Java package ownership"
+          git push origin HEAD:dev
