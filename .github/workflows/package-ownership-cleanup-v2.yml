@@ -61,6 +61,13 @@ jobs:
           if old not in script:
               raise SystemExit('Could not patch historical Tide Traits trait ownership')
           script = script.replace(old, new, 1)
+
+          old_no_type = '''    pm = package_re.search(text)\n    tm = type_re.search(text)\n    if not pm or not tm:\n        continue\n    old_pkg = pm.group(1)\n    cls = tm.group(1)'''
+          new_no_type = '''    pm = package_re.search(text)\n    tm = type_re.search(text)\n    if not pm:\n        continue\n    old_pkg = pm.group(1)\n    cls = tm.group(1) if tm else path.stem'''
+          if old_no_type not in script:
+              raise SystemExit('Could not patch package-only Java source handling')
+          script = script.replace(old_no_type, new_no_type, 1)
+
           Path('/tmp/package_migration.py').write_text(script, encoding='utf-8')
           PY
           python3 /tmp/package_migration.py
