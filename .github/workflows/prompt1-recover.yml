@@ -21,6 +21,8 @@ jobs:
       - name: Tolerant recovery
         shell: bash
         run: |
+          set +e
+          set +o pipefail
           set -u
           report=.github/prompt1_recovery_report2.txt
           : > "$report"; mkdir -p /tmp/textpayload /tmp/partial
