@@ -1,0 +1,45 @@
+== source counts before ==
+prod_java=281
+test_java=63
+== run ==
+{
+  "production_java_total": 281,
+  "test_java_total": 64,
+  "production_java_moved": 256,
+  "test_java_moved": 51,
+  "fqcn_moves": 307
+}
+rc=0
+== source counts after ==
+prod_java=281
+test_java=64
+== changed count ==
+110
+== missing Astra Java paths ==
+src/main/java/com/redslovesgames/tideborne/fishing/v2/gametest/GearArchetypeCases.java
+src/main/java/com/redslovesgames/tidetraits/client/gui/satchel/SatchelTackleScreen.java
+src/main/java/com/redslovesgames/tidetraits/satchel/SatchelGearSummary.java
+src/main/java/com/redslovesgames/tidetraits/satchel/SatchelLoadouts.java
+src/main/java/com/redslovesgames/tidetraits/satchel/SatchelPreset.java
+src/main/java/com/redslovesgames/tidetraits/satchel/SatchelTackleExchange.java
+src/main/java/com/redslovesgames/tidetraits/satchel/SatchelTackleHandler.java
+src/main/java/com/redslovesgames/tidetraits/satchel/network/TackleRenamePayload.java
+src/main/java/com/redslovesgames/tidetraits/satchel/network/TackleViewPayload.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/FrozenBobbersTest.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/FrozenGearArchitectureTest.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/FrozenHooksAndBaitTest.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/FrozenLeadersAndLeviathanTest.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/FrozenRodsAndLinesTest.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/GearArchetypeConvergenceTest.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/simulation/FishingSimulator.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/simulation/PostGearBalanceReport.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/simulation/PostGearBalanceScenarios.java
+src/test/java/com/redslovesgames/tideborne/fishing/v2/simulation/PostGearBalanceTest.java
+src/test/java/com/redslovesgames/tideteamjournal/BobberConfigMigrationTest.java
+src/test/java/com/redslovesgames/tideteamjournal/PhysicalSizeRecordComparisonTest.java
+src/test/java/com/redslovesgames/tideteamjournal/RecordHolderProjectionTest.java
+src/test/java/com/redslovesgames/tideteamjournal/TeamProgressStoreTest.java
+src/test/java/com/redslovesgames/tidetraits/fish/FishPercentileServiceTest.java
+src/test/java/com/redslovesgames/tidetraits/satchel/SatchelGearSummaryTest.java
+src/test/java/com/redslovesgames/tidetraits/satchel/SatchelLoadoutStateTest.java
+src/test/java/com/redslovesgames/tidetraits/satchel/SatchelPresetNameTest.java
