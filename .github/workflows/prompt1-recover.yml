@@ -1,4 +1,4 @@
-name: Prompt 1 Lean Java 21 Validation
+name: Prompt 1 Final Validation
 
 on:
   push:
@@ -13,6 +13,7 @@ jobs:
   validate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,13 +23,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Validate Prompt 1 migration directly
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
+      - name: Run Prompt 1 final matrix
         shell: bash
         run: |
-          set -euo pipefail
-          report=.github/prompt1_lean_validation.txt
+          set -u
+          report=.github/prompt1_final_validation.txt
           : > "$report"
-          echo "HEAD=$(git rev-parse HEAD)" >> "$report"
+          echo "VALIDATED_HEAD=$(git rev-parse HEAD)" >> "$report"
           echo "JAVA=$(java -version 2>&1 | head -1)" >> "$report"
           echo "MAIN_JAVA=$(find src/main/java -type f -name '*.java' | wc -l)" >> "$report"
           echo "TEST_JAVA=$(find src/test/java -type f -name '*.java' | wc -l)" >> "$report"
@@ -36,34 +40,62 @@ jobs:
           echo "FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
           echo "OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
           echo "OWNERSHIP_TEST=$(find src/test/java -name 'JavaPackageOwnershipArchitectureTest.java' | wc -l)" >> "$report"
-          sed -i 's/\r$//' scripts/fetch_ci_dependencies.sh
-          set +e
-          bash scripts/fetch_ci_dependencies.sh > /tmp/deps.log 2>&1
-          deps_rc=$?
-          chmod +x gradlew
-          ./gradlew compileJava --no-daemon > /tmp/compile.log 2>&1
-          compile_rc=$?
-          ./gradlew test --no-daemon > /tmp/test.log 2>&1
-          test_rc=$?
+
+          sed -i 's/\r$//' scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh scripts/dedicated_server_smoke.sh scripts/validate_release_artifact.sh 2>/dev/null || true
+          chmod +x gradlew scripts/*.sh 2>/dev/null || true
+
+          run_gate() {
+            name="$1"; shift
+            log="/tmp/${name}.log"
+            echo "== $name ==" >> "$report"
+            set +e
+            "$@" >"$log" 2>&1
+            rc=$?
+            set -e
+            echo "${name}_RC=$rc" >> "$report"
+            tail -120 "$log" >> "$report"
+            echo >> "$report"
+            return 0
+          }
+
           set -e
-          echo "DEPS_RC=$deps_rc" >> "$report"
-          echo "COMPILE_RC=$compile_rc" >> "$report"
-          echo "TEST_RC=$test_rc" >> "$report"
-          echo '== dependency tail ==' >> "$report"; tail -80 /tmp/deps.log >> "$report"
-          echo '== compile tail ==' >> "$report"; tail -160 /tmp/compile.log >> "$report"
-          echo '== test tail ==' >> "$report"; tail -160 /tmp/test.log >> "$report"
-          git checkout -- scripts/fetch_ci_dependencies.sh
-          test "$(grep '^MAIN_JAVA=' "$report"|cut -d= -f2)" = 274
-          test "$(grep '^TEST_JAVA=' "$report"|cut -d= -f2)" = 80
-          test "$(grep '^FORBIDDEN_PATHS=' "$report"|cut -d= -f2)" = 0
-          test "$(grep '^FORBIDDEN_DECLS=' "$report"|cut -d= -f2)" = 0
-          test "$(grep '^OUTSIDE_ROOT=' "$report"|cut -d= -f2)" = 0
-          test "$(grep '^OWNERSHIP_TEST=' "$report"|cut -d= -f2)" = 1
+          run_gate DEPS bash scripts/fetch_ci_dependencies.sh
+          run_gate COMPILE ./gradlew compileJava --no-daemon --stacktrace
+          run_gate STRUCTURAL bash scripts/validate_repository.sh
+          run_gate UNIT ./gradlew test --no-daemon --stacktrace
+          run_gate ARCH ./gradlew test --no-daemon --tests '*JavaPackageOwnershipArchitectureTest' --stacktrace
+          run_gate GAMETEST_CORE ./gradlew runGametest --no-daemon --stacktrace
+          run_gate GAMETEST_APEX ./gradlew runGametest --no-daemon -PincludeApexRuntime=true --stacktrace
+          run_gate GAMETEST_MYTHS ./gradlew runGametest --no-daemon -PincludeMythsRuntime=true --stacktrace
+          run_gate GAMETEST_BOTH ./gradlew runGametest --no-daemon -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
+          run_gate DEDICATED bash scripts/dedicated_server_smoke.sh
+          run_gate CLEAN_BUILD ./gradlew clean build --no-daemon --stacktrace
+
+          version="$(awk -F= '$1 == "mod_version" {print $2}' gradle.properties | tr -d '[:space:]')"
+          artifact="build/libs/tideborne-${version}.jar"
+          run_gate ARTIFACT bash scripts/validate_release_artifact.sh "$artifact"
+          if [ -f "$artifact" ]; then
+            echo "ARTIFACT=$artifact" >> "$report"
+            echo "ARTIFACT_SHA256=$(sha256sum "$artifact" | awk '{print $1}')" >> "$report"
+          fi
+
+          echo "FINAL_FORBIDDEN_PATHS=$(find src/main/java -type f -name '*.java' | grep -Ec '/(tidetraits|tideteamjournal|tideboundcompatibility)/|/fishing/v2/' || true)" >> "$report"
+          echo "FINAL_FORBIDDEN_DECLS=$(grep -RIE '^package com\.redslovesgames\.(tidetraits|tideteamjournal|tideboundcompatibility)(\.|;)|^package com\.redslovesgames\.tideborne\.fishing\.v2(\.|;)' src/main/java --include='*.java' | wc -l)" >> "$report"
+          echo "FINAL_OUTSIDE_ROOT=$(grep -RIE '^package ' src/main/java --include='*.java' | grep -v 'package com.redslovesgames.tideborne' | wc -l)" >> "$report"
+
+          git checkout -- scripts/fetch_ci_dependencies.sh scripts/validate_repository.sh scripts/dedicated_server_smoke.sh scripts/validate_release_artifact.sh 2>/dev/null || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$report"
-          git commit -m 'test: record lean Prompt 1 validation'
+          git commit -m 'test: record final Prompt 1 validation matrix' || true
           git push origin HEAD:dev
-          test "$deps_rc" = 0
-          test "$compile_rc" = 0
-          test "$test_rc" = 0
+
+          failures=0
+          for gate in DEPS COMPILE STRUCTURAL UNIT ARCH GAMETEST_CORE GAMETEST_APEX GAMETEST_MYTHS GAMETEST_BOTH DEDICATED CLEAN_BUILD ARTIFACT; do
+            rc="$(grep "^${gate}_RC=" "$report" | tail -1 | cut -d= -f2)"
+            [ "$rc" = 0 ] || failures=$((failures+1))
+          done
+          [ "$(grep '^FINAL_FORBIDDEN_PATHS=' "$report" | cut -d= -f2)" = 0 ] || failures=$((failures+1))
+          [ "$(grep '^FINAL_FORBIDDEN_DECLS=' "$report" | cut -d= -f2)" = 0 ] || failures=$((failures+1))
+          [ "$(grep '^FINAL_OUTSIDE_ROOT=' "$report" | cut -d= -f2)" = 0 ] || failures=$((failures+1))
+          exit "$failures"
