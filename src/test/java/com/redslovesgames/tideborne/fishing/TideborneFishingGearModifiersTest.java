@@ -1,14 +1,16 @@
 package com.redslovesgames.tideborne.fishing;
 
-import com.redslovesgames.tideborne.fishing.gear.FishingGearEffects;
-import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.redslovesgames.tideborne.config.TideboundConfig;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearEffects;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry;
 import com.redslovesgames.tideborne.fishing.gear.LeaderGearModifiers;
 import com.redslovesgames.tideborne.fishing.gear.LeaderTier;
 import com.redslovesgames.tideborne.fishing.gear.TideborneFishingGearModifiers;
+import com.redslovesgames.tideborne.fishing.specimen.CanonicalRarity;
+import com.redslovesgames.tideborne.fishing.specimen.LogNormalSizeDistribution;
 import org.junit.jupiter.api.Test;
 
 class TideborneFishingGearModifiersTest {
@@ -55,44 +57,40 @@ class TideborneFishingGearModifiersTest {
     void sharkToothHookUsesRebalancedIndependentTagMultipliers() {
         TideboundConfig.Values config = new TideboundConfig.Values();
 
-        assertEquals(2.0D, FishingGearEffects.fishWeightMultiplier(
-                TideborneFishingGearModifiers.sharkToothHook(true, true, false, config)), 1.0e-12);
-        assertEquals(0.45D, FishingGearEffects.fishWeightMultiplier(
-                TideborneFishingGearModifiers.sharkToothHook(true, false, true, config)), 1.0e-12);
-        assertEquals(0.90D, FishingGearEffects.fishWeightMultiplier(
-                TideborneFishingGearModifiers.sharkToothHook(true, true, true, config)), 1.0e-12);
-        assertEquals(1.0D, FishingGearEffects.fishWeightMultiplier(
-                TideborneFishingGearModifiers.sharkToothHook(true, false, false, config)), 1.0e-12);
+        assertEquals(2.0D, weight(TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK, false, config.enableApexCompat, config.enableMythsCompat, config), "heavy"), 1.0e-12);
+        assertEquals(0.45D, weight(TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK, false, config.enableApexCompat, config.enableMythsCompat, config), "very_small"), 1.0e-12);
+        assertEquals(0.90D, weight(TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK, false, config.enableApexCompat, config.enableMythsCompat, config), "heavy", "very_small"), 1.0e-12);
+        assertEquals(1.0D, weight(TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK, false, config.enableApexCompat, config.enableMythsCompat, config)), 1.0e-12);
     }
 
     @Test
     void seafarerAndKujiraUseRebalancedWeightModifiers() {
         TideboundConfig.Values config = new TideboundConfig.Values();
 
-        FishingGearModifiers seafarer = TideborneFishingGearModifiers.seafarersHook(true, true, config);
-        FishingGearModifiers kujira = TideborneFishingGearModifiers.kujiraRod(true, true, config);
+        FishingGearModifiers seafarer = TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SEAFARERS_HOOK, true, config.enableApexCompat, config.enableMythsCompat, config);
+        FishingGearModifiers kujira = TideborneFishingGearModifiers.rod(FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD, config.enableMythsCompat);
 
-        assertEquals(1.35D, FishingGearEffects.fishWeightMultiplier(seafarer), 1.0e-12);
-        assertEquals(1.30D, FishingGearEffects.crateWeightMultiplier(kujira), 1.0e-12);
+        assertEquals(1.35D, weight(seafarer, "legendary"), 1.0e-12);
+        assertEquals(0.70D, FishingGearEffects.crateWeightMultiplier(kujira), 1.0e-12);
         assertIdentityFightAndLuckAxes(seafarer);
-        assertIdentityFightAndLuckAxes(kujira);
+        assertEquals(0.88D, kujira.strengthMultiplier(), 1.0e-12);
     }
 
     @Test
     void inactiveOrIneligibleCustomGearIsNeutral() {
         TideboundConfig.Values config = new TideboundConfig.Values();
 
-        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.sharkToothHook(false, true, true, config));
-        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.seafarersHook(true, false, config));
-        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.kujiraRod(true, false, config));
+        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.hookTargets(null, false, config.enableApexCompat, config.enableMythsCompat, config));
+        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SEAFARERS_HOOK, false, config.enableApexCompat, config.enableMythsCompat, config));
+        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.rod(FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD, false));
 
         config.enableMythsCompat = false;
         config.enableApexCompat = false;
         assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.tentacleLine(config));
         assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.swiftLine(config));
-        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.sharkToothHook(true, true, true, config));
-        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.seafarersHook(true, true, config));
-        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.kujiraRod(true, true, config));
+        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SHARK_TOOTH_HOOK, false, config.enableApexCompat, config.enableMythsCompat, config));
+        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SEAFARERS_HOOK, true, config.enableApexCompat, config.enableMythsCompat, config));
+        assertEquals(FishingGearModifiers.neutral(), TideborneFishingGearModifiers.rod(FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD, config.enableMythsCompat));
     }
 
     @Test
@@ -107,18 +105,18 @@ class TideborneFishingGearModifiersTest {
         FishingGearModifiers combined = FishingGearModifiers.compose(
                 luck,
                 TideborneFishingGearModifiers.tentacleLine(config),
-                TideborneFishingGearModifiers.seafarersHook(true, true, config),
-                TideborneFishingGearModifiers.kujiraRod(true, true, config)
+                TideborneFishingGearModifiers.hookTargets(FishingGearRegistry.GearProfile.SEAFARERS_HOOK, true, config.enableApexCompat, config.enableMythsCompat, config),
+                TideborneFishingGearModifiers.rod(FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD, config.enableMythsCompat)
         );
 
         assertEquals(15.0D, combined.fishingLuck(), 1.0e-12);
         assertEquals(7.0D, combined.traitLuck(), 1.0e-12);
-        assertEquals(1.10D, combined.strengthMultiplier(), 1.0e-12);
-        assertEquals(0.95D, combined.tempoMultiplier(), 1.0e-12);
+        assertEquals(1.10D * 0.88D, combined.strengthMultiplier(), 1.0e-12);
+        assertEquals(0.95D * 1.10D, combined.tempoMultiplier(), 1.0e-12);
         assertEquals(1.32D, FishingGearEffects.catchZoneAreaMultiplier(combined), 1.0e-12);
         assertEquals(1.16D, FishingGearEffects.minigameSpeedMultiplier(combined), 1.0e-12);
-        assertEquals(1.35D, FishingGearEffects.fishWeightMultiplier(combined), 1.0e-12);
-        assertEquals(1.30D, FishingGearEffects.crateWeightMultiplier(combined), 1.0e-12);
+        assertEquals(1.35D, weight(combined, "legendary"), 1.0e-12);
+        assertEquals(0.70D, FishingGearEffects.crateWeightMultiplier(combined), 1.0e-12);
     }
 
     private static void assertIdentityFightAndLuckAxes(FishingGearModifiers modifiers) {
@@ -126,5 +124,10 @@ class TideborneFishingGearModifiersTest {
         assertEquals(0.0D, modifiers.traitLuck(), 1.0e-12);
         assertEquals(1.0D, modifiers.strengthMultiplier(), 1.0e-12);
         assertEquals(1.0D, modifiers.tempoMultiplier(), 1.0e-12);
+    }
+    private static double weight(FishingGearModifiers gear, String... tags) {
+        var species = new SpeciesProfile("tide:target_fixture", CanonicalRarity.FIVE_STAR, 1, SpeciesEligibility.always(),
+                1, 1, "steady", new LogNormalSizeDistribution(25, .4), java.util.Set.of(), java.util.Map.of(), java.util.Set.of(tags));
+        return FishingGearEffects.targetWeightMultiplier(species, FishingEnvironment.empty(), gear);
     }
 }
