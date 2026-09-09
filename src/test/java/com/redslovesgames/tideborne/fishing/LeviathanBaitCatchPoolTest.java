@@ -1,11 +1,10 @@
 package com.redslovesgames.tideborne.fishing;
 
-import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.gear.LeviathanBaitRules;
 import com.redslovesgames.tideborne.fishing.gear.TideborneFishingGearModifiers;
 import java.util.Set;
@@ -14,8 +13,20 @@ import org.junit.jupiter.api.Test;
 
 class LeviathanBaitCatchPoolTest {
     @Test
+    void emptyFishResultDoesNotRetryOrConsumeTheNormalSelector() {
+        AtomicInteger fishCalls = new AtomicInteger();
+        AtomicInteger normalCalls = new AtomicInteger();
+        String result = LeviathanBaitRules.selectCatch(TideborneFishingGearModifiers.leviathanBait(true),
+                () -> { normalCalls.incrementAndGet(); return "fallback"; },
+                () -> { fishCalls.incrementAndGet(); return null; });
+        org.junit.jupiter.api.Assertions.assertNull(result);
+        assertEquals(1, fishCalls.get());
+        assertEquals(0, normalCalls.get());
+    }
+
+    @Test
     void activeLeviathanBaitRestrictsCatchCategoriesToFishOnly() {
-        FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBaitCatchPool(true);
+        FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBait(true);
         FishingGearModifiers.IdRestriction categories = modifiers.categoryRestriction();
 
         assertTrue(categories.allowListActive());
@@ -30,7 +41,7 @@ class LeviathanBaitCatchPoolTest {
 
     @Test
     void activeLeviathanBaitUsesOnlyTheFishSelectorBranch() {
-        FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBaitCatchPool(true);
+        FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBait(true);
         AtomicInteger normalCalls = new AtomicInteger();
         AtomicInteger fishCalls = new AtomicInteger();
 
@@ -53,7 +64,7 @@ class LeviathanBaitCatchPoolTest {
 
     @Test
     void inactiveLeviathanBaitLeavesTheNormalCatchPoolUntouched() {
-        FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBaitCatchPool(false);
+        FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBait(false);
         FishingGearModifiers.IdRestriction categories = modifiers.categoryRestriction();
         AtomicInteger normalCalls = new AtomicInteger();
         AtomicInteger fishCalls = new AtomicInteger();
