@@ -34,12 +34,20 @@ if [[ "$version" != "$expected_version" ]]; then
     exit 1
 fi
 
-unzip -l "$artifact" 'com/redslovesgames/tideborne/Tideborne.class' | grep 'Tideborne\.class' >/dev/null
-unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/specimen/SpecimenGenerator.class' | grep 'SpecimenGenerator\.class' >/dev/null
-unzip -l "$artifact" 'com/redslovesgames/tideborne/fishing/species/TideSpeciesSelectionBridge.class' | grep 'TideSpeciesSelectionBridge\.class' >/dev/null
-unzip -l "$artifact" 'com/redslovesgames/tideborne/mixin/tide/AnglingTableLeaderMixin.class' | grep 'AnglingTableLeaderMixin\.class' >/dev/null
-unzip -l "$artifact" 'com/redslovesgames/tideborne/mixin/tide/AnglingTableScreenLeaderMixin.class' | grep 'AnglingTableScreenLeaderMixin\.class' >/dev/null
-unzip -l "$artifact" 'com/redslovesgames/tideborne/mixin/journal/TeamProgressCanonicalJournalMixin.class' | grep 'TeamProgressCanonicalJournalMixin\.class' >/dev/null
+require_class() {
+    local class_path="$1"
+    if ! unzip -l "$artifact" "$class_path" | grep -F "$(basename "$class_path")" >/dev/null; then
+        echo "Missing required production class: $class_path" >&2
+        exit 1
+    fi
+}
+
+require_class 'com/redslovesgames/tideborne/Tideborne.class'
+require_class 'com/redslovesgames/tideborne/fishing/specimen/SpecimenGenerator.class'
+require_class 'com/redslovesgames/tideborne/fishing/SpeciesSelectionService.class'
+require_class 'com/redslovesgames/tideborne/mixin/tide/AnglingTableLeaderMixin.class'
+require_class 'com/redslovesgames/tideborne/mixin/tide/AnglingTableScreenLeaderMixin.class'
+require_class 'com/redslovesgames/tideborne/mixin/journal/TeamProgressCanonicalJournalMixin.class'
 
 python3 - "$artifact" <<'PY'
 import json
@@ -51,11 +59,11 @@ with zipfile.ZipFile(artifact) as jar:
     refmap = json.loads(jar.read('tidebound_compatibility.refmap.json'))
 
 expected = {
-    'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableLeaderMixin': {
+    'com/redslovesgames/tideborne/mixin/tide/AnglingTableLeaderMixin': {
         'getForgingSlotsManager': 'Lcom/li64/tide/client/gui/menus/AnglingTableMenu;method_48352()Lnet/minecraft/class_8047;',
         'updateResult': 'Lcom/li64/tide/client/gui/menus/AnglingTableMenu;method_24928()V',
     },
-    'com/redslovesgames/tideboundcompatibility/mixin/AnglingTableScreenLeaderMixin': {
+    'com/redslovesgames/tideborne/mixin/tide/AnglingTableScreenLeaderMixin': {
         'drawInvalidRecipeArrow': 'Lcom/li64/tide/client/gui/screens/AnglingTableScreen;method_48467(Lnet/minecraft/class_332;II)V',
     },
 }
