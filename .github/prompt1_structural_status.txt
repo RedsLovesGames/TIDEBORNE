@@ -1,6 +1,0 @@
-HEAD=4e66b5fc5ddc783069be8c1d9ed7c5ad5582a150
-VALIDATOR_RC=1
-Missing mixin source from tide_team_journal.mixins.json: com.redslovesgames.tideborne.mixin.journal.TeamProgressCanonicalJournalMixin
-FORBIDDEN_PATHS=0
-FORBIDDEN_DECLS=0
-OUTSIDE_ROOT=0

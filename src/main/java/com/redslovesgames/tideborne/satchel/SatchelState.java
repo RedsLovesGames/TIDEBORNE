@@ -13,8 +13,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.UUID;
-import java.util.Optional;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
@@ -252,18 +250,26 @@ public final class SatchelState {
       return new SatchelState(copy);
    }
 
-   public Optional<UUID> presetRod(int index) {
-      if (index < 0) return Optional.empty();
-      String key = "legacy_preset_rod_" + index;
-      return this.data.containsUuid(key) ? Optional.of(this.data.getUuid(key)) : Optional.empty();
+   /** Additive equipment references; old states and unknown keys remain intact. */
+   public java.util.Optional<java.util.UUID> presetRod(int preset) {
+      checkPreset(preset);
+      NbtCompound refs = this.data.getCompound("tackle_presets");
+      String key = Integer.toString(preset);
+      return refs.containsUuid(key) ? java.util.Optional.of(refs.getUuid(key)) : java.util.Optional.empty();
    }
 
-   public SatchelState withPresetRod(int index, UUID rodId) {
-      if (index < 0) throw new IllegalArgumentException("index must be non-negative");
+   public SatchelState withPresetRod(int preset, java.util.UUID reference) {
+      checkPreset(preset);
       NbtCompound copy = this.data.copy();
-      String key = "legacy_preset_rod_" + index;
-      if (rodId == null) copy.remove(key); else copy.putUuid(key, rodId);
+      NbtCompound refs = copy.getCompound("tackle_presets").copy();
+      if (reference == null) refs.remove(Integer.toString(preset));
+      else refs.putUuid(Integer.toString(preset), reference);
+      copy.put("tackle_presets", refs);
       return new SatchelState(copy);
+   }
+
+   private static void checkPreset(int preset) {
+      if (preset < 0 || preset >= 7) throw new IllegalArgumentException("Invalid tackle preset");
    }
 
    public NbtCompound toTag() {

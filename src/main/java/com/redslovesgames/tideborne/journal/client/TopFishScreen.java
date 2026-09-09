@@ -16,7 +16,6 @@ import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenTransfer;
 import java.util.List;
-import java.util.Optional;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -55,6 +54,12 @@ public final class TopFishScreen extends Screen {
    private static final int ROW_HEIGHT = 12;
    private final Screen parent;
    private List<Text> hoverTooltip = List.of();
+   private NbtCompound recordSnapshot;
+   private final ItemStack[] stacks = new ItemStack[TOP_FISH_SLOTS];
+   private final CanonicalRecordDisplay[] displays = new CanonicalRecordDisplay[TOP_FISH_SLOTS];
+   private ItemStack previewStack;
+   private FishData previewFish;
+   private Entity previewEntity;
 
    public TopFishScreen(Screen parent) {
       super(Text.literal("Top Team Fish"));
@@ -104,6 +109,20 @@ public final class TopFishScreen extends Screen {
 
       NbtList list = ClientTeamData.get().getList(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_KEY, 10);
       int visibleCount = Math.min(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_LIMIT, list.size());
+      if (recordSnapshot != ClientTeamData.get()) {
+         recordSnapshot = ClientTeamData.get();
+         java.util.Arrays.fill(stacks, ItemStack.EMPTY);
+         java.util.Arrays.fill(displays, null);
+         previewStack = null;
+         previewEntity = null;
+         for (int row = 0; row < visibleCount; row++) {
+            NbtCompound tag = list.getCompound(row);
+            ItemStack stack = fishStack(tag.getString("fish"));
+            if (!stack.isEmpty()) CanonicalSpecimenStorage.restoreTransferData(tag, stack);
+            stacks[row] = stack;
+            displays[row] = CanonicalRecordDisplay.from(tag).orElse(null);
+         }
+      }
       int selectedIndex = visibleCount > 0 ? 0 : -1;
       if (visibleCount > 0
          && mouseX >= left + LIST_ROW_LEFT
@@ -133,12 +152,9 @@ public final class TopFishScreen extends Screen {
             }
 
             NbtCompound tag = (NbtCompound)list.get(row);
-            ItemStack stack = fishStack(tag.getString("fish"));
-            if (!stack.isEmpty()) {
-               CanonicalSpecimenStorage.restoreTransferData(tag, stack);
-            }
+            ItemStack stack = stacks[row];
             graphics.drawItem(stack, left + ICON_X, rowY - 2);
-            CanonicalRecordDisplay display = CanonicalRecordDisplay.from(tag).orElse(null);
+            CanonicalRecordDisplay display = displays[row];
             String name = stack.getName().getString();
             FittedText fittedName = FishingUiLayout.ellipsize(name, NAME_WIDTH, this.textRenderer::getWidth);
             TideTextRenderer.draw(graphics, this.textRenderer, fittedName.text(), left + NAME_X, rowY + 2, TEXT);
@@ -171,11 +187,8 @@ public final class TopFishScreen extends Screen {
       }
 
       NbtCompound selected = (NbtCompound)list.get(selectedIndex);
-      ItemStack stack = fishStack(selected.getString("fish"));
-      if (!stack.isEmpty()) {
-         CanonicalSpecimenStorage.restoreTransferData(selected, stack);
-      }
-      CanonicalRecordDisplay display = CanonicalRecordDisplay.from(selected).orElse(null);
+      ItemStack stack = stacks[selectedIndex];
+      CanonicalRecordDisplay display = displays[selectedIndex];
       renderFish3D(graphics, stack, left + 300, detailTop + 86);
       this.drawValue(
          graphics,
@@ -298,10 +311,12 @@ public final class TopFishScreen extends Screen {
 
    @Override
    public void close() {
+      previewEntity = null;
+      previewStack = null;
       this.client.setScreen(this.parent);
    }
 
-   private static void renderFish3D(DrawContext graphics, ItemStack stack, int x, int y) {
+   private void renderFish3D(DrawContext graphics, ItemStack stack, int x, int y) {
       MinecraftClient client = MinecraftClient.getInstance();
       if (client.world != null) {
          FishData fish = FishData.getExact(stack).orElse(null);
@@ -309,11 +324,18 @@ public final class TopFishScreen extends Screen {
             DisplayData display = fish.display().orElse(null);
             if (display != null) {
                EntityType<?> type = display.entityType();
-               Entity entity = type == null ? null : type.create(client.world);
+               if (previewStack != stack || previewFish != fish
+                     || previewEntity != null && previewEntity.getWorld() != client.world) {
+                  previewStack = stack;
+                  previewFish = fish;
+                  previewEntity = type == null ? null : type.create(client.world);
+                  if (previewEntity != null) {
+                     display.nbt().ifPresent(previewEntity::readNbt);
+                     SpecimenTransfer.stackToEntity(stack, previewEntity);
+                  }
+               }
+               Entity entity = previewEntity;
                if (entity != null) {
-                  Optional<NbtCompound> nbt = display.nbt();
-                  nbt.ifPresent(entity::readNbt);
-                  SpecimenTransfer.stackToEntity(stack, entity);
                   MatrixStack matrices = graphics.getMatrices();
                   matrices.push();
                   matrices.translate(x, y, 200.0F);
