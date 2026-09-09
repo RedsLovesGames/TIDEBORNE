@@ -14,7 +14,6 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.redslovesgames.tideborne.command.FishingInspectCommand;
 import com.redslovesgames.tideborne.command.FishingRecoveryCommand;
 import com.redslovesgames.tideborne.command.FishingReproduceCommand;
-import com.redslovesgames.tideborne.compat.apex.ApexCompat;
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import com.redslovesgames.tideborne.ecosystem.SharkScentManager;
 import com.redslovesgames.tideborne.network.SharkCatchLossPayload;
@@ -23,6 +22,7 @@ import com.redslovesgames.tideborne.network.TideboundSettingsResultPayload;
 import com.redslovesgames.tideborne.network.TideboundSettingsUpdatePayload;
 import com.redslovesgames.tideborne.registry.TideboundEntities;
 import com.redslovesgames.tideborne.registry.TideboundItems;
+import java.lang.reflect.InvocationTargetException;
 import java.util.OptionalDouble;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 public final class FishingGameplayInitializer implements ModInitializer {
    public static final String MOD_ID = "tidebound_compatibility";
    public static final Logger LOGGER = LoggerFactory.getLogger("tidebound_compatibility");
+   private static final String APEX_COMPAT_CLASS = "com.redslovesgames.tideborne.compat.apex.ApexCompat";
    private static boolean mythsEnabledAtStartup;
    private static boolean apexEnabledAtStartup;
 
@@ -81,11 +82,29 @@ public final class FishingGameplayInitializer implements ModInitializer {
       }
 
       if (apexEnabledAtStartup) {
-         ApexCompat.initialize();
+         initializeApexIntegration();
          LOGGER.info("Enabled Apex Waters integration");
       }
 
       LOGGER.info("[Tideborne] Fishing compatibility initialized (Myths: {}, Apex: {})", isMythsLoaded(), isApexLoaded());
+   }
+
+   private static void initializeApexIntegration() {
+      try {
+         Class<?> compatibility = Class.forName(APEX_COMPAT_CLASS, true, FishingGameplayInitializer.class.getClassLoader());
+         compatibility.getMethod("initialize").invoke(null);
+      } catch (InvocationTargetException exception) {
+         Throwable cause = exception.getCause();
+         if (cause instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+         }
+         if (cause instanceof Error error) {
+            throw error;
+         }
+         throw new IllegalStateException("Could not initialize Apex Waters integration", cause);
+      } catch (ReflectiveOperationException exception) {
+         throw new IllegalStateException("Could not initialize Apex Waters integration", exception);
+      }
    }
 
    public static Identifier id(String path) {
