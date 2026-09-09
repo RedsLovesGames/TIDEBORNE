@@ -5,14 +5,14 @@
  */
 package com.redslovesgames.tideborne.network;
 
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload.Id;
 
 public record TideboundSettingsResultPayload(boolean success, String message) implements CustomPayload {
-   public static final Id<TideboundSettingsResultPayload> TYPE = new Id(TideboundCompatibility.id("settings_result"));
+   public static final Id<TideboundSettingsResultPayload> TYPE = new Id(FishingGameplayInitializer.id("settings_result"));
    public static final PacketCodec<RegistryByteBuf, TideboundSettingsResultPayload> CODEC = PacketCodec.ofStatic((buffer, payload) -> {
       buffer.writeBoolean(payload.success);
       buffer.writeString(payload.message, 1024);

@@ -5,8 +5,8 @@
  */
 package com.redslovesgames.tideborne.network;
 
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
 import com.redslovesgames.tideborne.config.TideboundConfig;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import java.util.Objects;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.CustomPayload;
@@ -15,7 +15,7 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload.Id;
 
 public record TideboundSettingsPayload(NbtCompound tag) implements CustomPayload {
-   public static final Id<TideboundSettingsPayload> TYPE = new Id(TideboundCompatibility.id("settings"));
+   public static final Id<TideboundSettingsPayload> TYPE = new Id(FishingGameplayInitializer.id("settings"));
    public static final PacketCodec<RegistryByteBuf, TideboundSettingsPayload> CODEC = PacketCodec.ofStatic(
       (buffer, payload) -> buffer.writeNbt(payload.tag),
       buffer -> new TideboundSettingsPayload(Objects.requireNonNullElseGet(buffer.readNbt(), NbtCompound::new))
@@ -23,7 +23,7 @@ public record TideboundSettingsPayload(NbtCompound tag) implements CustomPayload
 
    public static TideboundSettingsPayload fromServer() {
       TideboundConfig.Values v = TideboundConfig.get();
-      return fromValues(v, TideboundCompatibility.isMythsIntegrationActive(), TideboundCompatibility.isApexIntegrationActive());
+      return fromValues(v, FishingGameplayInitializer.isMythsIntegrationActive(), FishingGameplayInitializer.isApexIntegrationActive());
    }
 
    public static TideboundSettingsPayload fromValues(TideboundConfig.Values v, boolean mythsActive, boolean apexActive) {

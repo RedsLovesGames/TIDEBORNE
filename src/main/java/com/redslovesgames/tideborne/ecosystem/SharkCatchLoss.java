@@ -7,7 +7,6 @@ package com.redslovesgames.tideborne.ecosystem;
 
 import com.li64.tide.data.TideTags.Items;
 import com.li64.tide.data.fishing.FishData;
-import com.redslovesgames.tideborne.compat.apex.SharkScentManager;
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import com.redslovesgames.tideborne.registry.TideboundTags;
 import net.minecraft.item.ItemStack;

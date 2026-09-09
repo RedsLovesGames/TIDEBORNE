@@ -8,6 +8,7 @@ package com.redslovesgames.tideborne.compat.apex;
 import com.acorsicanfrog.apexwaters.config.ApexWatersConfig;
 import com.acorsicanfrog.apexwaters.entity.GreatWhiteSharkEntity;
 import com.redslovesgames.tideborne.config.TideboundConfig;
+import com.redslovesgames.tideborne.ecosystem.SharkScentManager;
 import java.util.EnumSet;
 import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.entity.Entity;

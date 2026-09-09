@@ -9,7 +9,7 @@ import com.li64.tide.data.minigame.FishCatchMinigame;
 import com.li64.tide.registries.entities.misc.fishing.HookAccessor;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.li64.tide.util.BaitUtils;
-import com.redslovesgames.tideborne.compat.apex.SharkScentManager;
+import com.redslovesgames.tideborne.ecosystem.SharkScentManager;
 import com.redslovesgames.tideborne.fishing.gear.SteelLeaderAttachment;
 import com.redslovesgames.tideborne.registry.TideboundItems;
 import java.util.ArrayList;

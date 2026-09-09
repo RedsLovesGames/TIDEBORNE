@@ -5,7 +5,7 @@
  */
 package com.redslovesgames.tideborne.registry;
 
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import net.minecraft.item.Item;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.registry.RegistryKeys;
@@ -25,6 +25,6 @@ public final class TideboundTags {
    }
 
    private static TagKey<Item> item(String path) {
-      return TagKey.of(RegistryKeys.ITEM, TideboundCompatibility.id(path));
+      return TagKey.of(RegistryKeys.ITEM, FishingGameplayInitializer.id(path));
    }
 }

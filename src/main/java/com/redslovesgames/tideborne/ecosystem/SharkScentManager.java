@@ -3,14 +3,14 @@
  * Recovered from Tideborne 1.3.57 bytecode.
  * See docs/RECONSTRUCTION.md before changing behavior.
  */
-package com.redslovesgames.tideborne.compat.apex;
+package com.redslovesgames.tideborne.ecosystem;
 
 import com.li64.tide.data.TideTags.Items;
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook.CatchType;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
 import com.redslovesgames.tideborne.config.TideboundConfig;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.registry.TideboundTags;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -128,9 +128,10 @@ public final class SharkScentManager {
    }
 
    public static boolean isLargeCatch(ItemStack stack) {
-      return !stack.isIn(TideboundTags.LARGE_FISH) && !stack.isIn(Items.LEGENDARY_FISH)
-         ? FishData.get(stack).map(data -> data.getAverageLength() >= 100.0).orElse(false)
-         : true;
+      if (stack.isIn(TideboundTags.LARGE_FISH) || stack.isIn(Items.LEGENDARY_FISH)) {
+         return true;
+      }
+      return FishData.get(stack).map(data -> data.getAverageLength() >= 100.0).orElse(false);
    }
 
    public static double sizeMultiplier(double length, double largeFishMultiplier) {
@@ -167,9 +168,8 @@ public final class SharkScentManager {
          }
 
          return best;
-      } else {
-         return null;
       }
+      return null;
    }
 
    public static void tick(ServerWorld level) {
@@ -195,10 +195,7 @@ public final class SharkScentManager {
       BlockPos origin = BlockPos.ofFloored(zone.position);
       int y = origin.getY();
 
-      while (
-         y < level.getTopY() - 1
-            && level.getFluidState(new BlockPos(origin.getX(), y + 1, origin.getZ())).isIn(FluidTags.WATER)
-      ) {
+      while (y < level.getTopY() - 1 && level.getFluidState(new BlockPos(origin.getX(), y + 1, origin.getZ())).isIn(FluidTags.WATER)) {
          y++;
       }
 
@@ -227,7 +224,6 @@ public final class SharkScentManager {
 
    private static void addOrRefresh(ServerWorld level, SharkScentManager.ScentZone incoming) {
       List<SharkScentManager.ScentZone> zones = ZONES.computeIfAbsent(level, ignored -> new ArrayList<>());
-
       for (SharkScentManager.ScentZone existing : zones) {
          if (existing.kind == incoming.kind && existing.position.squaredDistanceTo(incoming.position) < 36.0) {
             existing.position = incoming.position;
@@ -239,7 +235,7 @@ public final class SharkScentManager {
       }
 
       zones.add(incoming);
-      if (zones.size() > 256) {
+      if (zones.size() > MAX_ZONES_PER_LEVEL) {
          zones.sort(Comparator.comparingLong(zone -> zone.expiresAt));
          zones.remove(0);
       }
@@ -264,9 +260,7 @@ public final class SharkScentManager {
                BlockPos origin = BlockPos.ofFloored(zone.position);
 
                for (int attempt = 0; attempt < config.chumSpawnAttempts; attempt++) {
-                  BlockPos pos = origin.add(
-                     level.random.nextInt(33) - 16, level.random.nextInt(9) - 4, level.random.nextInt(33) - 16
-                  );
+                  BlockPos pos = origin.add(level.random.nextInt(33) - 16, level.random.nextInt(9) - 4, level.random.nextInt(33) - 16);
                   if (level.isChunkLoaded(pos)
                      && level.getBiome(pos).isIn(BiomeTags.IS_OCEAN)
                      && level.getFluidState(pos).isIn(FluidTags.WATER)
@@ -275,9 +269,7 @@ public final class SharkScentManager {
                         return;
                      }
 
-                     mob.refreshPositionAndAngles(
-                        pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, level.random.nextFloat() * 360.0F, 0.0F
-                     );
+                     mob.refreshPositionAndAngles(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, level.random.nextFloat() * 360.0F, 0.0F);
                      if (level.isSpaceEmpty(mob)) {
                         mob.initialize(level, level.getLocalDifficulty(pos), SpawnReason.NATURAL, null);
                         level.spawnEntity(mob);
@@ -292,7 +284,7 @@ public final class SharkScentManager {
 
    private static boolean enabled() {
       TideboundConfig.Values config = TideboundConfig.get();
-      return config.enableApexCompat && config.enableSharkFishAttraction && TideboundCompatibility.isApexLoaded();
+      return config.enableApexCompat && config.enableSharkFishAttraction && FishingGameplayInitializer.isApexLoaded();
    }
 
    public enum Kind {
