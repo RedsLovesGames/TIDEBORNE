@@ -13,15 +13,22 @@ import com.redslovesgames.tideborne.config.TideTraitsConfigManager;
 import com.redslovesgames.tideborne.discovery.DiscoveryManager;
 import com.redslovesgames.tideborne.satchel.SatchelRegistration;
 import com.redslovesgames.tideborne.satchel.network.SatchelNetworking;
-import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class TideTraits implements ModInitializer {
+public final class TideTraits {
    public static final String MOD_ID = "tide_traits";
    public static final Logger LOGGER = LoggerFactory.getLogger("tide_traits");
+   private static boolean initialized;
 
-   public void onInitialize() {
+   private TideTraits() {
+   }
+
+   public static void initialize() {
+      if (initialized) {
+         return;
+      }
+      initialized = true;
       TideTraitsConfigManager.Settings settings = TideTraitsConfigManager.load();
       TideTraitsComponents.init();
       SatchelRegistration.init();
