@@ -24,7 +24,6 @@ import com.redslovesgames.tideborne.network.TideboundSettingsUpdatePayload;
 import com.redslovesgames.tideborne.registry.TideboundEntities;
 import com.redslovesgames.tideborne.registry.TideboundItems;
 import java.util.OptionalDouble;
-import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -40,13 +39,21 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class TideboundCompatibility implements ModInitializer {
+public final class TideboundCompatibility {
    public static final String MOD_ID = "tidebound_compatibility";
    public static final Logger LOGGER = LoggerFactory.getLogger("tidebound_compatibility");
    private static boolean mythsEnabledAtStartup;
    private static boolean apexEnabledAtStartup;
+   private static boolean initialized;
 
-   public void onInitialize() {
+   private TideboundCompatibility() {
+   }
+
+   public static void initialize() {
+      if (initialized) {
+         return;
+      }
+      initialized = true;
       TideboundConfig.Result initialLoad = TideboundConfig.load();
       if (!initialLoad.success()) {
          LOGGER.error("{}", initialLoad.message());

@@ -25,10 +25,10 @@ public final class Tideborne implements ModInitializer {
          System.out.println("[Tideborne] Starting 2.0.0 Fishing System 2.0 Integration...");
          TideborneMigrationManager.migrate();
          TideborneConfigBackend.beforeSubsystems();
-         new TideTraits().onInitialize();
-         new TideTeamJournal().onInitialize();
+         TideTraits.initialize();
+         TideTeamJournal.initialize();
          OwnedFishJournalBackfill.init();
-         new TideboundCompatibility().onInitialize();
+         TideboundCompatibility.initialize();
          TideborneItemGroups.init();
          TideborneCommands.init();
          TideborneConfigBackend.afterSubsystems();

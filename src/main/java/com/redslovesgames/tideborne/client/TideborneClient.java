@@ -17,9 +17,9 @@ public final class TideborneClient implements ClientModInitializer {
    public void onInitializeClient() {
       if (!initialized) {
          initialized = true;
-         new TideTraitsClient().onInitializeClient();
-         new TideTeamJournalClient().onInitializeClient();
-         new TideboundCompatibilityClient().onInitializeClient();
+         TideTraitsClient.initialize();
+         TideTeamJournalClient.initialize();
+         TideboundCompatibilityClient.initialize();
          TideborneConfigBackend.afterSubsystems();
          System.out.println("[Tideborne] Unified client configuration and rendering systems initialized.");
       }
