@@ -10,8 +10,7 @@
     "MinecraftMutationRenderingMixin",
     "TideFishRendererMixin",
     "TideFishProfileMixin",
-    "FishProfileSizeRangeMixin",
-    "TeamStatsPercentileMixin"
+    "FishProfileSizeRangeMixin"
   ],
   "injectors": {
     "defaultRequire": 0
