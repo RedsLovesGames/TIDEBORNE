@@ -5,9 +5,9 @@
  */
 package com.redslovesgames.tideborne.mixin.journal;
 
-import com.li64.tide.data.rods.CustomRodManager;
+
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
-import com.redslovesgames.tideborne.journal.BobberBonuses;
+
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -21,7 +21,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(TideFishingHook.class)
-abstract class TideFishingHookMixin {
+/** Required Tide hook constructor adapter: no Fabric cast event exposes native luck/lure fields.
+ * Signature/field changes in Tide fail mixin application. The server captures one full bobber contribution.
+ */
+abstract class TideFishingHookMixin implements com.redslovesgames.tideborne.fishing.gear.BobberGearModifiers.HookSnapshot {
+   @org.spongepowered.asm.mixin.Unique
+   private com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers tideborne$bobber = com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers.neutral();
+
+   @Override
+   public com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers tideborne$bobberModifiers() { return tideborne$bobber; }
    @Shadow
    @Final
    @Mutable
@@ -45,8 +53,9 @@ abstract class TideFishingHookMixin {
       ItemStack rod,
       CallbackInfo callback
    ) {
-      BobberBonuses.Bonus bonus = BobberBonuses.get(CustomRodManager.getBobber(rod));
-      this.luck = this.luck + bonus.luck();
-      this.lureSpeed = this.lureSpeed + bonus.lureSpeed();
+      if (level.isClient()) return;
+      tideborne$bobber = com.redslovesgames.tideborne.fishing.gear.BobberGearModifiers.forRod(rod);
+      this.luck = this.luck + (int) tideborne$bobber.fishingLuck();
+      this.lureSpeed = this.lureSpeed + (int) tideborne$bobber.namedAdditiveModifier(com.redslovesgames.tideborne.fishing.gear.FishingGearEffects.LURE_BONUS);
    }
 }
