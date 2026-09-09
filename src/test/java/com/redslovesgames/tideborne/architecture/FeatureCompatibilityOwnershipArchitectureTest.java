@@ -16,7 +16,9 @@ class FeatureCompatibilityOwnershipArchitectureTest {
     private static final Path PRODUCTION_ROOT = Path.of("src/main/java");
     private static final Pattern PACKAGE = Pattern.compile("(?m)^package\\s+([\\w.]+);");
     private static final String COMPAT_ROOT = "com.redslovesgames.tideborne.compat";
+    private static final String DIRECT_APEX_IMPORT = "import com.redslovesgames.tideborne.compat.apex.";
     private static final Map<String, String> NATIVE_OWNERS = Map.ofEntries(
+            Map.entry("FishingGameplayInitializer.java", "com.redslovesgames.tideborne.fishing"),
             Map.entry("SharkScentManager.java", "com.redslovesgames.tideborne.ecosystem"),
             Map.entry("SharkCatchLoss.java", "com.redslovesgames.tideborne.ecosystem"),
             Map.entry("ChumBucketItem.java", "com.redslovesgames.tideborne.ecosystem"),
@@ -57,6 +59,10 @@ class FeatureCompatibilityOwnershipArchitectureTest {
                 }
                 if (text.contains("com.redslovesgames.tideborne.compat.apex.SharkScentManager")) {
                     violations.add(source + " -> native shark scent gameplay depends on Apex ownership");
+                }
+                if (source.getFileName().toString().equals("FishingGameplayInitializer.java")
+                        && text.contains(DIRECT_APEX_IMPORT)) {
+                    violations.add(source + " -> native initializer directly links optional Apex classes");
                 }
             }
         }
