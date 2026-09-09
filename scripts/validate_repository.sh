@@ -14,7 +14,9 @@ fi
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-if rg -n '\b(class|method|field)_[0-9]+' src/main/java; then
+# Keep this guard portable across developer machines and GitHub runners; do not
+# rely on ripgrep being installed or allow a missing search tool to skip it.
+if grep -R -n -E --include='*.java' '(^|[^[:alnum:]_])(class|method|field)_[0-9]+' src/main/java; then
     echo 'Unresolved intermediary identifiers remain in maintained source.' >&2
     exit 1
 fi
