@@ -14,6 +14,15 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import net.minecraft.util.Identifier;
 
+/**
+ * Mutation-era physical-size compatibility retained for old specimen reconstruction and
+ * administrative compatibility tooling.
+ *
+ * <p>Current Fishing System generation owns body type and final length in
+ * {@link com.redslovesgames.tideborne.fishing.specimen.SpecimenData}. New gameplay must not use
+ * this service.
+ */
+@Deprecated(forRemoval = false)
 public final class SpecimenSizeService {
    private final FishPercentileService percentiles;
 

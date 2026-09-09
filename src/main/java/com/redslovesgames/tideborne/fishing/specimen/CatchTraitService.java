@@ -19,11 +19,11 @@ import com.redslovesgames.tideborne.fishing.specimen.FishPercentileService;
 import com.redslovesgames.tideborne.fishing.specimen.FishSizeClass;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenSizeService;
 import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
-import com.redslovesgames.tideborne.fishing.specimen.legacy.SpecimenData;
 import com.redslovesgames.tideborne.fishing.specimen.legacy.TraitAxesRuntime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
@@ -96,10 +96,19 @@ public final class CatchTraitService {
     * Compatibility gate retained at the reconstructed Tide hook sites.
     *
     * Fishing System 2.0 owns every new-catch trait axis and the canonical specimen seed before this
-    * method runs. This method may mirror canonical fields or normalize already-persisted legacy
-    * fields, but it never selects a mutation, creates a seed, or consumes the supplied RNG.
+    * method runs. This method may normalize already-persisted legacy fields, but it never selects a
+    * mutation, creates a seed, or consumes the supplied RNG.
     */
    public boolean assignIfAbsent(ItemStack stack, Random ignoredRandom) {
+      // Current gameplay is already complete at the canonical persistence boundary. Compatibility
+      // mirrors are repaired directly from canonical identity instead of routing current specimens
+      // through mutation-era models or migration helpers.
+      Optional<com.redslovesgames.tideborne.fishing.specimen.SpecimenData> canonical = CanonicalSpecimenStorage.readCurrent(stack);
+      if (canonical.isPresent()) {
+         repairCompatibilityMirrors(stack, canonical.get());
+         return false;
+      }
+
       if (TraitAxesRuntime.isCanonicalV2(stack)) {
          String canonicalCondition = (String)stack.get(TideTraitsComponents.SPECIMEN_CONDITION);
          if (canonicalCondition != null && !canonicalCondition.isBlank()) {
@@ -131,42 +140,77 @@ public final class CatchTraitService {
 
    public void recordSuccessfulCatch(ItemStack stack, ServerPlayerEntity player) {
       Optional<FishData> fishData = FishData.get(stack);
-      if (!fishData.isEmpty()) {
-         Identifier species = FishDescriptor.fromFishData(fishData.get()).canonicalSpeciesId();
-         Identifier sharedMutation = null;
-         Identifier sharedSizeBand = null;
-         String mutationValue = (String)stack.get(TideTraitsComponents.MUTATION);
-         Optional<FishMutation> mutation = FishMutation.bySerializedName(mutationValue);
-         if (mutation.isPresent() && mutation.get().isMutation()) {
-            sharedMutation = namespaced(mutation.get().serializedName());
-         }
-
-         Double percentile = (Double)stack.get(TideTraitsComponents.SIZE_PERCENTILE);
-         if (percentile != null && Double.isFinite(percentile) && percentile >= 0.0 && percentile <= 100.0) {
-            FishSizeClass sizeClass = FishSizeClass.fromPercentile(percentile);
-            sharedSizeBand = namespaced(sizeClass.serializedName());
-         }
-
-         if (!TideTraitsConfigManager.current().sharedDiscovery() || sharedMutation == null && sharedSizeBand == null) {
-            boolean changed = false;
-            if (sharedMutation != null) {
-               changed = DiscoveryManager.discoverMutation(player, species, sharedMutation);
-            }
-
-            if (sharedSizeBand != null) {
-               changed |= DiscoveryManager.discoverSizeBand(player, species, sharedSizeBand);
-            }
-
-            if (changed) {
-               DiscoveryManager.sync(player);
-            }
-
-            tideborne$recordBodyTypeDiscovery(stack, player, species);
-         } else {
-            MultiplayerDiscoveryCompat.recordCatch(player, species, sharedMutation, sharedSizeBand);
-            tideborne$recordBodyTypeDiscovery(stack, player, species);
-         }
+      if (fishData.isEmpty()) {
+         return;
       }
+
+      Identifier species = FishDescriptor.fromFishData(fishData.get()).canonicalSpeciesId();
+      Optional<com.redslovesgames.tideborne.fishing.specimen.SpecimenData> canonical = CanonicalSpecimenStorage.readCurrent(stack);
+      if (canonical.isPresent()) {
+         com.redslovesgames.tideborne.fishing.specimen.SpecimenData specimen = canonical.get();
+         Identifier sharedMutation = specimen.condition() == com.redslovesgames.tideborne.fishing.specimen.SpecimenData.Condition.NORMAL
+            ? null
+            : namespaced(serialized(specimen.condition()));
+         Identifier sharedSizeBand = namespaced(FishSizeClass.fromPercentile(specimen.finalPercentile()).serializedName());
+         recordDiscoveries(player, species, sharedMutation, sharedSizeBand, serialized(specimen.bodyType()));
+         return;
+      }
+
+      // Compatibility fallback for old items that have not yet crossed the canonical migration
+      // boundary. This is intentionally the only discovery path that reads mutation-era state.
+      Identifier sharedMutation = null;
+      Identifier sharedSizeBand = null;
+      String mutationValue = (String)stack.get(TideTraitsComponents.MUTATION);
+      Optional<FishMutation> mutation = FishMutation.bySerializedName(mutationValue);
+      if (mutation.isPresent() && mutation.get().isMutation()) {
+         sharedMutation = namespaced(mutation.get().serializedName());
+      }
+
+      Double percentile = (Double)stack.get(TideTraitsComponents.SIZE_PERCENTILE);
+      if (percentile != null && Double.isFinite(percentile) && percentile >= 0.0 && percentile <= 100.0) {
+         FishSizeClass sizeClass = FishSizeClass.fromPercentile(percentile);
+         sharedSizeBand = namespaced(sizeClass.serializedName());
+      }
+
+      recordDiscoveries(player, species, sharedMutation, sharedSizeBand, TraitAxesRuntime.bodyType(stack));
+   }
+
+   private static void recordDiscoveries(
+      ServerPlayerEntity player,
+      Identifier species,
+      Identifier sharedMutation,
+      Identifier sharedSizeBand,
+      String bodyType
+   ) {
+      if (!TideTraitsConfigManager.current().sharedDiscovery() || sharedMutation == null && sharedSizeBand == null) {
+         boolean changed = false;
+         if (sharedMutation != null) {
+            changed = DiscoveryManager.discoverMutation(player, species, sharedMutation);
+         }
+
+         if (sharedSizeBand != null) {
+            changed |= DiscoveryManager.discoverSizeBand(player, species, sharedSizeBand);
+         }
+
+         if (changed) {
+            DiscoveryManager.sync(player);
+         }
+
+         tideborne$recordBodyTypeDiscovery(bodyType, player, species);
+      } else {
+         MultiplayerDiscoveryCompat.recordCatch(player, species, sharedMutation, sharedSizeBand);
+         tideborne$recordBodyTypeDiscovery(bodyType, player, species);
+      }
+   }
+
+   private static void repairCompatibilityMirrors(
+      ItemStack stack,
+      com.redslovesgames.tideborne.fishing.specimen.SpecimenData specimen
+   ) {
+      stack.set(TideTraitsComponents.MUTATION_SEED, specimen.deterministicSeed());
+      stack.set(TideTraitsComponents.SIZE_PERCENTILE, specimen.finalPercentile());
+      stack.set(TideTraitsComponents.BODY_TYPE, serialized(specimen.bodyType()));
+      stack.set(TideTraitsComponents.MUTATION, serialized(specimen.condition()));
    }
 
    /**
@@ -191,7 +235,8 @@ public final class CatchTraitService {
       if (existingPercentile == null || !Double.isFinite(existingPercentile)) {
          double finalLength = (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
          FishDescriptor descriptor = FishDescriptor.fromFishData(data);
-         SpecimenData specimen = SpecimenData.unclassified(seed, mutation.get());
+         com.redslovesgames.tideborne.fishing.specimen.legacy.SpecimenData specimen =
+            com.redslovesgames.tideborne.fishing.specimen.legacy.SpecimenData.unclassified(seed, mutation.get());
          SpecimenSizeService.AppliedSize classified = this.legacyMigrationSizes
             .classifyExistingFinalLength(
                specimen,
@@ -207,14 +252,17 @@ public final class CatchTraitService {
       return Identifier.of("tide_traits", path);
    }
 
-   private static void tideborne$recordBodyTypeDiscovery(ItemStack var0, ServerPlayerEntity var1, Identifier var2) {
-      String var3 = TraitAxesRuntime.bodyType(var0);
-      if (!"normal".equals(var3)) {
-         Identifier var4 = namespaced(var3);
-         if (TideTraitsConfigManager.current().sharedDiscovery() && MultiplayerDiscoveryCompat.isAvailable(var1)) {
-            MultiplayerDiscoveryCompat.recordCatch(var1, var2, var4, null);
+   private static String serialized(Enum<?> value) {
+      return value.name().toLowerCase(Locale.ROOT);
+   }
+
+   private static void tideborne$recordBodyTypeDiscovery(String bodyType, ServerPlayerEntity player, Identifier species) {
+      if (!"normal".equals(bodyType)) {
+         Identifier bodyTypeId = namespaced(bodyType);
+         if (TideTraitsConfigManager.current().sharedDiscovery() && MultiplayerDiscoveryCompat.isAvailable(player)) {
+            MultiplayerDiscoveryCompat.recordCatch(player, species, bodyTypeId, null);
          } else {
-            DiscoveryManager.discoverMutationAndSync(var1, var2, var4);
+            DiscoveryManager.discoverMutationAndSync(player, species, bodyTypeId);
          }
       }
    }
