@@ -7,7 +7,7 @@ import com.redslovesgames.tideborne.fishing.gear.FishingGearEffects;
 import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry;
 import com.redslovesgames.tideborne.fishing.tide.TideFishingLineModifiers;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import java.util.Objects;
 import net.minecraft.item.ItemStack;
@@ -32,7 +32,7 @@ public final class TideborneFishingGearModifiers {
     public static FishingGearModifiers forLoadoutPreview(ItemStack rod, TideboundConfig.Values config) {
         ItemStack line = com.li64.tide.data.rods.CustomRodManager.getLine(rod);
         var profile = FishingGearRegistry.resolve(line).orElse(null);
-        boolean myths = config.enableMythsCompat && TideboundCompatibility.isMythsIntegrationActive();
+        boolean myths = config.enableMythsCompat && FishingGameplayInitializer.isMythsIntegrationActive();
         var specialLine = selectMinigameLine(myths && profile == FishingGearRegistry.GearProfile.TENTACLE_LINE,
                 myths && profile == FishingGearRegistry.GearProfile.SWIFT_LINE, FishingGearModifiers.neutral(), config);
         var tier = LeaderAttachment.tier(rod);
@@ -41,7 +41,7 @@ public final class TideborneFishingGearModifiers {
                 .namedAdditiveModifier(FishingGearEffects.LURE_BONUS,
                         BaitUtils.getCombinedSpeed(rod)).build();
         var targets = hookTargets(FishingGearRegistry.resolve(com.li64.tide.data.rods.CustomRodManager.getHook(rod)).orElse(null),
-                true, config.enableApexCompat && TideboundCompatibility.isApexIntegrationActive(), myths, config);
+                true, config.enableApexCompat && FishingGameplayInitializer.isApexIntegrationActive(), myths, config);
         var baitTargets = baitTargets(rod);
         return FishingGearModifiers.compose(forRod(rod, config), TideFishingLineModifiers.forLine(line), specialLine, targets, baitTargets,
                 LeaderGearModifiers.forTier(tier, config.enableApexCompat),
@@ -62,7 +62,7 @@ public final class TideborneFishingGearModifiers {
 
     public static FishingGearModifiers forRod(ItemStack rod, TideboundConfig.Values config) {
         return rod(FishingGearRegistry.resolve(rod).orElse(null),
-                config.enableMythsCompat && TideboundCompatibility.isMythsIntegrationActive());
+                config.enableMythsCompat && FishingGameplayInitializer.isMythsIntegrationActive());
     }
 
     public static FishingGearModifiers rod(FishingGearRegistry.GearProfile profile, boolean mythsActive) {
@@ -77,8 +77,8 @@ public final class TideborneFishingGearModifiers {
         TideFishingHook hook = context.hook();
         var hookProfile = FishingGearRegistry.resolve(hook.getHook()).orElse(null);
         var target = hookTargets(hookProfile, context.exactBiome().isIn(BiomeTags.IS_OCEAN) && context.level().isNight(),
-                config.enableApexCompat && TideboundCompatibility.isApexIntegrationActive(),
-                config.enableMythsCompat && TideboundCompatibility.isMythsIntegrationActive(), config);
+                config.enableApexCompat && FishingGameplayInitializer.isApexIntegrationActive(),
+                config.enableMythsCompat && FishingGameplayInitializer.isMythsIntegrationActive(), config);
         var bait = baitTargets(context.rod());
         return FishingGearModifiers.compose(forRod(context.rod(), config), target, bait,
                 FishingGearModifiers.builder().fishingLuck(BaitUtils.getCombinedLuck(context.rod())).build(),
@@ -111,8 +111,8 @@ public final class TideborneFishingGearModifiers {
         if (hook == null) return FishingGearModifiers.neutral();
         FishingGearRegistry.GearProfile lineProfile = FishingGearRegistry.resolve(hook.getLine()).orElse(null);
         FishingGearModifiers specialLine = FishingGearModifiers.neutral();
-        if (TideboundCompatibility.isMythsIntegrationActive() && lineProfile == FishingGearRegistry.GearProfile.TENTACLE_LINE) specialLine = tentacleLine(config);
-        else if (TideboundCompatibility.isMythsIntegrationActive() && lineProfile == FishingGearRegistry.GearProfile.SWIFT_LINE) specialLine = swiftLine(config);
+        if (FishingGameplayInitializer.isMythsIntegrationActive() && lineProfile == FishingGearRegistry.GearProfile.TENTACLE_LINE) specialLine = tentacleLine(config);
+        else if (FishingGameplayInitializer.isMythsIntegrationActive() && lineProfile == FishingGearRegistry.GearProfile.SWIFT_LINE) specialLine = swiftLine(config);
         return FishingGearModifiers.compose(specialLine, LeaderGearModifiers.forHook(hook, config), BobberGearModifiers.forHook(hook));
     }
 
