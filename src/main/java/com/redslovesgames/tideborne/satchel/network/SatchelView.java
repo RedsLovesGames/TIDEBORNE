@@ -34,9 +34,39 @@ public record SatchelView(
    Set<Integer> protectedSlots,
    Set<String> protectionRules,
    SatchelNetworkStatus status,
-   String detail
+   String detail,
+   net.minecraft.nbt.NbtCompound tackle
 ) {
+   /** Compatibility constructor for the unchanged version-2 fields. */
+   public SatchelView(
+   int protocolVersion,
+   Hand hand,
+   long stateToken,
+   boolean valid,
+   boolean open,
+   boolean active,
+   boolean multiplayerAvailable,
+   int experiencePoints,
+   int capacityLevel,
+   int capacity,
+   int nextCapacityLevel,
+   int nextCapacityCost,
+   List<SatchelFeatureView> features,
+   List<SatchelSortRule> sortRules,
+   List<ItemStack> contents,
+   List<PersonalRecordView> personalRecords,
+   Set<Integer> protectedSlots,
+   Set<String> protectionRules,
+   SatchelNetworkStatus status,
+   String detail
+   ) {
+      this(protocolVersion, hand, stateToken, valid, open, active, multiplayerAvailable, experiencePoints, capacityLevel, capacity, nextCapacityLevel, nextCapacityCost, features, sortRules, contents, personalRecords, protectedSlots, protectionRules, status, detail, new net.minecraft.nbt.NbtCompound());
+   }
+
+   public net.minecraft.nbt.NbtCompound tackle() { return tackle.copy(); }
+
    public SatchelView {
+      tackle = tackle == null ? new net.minecraft.nbt.NbtCompound() : tackle.copy();
       hand = Objects.requireNonNull(hand, "hand");
       features = List.copyOf(Objects.requireNonNullElse(features, List.of()));
       sortRules = List.copyOf(Objects.requireNonNullElse(sortRules, List.of()));
