@@ -2,6 +2,7 @@ package com.redslovesgames.tideborne.fishing;
 
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import com.redslovesgames.tideborne.fishing.gear.*;
+import com.redslovesgames.tideborne.fishing.specimen.*;
 import com.redslovesgames.tideborne.fishing.tide.TideFishingLineModifiers;
 import org.junit.jupiter.api.Test;
 import java.util.*;

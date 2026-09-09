@@ -3,6 +3,7 @@ package com.redslovesgames.tideborne.fishing;
 import com.redslovesgames.tideborne.fishing.gametest.GearArchetypeCases;
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import com.redslovesgames.tideborne.fishing.gear.*;
+import com.redslovesgames.tideborne.fishing.specimen.*;
 import com.redslovesgames.tideborne.fishing.tide.TideFishingLineModifiers;
 import com.redslovesgames.tideborne.satchel.SatchelGearSummary;
 import java.util.*;
@@ -27,14 +28,13 @@ class GearArchetypeConvergenceTest {
         var species = species(Set.of("heavy", "kujira_target", "boss", "legendary", "deep"));
         var generator = new SpecimenGenerator();
         var specimen = generator.generate(species, 7741, SpecimenData.Provenance.generated(), 0);
-        var before = specimen.toString(); // Includes all axes, identity, length, percentile and score.
+        var before = specimen.toString();
         for (var build : GearArchetypeCases.builds()) {
             var gear = build.contributions(true, true, config);
             new FightProfileService().create(species, specimen, gear);
             new FightProfileService().projectMinigame(species, specimen, gear, 1);
             new SpeciesSelectionService().adjustedWeight(species, 0, FishingEnvironment.empty(), gear);
             assertEquals(before, specimen.toString(), build.name());
-            // TL may affect canonical traits; the independent natural sample never changes.
             var generated = generator.generate(species, 7741, SpecimenData.Provenance.generated(), FishingGearEffects.traitLuck(gear));
             assertEquals(specimen.basePercentile(), generated.basePercentile(), build.name());
             assertEquals(specimen.baseLength(), generated.baseLength(), build.name());
@@ -75,12 +75,11 @@ class GearArchetypeConvergenceTest {
         assertEquals(.25, FishingGearEffects.trophyFightRelief(DIAMOND_ROD.rodModifiers()));
         assertEquals(.10, FishingGearEffects.trophyFightRelief(NETHERITE_ROD.rodModifiers()));
         assertTrue(FishingGearEffects.catchLossPreventionChance(NETHERITE_ROD.rodModifiers()) > FishingGearEffects.catchLossPreventionChance(DIAMOND_ROD.rodModifiers()));
-        assertEquals(0, GOLD_ROD.rodModifiers().fishingLuck()); // Native Gold luck is separate.
+        assertEquals(0, GOLD_ROD.rodModifiers().fishingLuck());
     }
 
     @Test void completeStackCapsRetainRawCostsAndNativeLuckProvenance() {
         var build = GearArchetypeCases.builds().get(4);
-        // One bobber, two native bait slots (Leviathan + Lucky), and the existing six equipment roles.
         var twoBaits = new GearArchetypeCases.Build(build.name(), build.rod(), build.line(), build.hook(),
                 "enchanted_golden_apple", build.bait(), build.leader(), 2, 0, new double[0]);
         var gear = twoBaits.contributions(true,true,config);
@@ -100,7 +99,6 @@ class GearArchetypeConvergenceTest {
         assertTrue(copper.tempoMultiplier() < base.tempoMultiplier());
         assertTrue(FishingGearEffects.catchZoneAreaMultiplier(copper) > FishingGearEffects.catchZoneAreaMultiplier(base));
         assertEquals(copper.strengthMultiplier(), base.strengthMultiplier());
-        // Material upgrades dominate the neutral base; non-base lines retain different handling costs.
         assertTrue(TideFishingLineModifiers.forProfile(TIDE_GOLDEN_LINE).strengthMultiplier() > 1);
         assertTrue(TideFishingLineModifiers.forProfile(TIDE_DIAMOND_LINE).tempoMultiplier() > 1);
         assertTrue(FishingGearEffects.minigameSpeedMultiplier(TideborneFishingGearModifiers.swiftLine(config)) > 1);
@@ -119,7 +117,6 @@ class GearArchetypeConvergenceTest {
                     .mapToDouble(metric).max().orElseThrow();
             assertEquals(max, metric.applyAsDouble(winner), EPS);
         }
-        // A balance finding, not permission to retune: insurance can cap despite net-positive zone area.
         var safe = GearArchetypeCases.builds().get(3).contributions(true,true,config);
         assertEquals(.95, FishingGearEffects.catchLossPreventionChance(safe));
         assertTrue(FishingGearEffects.catchZoneAreaMultiplier(safe) > 1);
