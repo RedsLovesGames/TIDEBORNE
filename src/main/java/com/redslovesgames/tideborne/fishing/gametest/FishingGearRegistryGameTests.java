@@ -15,8 +15,8 @@ public final class FishingGearRegistryGameTests implements FabricGameTest {
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void sevenRealLoadoutsConvergeAcrossCastFightAndSatchel(TestContext helper) {
         var config = com.redslovesgames.tideborne.config.TideboundConfig.get();
-        boolean myths = com.redslovesgames.tideborne.compat.TideboundCompatibility.isMythsIntegrationActive();
-        boolean apex = com.redslovesgames.tideborne.compat.TideboundCompatibility.isApexIntegrationActive();
+        boolean myths = com.redslovesgames.tideborne.fishing.FishingGameplayInitializer.isMythsIntegrationActive();
+        boolean apex = com.redslovesgames.tideborne.fishing.FishingGameplayInitializer.isApexIntegrationActive();
         var player = helper.createMockCreativeServerPlayerInWorld();
         for (var build : GearArchetypeCases.builds()) {
             ItemStack rod = new ItemStack(Registries.ITEM.get(build.rod().itemId()));
@@ -91,7 +91,7 @@ public final class FishingGearRegistryGameTests implements FabricGameTest {
         var hook = new com.li64.tide.registries.entities.misc.fishing.TideFishingHook(
                 com.li64.tide.registries.TideEntityTypes.FISHING_BOBBER, helper.createMockCreativeServerPlayerInWorld(), helper.getWorld(), 0, 0, 0, rod);
         var config = com.redslovesgames.tideborne.config.TideboundConfig.get();
-        if (!com.redslovesgames.tideborne.compat.TideboundCompatibility.isMythsIntegrationActive()) {
+        if (!com.redslovesgames.tideborne.fishing.FishingGameplayInitializer.isMythsIntegrationActive()) {
             helper.assertTrue(!com.redslovesgames.tideborne.fishing.gear.LeviathanBaitFishing.isEnabledFor(hook, config),
                     "Absent Myths integration activated Leviathan");
             var gear = com.redslovesgames.tideborne.fishing.gear.TideborneFishingGearModifiers.forSelection(hook.getContext(), config);
@@ -186,7 +186,7 @@ public final class FishingGearRegistryGameTests implements FabricGameTest {
         helper.assertTrue(hook.getLuck() == 7, "Rod composition duplicated native luck");
         helper.assertTrue(new ItemStack(TideItems.GOLDEN_FISHING_ROD).isIn(com.li64.tide.data.TideTags.Items.LUCK_BOOSTING_RODS),
                 "Tide native Gold luck tag was lost");
-        if (!com.redslovesgames.tideborne.compat.TideboundCompatibility.isMythsIntegrationActive()) {
+        if (!com.redslovesgames.tideborne.fishing.FishingGameplayInitializer.isMythsIntegrationActive()) {
             com.li64.tide.data.rods.CustomRodManager.setLine(rod, new ItemStack(TideboundItems.TENTACLE_LINE));
             var optionalHook = new com.li64.tide.registries.entities.misc.fishing.TideFishingHook(
                     com.li64.tide.registries.TideEntityTypes.FISHING_BOBBER, player, helper.getWorld(), 0, 0, 0, rod);
