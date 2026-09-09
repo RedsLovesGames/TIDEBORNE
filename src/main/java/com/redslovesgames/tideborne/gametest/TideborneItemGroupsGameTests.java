@@ -1,7 +1,7 @@
 package com.redslovesgames.tideborne.gametest;
 
 import com.redslovesgames.tideborne.registry.TideborneItemGroups;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.registry.TideboundItems;
 import com.redslovesgames.tideborne.satchel.SatchelRegistration;
 import java.util.List;
@@ -67,8 +67,8 @@ public final class TideborneItemGroupsGameTests implements FabricGameTest {
 
     @GameTest(templateName = "fabric-gametest-api-v1:empty")
     public void currentCreativeItemsFollowActiveIntegrationFlags(TestContext helper) {
-        boolean mythsActive = TideboundCompatibility.isMythsIntegrationActive();
-        boolean apexActive = TideboundCompatibility.isApexIntegrationActive();
+        boolean mythsActive = FishingGameplayInitializer.isMythsIntegrationActive();
+        boolean apexActive = FishingGameplayInitializer.isApexIntegrationActive();
         List<Item> current = TideborneItemGroups.currentCreativeItems();
 
         helper.assertTrue(current.equals(TideborneItemGroups.creativeItems(mythsActive, apexActive)),
