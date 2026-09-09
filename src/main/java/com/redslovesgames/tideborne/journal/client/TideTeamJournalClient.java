@@ -18,7 +18,6 @@ import com.redslovesgames.tideborne.journal.network.RecordHoldersPayload;
 import com.redslovesgames.tideborne.journal.network.TeamDataPayload;
 import java.util.HashMap;
 import java.util.Map;
-import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.nbt.NbtCompound;
@@ -26,8 +25,17 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.registry.Registries;
 
-public final class TideTeamJournalClient implements ClientModInitializer {
-   public void onInitializeClient() {
+public final class TideTeamJournalClient {
+   private static boolean initialized;
+
+   private TideTeamJournalClient() {
+   }
+
+   public static void initialize() {
+      if (initialized) {
+         return;
+      }
+      initialized = true;
       ClientConfig.load();
       RecordScoreboard.register();
       ClientPlayNetworking.registerGlobalReceiver(RecordHoldersPayload.TYPE, (payload, context) -> {
