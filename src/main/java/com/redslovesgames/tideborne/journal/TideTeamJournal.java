@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -45,11 +44,19 @@ import net.minecraft.registry.Registries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class TideTeamJournal implements ModInitializer {
+public final class TideTeamJournal {
    public static final String MOD_ID = "tide_team_journal";
    public static final Logger LOGGER = LoggerFactory.getLogger("tide_team_journal");
+   private static boolean initialized;
 
-   public void onInitialize() {
+   private TideTeamJournal() {
+   }
+
+   public static void initialize() {
+      if (initialized) {
+         return;
+      }
+      initialized = true;
       ServerConfig.load();
       PayloadTypeRegistry.playS2C().register(RecordHoldersPayload.TYPE, RecordHoldersPayload.CODEC);
       PayloadTypeRegistry.playS2C().register(TeamDataPayload.TYPE, TeamDataPayload.CODEC);
