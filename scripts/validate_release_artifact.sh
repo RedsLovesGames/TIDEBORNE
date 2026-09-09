@@ -59,20 +59,31 @@ with zipfile.ZipFile(artifact) as jar:
     refmap = json.loads(jar.read('tidebound_compatibility.refmap.json'))
 
 expected = {
-    'com/redslovesgames/tideborne/mixin/tide/AnglingTableLeaderMixin': {
+    'AnglingTableLeaderMixin': {
         'getForgingSlotsManager': 'Lcom/li64/tide/client/gui/menus/AnglingTableMenu;method_48352()Lnet/minecraft/class_8047;',
         'updateResult': 'Lcom/li64/tide/client/gui/menus/AnglingTableMenu;method_24928()V',
     },
-    'com/redslovesgames/tideborne/mixin/tide/AnglingTableScreenLeaderMixin': {
+    'AnglingTableScreenLeaderMixin': {
         'drawInvalidRecipeArrow': 'Lcom/li64/tide/client/gui/screens/AnglingTableScreen;method_48467(Lnet/minecraft/class_332;II)V',
     },
 }
 
-for section in (refmap.get('mappings', {}), refmap.get('data', {}).get('named:intermediary', {})):
-    for mixin, members in expected.items():
-        actual = section.get(mixin)
-        if actual is None:
-            raise SystemExit(f'Missing production refmap entry for {mixin}')
+for section_name, section in (
+    ('mappings', refmap.get('mappings', {})),
+    ('named:intermediary', refmap.get('data', {}).get('named:intermediary', {})),
+):
+    for simple_name, members in expected.items():
+        candidates = [
+            (key, value)
+            for key, value in section.items()
+            if key.replace('.', '/').rsplit('/', 1)[-1] == simple_name
+        ]
+        if len(candidates) != 1:
+            keys = [key for key, _ in candidates]
+            raise SystemExit(
+                f'Expected exactly one production refmap entry for {simple_name} in {section_name}; found {keys}'
+            )
+        mixin, actual = candidates[0]
         for member, target in members.items():
             if actual.get(member) != target:
                 raise SystemExit(f'Bad production refmap target for {mixin}.{member}: {actual.get(member)!r}')
