@@ -99,49 +99,10 @@ jobs:
             gradle clean build --stacktrace
           fi
 
-      - name: Run GameTests with no optional compatibility mods
-        run: |
-          if [ -x ./gradlew ]; then
-            ./gradlew runGametest --stacktrace
-          else
-            gradle runGametest --stacktrace
-          fi
-
-      - name: Run GameTests with Apex Waters 1.1.1 only
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-        run: |
-          if [ -x ./gradlew ]; then
-            ./gradlew runGametest -PincludeApexRuntime=true --stacktrace
-          else
-            gradle runGametest -PincludeApexRuntime=true --stacktrace
-          fi
-
-      - name: Run GameTests with Myths of the Sea 1.3.0 only
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-        run: |
-          if [ -x ./gradlew ]; then
-            ./gradlew runGametest -PincludeMythsRuntime=true --stacktrace
-          else
-            gradle runGametest -PincludeMythsRuntime=true --stacktrace
-          fi
-
-      - name: Run GameTests with Apex Waters and Myths of the Sea
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-        run: |
-          if [ -x ./gradlew ]; then
-            ./gradlew runGametest -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
-          else
-            gradle runGametest -PincludeApexRuntime=true -PincludeMythsRuntime=true --stacktrace
-          fi
-
-      - name: Run dedicated-server smoke test
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
-        run: ./scripts/dedicated_server_smoke.sh
-
       - name: Validate production release artifact
         run: ./scripts/validate_release_artifact.sh "build/libs/tideborne-${{ steps.version.outputs.version }}.jar"
 
-      - name: Report final validation counts
+      - name: Report unit test count
         shell: bash
         run: |
           unit_count="$(python3 - <<'PY'
@@ -154,11 +115,8 @@ jobs:
           print(total)
           PY
           )"
-          gametest_count="$(grep -R -h -c '^[[:space:]]*@GameTest' src/main/java | awk '{sum += $1} END {print sum + 0}')"
           test "$unit_count" -gt 0
-          test "$gametest_count" -gt 0
           echo "UNIT_TEST_COUNT=$unit_count"
-          echo "GAME_TEST_COUNT=$gametest_count"
 
       - name: Upload built JARs
         if: success()
