@@ -6,7 +6,6 @@
 package com.redslovesgames.tideborne.presentation.render;
 
 import com.redslovesgames.tideborne.presentation.resource.TextureCacheLimits;
-import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +39,7 @@ final class MutationTextureCache {
    }
 
    synchronized Identifier resolve(Identifier original, MutationTextureCache.Visual visual) {
-      MutationTextureCache.Key key = new MutationTextureCache.Key(original, visual.mutation(), visual.maskVariant(), visual.maskOffsetX(), visual.maskOffsetY());
+      MutationTextureCache.Key key = new MutationTextureCache.Key(original, visual.effect(), visual.maskVariant(), visual.maskOffsetX(), visual.maskOffsetY());
       MutationTextureCache.Entry cached = this.entries.get(key);
       if (cached != null) {
          return cached.location();
@@ -204,13 +203,12 @@ final class MutationTextureCache {
                int blue = Abgr.getBlue(sourcePixel);
                double maskOpacity = maskCoverage(mask, x, y, width, height, key.maskOffsetX(), key.maskOffsetY());
 
-               int transformed = switch (key.mutation()) {
+               int transformed = switch (key.effect()) {
                   case ALBINO -> albino(alpha, red, green, blue);
                   case PERFECT_SPECIMEN -> perfect(alpha, red, green, blue);
                   case IRIDESCENT -> iridescent(alpha, red, green, blue, x, y, key.maskVariant(), maskOpacity);
                   case SCARRED -> overlay(alpha, red, green, blue, 92, 39, 34, maskOpacity * (alpha / 255.0) * 0.78);
                   case PARASITE_RIDDEN -> overlay(alpha, red, green, blue, 190, 224, 96, maskOpacity);
-                  default -> sourcePixel;
                };
                result.setColor(x, y, transformed);
             }
@@ -281,7 +279,7 @@ final class MutationTextureCache {
    private static Identifier maskLocation(MutationTextureCache.Key key) {
       String prefix;
       int variants;
-      switch (key.mutation()) {
+      switch (key.effect()) {
          case IRIDESCENT:
             prefix = "sparkle";
             variants = 2;
@@ -367,11 +365,29 @@ final class MutationTextureCache {
       }
    }
 
-   @Environment(EnvType.CLIENT)
-   private record Key(Identifier original, FishMutation mutation, int maskVariant, int maskOffsetX, int maskOffsetY) {
+   enum VisualEffect {
+      ALBINO(1),
+      PERFECT_SPECIMEN(4),
+      SCARRED(5),
+      PARASITE_RIDDEN(6),
+      IRIDESCENT(7);
+
+      private final int historicalOrdinal;
+
+      VisualEffect(int historicalOrdinal) {
+         this.historicalOrdinal = historicalOrdinal;
+      }
+
+      int historicalOrdinal() {
+         return this.historicalOrdinal;
+      }
    }
 
    @Environment(EnvType.CLIENT)
-   record Visual(FishMutation mutation, int maskVariant, int maskOffsetX, int maskOffsetY) {
+   private record Key(Identifier original, VisualEffect effect, int maskVariant, int maskOffsetX, int maskOffsetY) {
+   }
+
+   @Environment(EnvType.CLIENT)
+   record Visual(VisualEffect effect, int maskVariant, int maskOffsetX, int maskOffsetY) {
    }
 }

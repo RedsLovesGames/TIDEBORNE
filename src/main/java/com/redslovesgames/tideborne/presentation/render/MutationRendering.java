@@ -12,9 +12,8 @@ import com.redslovesgames.tideborne.registry.TideTraitsComponents;
 import com.redslovesgames.tideborne.config.TideTraitsConfigManager;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenEntity;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenTransfer;
-import com.redslovesgames.tideborne.fishing.specimen.legacy.DeterministicValues;
-import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -71,7 +70,7 @@ public final class MutationRendering {
 
    /**
     * Applies the same deterministic mutation texture transform used by fish entities to a flat item
-    * texture. The ItemStack is only read here: canonical V2 pigmentation/condition state is never
+    * texture. The ItemStack is only read here: canonical pigmentation/condition state is never
     * generated or mutated by rendering.
     */
    public static Identifier textureForItem(Identifier original, ItemStack stack) {
@@ -100,7 +99,9 @@ public final class MutationRendering {
       if (entity != null && poseStack != null && entity instanceof SpecimenEntity specimenEntity) {
          try {
             NbtCompound specimen = specimenEntity.tideTraits$getSpecimenTag();
-            if (specimen.getString("Mutation").isBlank() || SpecimenTransfer.isDisplayPreview(entity)) {
+            boolean hasCanonicalState = !specimen.getString(SpecimenTransfer.CANONICAL_PIGMENTATION_KEY).isBlank()
+               || !specimen.getString(SpecimenTransfer.CANONICAL_CONDITION_KEY).isBlank();
+            if ((!hasCanonicalState && specimen.getString(SpecimenTransfer.MUTATION_KEY).isBlank()) || SpecimenTransfer.isDisplayPreview(entity)) {
                return;
             }
 
@@ -133,76 +134,84 @@ public final class MutationRendering {
    private static Optional<MutationTextureCache.Visual> visual(Entity entity) {
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound specimen = specimenEntity.tideTraits$getSpecimenTag();
-         Optional<FishMutation> mutation = visualMutation(specimen);
-         if (!mutation.isEmpty() && usesGeneratedTexture(mutation.get())) {
+         Optional<MutationTextureCache.VisualEffect> effect = visualEffect(specimen);
+         if (effect.isPresent()) {
             long seed = specimen.contains("MutationSeed", 99) ? specimen.getLong("MutationSeed") : fallbackSeed(entity.getUuid());
-            return visual(mutation.get(), seed);
+            return visual(effect.get(), seed);
          }
       }
       return Optional.empty();
    }
 
    private static Optional<MutationTextureCache.Visual> visual(ItemStack stack) {
-      Optional<FishMutation> mutation = visualMutation(stack);
-      if (mutation.isEmpty() || !usesGeneratedTexture(mutation.get())) {
+      Optional<MutationTextureCache.VisualEffect> effect = visualEffect(stack);
+      if (effect.isEmpty()) {
          return Optional.empty();
       }
 
       Long canonicalSeed = stack.get(TideTraitsComponents.SPECIMEN_DETERMINISTIC_SEED);
       Long legacySeed = stack.get(TideTraitsComponents.MUTATION_SEED);
       long seed = canonicalSeed != null ? canonicalSeed : (legacySeed != null ? legacySeed : 0L);
-      return visual(mutation.get(), seed);
+      return visual(effect.get(), seed);
    }
 
-   private static Optional<MutationTextureCache.Visual> visual(FishMutation mutation, long seed) {
-      int variants = switch (mutation) {
+   private static Optional<MutationTextureCache.Visual> visual(MutationTextureCache.VisualEffect effect, long seed) {
+      int variants = switch (effect) {
          case SCARRED, PARASITE_RIDDEN -> 4;
          case IRIDESCENT -> 8;
          default -> 1;
       };
-      long mixed = DeterministicValues.mix64(seed ^ VARIANT_SALT ^ mutation.ordinal());
+      long mixed = mix64(seed ^ VARIANT_SALT ^ effect.historicalOrdinal());
       int variant = Math.floorMod(mixed, variants);
-      int offsetX = Math.floorMod(DeterministicValues.mix64(mixed ^ 7640891576956012809L), 7) - 3;
-      int offsetY = Math.floorMod(DeterministicValues.mix64(mixed ^ -4942790177534073029L), 7) - 3;
-      return Optional.of(new MutationTextureCache.Visual(mutation, variant, offsetX, offsetY));
+      int offsetX = Math.floorMod(mix64(mixed ^ 7640891576956012809L), 7) - 3;
+      int offsetY = Math.floorMod(mix64(mixed ^ -4942790177534073029L), 7) - 3;
+      return Optional.of(new MutationTextureCache.Visual(effect, variant, offsetX, offsetY));
    }
 
-   private static Optional<FishMutation> visualMutation(NbtCompound specimen) {
-      Optional<FishMutation> pigmentation = FishMutation.bySerializedName(
+   private static Optional<MutationTextureCache.VisualEffect> visualEffect(NbtCompound specimen) {
+      Optional<MutationTextureCache.VisualEffect> pigmentation = visualEffectBySerializedName(
          specimen.getString(SpecimenTransfer.CANONICAL_PIGMENTATION_KEY)
       );
-      if (pigmentation.filter(mutation -> mutation == FishMutation.ALBINO || mutation == FishMutation.IRIDESCENT).isPresent()) {
+      if (pigmentation.filter(effect -> effect == MutationTextureCache.VisualEffect.ALBINO || effect == MutationTextureCache.VisualEffect.IRIDESCENT).isPresent()) {
          return pigmentation;
       }
 
-      Optional<FishMutation> condition = FishMutation.bySerializedName(
+      Optional<MutationTextureCache.VisualEffect> condition = visualEffectBySerializedName(
          specimen.getString(SpecimenTransfer.CANONICAL_CONDITION_KEY)
       );
-      if (condition.filter(mutation -> mutation == FishMutation.SCARRED || mutation == FishMutation.PARASITE_RIDDEN).isPresent()) {
+      if (condition.filter(effect -> effect == MutationTextureCache.VisualEffect.SCARRED || effect == MutationTextureCache.VisualEffect.PARASITE_RIDDEN).isPresent()) {
          return condition;
       }
 
-      return FishMutation.bySerializedName(specimen.getString(SpecimenTransfer.MUTATION_KEY));
+      return visualEffectBySerializedName(specimen.getString(SpecimenTransfer.MUTATION_KEY));
    }
 
-   private static Optional<FishMutation> visualMutation(ItemStack stack) {
-      Optional<FishMutation> pigmentation = FishMutation.bySerializedName(stack.get(TideTraitsComponents.SPECIMEN_PIGMENTATION));
-      if (pigmentation.filter(mutation -> mutation == FishMutation.ALBINO || mutation == FishMutation.IRIDESCENT).isPresent()) {
+   private static Optional<MutationTextureCache.VisualEffect> visualEffect(ItemStack stack) {
+      Optional<MutationTextureCache.VisualEffect> pigmentation = visualEffectBySerializedName(stack.get(TideTraitsComponents.SPECIMEN_PIGMENTATION));
+      if (pigmentation.filter(effect -> effect == MutationTextureCache.VisualEffect.ALBINO || effect == MutationTextureCache.VisualEffect.IRIDESCENT).isPresent()) {
          return pigmentation;
       }
 
-      Optional<FishMutation> condition = FishMutation.bySerializedName(stack.get(TideTraitsComponents.SPECIMEN_CONDITION));
-      if (condition.filter(mutation -> mutation == FishMutation.SCARRED || mutation == FishMutation.PARASITE_RIDDEN).isPresent()) {
+      Optional<MutationTextureCache.VisualEffect> condition = visualEffectBySerializedName(stack.get(TideTraitsComponents.SPECIMEN_CONDITION));
+      if (condition.filter(effect -> effect == MutationTextureCache.VisualEffect.SCARRED || effect == MutationTextureCache.VisualEffect.PARASITE_RIDDEN).isPresent()) {
          return condition;
       }
 
-      return FishMutation.bySerializedName(stack.get(TideTraitsComponents.MUTATION));
+      return visualEffectBySerializedName(stack.get(TideTraitsComponents.MUTATION));
    }
 
-   private static boolean usesGeneratedTexture(FishMutation mutation) {
-      return switch (mutation) {
-         case SCARRED, PARASITE_RIDDEN, IRIDESCENT, ALBINO, PERFECT_SPECIMEN -> true;
-         case NORMAL, DWARF, GIANT -> false;
+   private static Optional<MutationTextureCache.VisualEffect> visualEffectBySerializedName(String value) {
+      if (value == null) {
+         return Optional.empty();
+      }
+
+      return switch (value.toLowerCase(Locale.ROOT)) {
+         case "albino" -> Optional.of(MutationTextureCache.VisualEffect.ALBINO);
+         case "perfect_specimen" -> Optional.of(MutationTextureCache.VisualEffect.PERFECT_SPECIMEN);
+         case "scarred" -> Optional.of(MutationTextureCache.VisualEffect.SCARRED);
+         case "parasite_ridden" -> Optional.of(MutationTextureCache.VisualEffect.PARASITE_RIDDEN);
+         case "iridescent" -> Optional.of(MutationTextureCache.VisualEffect.IRIDESCENT);
+         default -> Optional.empty();
       };
    }
 
@@ -225,7 +234,13 @@ public final class MutationRendering {
    }
 
    private static long fallbackSeed(UUID uuid) {
-      return DeterministicValues.mix64(uuid.getMostSignificantBits() ^ Long.rotateLeft(uuid.getLeastSignificantBits(), 29));
+      return mix64(uuid.getMostSignificantBits() ^ Long.rotateLeft(uuid.getLeastSignificantBits(), 29));
+   }
+
+   private static long mix64(long value) {
+      value = (value ^ value >>> 30) * -4658895280553007687L;
+      value = (value ^ value >>> 27) * -7723592293110705685L;
+      return value ^ value >>> 31;
    }
 
    private static boolean isGenerated(Identifier texture) {
