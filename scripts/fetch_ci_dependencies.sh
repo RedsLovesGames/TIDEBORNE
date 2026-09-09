@@ -3,6 +3,13 @@ set -euo pipefail
 
 mkdir -p dev/libs
 
+# Modrinth requires a uniquely identifying User-Agent for API traffic. Keep all
+# artifact identity pinned by the existing project/version IDs and SHA-256 checks.
+MODRINTH_USER_AGENT="${MODRINTH_USER_AGENT:-RedsLovesGames/TIDEBORNE-ci/1.3.57}"
+modrinth_curl() {
+    curl -fsSL -A "$MODRINTH_USER_AGENT" "$@"
+}
+
 fetch_modrinth_primary() {
     local project_id="$1"
     local version_id="$2"
@@ -10,16 +17,16 @@ fetch_modrinth_primary() {
     local expected_sha="$4"
     local json url
 
-    json="$(curl -fsSL "https://api.modrinth.com/v2/version/${version_id}")"
+    json="$(modrinth_curl "https://api.modrinth.com/v2/version/${version_id}")"
     test "$(printf '%s' "$json" | jq -r '.project_id')" = "$project_id"
     url="$(printf '%s' "$json" | jq -r '.files[] | select(.primary == true) | .url' | head -n1)"
     test -n "$url"
-    curl -fsSL "$url" -o "$output"
+    modrinth_curl "$url" -o "$output"
     printf '%s  %s\n' "$expected_sha" "$output" | sha256sum --check --strict
 }
 
 # Tide 2.1.1 Fabric for Minecraft 1.21.1.
-tide_json="$(curl -fsSLG \
+tide_json="$(modrinth_curl -G \
     --data-urlencode 'game_versions=["1.21.1"]' \
     --data-urlencode 'loaders=["fabric"]' \
     --data-urlencode 'include_changelog=false' \
@@ -28,7 +35,7 @@ tide_version_id="$(printf '%s' "$tide_json" | jq -r '[.[] | select(.name == "Tid
 tide_url="$(printf '%s' "$tide_json" | jq -r '[.[] | select(.name == "Tide 2.1.1 (Fabric 1.21.1)")][0].files[] | select(.primary == true) | .url' | head -n1)"
 test -n "$tide_version_id"
 test -n "$tide_url"
-curl -fsSL "$tide_url" -o dev/libs/tide-fabric-1.21.1-2.1.1.jar
+modrinth_curl "$tide_url" -o dev/libs/tide-fabric-1.21.1-2.1.1.jar
 test "$(unzip -p dev/libs/tide-fabric-1.21.1-2.1.1.jar fabric.mod.json | jq -r '.version')" = '2.1.1'
 echo '498a5e8dda940866c9b0decadf7960724ef489fb49215b30f70c18d12f07b1c8  dev/libs/tide-fabric-1.21.1-2.1.1.jar' | sha256sum --check --strict
 
