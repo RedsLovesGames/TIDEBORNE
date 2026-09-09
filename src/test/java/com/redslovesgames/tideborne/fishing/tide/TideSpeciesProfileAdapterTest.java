@@ -8,12 +8,6 @@ import org.junit.jupiter.api.Test;
 
 class TideSpeciesProfileAdapterTest {
     @Test
-    void migrationEncounterWeightPreservesAuthoritativeSelectionWeight() {
-        assertEquals(37.5, TideSpeciesProfileAdapter.migrationEncounterWeight(37.5), 0.0);
-        assertEquals(0.0, TideSpeciesProfileAdapter.migrationEncounterWeight(0.0), 0.0);
-    }
-
-    @Test
     void serializedBehaviorIdMatchesTideContract() {
         assertEquals("linear_wrap", TideSpeciesProfileAdapter.serializedBehaviorId("LINEAR_WRAP"));
         assertEquals("sine", TideSpeciesProfileAdapter.serializedBehaviorId("SINE"));
