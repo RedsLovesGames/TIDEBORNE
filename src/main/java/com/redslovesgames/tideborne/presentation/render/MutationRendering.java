@@ -10,6 +10,8 @@ import com.li64.tide.data.fishing.FishData;
 import com.redslovesgames.tideborne.fishing.TideTraits;
 import com.redslovesgames.tideborne.registry.TideTraitsComponents;
 import com.redslovesgames.tideborne.config.TideTraitsConfigManager;
+import com.redslovesgames.tideborne.fishing.specimen.CanonicalSpecimenStorage;
+import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenEntity;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenTransfer;
 import java.util.LinkedHashSet;
@@ -99,7 +101,9 @@ public final class MutationRendering {
       if (entity != null && poseStack != null && entity instanceof SpecimenEntity specimenEntity) {
          try {
             NbtCompound specimen = specimenEntity.tideTraits$getSpecimenTag();
-            boolean hasCanonicalState = !specimen.getString(SpecimenTransfer.CANONICAL_PIGMENTATION_KEY).isBlank()
+            Optional<SpecimenData> canonical = CanonicalSpecimenStorage.readTransferData(specimen);
+            boolean hasCanonicalState = canonical.isPresent()
+               || !specimen.getString(SpecimenTransfer.CANONICAL_PIGMENTATION_KEY).isBlank()
                || !specimen.getString(SpecimenTransfer.CANONICAL_CONDITION_KEY).isBlank();
             if ((!hasCanonicalState && specimen.getString(SpecimenTransfer.MUTATION_KEY).isBlank()) || SpecimenTransfer.isDisplayPreview(entity)) {
                return;
@@ -111,7 +115,7 @@ public final class MutationRendering {
             }
 
             double averageLength = fishData.get().getAverageLength();
-            double trackedLength = trackedLength(entity, specimen);
+            double trackedLength = canonical.isPresent() ? canonical.get().finalLength() : trackedLength(entity, specimen);
             if (!Double.isFinite(averageLength) || averageLength <= 0.0 || !Double.isFinite(trackedLength) || trackedLength <= 0.0) {
                return;
             }
@@ -134,9 +138,16 @@ public final class MutationRendering {
    private static Optional<MutationTextureCache.Visual> visual(Entity entity) {
       if (entity instanceof SpecimenEntity specimenEntity) {
          NbtCompound specimen = specimenEntity.tideTraits$getSpecimenTag();
-         Optional<MutationTextureCache.VisualEffect> effect = visualEffect(specimen);
+         Optional<SpecimenData> canonical = CanonicalSpecimenStorage.readTransferData(specimen);
+         Optional<MutationTextureCache.VisualEffect> effect = canonical.isPresent()
+            ? visualEffect(canonical.get())
+            : visualEffect(specimen);
          if (effect.isPresent()) {
-            long seed = specimen.contains("MutationSeed", 99) ? specimen.getLong("MutationSeed") : fallbackSeed(entity.getUuid());
+            long seed = canonical.isPresent()
+               ? canonical.get().deterministicSeed()
+               : specimen.contains(SpecimenTransfer.SEED_KEY, 99)
+                  ? specimen.getLong(SpecimenTransfer.SEED_KEY)
+                  : fallbackSeed(entity.getUuid());
             return visual(effect.get(), seed);
          }
       }
@@ -166,6 +177,20 @@ public final class MutationRendering {
       int offsetX = Math.floorMod(mix64(mixed ^ 7640891576956012809L), 7) - 3;
       int offsetY = Math.floorMod(mix64(mixed ^ -4942790177534073029L), 7) - 3;
       return Optional.of(new MutationTextureCache.Visual(effect, variant, offsetX, offsetY));
+   }
+
+   private static Optional<MutationTextureCache.VisualEffect> visualEffect(SpecimenData specimen) {
+      Optional<MutationTextureCache.VisualEffect> pigmentation = visualEffectBySerializedName(specimen.pigmentation().name());
+      if (pigmentation.filter(effect -> effect == MutationTextureCache.VisualEffect.ALBINO || effect == MutationTextureCache.VisualEffect.IRIDESCENT).isPresent()) {
+         return pigmentation;
+      }
+
+      Optional<MutationTextureCache.VisualEffect> condition = visualEffectBySerializedName(specimen.condition().name());
+      if (condition.filter(effect -> effect == MutationTextureCache.VisualEffect.SCARRED || effect == MutationTextureCache.VisualEffect.PARASITE_RIDDEN).isPresent()) {
+         return condition;
+      }
+
+      return Optional.empty();
    }
 
    private static Optional<MutationTextureCache.VisualEffect> visualEffect(NbtCompound specimen) {
@@ -216,8 +241,8 @@ public final class MutationRendering {
    }
 
    private static double trackedLength(Entity entity, NbtCompound specimen) {
-      if (specimen.contains("LengthCm", 99)) {
-         double synchronizedLength = specimen.getDouble("LengthCm");
+      if (specimen.contains(SpecimenTransfer.LENGTH_KEY, 99)) {
+         double synchronizedLength = specimen.getDouble(SpecimenTransfer.LENGTH_KEY);
          if (Double.isFinite(synchronizedLength) && synchronizedLength > 0.0) {
             return synchronizedLength;
          }
