@@ -11,14 +11,22 @@ import com.redslovesgames.tideborne.presentation.render.MutationRendering;
 import com.redslovesgames.tideborne.discovery.multiplayer.MultiplayerDiscoveryClient;
 import com.redslovesgames.tideborne.discovery.DiscoveryClient;
 import com.redslovesgames.tideborne.satchel.SatchelRegistration;
-import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 
 @Environment(EnvType.CLIENT)
-public final class TideTraitsClient implements ClientModInitializer {
-   public void onInitializeClient() {
+public final class TideTraitsClient {
+   private static boolean initialized;
+
+   private TideTraitsClient() {
+   }
+
+   public static void initialize() {
+      if (initialized) {
+         return;
+      }
+      initialized = true;
       DiscoveryClient.initClient();
       MultiplayerDiscoveryClient.initClient();
       SatchelClientNetworking.initClient();
