@@ -4,129 +4,118 @@ import com.li64.tide.data.item.TideDataComponents;
 import com.li64.tide.data.rods.BaitContents;
 import com.li64.tide.data.rods.CustomRodManager;
 import com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry;
+import com.redslovesgames.tideborne.fishing.gear.LeaderAttachment;
+import com.redslovesgames.tideborne.registry.TideTraitsComponents;
+import net.minecraft.component.ComponentType;
+import net.minecraft.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
 
-/** Pure tackle exchange planner. It never mutates the supplied rod or preset pockets. */
+/** Builds an item-conserving swap on copies before either authoritative inventory is written. */
 public final class SatchelTackleExchange {
     private SatchelTackleExchange() {}
 
-    public static Plan plan(ItemStack currentRod, List<ItemStack> requestedPockets) {
-        if (currentRod == null || currentRod.isEmpty()) return Plan.failed("No fishing rod equipped", currentRod, requestedPockets);
-        ArrayList<ItemStack> pockets = normalized(requestedPockets);
-        ItemStack rod = currentRod.copy();
-
-        for (int i = 0; i < SatchelPreset.SLOTS.size(); i++) {
-            ItemStack requested = pockets.get(i);
-            if (requested.isEmpty()) continue;
-            FishingGearRegistry.Slot slot = SatchelPreset.SLOTS.get(i);
-            if (!FishingGearRegistry.accepts(slot, requested)) return Plan.failed("Invalid item for " + slot, currentRod, requestedPockets);
-            if (slot == FishingGearRegistry.Slot.ATTACHMENT && requested.contains(DataComponentTypes.CUSTOM_NAME)) {
-                return Plan.failed("Named attachment cannot be safely rewritten", currentRod, requestedPockets);
+    public static Plan plan(ItemStack held, List<ItemStack> offered) {
+        if (offered.size() != 6) throw new IllegalArgumentException("Six tackle slots required");
+        if (!survivesNativeCopy(held) || offered.stream().anyMatch(item -> !survivesNativeCopy(item)))
+            return Plan.failed("Remove excess bait from the rod before exchanging tackle");
+        List<ItemStack> pockets = new ArrayList<>(offered.stream().map(ItemStack::copy).toList());
+        for (int i = 0; i < 6; i++) {
+            ItemStack item = pockets.get(i);
+            if (!item.isEmpty() && (!FishingGearRegistry.accepts(SatchelPreset.SLOTS.get(i), item)
+                    || item.getCount() > (i == 4 ? item.getMaxCount() : 1)
+                    || Boolean.TRUE.equals(item.get(TideTraitsComponents.PROTECTED)))) return Plan.failed("Incompatible or protected tackle");
+        }
+        if (pockets.stream().allMatch(ItemStack::isEmpty)) return Plan.failed("Add tackle to this preset");
+        if (!held.isEmpty() && (!FishingGearRegistry.accepts(FishingGearRegistry.Slot.ROD, held) || held.getCount() != 1))
+            return Plan.failed("Hold a fishing rod or empty the other hand");
+        ItemStack previous = held.copy();
+        ItemStack rod = pockets.get(0).isEmpty() ? held.copy() : pockets.get(0).copy();
+        if (rod.isEmpty()) return Plan.failed("Hold a rod to equip this partial preset");
+        if (Boolean.TRUE.equals(previous.get(TideTraitsComponents.PROTECTED))) return Plan.failed("Unprotect the current rod first");
+        try {
+            normalizeLeader(rod);
+            if (!previous.isEmpty()) normalizeLeader(previous);
+            if (!pockets.get(0).isEmpty()) {
+                // Empty accessory slots retain the CURRENT equipment even when exchanging rod bodies.
+                if (!previous.isEmpty()) {
+                    if (pockets.get(1).isEmpty()) swapComponent(rod, previous, TideDataComponents.FISHING_LINE);
+                    if (pockets.get(2).isEmpty()) swapComponent(rod, previous, TideDataComponents.FISHING_HOOK);
+                    if (pockets.get(3).isEmpty()) swapComponent(rod, previous, TideDataComponents.FISHING_BOBBER);
+                    if (pockets.get(4).isEmpty()) swapComponent(rod, previous, TideDataComponents.BAIT_CONTENTS);
+                    if (pockets.get(5).isEmpty()) {
+                        swapComponent(rod, previous, TideTraitsComponents.LEADER_TIER);
+                        swapComponent(rod, previous, TideTraitsComponents.STEEL_LEADER_ATTACHED);
+                    }
+                }
+                pockets.set(0, previous);
             }
-        }
+            for (int slot = 1; slot < 6; slot++) {
+                ItemStack incoming = pockets.get(slot);
+                if (incoming.isEmpty()) continue;
+                ItemStack displaced = physicalEquipment(rod).get(slot);
+                switch (slot) {
+                    case 1 -> CustomRodManager.setLine(rod, incoming);
+                    case 2 -> CustomRodManager.setHook(rod, incoming);
+                    case 3 -> CustomRodManager.setBobber(rod, incoming);
+                    case 4 -> {
+                        // One visible bait slot changes the first native bait slot; all additional slots survive.
+                        List<ItemStack> bait = new ArrayList<>(rod.getOrDefault(TideDataComponents.BAIT_CONTENTS, new BaitContents())
+                                .items().stream().map(ItemStack::copy).toList());
+                        if (bait.isEmpty()) bait.add(incoming.copy()); else bait.set(0, incoming.copy());
 
-        ItemStack requestedRod = pockets.get(0);
-        if (!requestedRod.isEmpty()) {
-            BaitContents bait = rod.get(TideDataComponents.BAIT_CONTENTS);
-            if (isVanillaRod(requestedRod) && bait != null && bait.size() > 1) {
-                return Plan.failed("Replacement rod cannot preserve all bait slots", currentRod, requestedPockets);
+                        rod.set(TideDataComponents.BAIT_CONTENTS, new BaitContents(List.copyOf(bait)));
+
+                    }
+                    case 5 -> {
+                        if (!ItemStack.areItemsAndComponentsEqual(incoming, new ItemStack(incoming.getItem())))
+                            return Plan.failed("Use an unmodified leader; this attachment stores only its tier");
+                        LeaderAttachment.set(rod, LeaderAttachment.tierOfStack(incoming));
+                    }
+                    default -> throw new IllegalArgumentException("slot");
+                }
+                pockets.set(slot, displaced);
             }
-            ItemStack incoming = requestedRod.copy();
-            ItemStack displaced = rod.copy();
-            swapRodAccessories(rod, incoming, displaced);
-            rod = incoming;
-            pockets.set(0, displaced);
-        }
-
-        if (!pockets.get(1).isEmpty()) {
-            ItemStack previous = physicalOrEmpty(CustomRodManager.getLine(rod), "tide:fishing_line");
-            CustomRodManager.setLine(rod, pockets.get(1));
-            pockets.set(1, previous);
-        }
-        if (!pockets.get(2).isEmpty()) {
-            ItemStack previous = physicalOrEmpty(CustomRodManager.getHook(rod), "tide:fishing_hook");
-            CustomRodManager.setHook(rod, pockets.get(2));
-            pockets.set(2, previous);
-        }
-        if (!pockets.get(3).isEmpty()) {
-            ItemStack previous = physicalOrEmpty(CustomRodManager.getBobber(rod), "tide:red_bobber");
-            CustomRodManager.setBobber(rod, pockets.get(3));
-            pockets.set(3, previous);
-        }
-        if (!pockets.get(4).isEmpty()) {
-            BaitContents existing = rod.get(TideDataComponents.BAIT_CONTENTS);
-            ArrayList<ItemStack> bait = new ArrayList<>();
-            if (existing != null) {
-                for (int i = 0; i < existing.size(); i++) bait.add(existing.get(i).copy());
-            }
-            ItemStack previous = bait.isEmpty() ? ItemStack.EMPTY : bait.get(0).copy();
-            if (bait.isEmpty()) bait.add(pockets.get(4).copy()); else bait.set(0, pockets.get(4).copy());
-            rod.set(TideDataComponents.BAIT_CONTENTS, new BaitContents(bait));
-            pockets.set(4, previous);
-        }
-
-        return new Plan(true, "", rod, pockets);
+            if (!survivesNativeCopy(rod) || pockets.stream().anyMatch(item -> !survivesNativeCopy(item)))
+                return Plan.failed("Rod bait capacities differ; remove extra bait before swapping rods");
+            return new Plan(true, "", rod, List.copyOf(pockets));
+        } catch (RuntimeException exception) { return Plan.failed("Tackle could not be exchanged safely"); }
     }
 
-    private static void swapRodAccessories(ItemStack current, ItemStack incoming, ItemStack displaced) {
-        ItemStack currentLine = physicalOrEmpty(CustomRodManager.getLine(current), "tide:fishing_line");
-        ItemStack currentHook = physicalOrEmpty(CustomRodManager.getHook(current), "tide:fishing_hook");
-        ItemStack currentBobber = physicalOrEmpty(CustomRodManager.getBobber(current), "tide:red_bobber");
-        BaitContents currentBait = current.get(TideDataComponents.BAIT_CONTENTS);
-
-        ItemStack incomingLine = physicalOrEmpty(CustomRodManager.getLine(incoming), "tide:fishing_line");
-        ItemStack incomingHook = physicalOrEmpty(CustomRodManager.getHook(incoming), "tide:fishing_hook");
-        ItemStack incomingBobber = physicalOrEmpty(CustomRodManager.getBobber(incoming), "tide:red_bobber");
-        BaitContents incomingBait = incoming.get(TideDataComponents.BAIT_CONTENTS);
-
-        if (!currentLine.isEmpty()) CustomRodManager.setLine(incoming, currentLine);
-        if (!currentHook.isEmpty()) CustomRodManager.setHook(incoming, currentHook);
-        if (!currentBobber.isEmpty()) CustomRodManager.setBobber(incoming, currentBobber);
-        if (currentBait != null && currentBait.size() > 0) incoming.set(TideDataComponents.BAIT_CONTENTS, copyBait(currentBait));
-
-        if (!incomingLine.isEmpty()) CustomRodManager.setLine(displaced, incomingLine);
-        if (!incomingHook.isEmpty()) CustomRodManager.setHook(displaced, incomingHook);
-        if (!incomingBobber.isEmpty()) CustomRodManager.setBobber(displaced, incomingBobber);
-        if (incomingBait != null && incomingBait.size() > 0) displaced.set(TideDataComponents.BAIT_CONTENTS, copyBait(incomingBait));
+    /** Physical attachments only: Tide's implicit default hook/line/bobber must never become free items. */
+    public static List<ItemStack> physicalEquipment(ItemStack rod) {
+        if (rod.isEmpty()) return java.util.Collections.nCopies(6, ItemStack.EMPTY);
+        var bait = rod.getOrDefault(TideDataComponents.BAIT_CONTENTS, new BaitContents());
+        var tier = LeaderAttachment.tier(rod);
+        if (tier == null) tier = LeaderAttachment.tierOfStack(CustomRodManager.getLine(rod));
+        return List.of(rod.copy(), CustomRodManager.hasLine(rod) ? CustomRodManager.getLine(rod).copy() : ItemStack.EMPTY,
+                CustomRodManager.hasHook(rod) ? CustomRodManager.getHook(rod).copy() : ItemStack.EMPTY,
+                CustomRodManager.hasBobber(rod) ? CustomRodManager.getBobber(rod).copy() : ItemStack.EMPTY,
+                bait.isEmpty() ? ItemStack.EMPTY : bait.get(0).copy(), tier == null ? ItemStack.EMPTY : new ItemStack(LeaderAttachment.item(tier)));
     }
 
-    private static BaitContents copyBait(BaitContents source) {
-        ArrayList<ItemStack> items = new ArrayList<>();
-        for (int i = 0; i < source.size(); i++) items.add(source.get(i).copy());
-        return new BaitContents(items);
+    /** Tide normalizes rod capacity during copy/load. Never commit contents it would discard. */
+    static boolean survivesNativeCopy(ItemStack stack) {
+        return ItemStack.areEqual(stack, stack.copy());
     }
 
-    private static ItemStack physicalOrEmpty(ItemStack stack, String virtualDefault) {
-        if (stack == null || stack.isEmpty()) return ItemStack.EMPTY;
-        return Registries.ITEM.getId(stack.getItem()).toString().equals(virtualDefault) ? ItemStack.EMPTY : stack.copy();
+    private static void normalizeLeader(ItemStack rod) {
+        ItemStack line = CustomRodManager.hasLine(rod) ? CustomRodManager.getLine(rod) : ItemStack.EMPTY;
+        var tier = LeaderAttachment.tierOfStack(line);
+        if (tier == null) return;
+        if (LeaderAttachment.tier(rod) != null || !ItemStack.areItemsAndComponentsEqual(line, new ItemStack(line.getItem())))
+            throw new IllegalArgumentException("Ambiguous legacy leader");
+        rod.remove(TideDataComponents.FISHING_LINE);
+        LeaderAttachment.set(rod, tier);
     }
 
-    private static boolean isVanillaRod(ItemStack stack) {
-        return Registries.ITEM.getId(stack.getItem()).toString().equals("minecraft:fishing_rod");
-    }
-
-    private static ArrayList<ItemStack> normalized(List<ItemStack> source) {
-        ArrayList<ItemStack> result = new ArrayList<>(SatchelPreset.SLOTS.size());
-        for (int i = 0; i < SatchelPreset.SLOTS.size(); i++) {
-            ItemStack stack = source != null && i < source.size() && source.get(i) != null ? source.get(i) : ItemStack.EMPTY;
-            result.add(stack.copy());
-        }
-        return result;
+    private static <T> void swapComponent(ItemStack first, ItemStack second, ComponentType<T> type) {
+        T value = first.get(type), other = second.get(type);
+        if (other == null) first.remove(type); else first.set(type, other);
+        if (value == null) second.remove(type); else second.set(type, value);
     }
 
     public record Plan(boolean success, String error, ItemStack rod, List<ItemStack> pockets) {
-        public Plan {
-            rod = rod == null ? ItemStack.EMPTY : rod.copy();
-            pockets = pockets == null ? List.of() : pockets.stream().map(stack -> stack == null ? ItemStack.EMPTY : stack.copy()).toList();
-        }
-        private static Plan failed(String error, ItemStack rod, List<ItemStack> pockets) {
-            return new Plan(false, error, rod, normalized(pockets));
-        }
-        @Override public ItemStack rod() { return rod.copy(); }
-        @Override public List<ItemStack> pockets() { return pockets.stream().map(ItemStack::copy).toList(); }
+        private static Plan failed(String error) { return new Plan(false, error, ItemStack.EMPTY, List.of()); }
     }
 }
