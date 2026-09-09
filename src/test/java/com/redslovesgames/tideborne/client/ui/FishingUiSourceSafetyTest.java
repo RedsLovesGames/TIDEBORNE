@@ -16,7 +16,7 @@ class FishingUiSourceSafetyTest {
             "src/main/java/com/redslovesgames/tideborne/journal/client/TopFishScreen.java",
             "src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java",
             "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/FishProfileSizeRangeMixin.java",
-            "src/main/java/com/redslovesgames/tidetraits/mixin/client/TeamStatsPercentileMixin.java",
+            "src/main/java/com/redslovesgames/tideborne/journal/client/TeamStatsComponent.java",
             "src/main/java/com/redslovesgames/tideborne/journal/client/DiscoveryBadgesComponent.java",
             "src/main/java/com/redslovesgames/tideborne/mixin/journal/client/FishingJournalMixin.java",
             "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/TideFishProfileMixin.java",
@@ -64,11 +64,12 @@ class FishingUiSourceSafetyTest {
         String stats = Files.readString(Path.of(AFFECTED_UI.get(4)));
         assertTrue(stats.contains("BASE_LINE_STEP = 9"));
         assertTrue(stats.contains("BEST_SECTION_HEIGHT = 43"));
-        assertTrue(stats.contains("firstCatchIndex"));
-        assertTrue(stats.contains("index = smallestIndex;"));
         assertTrue(stats.contains("graphics.fill(x + 4, y + cursorY"));
         assertTrue(stats.contains("\"Best Specimen\""));
         assertTrue(stats.contains("\"PC \""));
+
+        String mixins = Files.readString(Path.of("src/main/resources/tide_traits.client.mixins.json"));
+        assertFalse(mixins.contains("TeamStatsPercentileMixin"));
 
         String journal = Files.readString(Path.of(AFFECTED_UI.get(6)));
         int buttonY = constantValue(journal, "TEAM_RECORDS_BUTTON_Y");
@@ -158,8 +159,8 @@ class FishingUiSourceSafetyTest {
         assertTrue(mutationRendering.contains("SPECIMEN_PIGMENTATION"));
 
         String topFish = Files.readString(Path.of(AFFECTED_UI.get(1)));
-        assertTrue(occurrences(topFish, "CanonicalSpecimenStorage.restoreTransferData(") >= 2);
-        assertTrue(topFish.contains("SpecimenTransfer.stackToEntity(stack, entity);"));
+        assertTrue(occurrences(topFish, "CanonicalSpecimenStorage.restoreTransferData(") == 1);
+        assertTrue(topFish.contains("SpecimenTransfer.stackToEntity(stack, previewEntity);"));
 
         String fishDisplay = Files.readString(Path.of(
                 "src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/FishDisplayBlockEntityMixin.java"));

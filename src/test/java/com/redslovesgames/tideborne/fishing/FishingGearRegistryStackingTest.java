@@ -1,8 +1,7 @@
 package com.redslovesgames.tideborne.fishing;
 
-import com.redslovesgames.tideborne.fishing.gear.FishingGearEffects;
-import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
-import com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry;
+import com.redslovesgames.tideborne.fishing.gear.*;
+import com.redslovesgames.tideborne.fishing.specimen.*;
 import com.redslovesgames.tideborne.fishing.tide.TideFishingLineModifiers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,9 +26,9 @@ class FishingGearRegistryStackingTest {
                 TideborneFishingGearModifiers.leviathanBait(true)
         );
 
-        assertEquals(15.0D, combined.fishingLuck(), 1.0e-12);
-        assertEquals(4.0D, combined.traitLuck(), 1.0e-12);
-        assertEquals(0.82D * 1.25D, combined.strengthMultiplier(), 1.0e-12);
+        assertEquals(4.0D, combined.fishingLuck(), 1.0e-12);
+        assertEquals(1.0D, combined.traitLuck(), 1.0e-12);
+        assertEquals(0.82D * 1.30D, combined.strengthMultiplier(), 1.0e-12);
         assertEquals(1.06D * 1.20D, combined.tempoMultiplier(), 1.0e-12);
         assertEquals(1.32D * 0.95D,
                 FishingGearEffects.catchZoneAreaMultiplier(combined), 1.0e-12);

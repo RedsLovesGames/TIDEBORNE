@@ -1,9 +1,8 @@
 package com.redslovesgames.tideborne.fishing;
 
-import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
-import com.redslovesgames.tideborne.fishing.specimen.CanonicalRarity;
-import com.redslovesgames.tideborne.fishing.specimen.LogNormalSizeDistribution;
-import com.redslovesgames.tideborne.fishing.specimen.TraitProbabilityService;
+import com.redslovesgames.tideborne.fishing.gear.*;
+import com.redslovesgames.tideborne.fishing.specimen.*;
+import com.redslovesgames.tideborne.fishing.tide.TideFishingLineModifiers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -20,9 +19,9 @@ class LeviathanBaitModifiersTest {
     void activeBaitPublishesTheCompleteCanonicalModifierSet() {
         FishingGearModifiers modifiers = TideborneFishingGearModifiers.leviathanBait(true);
 
-        assertEquals(15.0, modifiers.fishingLuck(), 0.0);
-        assertEquals(4.0, modifiers.traitLuck(), 0.0);
-        assertEquals(1.25, modifiers.strengthMultiplier(), 0.0);
+        assertEquals(4.0, modifiers.fishingLuck(), 0.0);
+        assertEquals(1.0, modifiers.traitLuck(), 0.0);
+        assertEquals(1.30, modifiers.strengthMultiplier(), 0.0);
         assertEquals(1.20, modifiers.tempoMultiplier(), 0.0);
         assertTrue(LeviathanBaitRules.isFishOnlyCatchPool(modifiers));
         assertEquals(Set.of(TideborneFishingGearModifiers.FISH_CATCH_CATEGORY), modifiers.categoryRestriction().allowedIds());
@@ -41,8 +40,8 @@ class LeviathanBaitModifiersTest {
         FishingContext base = new FishingContext(0.0, 2.0, 3.0, Map.of(), Map.of(), Map.of());
         FishingContext withBait = base.withGearModifiers(TideborneFishingGearModifiers.leviathanBait(true));
 
-        assertEquals(17.0, withBait.fishingLuck(), 0.0);
-        assertEquals(7.0, withBait.traitLuck(), 0.0);
+        assertEquals(6.0, withBait.fishingLuck(), 0.0);
+        assertEquals(4.0, withBait.traitLuck(), 0.0);
         assertEquals(base.biteSpeed(), withBait.biteSpeed(), 0.0);
         assertEquals(base.equipmentModifiers(), withBait.equipmentModifiers());
         assertEquals(base.baitModifiers(), withBait.baitModifiers());
@@ -83,7 +82,7 @@ class LeviathanBaitModifiersTest {
         FightProfile base = new FightProfile(0.8, 0.08, fights.catchZoneArea(0.8), "steady");
         FightProfile modified = fights.applyGearModifiers(base, TideborneFishingGearModifiers.leviathanBait(true));
 
-        assertEquals(0.8 * 1.25, modified.strength(), 1.0e-12);
+        assertEquals(0.8 * 1.30, modified.strength(), 1.0e-12);
         assertEquals(0.08 * 1.20, modified.tempo(), 1.0e-12);
         assertEquals(fights.catchZoneArea(modified.strength()), modified.catchZoneArea(), 1.0e-12);
         assertTrue(modified.catchZoneArea() < base.catchZoneArea());
