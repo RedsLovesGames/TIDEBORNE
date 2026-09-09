@@ -7,7 +7,7 @@ package com.redslovesgames.tideborne.presentation.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,7 +36,7 @@ public final class TideboundClientConfig {
             save();
          }
       } catch (IOException | RuntimeException exception) {
-         TideboundCompatibility.LOGGER.error("Could not load Tidebound client settings; using defaults", exception);
+         FishingGameplayInitializer.LOGGER.error("Could not load Tidebound client settings; using defaults", exception);
          values = new TideboundClientConfig.Values();
       }
    }
@@ -46,7 +46,7 @@ public final class TideboundClientConfig {
          Files.createDirectories(PATH.getParent());
          Files.writeString(PATH, GSON.toJson(values));
       } catch (IOException exception) {
-         TideboundCompatibility.LOGGER.error("Could not save Tidebound client settings", exception);
+         FishingGameplayInitializer.LOGGER.error("Could not save Tidebound client settings", exception);
       }
    }
 
