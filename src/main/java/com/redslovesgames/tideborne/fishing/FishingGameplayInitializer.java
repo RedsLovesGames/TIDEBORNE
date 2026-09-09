@@ -3,7 +3,7 @@
  * Recovered from Tideborne 1.3.57 bytecode.
  * See docs/RECONSTRUCTION.md before changing behavior.
  */
-package com.redslovesgames.tideborne.compat;
+package com.redslovesgames.tideborne.fishing;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -15,8 +15,8 @@ import com.redslovesgames.tideborne.command.FishingInspectCommand;
 import com.redslovesgames.tideborne.command.FishingRecoveryCommand;
 import com.redslovesgames.tideborne.command.FishingReproduceCommand;
 import com.redslovesgames.tideborne.compat.apex.ApexCompat;
-import com.redslovesgames.tideborne.compat.apex.SharkScentManager;
 import com.redslovesgames.tideborne.config.TideboundConfig;
+import com.redslovesgames.tideborne.ecosystem.SharkScentManager;
 import com.redslovesgames.tideborne.network.SharkCatchLossPayload;
 import com.redslovesgames.tideborne.network.TideboundSettingsPayload;
 import com.redslovesgames.tideborne.network.TideboundSettingsResultPayload;
@@ -40,7 +40,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class TideboundCompatibility implements ModInitializer {
+public final class FishingGameplayInitializer implements ModInitializer {
    public static final String MOD_ID = "tidebound_compatibility";
    public static final Logger LOGGER = LoggerFactory.getLogger("tidebound_compatibility");
    private static boolean mythsEnabledAtStartup;
@@ -65,7 +65,7 @@ public final class TideboundCompatibility implements ModInitializer {
          } else {
             TideboundConfig.Result result = TideboundConfig.applyBalanceJson(payload.json());
             if (result.success()) {
-               context.server().getPlayerManager().getPlayerList().forEach(TideboundCompatibility::syncSettings);
+               context.server().getPlayerManager().getPlayerList().forEach(FishingGameplayInitializer::syncSettings);
             }
 
             sendSettingsResult(context.player(), result.success(), result.message());
@@ -141,7 +141,7 @@ public final class TideboundCompatibility implements ModInitializer {
                      context.getSource().sendError(Text.literal(result.message()));
                      return 0;
                   }
-                  context.getSource().getServer().getPlayerManager().getPlayerList().forEach(TideboundCompatibility::syncSettings);
+                  context.getSource().getServer().getPlayerManager().getPlayerList().forEach(FishingGameplayInitializer::syncSettings);
                   context.getSource().sendFeedback(() -> Text.translatable("command.tidebound_compatibility.reload"), true);
                   return 1;
                })

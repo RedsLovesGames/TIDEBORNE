@@ -13,9 +13,9 @@ import com.li64.tide.registries.entities.misc.fishing.TideFishingHook.CatchType;
 import com.redslovesgames.tideborne.fishing.gear.FishingGearEffects;
 import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.specimen.CanonicalCatchStateManager;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
-import com.redslovesgames.tideborne.compat.apex.SharkScentManager;
+import com.redslovesgames.tideborne.ecosystem.SharkScentManager;
 import com.redslovesgames.tideborne.config.TideboundConfig;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.fishing.gear.LeviathanBaitFishing;
 import com.redslovesgames.tideborne.fishing.gear.LeviathanBaitHook;
 import com.redslovesgames.tideborne.ecosystem.SharkCatchLoss;
@@ -141,7 +141,7 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
    private void tidebound$rollAbstractSharkCatchLoss(ItemStack rod, ServerWorld level, PlayerEntity player, CallbackInfoReturnable<Integer> callback) {
       TideFishingHook hook = (TideFishingHook)(Object)this;
       TideboundConfig.Values config = TideboundConfig.get();
-      if (TideboundCompatibility.isApexIntegrationActive()
+      if (FishingGameplayInitializer.isApexIntegrationActive()
          && config.enableSharkCatchLoss
          && player instanceof ServerPlayerEntity serverPlayer
          && hook.getCatchType() == CatchType.FISH
@@ -162,7 +162,7 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
                }
 
                if (config.debugLogging) {
-                  TideboundCompatibility.LOGGER
+                  FishingGameplayInitializer.LOGGER
                      .debug("Shark catch loss for {} at {}%", serverPlayer.getGameProfile().getName(), Math.round(chance * 10000.0) / 100.0);
                }
             }

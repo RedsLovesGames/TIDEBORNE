@@ -1,4 +1,4 @@
-package com.redslovesgames.tideborne.compat;
+package com.redslovesgames.tideborne.fishing;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -7,12 +7,12 @@ import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.server.command.ServerCommandSource;
 import org.junit.jupiter.api.Test;
 
-class TideboundCompatibilityCommandTest {
+class FishingGameplayInitializerCommandTest {
     @Test
     void registersFishingInspectCommand() {
         CommandDispatcher<ServerCommandSource> dispatcher = new CommandDispatcher<>();
 
-        TideboundCompatibility.registerCommands(dispatcher);
+        FishingGameplayInitializer.registerCommands(dispatcher);
 
         CommandNode<ServerCommandSource> fishing = dispatcher.getRoot().getChild("tideborne_internal_fishing");
         assertNotNull(fishing);
@@ -26,7 +26,7 @@ class TideboundCompatibilityCommandTest {
     void registersAdminDeterministicReproduceCommandWithContextAndPercentileArguments() {
         CommandDispatcher<ServerCommandSource> dispatcher = new CommandDispatcher<>();
 
-        TideboundCompatibility.registerCommands(dispatcher);
+        FishingGameplayInitializer.registerCommands(dispatcher);
 
         CommandNode<ServerCommandSource> fishing = dispatcher.getRoot().getChild("tideborne_internal_fishing");
         assertNotNull(fishing);

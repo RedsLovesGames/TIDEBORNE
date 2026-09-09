@@ -5,10 +5,8 @@
  */
 package com.redslovesgames.tideborne.ecosystem;
 
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
-import com.redslovesgames.tideborne.compat.apex.SharkScentManager;
 import com.redslovesgames.tideborne.config.TideboundConfig;
-import com.redslovesgames.tideborne.ecosystem.ChumProjectileEntity;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.TypedActionResult;
@@ -66,7 +64,7 @@ public final class ChumBucketItem extends Item {
 
    public static boolean activate(ServerWorld level, BlockPos pos, PlayerEntity player) {
       TideboundConfig.Values config = TideboundConfig.get();
-      if (config.enableChum && config.enableApexCompat && TideboundCompatibility.isApexLoaded()) {
+      if (config.enableChum && config.enableApexCompat && FishingGameplayInitializer.isApexLoaded()) {
          if (!level.getBiome(pos).isIn(BiomeTags.IS_OCEAN)) {
             if (player != null) {
                player.sendMessage(Text.translatable("message.tidebound_compatibility.chum_ocean_only"), true);

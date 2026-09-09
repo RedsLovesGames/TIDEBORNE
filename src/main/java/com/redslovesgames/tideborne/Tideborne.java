@@ -7,9 +7,9 @@ package com.redslovesgames.tideborne;
 
 import com.redslovesgames.tideborne.command.TideborneCommands;
 import com.redslovesgames.tideborne.config.TideborneConfigBackend;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.migration.legacy.TideborneMigrationManager;
 import com.redslovesgames.tideborne.registry.TideborneItemGroups;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
 import com.redslovesgames.tideborne.journal.OwnedFishJournalBackfill;
 import com.redslovesgames.tideborne.journal.TideTeamJournal;
 import com.redslovesgames.tideborne.fishing.TideTraits;
@@ -28,7 +28,7 @@ public final class Tideborne implements ModInitializer {
          new TideTraits().onInitialize();
          new TideTeamJournal().onInitialize();
          OwnedFishJournalBackfill.init();
-         new TideboundCompatibility().onInitialize();
+         new FishingGameplayInitializer().onInitialize();
          TideborneItemGroups.init();
          TideborneCommands.init();
          TideborneConfigBackend.afterSubsystems();

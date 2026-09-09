@@ -6,7 +6,7 @@
 package com.redslovesgames.tideborne.compat.apex;
 
 import com.acorsicanfrog.apexwaters.entity.GreatWhiteSharkEntity;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.registry.TideboundItems;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -47,7 +47,7 @@ public final class ApexCompat {
                   }
                }
             );
-         TideboundCompatibility.LOGGER.info("Added the compatibility-side shark tooth drop to Apex Waters Great Whites");
+         FishingGameplayInitializer.LOGGER.info("Added the compatibility-side shark tooth drop to Apex Waters Great Whites");
       }
    }
 
