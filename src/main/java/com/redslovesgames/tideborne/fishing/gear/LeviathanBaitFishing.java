@@ -11,7 +11,7 @@ import com.li64.tide.data.fishing.FishingContext;
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
 import com.li64.tide.util.BaitUtils;
 import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
-import com.redslovesgames.tideborne.compat.TideboundCompatibility;
+import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import com.redslovesgames.tideborne.registry.TideboundItems;
 
@@ -33,7 +33,7 @@ public final class LeviathanBaitFishing {
    }
 
    public static boolean isEnabledFor(TideFishingHook hook, TideboundConfig.Values config) {
-      return hook != null && config.enableMythsCompat && TideboundCompatibility.isMythsIntegrationActive()
+      return hook != null && config.enableMythsCompat && FishingGameplayInitializer.isMythsIntegrationActive()
          && config.leviathanBaitFishOnly
          && BaitUtils.hasBait(TideboundItems.LEVIATHAN_BAIT, hook.getRod());
    }
