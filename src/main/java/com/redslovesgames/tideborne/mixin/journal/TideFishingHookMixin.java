@@ -5,11 +5,8 @@
  */
 package com.redslovesgames.tideborne.mixin.journal;
 
-
 import com.li64.tide.registries.entities.misc.fishing.TideFishingHook;
-
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
@@ -40,16 +37,14 @@ abstract class TideFishingHookMixin implements com.redslovesgames.tideborne.fish
    private int lureSpeed;
 
    @Inject(
-      method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;IIFLnet/minecraft/world/item/ItemStack;)V",
+      method = "<init>(Lnet/minecraft/entity/EntityType;Lnet/minecraft/world/World;IILnet/minecraft/item/ItemStack;)V",
       at = @At("RETURN")
    )
    private void tideTeamJournal$applyBobberBonus(
       EntityType<? extends TideFishingHook> hookType,
-      PlayerEntity player,
       World level,
       int luck,
       int lureSpeed,
-      float charge,
       ItemStack rod,
       CallbackInfo callback
    ) {

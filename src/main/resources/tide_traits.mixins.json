@@ -11,8 +11,7 @@
     "MobSpecimenMixin",
     "TideFishingHookMixin",
     "TideItemBucketMixin",
-    "TidePlayerDataMixin",
-    "TideTeamJournalServiceMixin"
+    "TidePlayerDataMixin"
   ],
   "injectors": {
     "defaultRequire": 1
