@@ -100,9 +100,12 @@ public final class CatchTraitService {
     * mutation, creates a seed, or consumes the supplied RNG.
     */
    public boolean assignIfAbsent(ItemStack stack, Random ignoredRandom) {
-      // Current gameplay is already complete at the canonical persistence boundary. Do not route a
-      // current specimen through mutation-era mirrors or migration helpers.
-      if (CanonicalSpecimenStorage.readCurrent(stack).isPresent()) {
+      // Current gameplay is already complete at the canonical persistence boundary. Compatibility
+      // mirrors are repaired directly from canonical identity instead of routing current specimens
+      // through mutation-era models or migration helpers.
+      Optional<com.redslovesgames.tideborne.fishing.specimen.SpecimenData> canonical = CanonicalSpecimenStorage.readCurrent(stack);
+      if (canonical.isPresent()) {
+         repairCompatibilityMirrors(stack, canonical.get());
          return false;
       }
 
@@ -198,6 +201,16 @@ public final class CatchTraitService {
          MultiplayerDiscoveryCompat.recordCatch(player, species, sharedMutation, sharedSizeBand);
          tideborne$recordBodyTypeDiscovery(bodyType, player, species);
       }
+   }
+
+   private static void repairCompatibilityMirrors(
+      ItemStack stack,
+      com.redslovesgames.tideborne.fishing.specimen.SpecimenData specimen
+   ) {
+      stack.set(TideTraitsComponents.MUTATION_SEED, specimen.deterministicSeed());
+      stack.set(TideTraitsComponents.SIZE_PERCENTILE, specimen.finalPercentile());
+      stack.set(TideTraitsComponents.BODY_TYPE, serialized(specimen.bodyType()));
+      stack.set(TideTraitsComponents.MUTATION, serialized(specimen.condition()));
    }
 
    /**
