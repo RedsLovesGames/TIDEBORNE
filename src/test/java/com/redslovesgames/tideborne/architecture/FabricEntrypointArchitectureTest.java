@@ -21,6 +21,8 @@ class FabricEntrypointArchitectureTest {
             "src/main/java/com/redslovesgames/tideborne/Tideborne.java", "ModInitializer",
             "src/main/java/com/redslovesgames/tideborne/client/TideborneClient.java", "ClientModInitializer");
     private static final Pattern IMPLEMENTS = Pattern.compile("\\bimplements\\s+([^\\{]+)\\{");
+    private static final Pattern FABRIC_INITIALIZER_INTERFACE = Pattern.compile(
+            "\\b(ModInitializer|ClientModInitializer|DedicatedServerModInitializer)\\b");
     private static final Pattern FABRIC_CALLBACK = Pattern.compile("\\b(onInitialize|onInitializeClient|onInitializeServer)\\s*\\(");
 
     @Test
@@ -34,9 +36,10 @@ class FabricEntrypointArchitectureTest {
 
                 Matcher implementsMatcher = IMPLEMENTS.matcher(text);
                 while (implementsMatcher.find()) {
-                    String interfaces = implementsMatcher.group(1);
-                    for (String initializer : List.of("ModInitializer", "ClientModInitializer", "DedicatedServerModInitializer")) {
-                        if (interfaces.contains(initializer) && !initializer.equals(expectedInterface)) {
+                    Matcher initializerMatcher = FABRIC_INITIALIZER_INTERFACE.matcher(implementsMatcher.group(1));
+                    while (initializerMatcher.find()) {
+                        String initializer = initializerMatcher.group(1);
+                        if (!initializer.equals(expectedInterface)) {
                             violations.add(normalized + " implements " + initializer);
                         }
                     }
