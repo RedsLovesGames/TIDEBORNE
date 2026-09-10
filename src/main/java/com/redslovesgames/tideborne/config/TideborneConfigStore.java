@@ -56,13 +56,15 @@ public final class TideborneConfigStore {
    }
 
    public static synchronized JsonObject readSection(String section) throws IOException {
-      JsonObject root = Files.exists(path()) ? readRoot() : newRoot();
+      initialize();
+      JsonObject root = readRoot();
       JsonElement value = root.get(section);
       return value != null && value.isJsonObject() ? value.getAsJsonObject().deepCopy() : null;
    }
 
    public static synchronized void writeSection(String section, JsonElement value) throws IOException {
-      JsonObject root = Files.exists(path()) ? readRoot() : newRoot();
+      initialize();
+      JsonObject root = readRoot();
       root.addProperty("schema_version", SCHEMA_VERSION);
       root.add(section, value.deepCopy());
       writeRoot(root);
@@ -73,18 +75,13 @@ public final class TideborneConfigStore {
    }
 
    public static synchronized void removeSection(String section) throws IOException {
-      if (!Files.exists(path())) return;
+      initialize();
       JsonObject root = readRoot();
       if (root.remove(section) != null) writeRoot(root);
    }
 
    static JsonObject readLegacyFile(String fileName) throws IOException {
       return readLegacyObject(FabricLoader.getInstance().getConfigDir().resolve(fileName));
-   }
-
-   static void backupLegacyFile(String fileName) throws IOException {
-      Path path = FabricLoader.getInstance().getConfigDir().resolve(fileName);
-      if (Files.isRegularFile(path)) backupOnce(path);
    }
 
    private static Map<String, String> legacyFiles() {
