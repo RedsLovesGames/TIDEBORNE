@@ -20,6 +20,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - name: Fetch exact external compile dependencies
+        shell: bash
+        run: bash scripts/fetch_ci_dependencies.sh
       - name: Apply presentation ownership migration
         shell: bash
         run: |
