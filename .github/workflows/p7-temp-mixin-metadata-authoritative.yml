@@ -1,0 +1,263 @@
+name: P7 Temporary Authoritative Mixin Metadata Validation
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: "${{ github.event.head_commit.message == 'chore: validate authoritative P7.4 refmap layout' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Fetch exact external compile dependencies
+        run: bash scripts/fetch_ci_dependencies.sh
+      - name: Build P7.4 canonical source metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/p7-temp-mixin-metadata-validation-rerun.yml').read_text().splitlines()
+          start = workflow.index('      - name: Consolidate Tideborne mixin metadata')
+          run_line = next(i for i in range(start + 1, len(workflow)) if workflow[i] == '        run: |')
+          end = next(i for i in range(run_line + 1, len(workflow)) if workflow[i].startswith('      - name: '))
+          body = []
+          for line in workflow[run_line + 1:end]:
+              if line.startswith('          '):
+                  body.append(line[10:])
+              elif not line.strip():
+                  body.append('')
+              else:
+                  raise SystemExit(f'Unexpected indentation: {line!r}')
+          Path('/tmp/p7_4_base_transform.sh').write_text('\n'.join(body) + '\n')
+          PY
+          bash /tmp/p7_4_base_transform.sh
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('src/main/resources')
+          broad_refmap_path = root / 'tideborne.refmap.json'
+          broad_refmap = json.loads(broad_refmap_path.read_text())
+          apex_key = 'com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin'
+
+          apex_refmap = {
+              'mappings': {apex_key: broad_refmap['mappings'][apex_key]},
+              'data': {
+                  'named:intermediary': {
+                      apex_key: broad_refmap['data']['named:intermediary'][apex_key]
+                  }
+              },
+          }
+          (root / 'tideborne.apex.refmap.json').write_text(json.dumps(apex_refmap, indent=2) + '\n')
+          broad_refmap_path.unlink()
+
+          common_path = root / 'tideborne.mixins.json'
+          common = json.loads(common_path.read_text())
+          common.pop('refmap', None)
+          common_path.write_text(json.dumps(common, indent=2) + '\n')
+
+          apex_path = root / 'tideborne.apex.mixins.json'
+          apex = json.loads(apex_path.read_text())
+          apex['refmap'] = 'tideborne.apex.refmap.json'
+          apex_path.write_text(json.dumps(apex, indent=2) + '\n')
+
+          # Rebuild artifact validation from the untouched branch version so no
+          # assumptions from earlier temporary P7.4 experiments survive.
+          PY
+          git show HEAD:scripts/validate_release_artifact.sh > scripts/validate_release_artifact.sh
+          chmod +x scripts/validate_release_artifact.sh
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/validate_release_artifact.sh')
+          text = path.read_text()
+          old = "refmap = json.loads(jar.read('tidebound_compatibility.refmap.json'))"
+          new = "refmap = json.loads(jar.read('tideborne-refmap.json'))"
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one historical artifact refmap read, found {text.count(old)}')
+          text = text.replace(old, new)
+          marker = 'python3 - "$artifact" <<\'PY\'\n'
+          if text.count(marker) != 1:
+              raise SystemExit(f'Expected exactly one original artifact Python block, found {text.count(marker)}')
+          precheck = '''python3 - "$artifact" <<'PY'\nimport json\nimport sys\nimport zipfile\n\nartifact = sys.argv[1]\nexpected = {\n    'tideborne.mixins.json',\n    'tideborne.client.mixins.json',\n    'tideborne.apex.mixins.json',\n    'tideborne-refmap.json',\n    'tideborne.apex.refmap.json',\n}\nretired = {\n    'tide_traits.mixins.json',\n    'tide_traits.client.mixins.json',\n    'tide_team_journal.mixins.json',\n    'tidebound_compatibility.mixins.json',\n    'tidebound_compatibility.apex.mixins.json',\n    'tide_team_journal.refmap.json',\n    'tidebound_compatibility.refmap.json',\n    'tideborne.refmap.json',\n}\nwith zipfile.ZipFile(artifact) as jar:\n    names = set(jar.namelist())\n    missing = sorted(expected - names)\n    if missing:\n        raise SystemExit(f'Missing canonical mixin metadata: {missing}')\n    leaked = sorted(retired & names)\n    if leaked:\n        raise SystemExit(f'Retired/overlapping mixin metadata leaked into artifact: {leaked}')\n    fabric = json.loads(jar.read('fabric.mod.json'))\n    common = json.loads(jar.read('tideborne.mixins.json'))\n    client = json.loads(jar.read('tideborne.client.mixins.json'))\n    apex = json.loads(jar.read('tideborne.apex.mixins.json'))\n    generated = json.loads(jar.read('tideborne-refmap.json'))\n    apex_refmap = json.loads(jar.read('tideborne.apex.refmap.json'))\n\nexpected_mixins = [\n    'tideborne.mixins.json',\n    {'config': 'tideborne.client.mixins.json', 'environment': 'client'},\n    'tideborne.apex.mixins.json',\n]\nif fabric.get('mixins') != expected_mixins:\n    raise SystemExit(f'Unexpected Fabric mixin config list: {fabric.get("mixins")!r}')\nif not {'tide_traits', 'tide_team_journal', 'tidebound_compatibility'}.issubset(set(fabric.get('provides', []))):\n    raise SystemExit('Historical compatibility provides were not preserved')\n\nif common.get('package') != 'com.redslovesgames.tideborne.mixin':\n    raise SystemExit(f'Unexpected common mixin package: {common.get("package")!r}')\nif common.get('required') is not True or common.get('injectors', {}).get('defaultRequire') != 1:\n    raise SystemExit('Common mixin strict failure semantics changed')\nif common.get('refmap') != 'tideborne-refmap.json':\n    raise SystemExit(f'Loom did not wire common config to generated refmap: {common.get("refmap")!r}')\nfor required in ('specimen.AnglersSatchelRecipeMixin', 'journal.TeamProgressCanonicalJournalMixin', 'tide.AnglingTableLeaderMixin'):\n    if required not in common.get('mixins', []):\n        raise SystemExit(f'Missing common mixin registration: {required}')\nfor required in ('journal.client.FishingJournalMixin', 'tide.AnglingTableScreenLeaderMixin'):\n    if required not in common.get('client', []):\n        raise SystemExit(f'Missing strict client mixin registration: {required}')\n\nif client.get('package') != 'com.redslovesgames.tideborne.mixin':\n    raise SystemExit(f'Unexpected client mixin package: {client.get("package")!r}')\nif client.get('required') is not False or client.get('injectors', {}).get('defaultRequire') != 0:\n    raise SystemExit('Specimen client tolerant failure semantics changed')\nif client.get('refmap') != 'tideborne-refmap.json':\n    raise SystemExit(f'Loom did not wire client config to generated refmap: {client.get("refmap")!r}')\nif 'specimen.client.MinecraftMutationRenderingMixin' not in client.get('client', []):\n    raise SystemExit('Canonical specimen client registration missing')\n\nif apex.get('package') != 'com.redslovesgames.tideborne.mixin.compat.apex':\n    raise SystemExit(f'Unexpected Apex mixin package: {apex.get("package")!r}')\nif apex.get('required') is not False or apex.get('injectors', {}).get('defaultRequire') != 1:\n    raise SystemExit('Optional Apex failure semantics changed')\nif apex.get('plugin') != 'com.redslovesgames.tideborne.mixin.tide.OptionalCompatMixinPlugin':\n    raise SystemExit('Optional Apex plugin boundary changed')\nif apex.get('refmap') != 'tideborne.apex.refmap.json':\n    raise SystemExit(f'Unexpected Apex refmap: {apex.get("refmap")!r}')\n\nfor section_name, section in (\n    ('mappings', generated.get('mappings', {})),\n    ('named:intermediary', generated.get('data', {}).get('named:intermediary', {})),\n):\n    if len(section) < 20:\n        raise SystemExit(f'Generated Tideborne refmap unexpectedly sparse in {section_name}: {len(section)} entries')\n    if any('tideteamjournal' in key or 'tideboundcompatibility' in key for key in section):\n        raise SystemExit(f'Stale pre-unification class key in generated {section_name}')\n    for key in (\n        'com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin',\n        'com/redslovesgames/tideborne/mixin/specimen/TideFishingHookMixin',\n        'com/redslovesgames/tideborne/mixin/specimen/client/MinecraftMutationRenderingMixin',\n        'com/redslovesgames/tideborne/mixin/tide/AnglingTableLeaderMixin',\n        'com/redslovesgames/tideborne/mixin/tide/AnglingTableScreenLeaderMixin',\n    ):\n        if key not in section:\n            raise SystemExit(f'Missing generated refmap entry {key} in {section_name}')\n\napex_key = 'com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin'\nexpected_apex_target = 'Lcom/acorsicanfrog/apexwaters/entity/GreatWhiteSharkEntity;method_5959()V'\nfor section_name, section in (\n    ('mappings', apex_refmap.get('mappings', {})),\n    ('named:intermediary', apex_refmap.get('data', {}).get('named:intermediary', {})),\n):\n    if set(section) != {apex_key}:\n        raise SystemExit(f'Apex refmap must be integration-only in {section_name}: {sorted(section)}')\n    if section[apex_key].get('registerGoals') != expected_apex_target:\n        raise SystemExit(f'Bad Apex registerGoals mapping in {section_name}')\nPY\n\n'''
+          path.write_text(text.replace(marker, precheck + marker, 1))
+          PY
+
+          cat > src/test/java/com/redslovesgames/tideborne/architecture/MixinResourceOwnershipTest.java <<'JAVA'
+          package com.redslovesgames.tideborne.architecture;
+
+          import static org.junit.jupiter.api.Assertions.assertFalse;
+          import static org.junit.jupiter.api.Assertions.assertTrue;
+
+          import java.io.IOException;
+          import java.nio.file.Files;
+          import java.nio.file.Path;
+          import java.util.List;
+          import org.junit.jupiter.api.Test;
+
+          class MixinResourceOwnershipTest {
+              private static final Path RESOURCES = Path.of("src/main/resources");
+              private static final List<String> RETIRED = List.of(
+                      "tide_traits.mixins.json",
+                      "tide_traits.client.mixins.json",
+                      "tide_team_journal.mixins.json",
+                      "tidebound_compatibility.mixins.json",
+                      "tidebound_compatibility.apex.mixins.json",
+                      "tide_team_journal.refmap.json",
+                      "tidebound_compatibility.refmap.json",
+                      "tideborne.refmap.json"
+              );
+
+              @Test
+              void activeSourceMixinMetadataUsesTideborneOwnership() {
+                  assertTrue(Files.isRegularFile(RESOURCES.resolve("tideborne.mixins.json")));
+                  assertTrue(Files.isRegularFile(RESOURCES.resolve("tideborne.client.mixins.json")));
+                  assertTrue(Files.isRegularFile(RESOURCES.resolve("tideborne.apex.mixins.json")));
+                  assertTrue(Files.isRegularFile(RESOURCES.resolve("tideborne.apex.refmap.json")));
+                  for (String retired : RETIRED) {
+                      assertFalse(Files.exists(RESOURCES.resolve(retired)), retired);
+                  }
+              }
+
+              @Test
+              void sourceCommonClientAndOptionalFailureSemanticsStaySeparated() throws IOException {
+                  String common = Files.readString(RESOURCES.resolve("tideborne.mixins.json"));
+                  String client = Files.readString(RESOURCES.resolve("tideborne.client.mixins.json"));
+                  String apex = Files.readString(RESOURCES.resolve("tideborne.apex.mixins.json"));
+
+                  assertTrue(common.contains("\"required\": true"));
+                  assertTrue(common.contains("\"defaultRequire\": 1"));
+                  assertFalse(common.contains("\"refmap\""));
+                  assertTrue(common.contains("\"specimen.AnglersSatchelRecipeMixin\""));
+                  assertTrue(common.contains("\"journal.TeamProgressCanonicalJournalMixin\""));
+                  assertTrue(common.contains("\"tide.AnglingTableLeaderMixin\""));
+                  assertTrue(common.contains("\"journal.client.FishingJournalMixin\""));
+                  assertTrue(common.contains("\"tide.AnglingTableScreenLeaderMixin\""));
+
+                  assertTrue(client.contains("\"required\": false"));
+                  assertTrue(client.contains("\"defaultRequire\": 0"));
+                  assertFalse(client.contains("\"refmap\""));
+                  assertTrue(client.contains("\"specimen.client.MinecraftMutationRenderingMixin\""));
+                  assertFalse(client.contains("journal.client."));
+                  assertFalse(client.contains("tide.AnglingTableScreenLeaderMixin"));
+
+                  assertTrue(apex.contains("\"required\": false"));
+                  assertTrue(apex.contains("\"defaultRequire\": 1"));
+                  assertTrue(apex.contains("\"plugin\": \"com.redslovesgames.tideborne.mixin.tide.OptionalCompatMixinPlugin\""));
+                  assertTrue(apex.contains("\"refmap\": \"tideborne.apex.refmap.json\""));
+                  assertTrue(apex.contains("\"GreatWhiteSharkMixin\""));
+              }
+
+              @Test
+              void apexRefmapIsNarrowAndCurrent() throws IOException {
+                  String refmap = Files.readString(RESOURCES.resolve("tideborne.apex.refmap.json"));
+                  assertTrue(refmap.contains("com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin"));
+                  assertTrue(refmap.contains("Lcom/acorsicanfrog/apexwaters/entity/GreatWhiteSharkEntity;method_5959()V"));
+                  assertFalse(refmap.contains("com/redslovesgames/tideteamjournal/"));
+                  assertFalse(refmap.contains("com/redslovesgames/tideboundcompatibility/"));
+                  assertFalse(refmap.contains("AnglingTableLeaderMixin"));
+              }
+
+              @Test
+              void fabricMetadataReferencesOnlyCanonicalConfigsAndKeepsCompatibilityProvides() throws IOException {
+                  String fabric = Files.readString(RESOURCES.resolve("fabric.mod.json"));
+                  assertTrue(fabric.contains("\"tideborne.mixins.json\""));
+                  assertTrue(fabric.contains("\"tideborne.client.mixins.json\""));
+                  assertTrue(fabric.contains("\"tideborne.apex.mixins.json\""));
+                  for (String retired : RETIRED) {
+                      assertFalse(fabric.contains(retired), retired);
+                  }
+                  assertTrue(fabric.contains("\"tide_traits\""));
+                  assertTrue(fabric.contains("\"tide_team_journal\""));
+                  assertTrue(fabric.contains("\"tidebound_compatibility\""));
+              }
+          }
+          JAVA
+      - name: Validate source P7.4 boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('src/main/resources')
+          expected = {
+              'tideborne.mixins.json',
+              'tideborne.client.mixins.json',
+              'tideborne.apex.mixins.json',
+              'tideborne.apex.refmap.json',
+          }
+          actual = {p.name for p in root.iterdir() if p.is_file() and (p.name.endswith('.mixins.json') or p.name.endswith('.refmap.json'))}
+          assert actual == expected, (actual, expected)
+          fabric = json.loads((root / 'fabric.mod.json').read_text())
+          assert fabric['mixins'] == [
+              'tideborne.mixins.json',
+              {'config': 'tideborne.client.mixins.json', 'environment': 'client'},
+              'tideborne.apex.mixins.json',
+          ]
+          common = json.loads((root / 'tideborne.mixins.json').read_text())
+          client = json.loads((root / 'tideborne.client.mixins.json').read_text())
+          apex = json.loads((root / 'tideborne.apex.mixins.json').read_text())
+          assert common['required'] is True and common['injectors']['defaultRequire'] == 1 and 'refmap' not in common
+          assert client['required'] is False and client['injectors']['defaultRequire'] == 0 and 'refmap' not in client
+          assert apex['required'] is False and apex['injectors']['defaultRequire'] == 1
+          assert apex['plugin'] == 'com.redslovesgames.tideborne.mixin.tide.OptionalCompatMixinPlugin'
+          assert apex['refmap'] == 'tideborne.apex.refmap.json'
+          assert set(fabric['provides']) >= {'tide_traits', 'tide_team_journal', 'tidebound_compatibility'}
+          apex_refmap = json.loads((root / 'tideborne.apex.refmap.json').read_text())
+          key = 'com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin'
+          for section in (apex_refmap['mappings'], apex_refmap['data']['named:intermediary']):
+              assert set(section) == {key}
+              assert section[key]['registerGoals'] == 'Lcom/acorsicanfrog/apexwaters/entity/GreatWhiteSharkEntity;method_5959()V'
+          print('P7.4 source boundary passed')
+          PY
+      - name: Run full repository and Java 21 validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/validate_repository.sh
+          ./gradlew clean build
+      - name: Validate processed resources and production artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in tideborne.mixins.json tideborne.client.mixins.json tideborne.apex.mixins.json tideborne.apex.refmap.json; do
+            test -f "build/resources/main/$name"
+          done
+          for name in tide_traits.mixins.json tide_traits.client.mixins.json tide_team_journal.mixins.json tidebound_compatibility.mixins.json tidebound_compatibility.apex.mixins.json tide_team_journal.refmap.json tidebound_compatibility.refmap.json tideborne.refmap.json; do
+            test ! -e "build/resources/main/$name"
+          done
+          VERSION="$(awk -F= '$1 == "mod_version" {print $2}' gradle.properties | tr -d '[:space:]')"
+          JAR="build/libs/tideborne-${VERSION}.jar"
+          unzip -Z1 "$JAR" | grep -Fx 'tideborne-refmap.json'
+          ./scripts/validate_release_artifact.sh "$JAR"
+      - name: Commit validated P7.4 product change
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/p7-temp-mixin-metadata-audit.yml
+          rm -f .github/workflows/p7-temp-mixin-metadata-validation.yml
+          rm -f .github/workflows/p7-temp-mixin-metadata-validation-rerun.yml
+          rm -f .github/workflows/p7-temp-mixin-metadata-final.yml
+          rm -f .github/workflows/p7-temp-refmap-diagnostic.yml
+          rm -f .github/workflows/p7-temp-mixin-metadata-authoritative.yml
+          git config user.name "RedsLovesGames"
+          git config user.email "75150137+RedsLovesGames@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "resources: consolidate Tideborne mixin metadata"
+          git push origin HEAD:agent/p7-resources
