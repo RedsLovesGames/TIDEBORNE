@@ -15,16 +15,14 @@ import java.util.Map;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * Owns Tideborne's canonical configuration file and one-way legacy imports.
+ * Owns Tideborne's canonical server/gameplay configuration file and one-way legacy imports.
  * Historical config files are migration inputs only and are never rewritten.
  */
 public final class TideborneConfigStore {
    public static final int SCHEMA_VERSION = 2;
    public static final String TRAITS = "traits";
    public static final String TEAM_SERVER = "team_server";
-   public static final String TEAM_CLIENT = "team_client";
    public static final String FISHING_SERVER = "fishing_server";
-   public static final String FISHING_CLIENT = "fishing_client";
 
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
    private static final Map<String, String> LEGACY_FILES = legacyFiles();
@@ -37,8 +35,9 @@ public final class TideborneConfigStore {
    }
 
    public static synchronized void initialize() throws IOException {
-      JsonObject root = Files.exists(path()) ? readRoot() : newRoot();
-      boolean changed = !Files.exists(path());
+      boolean existed = Files.exists(path());
+      JsonObject root = existed ? readRoot() : newRoot();
+      boolean changed = !existed || !root.has("schema_version") || root.get("schema_version").getAsInt() != SCHEMA_VERSION;
       root.addProperty("schema_version", SCHEMA_VERSION);
 
       for (Map.Entry<String, String> entry : LEGACY_FILES.entrySet()) {
@@ -53,9 +52,7 @@ public final class TideborneConfigStore {
          }
       }
 
-      if (changed) {
-         writeRoot(root);
-      }
+      if (changed) writeRoot(root);
    }
 
    public static synchronized JsonObject readSection(String section) throws IOException {
@@ -75,20 +72,33 @@ public final class TideborneConfigStore {
       writeSection(section, GSON.toJsonTree(value));
    }
 
+   public static synchronized void removeSection(String section) throws IOException {
+      if (!Files.exists(path())) return;
+      JsonObject root = readRoot();
+      if (root.remove(section) != null) writeRoot(root);
+   }
+
+   static JsonObject readLegacyFile(String fileName) throws IOException {
+      return readLegacyObject(FabricLoader.getInstance().getConfigDir().resolve(fileName));
+   }
+
+   static void backupLegacyFile(String fileName) throws IOException {
+      Path path = FabricLoader.getInstance().getConfigDir().resolve(fileName);
+      if (Files.isRegularFile(path)) backupOnce(path);
+   }
+
    private static Map<String, String> legacyFiles() {
       Map<String, String> result = new LinkedHashMap<>();
       result.put(TRAITS, "tide_traits.json");
       result.put(TEAM_SERVER, "tide_team_journal-server.json");
-      result.put(TEAM_CLIENT, "tide_team_journal-client.json");
       result.put(FISHING_SERVER, "tidebound_compatibility.json");
-      result.put(FISHING_CLIENT, "tidebound_compatibility-client.json");
       return Map.copyOf(result);
    }
 
    private static JsonObject newRoot() {
       JsonObject root = new JsonObject();
       root.addProperty("schema_version", SCHEMA_VERSION);
-      root.addProperty("_documentation", "Canonical Tideborne configuration. Historical config files are imported for migration only.");
+      root.addProperty("_documentation", "Canonical Tideborne server/gameplay configuration. Historical config files are migration inputs only.");
       JsonObject migration = new JsonObject();
       migration.addProperty("legacy_namespaces_preserved", true);
       migration.addProperty("note", "Serialized registry, network, and saved-data IDs retain historical namespaces for compatibility.");
@@ -98,16 +108,12 @@ public final class TideborneConfigStore {
 
    private static JsonObject readRoot() throws IOException {
       JsonElement parsed = JsonParser.parseString(Files.readString(path(), StandardCharsets.UTF_8));
-      if (!parsed.isJsonObject()) {
-         throw new IOException("Tideborne config root is not a JSON object: " + path());
-      }
+      if (!parsed.isJsonObject()) throw new IOException("Tideborne config root is not a JSON object: " + path());
       return parsed.getAsJsonObject();
    }
 
    private static JsonObject readLegacyObject(Path path) throws IOException {
-      if (!Files.isRegularFile(path)) {
-         return null;
-      }
+      if (!Files.isRegularFile(path)) return null;
       try {
          JsonElement parsed = JsonParser.parseString(Files.readString(path, StandardCharsets.UTF_8));
          return parsed.isJsonObject() ? parsed.getAsJsonObject() : null;
@@ -118,9 +124,7 @@ public final class TideborneConfigStore {
 
    private static void backupOnce(Path legacy) throws IOException {
       Path backup = legacy.resolveSibling(legacy.getFileName() + ".tideborne-migrated.bak");
-      if (!Files.exists(backup)) {
-         Files.copy(legacy, backup, StandardCopyOption.COPY_ATTRIBUTES);
-      }
+      if (!Files.exists(backup)) Files.copy(legacy, backup, StandardCopyOption.COPY_ATTRIBUTES);
    }
 
    private static void writeRoot(JsonObject root) throws IOException {
