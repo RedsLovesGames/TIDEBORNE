@@ -1,0 +1,29 @@
+name: P7 Temporary Java Resource Audit
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+jobs:
+  audit:
+    if: "${{ github.event.head_commit.message == 'chore: stage P7.3 Java resource audit' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Audit Java resource identifiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== Historical namespace literals in production Java ==='
+          grep -RIn --include='*.java' -E '"(tide_traits|tide_team_journal|tidebound_compatibility)"|"(tide_traits|tide_team_journal|tidebound_compatibility):' src/main/java || true
+          echo '=== Identifier/resource construction ==='
+          grep -RIn --include='*.java' -E 'Identifier\.(of|tryParse|ofVanilla)|new Identifier|resource\(|ResourceLocation|texture|Texture|SPRITE|ICON|MODEL|GUI|Identifier ' src/main/java | head -n 1200 || true
+          echo '=== Historical namespaces in tests ==='
+          grep -RIn --include='*.java' -E 'tide_traits|tide_team_journal|tidebound_compatibility' src/test/java || true
+          echo '=== Current Tideborne asset/data string references ==='
+          grep -RIn --include='*.java' -E 'assets/|data/|textures/|models/|gui/|journal/|satchel/|traits/|tideborne:' src/main/java | head -n 1200 || true
+          echo '=== Reload and dynamic identifier candidates ==='
+          grep -RIn --include='*.java' -Ei 'reload|dynamic.*texture|texture.*dynamic|register.*texture|resource.*manager|Identifier\.of\(' src/main/java | head -n 1200 || true
