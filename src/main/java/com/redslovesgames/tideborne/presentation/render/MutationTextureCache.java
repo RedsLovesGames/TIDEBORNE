@@ -83,7 +83,7 @@ final class MutationTextureCache {
       try {
          texture = new NativeImageBackedTexture(generated);
          texture.setFilter(false, false);
-         Identifier location = Identifier.of("tide_traits", "dynamic/mutation/" + Long.toUnsignedString(NEXT_TEXTURE_ID.incrementAndGet(), 36));
+         Identifier location = Identifier.of("tideborne", "dynamic/mutation/" + Long.toUnsignedString(NEXT_TEXTURE_ID.incrementAndGet(), 36));
          minecraft.getTextureManager().registerTexture(location, texture);
          return MutationTextureCache.Entry.dynamic(
             location, texture, TextureCacheLimits.estimatedRetainedBytes(generated.getWidth(), generated.getHeight())

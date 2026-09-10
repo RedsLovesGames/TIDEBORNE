@@ -269,7 +269,7 @@ public final class MutationRendering {
    }
 
    private static boolean isGenerated(Identifier texture) {
-      return "tide_traits".equals(texture.getNamespace()) && texture.getPath().startsWith("dynamic/mutation/");
+      return "tideborne".equals(texture.getNamespace()) && texture.getPath().startsWith("dynamic/mutation/");
    }
 
    @Environment(EnvType.CLIENT)
