@@ -5,20 +5,21 @@
   "baseline_sha": "b2ea30d927c4bae15f2e9ccbdc48b61331ead9f4",
   "optimization_seed_sha": "053f14f17404d9ae41aeefa095116a6690d19bc2",
   "status": "IN_PROGRESS",
-  "phase": "P7.1",
-  "checkpoint_sequence": 2,
-  "last_product_checkpoint_sha": "8114aa233fb265a5412075b4f4482305d92578ee",
-  "last_checkpoint_utc": "2026-09-10T22:54:28+00:00",
+  "phase": "P7.2",
+  "checkpoint_sequence": 3,
+  "last_product_checkpoint_sha": "630268a27928d75a0850a778bcc4bfd90dc900a5",
+  "last_checkpoint_utc": "2026-09-10T23:08:00+00:00",
   "completed_phases": [
-    "P7.0"
+    "P7.0",
+    "P7.1"
   ],
-  "next_action": "Update the exact Java callers for the newly canonical Tideborne translation/texture paths, validate all moved presentation lookups, then remove only historical presentation duplicates proven unnecessary while retaining item/model/upstream compatibility aliases.",
+  "next_action": "Audit and migrate current Tideborne-owned data resources into data/tideborne while preserving historical recipe/tag identities, upstream Tide extensions, optional Myths integration, and any historical datapack lookup paths that require dual-namespace compatibility.",
   "blockers": [],
   "validation": {
     "repository_structure": "pass_connector_inventory",
     "java21_clean_build": "not_run",
-    "unit_architecture_tests": "not_run",
-    "resource_paths_translations": "partial_asset_tree_and_model_aliases_verified",
+    "unit_architecture_tests": "p7_1_focused_leader_texture_parity_pass_java21_exact_dependencies",
+    "resource_paths_translations": "pass_p7_1_static_asset_translation_and_alias_validation",
     "mixin_refmap_metadata": "not_run",
     "optional_compatibility_safety": "not_run",
     "release_artifact": "not_run"
@@ -37,7 +38,11 @@
     "last_product_checkpoint_sha records the committed product/code/resource state immediately before the state-only checkpoint commit.",
     "GameTests and Minecraft boot tests are not part of the current required validation gate.",
     "P7.0 classification is recorded in .github/TIDEBORNE_P7_RESOURCE_CLASSIFICATION.md; the dependency gate was verified on the target branch through canonical config, specimen, gear, Tide-adapter, and ecosystem ownership paths.",
-    "A shell checkout was unavailable in this worker environment, so scripts/p7_agent.py and Gradle validation were not run. P7.0 state was checkpointed equivalently through branch-only GitHub commits after the read-only structural inventory.",
-    "P7.1 first product substep copied the TideTraits and TideboundCompatibility presentation texture trees byte-identically into assets/tideborne, merged their item textures, repointed retained historical item-model aliases to tideborne textures, and added collision-safe Tideborne-owned UI translation keys. Historical texture/lang paths remain temporarily as compatibility aliases until exact Java callers are migrated and validated."
+    "A shell checkout was unavailable in this worker environment, so scripts/p7_agent.py and Gradle validation were not run locally. GitHub Actions was used for P7.1 focused Java 21 validation with the repository's exact pinned CI dependencies.",
+    "P7.1 product commit 8114aa233fb265a5412075b4f4482305d92578ee copied TideTraits and TideboundCompatibility presentation textures byte-identically into assets/tideborne, merged item textures, repointed retained historical item-model aliases to tideborne textures, and added Tideborne-owned UI translation keys.",
+    "P7.1 product commit 630268a27928d75a0850a778bcc4bfd90dc900a5 switched audited presentation translation and static texture callers to Tideborne ownership, removed historical TideTraits and TideboundCompatibility texture trees, removed the pure-presentation TideTeamJournal lang file, and trimmed historical lang files to item/tag compatibility aliases only.",
+    "The first focused Gradle attempt intentionally did not commit because exact optional dependencies had not been fetched; it failed on missing Apex Waters classes and Tide fallback API differences unrelated to P7.1. The rerun used scripts/fetch_ci_dependencies.sh, passed the P7.1 static resource validation and LeaderTextureParityTest under Java 21, then committed the migration.",
+    "Historical item registry IDs, item model paths, item/tag translation aliases, network IDs, NBT keys, component IDs, reload IDs, dynamic texture IDs, recipes, tags, and optional integration identities were not renamed by P7.1.",
+    "Temporary P7.1 audit/apply workflows were removed by the successful product commit; only the normal build workflow and P7 checkpoint workflow remain."
   ]
 }
