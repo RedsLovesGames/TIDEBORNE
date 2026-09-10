@@ -6,7 +6,7 @@
 package com.redslovesgames.tideborne;
 
 import com.redslovesgames.tideborne.command.TideborneCommands;
-import com.redslovesgames.tideborne.config.TideborneConfigBackend;
+import com.redslovesgames.tideborne.config.TideborneConfig;
 import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.migration.legacy.TideborneMigrationManager;
 import com.redslovesgames.tideborne.registry.TideborneItemGroups;
@@ -24,14 +24,13 @@ public final class Tideborne implements ModInitializer {
          initialized = true;
          System.out.println("[Tideborne] Starting 2.0.0 Fishing System 2.0 Integration...");
          TideborneMigrationManager.migrate();
-         TideborneConfigBackend.beforeSubsystems();
+         TideborneConfig.initialize();
          TideTraits.initialize();
          TideTeamJournal.initialize();
          OwnedFishJournalBackfill.init();
          FishingGameplayInitializer.initialize();
          TideborneItemGroups.init();
          TideborneCommands.init();
-         TideborneConfigBackend.afterSubsystems();
          System.out.println("[Tideborne] Native backend, unified commands/config, migration and compatibility layers initialized.");
       }
    }
