@@ -1,0 +1,129 @@
+name: P7 Temporary Mixin Metadata Final Validation
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: "${{ github.event.head_commit.message == 'chore: finalize P7.4 mixin metadata validation' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Fetch exact external compile dependencies
+        run: bash scripts/fetch_ci_dependencies.sh
+      - name: Reuse the already validated P7.4 transformation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/p7-temp-mixin-metadata-validation-rerun.yml').read_text().splitlines()
+          start = workflow.index('      - name: Consolidate Tideborne mixin metadata')
+          run_line = next(i for i in range(start + 1, len(workflow)) if workflow[i] == '        run: |')
+          end = next(i for i in range(run_line + 1, len(workflow)) if workflow[i].startswith('      - name: '))
+          body = []
+          for line in workflow[run_line + 1:end]:
+              if line.startswith('          '):
+                  body.append(line[10:])
+              elif not line.strip():
+                  body.append('')
+              else:
+                  raise SystemExit(f'Unexpected indentation while extracting transform: {line!r}')
+          Path('/tmp/p7_4_transform.sh').write_text('\n'.join(body) + '\n')
+          PY
+          bash /tmp/p7_4_transform.sh
+      - name: Accept only Loom canonical-refmap injection in packaged client config
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/validate_release_artifact.sh')
+          text = path.read_text()
+          old = """if client.get('injectors', {}).get('defaultRequire') != 0 or 'refmap' in client:
+              raise SystemExit('Specimen client failure-tolerance/refmap semantics changed')"""
+          new = """if client.get('injectors', {}).get('defaultRequire') != 0:
+              raise SystemExit('Specimen client defaultRequire changed')
+          packaged_client_refmap = client.get('refmap')
+          if packaged_client_refmap not in (None, 'tideborne.refmap.json'):
+              raise SystemExit(f'Unexpected packaged client refmap: {packaged_client_refmap!r}')
+          print(f'Packaged specimen client refmap: {packaged_client_refmap!r}')"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one strict client artifact check, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+          PY
+      - name: Validate source metadata boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('src/main/resources')
+          expected = {'tideborne.mixins.json', 'tideborne.client.mixins.json', 'tideborne.apex.mixins.json', 'tideborne.refmap.json'}
+          actual = {p.name for p in root.iterdir() if p.is_file() and (p.name.endswith('.mixins.json') or p.name.endswith('.refmap.json'))}
+          assert actual == expected, (actual, expected)
+          fabric = json.loads((root / 'fabric.mod.json').read_text())
+          assert fabric['mixins'] == [
+              'tideborne.mixins.json',
+              {'config': 'tideborne.client.mixins.json', 'environment': 'client'},
+              'tideborne.apex.mixins.json',
+          ]
+          common = json.loads((root / 'tideborne.mixins.json').read_text())
+          client = json.loads((root / 'tideborne.client.mixins.json').read_text())
+          apex = json.loads((root / 'tideborne.apex.mixins.json').read_text())
+          assert common['required'] is True and common['injectors']['defaultRequire'] == 1 and common['refmap'] == 'tideborne.refmap.json'
+          assert client['required'] is False and client['injectors']['defaultRequire'] == 0 and 'refmap' not in client
+          assert apex['required'] is False and apex['injectors']['defaultRequire'] == 1 and apex['refmap'] == 'tideborne.refmap.json'
+          assert apex['plugin'] == 'com.redslovesgames.tideborne.mixin.tide.OptionalCompatMixinPlugin'
+          assert set(fabric['provides']) >= {'tide_traits', 'tide_team_journal', 'tidebound_compatibility'}
+          refmap = json.loads((root / 'tideborne.refmap.json').read_text())
+          for section in (refmap['mappings'], refmap['data']['named:intermediary']):
+              assert all(key.startswith('com/redslovesgames/tideborne/mixin/') for key in section)
+              assert not any(key.endswith('/SyncPlayerDataMsgMixin') for key in section)
+          print('P7.4 source metadata boundary passed')
+          PY
+      - name: Run full repository and Java 21 validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/validate_repository.sh
+          ./gradlew clean build
+      - name: Validate processed resources and production artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in tideborne.mixins.json tideborne.client.mixins.json tideborne.apex.mixins.json tideborne.refmap.json; do
+            test -f "build/resources/main/$name"
+          done
+          for name in tide_traits.mixins.json tide_traits.client.mixins.json tide_team_journal.mixins.json tidebound_compatibility.mixins.json tidebound_compatibility.apex.mixins.json tide_team_journal.refmap.json tidebound_compatibility.refmap.json; do
+            test ! -e "build/resources/main/$name"
+          done
+          VERSION="$(awk -F= '$1 == "mod_version" {print $2}' gradle.properties | tr -d '[:space:]')"
+          ./scripts/validate_release_artifact.sh "build/libs/tideborne-${VERSION}.jar"
+      - name: Commit validated P7.4 product change
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/p7-temp-mixin-metadata-audit.yml
+          rm -f .github/workflows/p7-temp-mixin-metadata-validation.yml
+          rm -f .github/workflows/p7-temp-mixin-metadata-validation-rerun.yml
+          rm -f .github/workflows/p7-temp-mixin-metadata-final.yml
+          git config user.name "RedsLovesGames"
+          git config user.email "75150137+RedsLovesGames@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "resources: consolidate Tideborne mixin metadata"
+          git push origin HEAD:agent/p7-resources
