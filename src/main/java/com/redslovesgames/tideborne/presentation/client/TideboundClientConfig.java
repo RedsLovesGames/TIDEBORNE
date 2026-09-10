@@ -8,7 +8,7 @@ package com.redslovesgames.tideborne.presentation.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.redslovesgames.tideborne.config.TideborneConfigStore;
+import com.redslovesgames.tideborne.config.TideborneClientConfig;
 import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import java.io.IOException;
 
@@ -26,7 +26,7 @@ public final class TideboundClientConfig {
 
    public static void load() {
       try {
-         JsonObject section = TideborneConfigStore.readSection(TideborneConfigStore.FISHING_CLIENT);
+         JsonObject section = TideborneClientConfig.readSection(TideborneClientConfig.FISHING);
          if (section != null) {
             Values parsed = GSON.fromJson(section, Values.class);
             if (parsed != null) values = parsed;
@@ -41,7 +41,7 @@ public final class TideboundClientConfig {
 
    public static void save() {
       try {
-         TideborneConfigStore.writeSection(TideborneConfigStore.FISHING_CLIENT, GSON.toJsonTree(values));
+         TideborneClientConfig.writeSection(TideborneClientConfig.FISHING, GSON.toJsonTree(values));
       } catch (IOException exception) {
          FishingGameplayInitializer.LOGGER.error("Could not save Tideborne fishing client settings", exception);
       }
