@@ -7,7 +7,7 @@ on:
 
 jobs:
   audit:
-    if: "${{ github.event.head_commit.message == 'chore: inspect Tide P7.2 data loading' }}"
+    if: "${{ github.event.head_commit.message == 'chore: decompile Tide P7.2 data loader' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,20 +16,15 @@ jobs:
       - name: Fetch exact Tide dependency
         shell: bash
         run: bash scripts/fetch_ci_dependencies.sh
-      - name: Inspect Tide 2.1.1 datapack loading
+      - name: Decompile Tide 2.1.1 data loading contract
         shell: bash
         run: |
           set -euo pipefail
           jar=dev/libs/tide-fabric-1.21.1-2.1.1.jar
-          echo '=== Tide classes containing rod_accessories/bait literals ==='
-          zipinfo -1 "$jar" '*.class' | while read -r cls; do
-            hits="$(unzip -p "$jar" "$cls" | strings | grep -E 'rod_accessories|(^|/)bait($|/)|bait_items' || true)"
-            if [ -n "$hits" ]; then
-              echo "CLASS $cls"
-              printf '%s\n' "$hits"
-            fi
+          for cls in \
+            com.li64.tide.data.TideData \
+            com.li64.tide.data.rods.AccessoryData \
+            com.li64.tide.data.rods.BaitData; do
+            echo "=== $cls ==="
+            javap -classpath "$jar" -c -p "$cls"
           done
-          echo '=== Tide bundled rod-accessory/bait resources ==='
-          zipinfo -1 "$jar" | grep -E '(^|/)rod_accessories/|(^|/)bait/' || true
-          echo '=== Candidate reload/data classes ==='
-          zipinfo -1 "$jar" '*.class' | grep -Ei 'resource|reload|accessor|accessor|bait|rod' | head -n 200 || true
