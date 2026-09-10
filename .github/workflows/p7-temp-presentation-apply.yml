@@ -1,0 +1,243 @@
+name: P7 Temporary Presentation Apply
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'chore: stage P7.1 presentation caller migration'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Apply presentation ownership migration
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import shutil
+
+          def edit(path_text, replacements):
+              path = Path(path_text)
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements:
+                  if old not in text:
+                      raise SystemExit(f'Missing expected literal in {path}: {old}')
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+
+          edit('src/main/java/com/redslovesgames/tideborne/ecosystem/ChumBucketItem.java', [
+              ('message.tidebound_compatibility.chum_ocean_only', 'message.tideborne.fishing.chum_ocean_only'),
+              ('message.tidebound_compatibility.chum_disabled', 'message.tideborne.fishing.chum_disabled'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/ecosystem/ChumProjectileEntity.java', [
+              ('message.tidebound_compatibility.chum_returned', 'message.tideborne.fishing.chum_returned'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/fishing/FishingGameplayInitializer.java', [
+              ('command.tidebound_compatibility.reload', 'command.tideborne.fishing.reload'),
+              ('command.tidebound_compatibility.status', 'command.tideborne.fishing.status'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/journal/TideTeamJournal.java', [
+              ('command.tide_team_journal.', 'command.tideborne.team_journal.'),
+              ('metric.tide_team_journal.', 'metric.tideborne.team_journal.'),
+              ('screen.tide_team_journal.', 'screen.tideborne.team_journal.'),
+              ('event.tide_team_journal.', 'event.tideborne.team_journal.'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/journal/client/ClientConfigScreen.java', [
+              ('config.tide_team_journal.', 'config.tideborne.team_journal.'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/journal/client/DiscoveryBadgesComponent.java', [
+              ('Identifier.of("tide_traits", base + "locked/" + id + "_locked.png")', 'Identifier.of("tideborne", base + "locked/" + id + "_locked.png")'),
+              ('Identifier.of("tide_traits", base + "unlocked/" + id + "_unlocked.png")', 'Identifier.of("tideborne", base + "unlocked/" + id + "_unlocked.png")'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/journal/client/RecordScoreboard.java', [
+              ('scoreboard.tide_team_journal.', 'scoreboard.tideborne.team_journal.'),
+              ('chat.tide_team_journal.', 'chat.tideborne.team_journal.'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/journal/client/TeamRecordsScreen.java', [
+              ('screen.tide_team_journal.', 'screen.tideborne.team_journal.'),
+              ('metric.tide_team_journal.', 'metric.tideborne.team_journal.'),
+              ('event.tide_team_journal.', 'event.tideborne.team_journal.'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/journal/client/TideTeamJournalClient.java', [
+              ('tooltip.tide_team_journal.', 'tooltip.tideborne.team_journal.'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/mixin/journal/client/FishingJournalMixin.java', [
+              ('screen.tide_team_journal.open', 'screen.tideborne.team_journal.open'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/mixin/specimen/TidePlayerDataMixin.java', [
+              ('message.tide_traits.new_record_largest', 'message.tideborne.new_record_largest'),
+              ('message.tide_traits.new_record_smallest', 'message.tideborne.new_record_smallest'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/ItemRendererMutationTintMixin.java', [
+              ('Identifier.of("tide_traits", "textures/entity/traits/masks/" + file)', 'Identifier.of("tideborne", "textures/entity/traits/masks/" + file)'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/mixin/tide/TideFishingHookMixin.java', [
+              ('message.tidebound_compatibility.steel_leader_saved', 'message.tideborne.fishing.steel_leader_saved'),
+              ('message.tidebound_compatibility.shark_stole_catch', 'message.tideborne.fishing.shark_stole_catch'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/presentation/client/TideboundCompatibilityClient.java', [
+              ('key.tidebound_compatibility.open_guide', 'key.tideborne.fishing.open_guide'),
+              ('key.categories.tidebound_compatibility', 'key.categories.tideborne'),
+              ('toast.tidebound_compatibility.catch_lost.title', 'toast.tideborne.fishing.catch_lost.title'),
+              ('toast.tidebound_compatibility.catch_lost.body', 'toast.tideborne.fishing.catch_lost.body'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/presentation/client/TideboundGuideScreen.java', [
+              ('guide.tidebound_compatibility.leviathan_bait', 'guide.tideborne.fishing.leviathan_bait'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/presentation/client/TideboundTooltips.java', [
+              ('tooltip.tidebound_compatibility.leviathan_bait.flavor', 'tooltip.tideborne.fishing.leviathan_bait.flavor'),
+              ('tooltip.tidebound_compatibility.leviathan_bait.fish_only', 'tooltip.tideborne.fishing.leviathan_bait.fish_only'),
+              ('tooltip.tidebound_compatibility.leviathan_bait.luck', 'tooltip.tideborne.fishing.leviathan_bait.luck'),
+              ('tooltip.tidebound_compatibility.leviathan_bait.fight', 'tooltip.tideborne.fishing.leviathan_bait.difficulty'),
+              ('tooltip.tidebound_compatibility.leviathan_bait.conditions', 'tooltip.tideborne.fishing.leviathan_bait.conditions'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/presentation/render/MutationTextureCache.java', [
+              ('Identifier.of("tide_traits", "textures/entity/traits/masks/" + prefix + "_0" + index + ".png")', 'Identifier.of("tideborne", "textures/entity/traits/masks/" + prefix + "_0" + index + ".png")'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/satchel/AnglersSatchelItem.java', [
+              ('message.tide_traits.satchel_active', 'message.tideborne.satchel_active'),
+              ('message.tide_traits.satchel_inactive', 'message.tideborne.satchel_inactive'),
+              ('message.tide_traits.satchel_screen_unavailable', 'message.tideborne.satchel_screen_unavailable'),
+          ])
+          edit('src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java', [
+              ('return Identifier.of("tide_traits", path);', 'return Identifier.of("tideborne", path);'),
+          ])
+          edit('src/test/java/com/redslovesgames/tideborne/assets/LeaderTextureParityTest.java', [
+              ('src/main/resources/assets/tidebound_compatibility/textures/item', 'src/main/resources/assets/tideborne/textures/item'),
+              ('\\"layer0\\":\\"tidebound_compatibility:item/', '\\"layer0\\":\\"tideborne:item/'),
+          ])
+
+          traits_lang = Path('src/main/resources/assets/tide_traits/lang/en_us.json')
+          traits = json.loads(traits_lang.read_text(encoding='utf-8'))
+          traits = {k: v for k, v in traits.items() if k.startswith('item.tide_traits.') or k.startswith('tag.item.tide_traits.')}
+          traits_lang.write_text(json.dumps(traits, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          fishing_lang = Path('src/main/resources/assets/tidebound_compatibility/lang/en_us.json')
+          fishing = json.loads(fishing_lang.read_text(encoding='utf-8'))
+          fishing = {k: v for k, v in fishing.items() if k.startswith('item.tidebound_compatibility.') or k.startswith('tag.item.tidebound_compatibility.')}
+          fishing_lang.write_text(json.dumps(fishing, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          team_lang = Path('src/main/resources/assets/tide_team_journal/lang/en_us.json')
+          if not team_lang.exists():
+              raise SystemExit('Expected historical team-journal lang file is missing')
+          team_lang.unlink()
+
+          for old_textures in (
+              Path('src/main/resources/assets/tide_traits/textures'),
+              Path('src/main/resources/assets/tidebound_compatibility/textures'),
+          ):
+              if not old_textures.is_dir():
+                  raise SystemExit(f'Expected historical texture tree is missing: {old_textures}')
+              shutil.rmtree(old_textures)
+          PY
+      - name: Validate presentation resource ownership
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          canonical = Path('src/main/resources/assets/tideborne')
+          required = [
+              canonical / 'textures/item/anglers_satchel.png',
+              canonical / 'textures/item/steel_leader.png',
+              canonical / 'textures/entity/traits/masks/scar_01.png',
+              canonical / 'textures/gui/journal/mutations/locked/albino_locked.png',
+          ]
+          missing = [str(path) for path in required if not path.is_file()]
+          if missing:
+              raise SystemExit('Missing canonical resources: ' + ', '.join(missing))
+
+          if Path('src/main/resources/assets/tide_traits/textures').exists():
+              raise SystemExit('Historical tide_traits texture tree still exists')
+          if Path('src/main/resources/assets/tidebound_compatibility/textures').exists():
+              raise SystemExit('Historical tidebound_compatibility texture tree still exists')
+          if Path('src/main/resources/assets/tide_team_journal/lang/en_us.json').exists():
+              raise SystemExit('Historical team-journal presentation lang still exists')
+
+          for model in Path('src/main/resources/assets/tidebound_compatibility/models/item').glob('*.json'):
+              text = model.read_text(encoding='utf-8')
+              if '"layer0":"tideborne:item/' not in text and '"layer0": "tideborne:item/' not in text:
+                  raise SystemExit(f'Historical model does not target canonical texture: {model}')
+          for model in Path('src/main/resources/assets/tide_traits/models/item').glob('*.json'):
+              text = model.read_text(encoding='utf-8')
+              if '"layer0": "tideborne:item/' not in text and '"layer0":"tideborne:item/' not in text:
+                  raise SystemExit(f'Satchel model does not target canonical texture: {model}')
+
+          canonical_lang = json.loads(Path('src/main/resources/assets/tideborne/lang/en_us.json').read_text(encoding='utf-8'))
+          required_keys = {
+              'message.tideborne.satchel_active',
+              'screen.tideborne.team_journal.title',
+              'tooltip.tideborne.fishing.leviathan_bait.difficulty',
+              'toast.tideborne.fishing.catch_lost.title',
+              'key.tideborne.fishing.open_guide',
+          }
+          absent = sorted(required_keys - canonical_lang.keys())
+          if absent:
+              raise SystemExit('Missing canonical translations: ' + ', '.join(absent))
+
+          traits_lang = json.loads(Path('src/main/resources/assets/tide_traits/lang/en_us.json').read_text(encoding='utf-8'))
+          if any(not (key.startswith('item.tide_traits.') or key.startswith('tag.item.tide_traits.')) for key in traits_lang):
+              raise SystemExit('Non-compatibility TideTraits translations remain')
+          fishing_lang = json.loads(Path('src/main/resources/assets/tidebound_compatibility/lang/en_us.json').read_text(encoding='utf-8'))
+          if any(not (key.startswith('item.tidebound_compatibility.') or key.startswith('tag.item.tidebound_compatibility.')) for key in fishing_lang):
+              raise SystemExit('Non-compatibility Tidebound translations remain')
+
+          forbidden = (
+              'message.tide_traits.', 'tooltip.tide_traits.',
+              'command.tide_team_journal.', 'screen.tide_team_journal.', 'tooltip.tide_team_journal.',
+              'metric.tide_team_journal.', 'event.tide_team_journal.', 'scoreboard.tide_team_journal.',
+              'chat.tide_team_journal.', 'config.tide_team_journal.',
+              'message.tidebound_compatibility.', 'tooltip.tidebound_compatibility.',
+              'toast.tidebound_compatibility.', 'guide.tidebound_compatibility.',
+              'key.tidebound_compatibility.', 'key.categories.tidebound_compatibility',
+              'command.tidebound_compatibility.reload', 'command.tidebound_compatibility.status',
+          )
+          offenders = []
+          for path in Path('src/main/java').rglob('*.java'):
+              text = path.read_text(encoding='utf-8')
+              for token in forbidden:
+                  if token in text:
+                      offenders.append(f'{path}: {token}')
+          if offenders:
+              raise SystemExit('Historical presentation literals remain:\n' + '\n'.join(offenders))
+
+          for path in [
+              Path('src/main/java/com/redslovesgames/tideborne/presentation/render/MutationTextureCache.java'),
+              Path('src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/ItemRendererMutationTintMixin.java'),
+              Path('src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java'),
+          ]:
+              text = path.read_text(encoding='utf-8')
+              if 'textures/entity/traits/masks/' in text and 'Identifier.of("tideborne"' not in text:
+                  raise SystemExit(f'Static presentation texture lookup not canonicalized: {path}')
+
+          for path in Path('src/main/resources/assets').rglob('*.json'):
+              json.loads(path.read_text(encoding='utf-8'))
+          print('P7.1 presentation ownership checks passed')
+          PY
+      - name: Run focused unit test
+        shell: bash
+        run: ./gradlew test --tests com.redslovesgames.tideborne.assets.LeaderTextureParityTest
+      - name: Commit presentation caller migration
+        shell: bash
+        run: |
+          rm -f .github/workflows/p7-temp-literal-audit.yml
+          rm -f .github/workflows/p7-temp-presentation-apply.yml
+          git config user.name "RedsLovesGames"
+          git config user.email "75150137+RedsLovesGames@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "resources: switch presentation callers to Tideborne"
+          git push origin HEAD:agent/p7-resources
