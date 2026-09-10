@@ -1,6 +1,6 @@
 package com.redslovesgames.tideborne.client;
 
-import com.redslovesgames.tideborne.config.TideborneConfigBackend;
+import com.redslovesgames.tideborne.config.TideborneConfig;
 import com.redslovesgames.tideborne.config.TideborneTraitsDraft;
 import com.redslovesgames.tideborne.config.TideTraitsConfigManager;
 import com.redslovesgames.tideborne.config.TideboundConfig;
@@ -25,6 +25,8 @@ public final class TideborneConfigScreen {
    }
 
    public static Screen create(Screen parent) {
+      MinecraftClient minecraft = MinecraftClient.getInstance();
+      boolean localServer = minecraft.getServer() != null;
       ConfigBuilder builder = ConfigBuilder.create().setParentScreen(parent).setTitle(text("Tideborne Settings"));
       ConfigEntryBuilder entries = builder.entryBuilder();
       TideborneTraitsDraft traits = TideborneTraitsDraft.from(TideTraitsConfigManager.current());
@@ -33,23 +35,30 @@ public final class TideborneConfigScreen {
       TideboundClientConfig.Values fishingClient = TideboundClientConfig.get();
       TideboundConfig.Values[] fishingServer = new TideboundConfig.Values[1];
 
-      addTraits(builder, entries, traits);
-      addSatchel(builder, entries, traits);
-      addTeam(builder, entries, teamServer, teamClient);
+      addTraits(builder, entries, traits, localServer);
+      addSatchel(builder, entries, traits, localServer);
+      addTeam(builder, entries, teamServer, teamClient, localServer);
       addClient(builder, entries, fishingClient);
-      addFishing(builder, entries, fishingServer);
+      addFishing(builder, entries, fishingServer, localServer);
 
       builder.setSavingRunnable(() -> {
-         TideborneConfigBackend.saveAll(traits, teamServer, fishingServer[0]);
-         if (fishingServer[0] != null) {
+         ClientConfig.save();
+         TideboundClientConfig.save();
+         if (localServer) {
+            TideborneConfig.saveServer(traits, teamServer, fishingServer[0]);
+         } else if (fishingServer[0] != null) {
             TideborneConfigNetworkingClient.sendFishingUpdate(TideboundConfig.toJson(fishingServer[0]));
          }
       });
       return builder.build();
    }
 
-   private static void addTraits(ConfigBuilder builder, ConfigEntryBuilder entries, TideborneTraitsDraft draft) {
+   private static void addTraits(ConfigBuilder builder, ConfigEntryBuilder entries, TideborneTraitsDraft draft, boolean editable) {
       ConfigCategory category = builder.getOrCreateCategory(text("Traits: Body Types & Conditions"));
+      if (!editable) {
+         category.addEntry(entries.startTextDescription(text("Server-controlled on multiplayer servers. These settings are read-only from the remote client.")).build());
+         return;
+      }
       category.addEntry(entries.startTextDescription(text("Trait odds are probabilities from 0.0 to 1.0. Body type and condition are rolled independently.")).build());
       for (FishMutation mutation : FishMutation.mutations()) {
          category.addEntry(doubleEntry(entries, pretty(mutation.serializedName()) + " chance", draft.odds.get(mutation), value -> draft.odds.put(mutation, value)));
@@ -71,8 +80,12 @@ public final class TideborneConfigScreen {
       category.addEntry(intEntry(entries, "Dynamic condition texture cache", draft.dynamicTextureCacheMaximum, value -> draft.dynamicTextureCacheMaximum = value));
    }
 
-   private static void addSatchel(ConfigBuilder builder, ConfigEntryBuilder entries, TideborneTraitsDraft draft) {
+   private static void addSatchel(ConfigBuilder builder, ConfigEntryBuilder entries, TideborneTraitsDraft draft, boolean editable) {
       ConfigCategory category = builder.getOrCreateCategory(text("Angler's Satchel"));
+      if (!editable) {
+         category.addEntry(entries.startTextDescription(text("Server-controlled on multiplayer servers. Satchel balance settings are read-only from the remote client.")).build());
+         return;
+      }
       category.addEntry(intEntry(entries, "Fish Satchel conversion XP", draft.conversionXpCost, value -> draft.conversionXpCost = value));
       while (draft.capacityMultipliers.size() < 4) draft.capacityMultipliers.add(1.0);
       while (draft.capacityXpCosts.size() < 4) draft.capacityXpCosts.add(0);
@@ -90,20 +103,24 @@ public final class TideborneConfigScreen {
       }
    }
 
-   private static void addTeam(ConfigBuilder builder, ConfigEntryBuilder entries, ServerConfig.Values server, ClientConfig.Values client) {
+   private static void addTeam(ConfigBuilder builder, ConfigEntryBuilder entries, ServerConfig.Values server, ClientConfig.Values client, boolean serverEditable) {
       ConfigCategory category = builder.getOrCreateCategory(text("Journal & Teams"));
-      category.addEntry(entries.startBooleanToggle(text("Team leaderboards"), server.leaderboardEnabled).setSaveConsumer(value -> server.leaderboardEnabled = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Team history"), server.historyEnabled).setSaveConsumer(value -> server.historyEnabled = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Track contributions"), server.contributionTracking).setSaveConsumer(value -> server.contributionTracking = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Team announcements"), server.announcementsEnabled).setSaveConsumer(value -> server.announcementsEnabled = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Record badges (server)"), server.recordBadgesEnabled).setSaveConsumer(value -> server.recordBadgesEnabled = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Record tooltips (server)"), server.recordTooltipsEnabled).setSaveConsumer(value -> server.recordTooltipsEnabled = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Members may claim records with exact fish"), server.membersMayClaimWithExactFish).setSaveConsumer(value -> server.membersMayClaimWithExactFish = value).build());
-      category.addEntry(intEntry(entries, "Team history limit", server.historyLimit, value -> server.historyLimit = value));
-      category.addEntry(entries.startBooleanToggle(text("Track discoveries"), server.trackDiscoveries).setSaveConsumer(value -> server.trackDiscoveries = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Track largest records"), server.trackLargestRecords).setSaveConsumer(value -> server.trackLargestRecords = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Track smallest records"), server.trackSmallestRecords).setSaveConsumer(value -> server.trackSmallestRecords = value).build());
-      category.addEntry(entries.startBooleanToggle(text("Bobber bonuses"), server.bobberBonusesEnabled).setSaveConsumer(value -> server.bobberBonusesEnabled = value).build());
+      if (serverEditable) {
+         category.addEntry(entries.startBooleanToggle(text("Team leaderboards"), server.leaderboardEnabled).setSaveConsumer(value -> server.leaderboardEnabled = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Team history"), server.historyEnabled).setSaveConsumer(value -> server.historyEnabled = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Track contributions"), server.contributionTracking).setSaveConsumer(value -> server.contributionTracking = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Team announcements"), server.announcementsEnabled).setSaveConsumer(value -> server.announcementsEnabled = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Record badges (server)"), server.recordBadgesEnabled).setSaveConsumer(value -> server.recordBadgesEnabled = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Record tooltips (server)"), server.recordTooltipsEnabled).setSaveConsumer(value -> server.recordTooltipsEnabled = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Members may claim records with exact fish"), server.membersMayClaimWithExactFish).setSaveConsumer(value -> server.membersMayClaimWithExactFish = value).build());
+         category.addEntry(intEntry(entries, "Team history limit", server.historyLimit, value -> server.historyLimit = value));
+         category.addEntry(entries.startBooleanToggle(text("Track discoveries"), server.trackDiscoveries).setSaveConsumer(value -> server.trackDiscoveries = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Track largest records"), server.trackLargestRecords).setSaveConsumer(value -> server.trackLargestRecords = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Track smallest records"), server.trackSmallestRecords).setSaveConsumer(value -> server.trackSmallestRecords = value).build());
+         category.addEntry(entries.startBooleanToggle(text("Bobber bonuses"), server.bobberBonusesEnabled).setSaveConsumer(value -> server.bobberBonusesEnabled = value).build());
+      } else {
+         category.addEntry(entries.startTextDescription(text("Server journal/team settings are read-only on remote multiplayer clients.")).build());
+      }
       category.addEntry(entries.startTextDescription(text("Client journal display")).build());
       category.addEntry(entries.startBooleanToggle(text("Show record badges"), client.showRecordBadges).setSaveConsumer(value -> client.showRecordBadges = value).build());
       category.addEntry(entries.startBooleanToggle(text("Show record tooltips"), client.showRecordTooltips).setSaveConsumer(value -> client.showRecordTooltips = value).build());
@@ -123,18 +140,23 @@ public final class TideborneConfigScreen {
       category.addEntry(entries.startTextDescription(text("Condition item overlays, Fish Displays and entity condition visuals use Tideborne's shared rendering pipeline.")).build());
    }
 
-   private static void addFishing(ConfigBuilder builder, ConfigEntryBuilder entries, TideboundConfig.Values[] target) {
+   private static void addFishing(ConfigBuilder builder, ConfigEntryBuilder entries, TideboundConfig.Values[] target, boolean localServer) {
       MinecraftClient client = MinecraftClient.getInstance();
-      if (!ClientTideboundSettings.available()) {
-         builder.getOrCreateCategory(text("Fishing Gameplay")).addEntry(entries.startTextDescription(text("Join a server/world first to receive authoritative fishing settings.")).build());
-         return;
-      }
-      if (client.player == null || !client.player.hasPermissionLevel(2)) {
-         builder.getOrCreateCategory(text("Fishing Gameplay")).addEntry(entries.startTextDescription(text("Only server operators can edit gameplay settings.")).build());
-         return;
+      TideboundConfig.Values values;
+      if (localServer) {
+         values = TideboundConfig.valuesFromJson(TideboundConfig.settingsJson());
+      } else {
+         if (!ClientTideboundSettings.available()) {
+            builder.getOrCreateCategory(text("Fishing Gameplay")).addEntry(entries.startTextDescription(text("Join a server/world first to receive authoritative fishing settings.")).build());
+            return;
+         }
+         if (client.player == null || !client.player.hasPermissionLevel(2)) {
+            builder.getOrCreateCategory(text("Fishing Gameplay")).addEntry(entries.startTextDescription(text("Only server operators can edit synchronized gameplay settings.")).build());
+            return;
+         }
+         values = TideboundConfig.valuesFromJson(ClientTideboundSettings.settingsJson());
       }
 
-      TideboundConfig.Values values = TideboundConfig.valuesFromJson(ClientTideboundSettings.settingsJson());
       target[0] = values;
       ConfigCategory gear = builder.getOrCreateCategory(text("Fishing Gear"));
       gear.addEntry(doubleEntry(entries, "Tentacle Line catch zone", values.tentacleCatchZoneMultiplier, x -> values.tentacleCatchZoneMultiplier = x));
