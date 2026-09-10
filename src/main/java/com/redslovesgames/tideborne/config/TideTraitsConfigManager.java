@@ -34,7 +34,7 @@ public final class TideTraitsConfigManager {
          JsonObject root = TideborneConfigStore.readSection(TideborneConfigStore.TRAITS);
          if (root == null) {
             current = Settings.defaults();
-            TideborneConfigStore.writeSection(TideborneConfigStore.TRAITS, toJson(current));
+            TideborneConfigStore.writeSection(TideborneConfigStore.TRAITS, firstRunJson(current));
          } else {
             current = parse(root);
          }
@@ -104,6 +104,16 @@ public final class TideTraitsConfigManager {
          sharedDiscovery,
          debugLogging
       );
+   }
+
+   private static JsonObject firstRunJson(Settings settings) {
+      JsonObject root = toJson(settings);
+      JsonObject sizes = object(root, "mutation_size");
+      sizes.add("dwarf_multiplier", array(0.65, 0.82));
+      sizes.add("giant_multiplier", array(1.2, 1.45));
+      sizes.add("parasite_multiplier", array(0.9, 0.97));
+      sizes.add("perfect_normal_percentile", array(75.0, 95.0));
+      return root;
    }
 
    private static JsonObject toJson(Settings settings) {
