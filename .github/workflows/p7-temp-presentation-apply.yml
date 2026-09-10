@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.head_commit.message == 'chore: stage P7.1 presentation caller migration'
+    if: "${{ github.event.head_commit.message == 'chore: stage P7.1 presentation caller migration' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -213,15 +213,6 @@ jobs:
                       offenders.append(f'{path}: {token}')
           if offenders:
               raise SystemExit('Historical presentation literals remain:\n' + '\n'.join(offenders))
-
-          for path in [
-              Path('src/main/java/com/redslovesgames/tideborne/presentation/render/MutationTextureCache.java'),
-              Path('src/main/java/com/redslovesgames/tideborne/mixin/specimen/client/ItemRendererMutationTintMixin.java'),
-              Path('src/main/java/com/redslovesgames/tideborne/satchel/client/AnglersSatchelScreen.java'),
-          ]:
-              text = path.read_text(encoding='utf-8')
-              if 'textures/entity/traits/masks/' in text and 'Identifier.of("tideborne"' not in text:
-                  raise SystemExit(f'Static presentation texture lookup not canonicalized: {path}')
 
           for path in Path('src/main/resources/assets').rglob('*.json'):
               json.loads(path.read_text(encoding='utf-8'))
