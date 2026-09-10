@@ -7,7 +7,7 @@ on:
 
 jobs:
   audit:
-    if: "${{ github.event.head_commit.message == 'chore: decompile Tide P7.2 data loader' }}"
+    if: "${{ github.event.head_commit.message == 'chore: inspect Tide flat data loader' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,15 +16,14 @@ jobs:
       - name: Fetch exact Tide dependency
         shell: bash
         run: bash scripts/fetch_ci_dependencies.sh
-      - name: Decompile Tide 2.1.1 data loading contract
+      - name: Decompile Tide flat data loader
         shell: bash
         run: |
           set -euo pipefail
           jar=dev/libs/tide-fabric-1.21.1-2.1.1.jar
           for cls in \
-            com.li64.tide.data.TideData \
-            com.li64.tide.data.rods.AccessoryData \
-            com.li64.tide.data.rods.BaitData; do
+            com.li64.tide.data.loaders.AbstractDataLoader \
+            com.li64.tide.data.loaders.FlatDataLoader; do
             echo "=== $cls ==="
             javap -classpath "$jar" -c -p "$cls"
           done
