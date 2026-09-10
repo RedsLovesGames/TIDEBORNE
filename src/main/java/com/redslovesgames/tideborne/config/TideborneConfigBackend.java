@@ -8,7 +8,6 @@ package com.redslovesgames.tideborne.config;
 import com.redslovesgames.tideborne.journal.ServerConfig;
 import com.redslovesgames.tideborne.journal.client.ClientConfig;
 import com.redslovesgames.tideborne.presentation.client.TideboundClientConfig;
-import java.io.IOException;
 
 /**
  * Compatibility coordinator retained for existing callers.
@@ -23,7 +22,7 @@ public final class TideborneConfigBackend {
    public static synchronized void beforeSubsystems() {
       try {
          TideborneConfigStore.initialize();
-      } catch (IOException exception) {
+      } catch (Exception exception) {
          System.err.println("[Tideborne] Unified config migration failed; defaults will remain usable: " + exception.getMessage());
       }
    }
