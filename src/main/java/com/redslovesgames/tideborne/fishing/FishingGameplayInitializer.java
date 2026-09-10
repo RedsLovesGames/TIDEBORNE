@@ -14,12 +14,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.redslovesgames.tideborne.command.FishingInspectCommand;
 import com.redslovesgames.tideborne.command.FishingRecoveryCommand;
 import com.redslovesgames.tideborne.command.FishingReproduceCommand;
+import com.redslovesgames.tideborne.config.TideborneConfigNetworking;
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import com.redslovesgames.tideborne.ecosystem.SharkScentManager;
 import com.redslovesgames.tideborne.network.SharkCatchLossPayload;
-import com.redslovesgames.tideborne.network.TideboundSettingsPayload;
-import com.redslovesgames.tideborne.network.TideboundSettingsResultPayload;
-import com.redslovesgames.tideborne.network.TideboundSettingsUpdatePayload;
 import com.redslovesgames.tideborne.registry.TideboundEntities;
 import com.redslovesgames.tideborne.registry.TideboundItems;
 import java.lang.reflect.InvocationTargetException;
@@ -27,9 +25,6 @@ import java.util.OptionalDouble;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.Join;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.command.CommandManager;
@@ -62,28 +57,12 @@ public final class FishingGameplayInitializer {
 
       mythsEnabledAtStartup = isMythsLoaded() && TideboundConfig.get().enableMythsCompat;
       apexEnabledAtStartup = isApexLoaded() && TideboundConfig.get().enableApexCompat;
-      PayloadTypeRegistry.playS2C().register(TideboundSettingsPayload.TYPE, TideboundSettingsPayload.CODEC);
-      PayloadTypeRegistry.playC2S().register(TideboundSettingsUpdatePayload.TYPE, TideboundSettingsUpdatePayload.CODEC);
-      PayloadTypeRegistry.playS2C().register(TideboundSettingsResultPayload.TYPE, TideboundSettingsResultPayload.CODEC);
+      TideborneConfigNetworking.initializeServer();
       PayloadTypeRegistry.playS2C().register(SharkCatchLossPayload.TYPE, SharkCatchLossPayload.CODEC);
-      ServerPlayNetworking.registerGlobalReceiver(TideboundSettingsUpdatePayload.TYPE, (payload, context) -> {
-         if (!context.player().hasPermissionLevel(2)) {
-            LOGGER.warn("Rejected Tidebound config update from non-operator {}", context.player().getGameProfile().getName());
-            sendSettingsResult(context.player(), false, "Only server operators can save gameplay settings.");
-         } else {
-            TideboundConfig.Result result = TideboundConfig.applyBalanceJson(payload.json());
-            if (result.success()) {
-               context.server().getPlayerManager().getPlayerList().forEach(FishingGameplayInitializer::syncSettings);
-            }
-
-            sendSettingsResult(context.player(), result.success(), result.message());
-         }
-      });
       TideboundItems.register();
       TideboundEntities.register();
       ServerTickEvents.END_WORLD_TICK.register(SharkScentManager::tick);
       CommandRegistrationCallback.EVENT.register((CommandRegistrationCallback)(dispatcher, registryAccess, environment) -> registerCommands(dispatcher));
-      ServerPlayConnectionEvents.JOIN.register((Join)(handler, sender, server) -> syncSettings(handler.player));
       if (mythsEnabledAtStartup) {
          LOGGER.info("Enabled Myths of the Sea integration");
       }
@@ -134,16 +113,9 @@ public final class FishingGameplayInitializer {
       return apexEnabledAtStartup;
    }
 
+   /** Historical compatibility delegate for callers that still request a settings sync here. */
    public static void syncSettings(ServerPlayerEntity player) {
-      if (ServerPlayNetworking.canSend(player, TideboundSettingsPayload.TYPE)) {
-         ServerPlayNetworking.send(player, TideboundSettingsPayload.fromServer());
-      }
-   }
-
-   private static void sendSettingsResult(ServerPlayerEntity player, boolean success, String message) {
-      if (ServerPlayNetworking.canSend(player, TideboundSettingsResultPayload.TYPE)) {
-         ServerPlayNetworking.send(player, new TideboundSettingsResultPayload(success, message));
-      }
+      TideborneConfigNetworking.syncSettings(player);
    }
 
    static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
@@ -167,7 +139,7 @@ public final class FishingGameplayInitializer {
                      context.getSource().sendError(Text.literal(result.message()));
                      return 0;
                   }
-                  context.getSource().getServer().getPlayerManager().getPlayerList().forEach(FishingGameplayInitializer::syncSettings);
+                  context.getSource().getServer().getPlayerManager().getPlayerList().forEach(TideborneConfigNetworking::syncSettings);
                   context.getSource().sendFeedback(() -> Text.translatable("command.tidebound_compatibility.reload"), true);
                   return 1;
                })
@@ -216,18 +188,16 @@ public final class FishingGameplayInitializer {
                                           OptionalDouble.empty()
                                        ))
                                        .then(
-                                          CommandManager.argument(
-                                             "forcedPercentile",
-                                             DoubleArgumentType.doubleArg(0.0, 99.999999999)
-                                          ).executes(context -> FishingReproduceCommand.run(
-                                             context.getSource(),
-                                             StringArgumentType.getString(context, "species"),
-                                             LongArgumentType.getLong(context, "seed"),
-                                             DoubleArgumentType.getDouble(context, "fishingLuck"),
-                                             DoubleArgumentType.getDouble(context, "traitLuck"),
-                                             BoolArgumentType.getBool(context, "perfectCatch"),
-                                             OptionalDouble.of(DoubleArgumentType.getDouble(context, "forcedPercentile"))
-                                          ))
+                                          CommandManager.argument("forcedPercentile", DoubleArgumentType.doubleArg(0.0, 99.999999999))
+                                             .executes(context -> FishingReproduceCommand.run(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "species"),
+                                                LongArgumentType.getLong(context, "seed"),
+                                                DoubleArgumentType.getDouble(context, "fishingLuck"),
+                                                DoubleArgumentType.getDouble(context, "traitLuck"),
+                                                BoolArgumentType.getBool(context, "perfectCatch"),
+                                                OptionalDouble.of(DoubleArgumentType.getDouble(context, "forcedPercentile"))
+                                             ))
                                        )
                                  )
                            )
@@ -239,7 +209,8 @@ public final class FishingGameplayInitializer {
    private static int status(ServerCommandSource source) {
       source.sendFeedback(
          () -> Text.translatable(
-            "command.tidebound_compatibility.status", new Object[]{isMythsIntegrationActive(), isApexIntegrationActive(), SharkScentManager.activeZoneCount()}
+            "command.tidebound_compatibility.status",
+            new Object[]{isMythsIntegrationActive(), isApexIntegrationActive(), SharkScentManager.activeZoneCount()}
          ),
          false
       );
