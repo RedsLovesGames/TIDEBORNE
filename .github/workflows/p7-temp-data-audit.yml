@@ -7,21 +7,29 @@ on:
 
 jobs:
   audit:
-    if: "${{ github.event.head_commit.message == 'chore: stage P7.2 data audit' }}"
+    if: "${{ github.event.head_commit.message == 'chore: inspect Tide P7.2 data loading' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Audit P7.2 data callers
+      - name: Fetch exact Tide dependency
+        shell: bash
+        run: bash scripts/fetch_ci_dependencies.sh
+      - name: Inspect Tide 2.1.1 datapack loading
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== rod_accessories literals ==='
-          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' 'rod_accessories' src/main/java src/test/java src/main/resources || true
-          echo '=== leviathan bait data literals ==='
-          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' -E 'bait/|leviathan_bait' src/main/java src/test/java src/main/resources || true
-          echo '=== resource reload/listener candidates ==='
-          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' -E 'ResourceManager|ResourceReloader|ResourceReload|ResourceManagerHelper|findResources|findAllResources|getAllResources' src/main/java || true
-          echo '=== historical namespace literals in Java ==='
-          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' 'tidebound_compatibility' src/main/java | head -n 250 || true
+          jar=dev/libs/tide-fabric-1.21.1-2.1.1.jar
+          echo '=== Tide classes containing rod_accessories/bait literals ==='
+          zipinfo -1 "$jar" '*.class' | while read -r cls; do
+            hits="$(unzip -p "$jar" "$cls" | strings | grep -E 'rod_accessories|(^|/)bait($|/)|bait_items' || true)"
+            if [ -n "$hits" ]; then
+              echo "CLASS $cls"
+              printf '%s\n' "$hits"
+            fi
+          done
+          echo '=== Tide bundled rod-accessory/bait resources ==='
+          zipinfo -1 "$jar" | grep -E '(^|/)rod_accessories/|(^|/)bait/' || true
+          echo '=== Candidate reload/data classes ==='
+          zipinfo -1 "$jar" '*.class' | grep -Ei 'resource|reload|accessor|accessor|bait|rod' | head -n 200 || true
