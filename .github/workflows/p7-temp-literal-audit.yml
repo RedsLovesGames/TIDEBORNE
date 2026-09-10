@@ -1,0 +1,31 @@
+name: P7 Temporary Literal Audit
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: List historical Java literals
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          namespaces = ("tide_traits", "tide_team_journal", "tidebound_compatibility")
+          roots = [Path("src/main/java"), Path("src/test/java")]
+          for root in roots:
+              if not root.exists():
+                  continue
+              for path in sorted(root.rglob("*.java")):
+                  try:
+                      lines = path.read_text(encoding="utf-8").splitlines()
+                  except UnicodeDecodeError:
+                      continue
+                  for number, line in enumerate(lines, 1):
+                      if any(namespace in line for namespace in namespaces):
+                          print(f"{path}:{number}:{line.strip()}")
+          PY
