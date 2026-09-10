@@ -1,9 +1,8 @@
 package com.redslovesgames.tideborne.presentation.client;
 
 import com.li64.tide.client.TideItemModelProperties;
+import com.redslovesgames.tideborne.client.TideborneConfigNetworkingClient;
 import com.redslovesgames.tideborne.network.SharkCatchLossPayload;
-import com.redslovesgames.tideborne.network.TideboundSettingsPayload;
-import com.redslovesgames.tideborne.network.TideboundSettingsResultPayload;
 import com.redslovesgames.tideborne.registry.TideboundEntities;
 import com.redslovesgames.tideborne.registry.TideboundItems;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -34,18 +33,12 @@ public final class TideboundCompatibilityClient {
       }
       initialized = true;
       TideboundClientConfig.load();
+      TideborneConfigNetworkingClient.initialize();
       EntityRendererRegistry.register(TideboundEntities.CHUM_PROJECTILE, FlyingItemEntityRenderer::new);
       ModelPredicateProviderRegistry.register(
          TideboundItems.KUJIRA_BONE_FISHING_ROD, TideItemModelProperties.CAST_PROPERTY, TideItemModelProperties.CAST_FUNCTION
       );
       registerLeaderColors();
-      ClientPlayNetworking.registerGlobalReceiver(TideboundSettingsPayload.TYPE, (payload, context) -> ClientTideboundSettings.update(payload.tag()));
-      ClientPlayNetworking.registerGlobalReceiver(
-         TideboundSettingsResultPayload.TYPE,
-         (payload, context) -> context.client().player.sendMessage(
-            Text.literal(payload.message()).styled(style -> style.withColor(payload.success() ? 5635925 : 16733525)), true
-         )
-      );
       ClientPlayNetworking.registerGlobalReceiver(
          SharkCatchLossPayload.TYPE,
          (payload, context) -> SystemToast.show(
