@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task": "P7 Resource Ownership",
+  "branch": "agent/p7-resources",
+  "baseline_sha": "b2ea30d927c4bae15f2e9ccbdc48b61331ead9f4",
+  "optimization_seed_sha": "053f14f17404d9ae41aeefa095116a6690d19bc2",
+  "status": "READY",
+  "phase": "P7.0",
+  "checkpoint_sequence": 0,
+  "last_product_checkpoint_sha": null,
+  "last_checkpoint_utc": null,
+  "completed_phases": [],
+  "next_action": "Verify the precomputed resource inventory, classify historical namespace occurrences as current ownership versus compatibility identity, and checkpoint P7.0 before moving resources.",
+  "blockers": [],
+  "validation": {
+    "repository_structure": "not_run",
+    "java21_clean_build": "not_run",
+    "unit_architecture_tests": "not_run",
+    "resource_paths_translations": "not_run",
+    "mixin_refmap_metadata": "not_run",
+    "optional_compatibility_safety": "not_run",
+    "release_artifact": "not_run"
+  },
+  "phase_plan": [
+    "P7.0 inventory_and_classification",
+    "P7.1 client_assets_and_translations",
+    "P7.2_data_resources",
+    "P7.3_java_resource_references",
+    "P7.4_mixin_refmap_metadata",
+    "P7.5_compatibility_alias_audit",
+    "P7.6_full_validation_and_closure"
+  ],
+  "notes": [
+    "This state file is the continuation source of truth for worker chats.",
+    "last_product_checkpoint_sha records the committed product/code/resource state immediately before the state-only checkpoint commit.",
+    "GameTests and Minecraft boot tests are not part of the current required validation gate."
+  ]
+}

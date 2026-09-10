@@ -1,0 +1,37 @@
+name: P7 AI Checkpoint Report
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p7-agent-report-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate compact P7 continuation report
+        run: python3 scripts/p7_agent.py report | tee p7-agent-report.md
+
+      - name: Publish report to job summary
+        if: always()
+        run: cat p7-agent-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload continuation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-agent-report-${{ github.run_id }}
+          path: p7-agent-report.md
+          if-no-files-found: error
+          retention-days: 7
