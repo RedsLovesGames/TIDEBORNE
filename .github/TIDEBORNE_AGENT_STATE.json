@@ -5,21 +5,22 @@
   "baseline_sha": "b2ea30d927c4bae15f2e9ccbdc48b61331ead9f4",
   "optimization_seed_sha": "053f14f17404d9ae41aeefa095116a6690d19bc2",
   "status": "IN_PROGRESS",
-  "phase": "P7.2",
-  "checkpoint_sequence": 3,
-  "last_product_checkpoint_sha": "630268a27928d75a0850a778bcc4bfd90dc900a5",
-  "last_checkpoint_utc": "2026-09-10T23:08:00+00:00",
+  "phase": "P7.3",
+  "checkpoint_sequence": 4,
+  "last_product_checkpoint_sha": "0d13f196ca489606b49fa427cbdbf038e4b735c3",
+  "last_checkpoint_utc": "2026-09-10T23:20:00+00:00",
   "completed_phases": [
     "P7.0",
-    "P7.1"
+    "P7.1",
+    "P7.2"
   ],
-  "next_action": "Audit and migrate current Tideborne-owned data resources into data/tideborne while preserving historical recipe/tag identities, upstream Tide extensions, optional Myths integration, and any historical datapack lookup paths that require dual-namespace compatibility.",
+  "next_action": "Audit and canonicalize remaining Java resource identifiers and references where they represent current Tideborne ownership, while preserving registry IDs, payload and network IDs, NBT and component keys, save identities, externally visible reload IDs, and optional integration identities.",
   "blockers": [],
   "validation": {
     "repository_structure": "pass_connector_inventory",
     "java21_clean_build": "not_run",
-    "unit_architecture_tests": "p7_1_focused_leader_texture_parity_pass_java21_exact_dependencies",
-    "resource_paths_translations": "pass_p7_1_static_asset_translation_and_alias_validation",
+    "unit_architecture_tests": "p7_1_and_p7_2_focused_tests_pass_java21_exact_dependencies",
+    "resource_paths_translations": "pass_p7_2_flat_data_ownership_and_compatibility_validation",
     "mixin_refmap_metadata": "not_run",
     "optional_compatibility_safety": "not_run",
     "release_artifact": "not_run"
@@ -38,11 +39,13 @@
     "last_product_checkpoint_sha records the committed product/code/resource state immediately before the state-only checkpoint commit.",
     "GameTests and Minecraft boot tests are not part of the current required validation gate.",
     "P7.0 classification is recorded in .github/TIDEBORNE_P7_RESOURCE_CLASSIFICATION.md; the dependency gate was verified on the target branch through canonical config, specimen, gear, Tide-adapter, and ecosystem ownership paths.",
-    "A shell checkout was unavailable in this worker environment, so scripts/p7_agent.py and Gradle validation were not run locally. GitHub Actions was used for P7.1 focused Java 21 validation with the repository's exact pinned CI dependencies.",
+    "A shell checkout was unavailable in this worker environment, so scripts/p7_agent.py and Gradle validation were not run locally. GitHub Actions was used for focused Java 21 validation with the repository's exact pinned CI dependencies.",
     "P7.1 product commit 8114aa233fb265a5412075b4f4482305d92578ee copied TideTraits and TideboundCompatibility presentation textures byte-identically into assets/tideborne, merged item textures, repointed retained historical item-model aliases to tideborne textures, and added Tideborne-owned UI translation keys.",
     "P7.1 product commit 630268a27928d75a0850a778bcc4bfd90dc900a5 switched audited presentation translation and static texture callers to Tideborne ownership, removed historical TideTraits and TideboundCompatibility texture trees, removed the pure-presentation TideTeamJournal lang file, and trimmed historical lang files to item/tag compatibility aliases only.",
-    "The first focused Gradle attempt intentionally did not commit because exact optional dependencies had not been fetched; it failed on missing Apex Waters classes and Tide fallback API differences unrelated to P7.1. The rerun used scripts/fetch_ci_dependencies.sh, passed the P7.1 static resource validation and LeaderTextureParityTest under Java 21, then committed the migration.",
-    "Historical item registry IDs, item model paths, item/tag translation aliases, network IDs, NBT keys, component IDs, reload IDs, dynamic texture IDs, recipes, tags, and optional integration identities were not renamed by P7.1.",
-    "Temporary P7.1 audit/apply workflows were removed by the successful product commit; only the normal build workflow and P7 checkpoint workflow remain."
+    "P7.2 product commit 0d13f196ca489606b49fa427cbdbf038e4b735c3 moved the bundled Leviathan bait record and eight Tide rod-accessory records into data/tideborne using their exact existing Git blobs, then removed only the bundled historical copies so Tide does not load duplicate flat-data entries.",
+    "Exact Tide 2.1.1 inspection established that TideData registers FlatDataLoader instances for bait and rod_accessories. FlatDataLoader scans the directory across resource namespaces, parses each JSON into a flat list, and does not retain the outer resource identifier as gameplay identity. External datapacks using the historical tidebound_compatibility namespace therefore remain loadable without a Tideborne dual loader.",
+    "P7.2 preserved the embedded tidebound_compatibility item registry IDs inside all moved flat-data JSON. Historical recipe IDs and public tags under tidebound_compatibility and tide_traits, upstream data/tide tags, optional data/myths_of_the_sea tags, data/c, data/minecraft, and the test-only TideTraits mutation function were not moved or renamed.",
+    "P7.2 static resource validation passed. DataResourceOwnershipTest and FishingGearRegistryTest passed under Java 21 with scripts/fetch_ci_dependencies.sh providing the exact Tide 2.1.1 and optional compile dependencies. The focused Gradle run ended BUILD SUCCESSFUL.",
+    "Temporary P7.2 audit and validation workflows were removed after use. The successful cleanup commit was 4a4602ca9baecf59e71f456ee35c6fb9c454c352, leaving only the normal build workflow and P7 checkpoint workflow."
   ]
 }
