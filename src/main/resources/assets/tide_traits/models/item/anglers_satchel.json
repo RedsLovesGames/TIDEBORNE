@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "tide_traits:item/anglers_satchel"
+    "layer0": "tideborne:item/anglers_satchel"
   },
   "overrides": [
     {

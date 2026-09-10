@@ -1,1 +1,1 @@
-{"parent":"minecraft:item/generated","textures":{"layer0":"tidebound_compatibility:item/copper_leader"}}
+{"parent":"minecraft:item/generated","textures":{"layer0":"tideborne:item/copper_leader"}}

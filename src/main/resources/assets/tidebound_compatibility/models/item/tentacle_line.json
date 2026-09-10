@@ -1,1 +1,1 @@
-{"parent":"minecraft:item/generated","textures":{"layer0":"tidebound_compatibility:item/tentacle_line"}}
+{"parent":"minecraft:item/generated","textures":{"layer0":"tideborne:item/tentacle_line"}}

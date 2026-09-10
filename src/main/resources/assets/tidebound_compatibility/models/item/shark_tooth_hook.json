@@ -1,1 +1,1 @@
-{"parent":"minecraft:item/generated","textures":{"layer0":"tidebound_compatibility:item/shark_tooth_hook"}}
+{"parent":"minecraft:item/generated","textures":{"layer0":"tideborne:item/shark_tooth_hook"}}
