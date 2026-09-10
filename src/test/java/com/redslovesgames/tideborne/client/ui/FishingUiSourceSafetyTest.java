@@ -68,7 +68,7 @@ class FishingUiSourceSafetyTest {
         assertTrue(stats.contains("\"Best Specimen\""));
         assertTrue(stats.contains("\"PC \""));
 
-        String mixins = Files.readString(Path.of("src/main/resources/tide_traits.client.mixins.json"));
+        String mixins = Files.readString(Path.of("src/main/resources/tideborne.client.mixins.json"));
         assertFalse(mixins.contains("TeamStatsPercentileMixin"));
 
         String journal = Files.readString(Path.of(AFFECTED_UI.get(6)));

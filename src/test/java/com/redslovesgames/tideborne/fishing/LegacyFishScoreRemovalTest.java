@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class LegacyFishScoreRemovalTest {
     @Test
     void reconstructedLegacyCalculatorStaysDisabledWithoutSelfMixin() throws IOException {
-        String mixins = resource("/tide_traits.mixins.json");
+        String mixins = resource("/tideborne.mixins.json");
         assertFalse(mixins.contains("LegacyFishScoreCalculatorMixin"));
         assertEquals(-1.0, TraitAxesRuntime.score(null, 5, 99.0, 50.0, 40.0));
         assertEquals(-1.0, TraitAxesRuntime.scoreFromParts(99.0, 5, "scarred", "giant", 50.0, 40.0));
@@ -22,7 +22,7 @@ class LegacyFishScoreRemovalTest {
 
     @Test
     void teamJournalCanonicalScorePayloadMixinsAreRegistered() throws IOException {
-        String mixins = resource("/tide_team_journal.mixins.json");
+        String mixins = resource("/tideborne.mixins.json");
         assertTrue(mixins.contains("TeamProgressCanonicalJournalMixin"));
         assertTrue(mixins.contains("ContributorCanonicalScorePayloadMixin"));
         assertTrue(mixins.contains("RecordEventCanonicalScorePayloadMixin"));

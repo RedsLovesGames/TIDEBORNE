@@ -55,8 +55,117 @@ import sys
 import zipfile
 
 artifact = sys.argv[1]
+expected = {
+    'tideborne.mixins.json',
+    'tideborne.client.mixins.json',
+    'tideborne.apex.mixins.json',
+    'tideborne-refmap.json',
+    'tideborne.apex.refmap.json',
+}
+retired = {
+    'tide_traits.mixins.json',
+    'tide_traits.client.mixins.json',
+    'tide_team_journal.mixins.json',
+    'tidebound_compatibility.mixins.json',
+    'tidebound_compatibility.apex.mixins.json',
+    'tide_team_journal.refmap.json',
+    'tidebound_compatibility.refmap.json',
+    'tideborne.refmap.json',
+}
 with zipfile.ZipFile(artifact) as jar:
-    refmap = json.loads(jar.read('tidebound_compatibility.refmap.json'))
+    names = set(jar.namelist())
+    missing = sorted(expected - names)
+    if missing:
+        raise SystemExit(f'Missing canonical mixin metadata: {missing}')
+    leaked = sorted(retired & names)
+    if leaked:
+        raise SystemExit(f'Retired/overlapping mixin metadata leaked into artifact: {leaked}')
+    fabric = json.loads(jar.read('fabric.mod.json'))
+    common = json.loads(jar.read('tideborne.mixins.json'))
+    client = json.loads(jar.read('tideborne.client.mixins.json'))
+    apex = json.loads(jar.read('tideborne.apex.mixins.json'))
+    generated = json.loads(jar.read('tideborne-refmap.json'))
+    apex_refmap = json.loads(jar.read('tideborne.apex.refmap.json'))
+
+expected_mixins = [
+    'tideborne.mixins.json',
+    {'config': 'tideborne.client.mixins.json', 'environment': 'client'},
+    'tideborne.apex.mixins.json',
+]
+if fabric.get('mixins') != expected_mixins:
+    raise SystemExit(f'Unexpected Fabric mixin config list: {fabric.get("mixins")!r}')
+if not {'tide_traits', 'tide_team_journal', 'tidebound_compatibility'}.issubset(set(fabric.get('provides', []))):
+    raise SystemExit('Historical compatibility provides were not preserved')
+
+if common.get('package') != 'com.redslovesgames.tideborne.mixin':
+    raise SystemExit(f'Unexpected common mixin package: {common.get("package")!r}')
+if common.get('required') is not True or common.get('injectors', {}).get('defaultRequire') != 1:
+    raise SystemExit('Common mixin strict failure semantics changed')
+if common.get('refmap') != 'tideborne-refmap.json':
+    raise SystemExit(f'Loom did not wire common config to generated refmap: {common.get("refmap")!r}')
+for required in ('specimen.AnglersSatchelRecipeMixin', 'journal.TeamProgressCanonicalJournalMixin', 'tide.AnglingTableLeaderMixin'):
+    if required not in common.get('mixins', []):
+        raise SystemExit(f'Missing common mixin registration: {required}')
+for required in ('journal.client.FishingJournalMixin', 'tide.AnglingTableScreenLeaderMixin'):
+    if required not in common.get('client', []):
+        raise SystemExit(f'Missing strict client mixin registration: {required}')
+
+if client.get('package') != 'com.redslovesgames.tideborne.mixin':
+    raise SystemExit(f'Unexpected client mixin package: {client.get("package")!r}')
+if client.get('required') is not False or client.get('injectors', {}).get('defaultRequire') != 0:
+    raise SystemExit('Specimen client tolerant failure semantics changed')
+if client.get('refmap') != 'tideborne-refmap.json':
+    raise SystemExit(f'Loom did not wire client config to generated refmap: {client.get("refmap")!r}')
+if 'specimen.client.MinecraftMutationRenderingMixin' not in client.get('client', []):
+    raise SystemExit('Canonical specimen client registration missing')
+
+if apex.get('package') != 'com.redslovesgames.tideborne.mixin.compat.apex':
+    raise SystemExit(f'Unexpected Apex mixin package: {apex.get("package")!r}')
+if apex.get('required') is not False or apex.get('injectors', {}).get('defaultRequire') != 1:
+    raise SystemExit('Optional Apex failure semantics changed')
+if apex.get('plugin') != 'com.redslovesgames.tideborne.mixin.tide.OptionalCompatMixinPlugin':
+    raise SystemExit('Optional Apex plugin boundary changed')
+if apex.get('refmap') != 'tideborne.apex.refmap.json':
+    raise SystemExit(f'Unexpected Apex refmap: {apex.get("refmap")!r}')
+
+for section_name, section in (
+    ('mappings', generated.get('mappings', {})),
+    ('named:intermediary', generated.get('data', {}).get('named:intermediary', {})),
+):
+    if len(section) < 20:
+        raise SystemExit(f'Generated Tideborne refmap unexpectedly sparse in {section_name}: {len(section)} entries')
+    if any('tideteamjournal' in key or 'tideboundcompatibility' in key for key in section):
+        raise SystemExit(f'Stale pre-unification class key in generated {section_name}')
+    for key in (
+        'com/redslovesgames/tideborne/mixin/journal/TideFishingHookMixin',
+        'com/redslovesgames/tideborne/mixin/specimen/TideFishingHookMixin',
+        'com/redslovesgames/tideborne/mixin/specimen/client/MinecraftMutationRenderingMixin',
+        'com/redslovesgames/tideborne/mixin/tide/AnglingTableLeaderMixin',
+        'com/redslovesgames/tideborne/mixin/tide/AnglingTableScreenLeaderMixin',
+    ):
+        if key not in section:
+            raise SystemExit(f'Missing generated refmap entry {key} in {section_name}')
+
+apex_key = 'com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin'
+expected_apex_target = 'Lcom/acorsicanfrog/apexwaters/entity/GreatWhiteSharkEntity;method_5959()V'
+for section_name, section in (
+    ('mappings', apex_refmap.get('mappings', {})),
+    ('named:intermediary', apex_refmap.get('data', {}).get('named:intermediary', {})),
+):
+    if set(section) != {apex_key}:
+        raise SystemExit(f'Apex refmap must be integration-only in {section_name}: {sorted(section)}')
+    if section[apex_key].get('registerGoals') != expected_apex_target:
+        raise SystemExit(f'Bad Apex registerGoals mapping in {section_name}')
+PY
+
+python3 - "$artifact" <<'PY'
+import json
+import sys
+import zipfile
+
+artifact = sys.argv[1]
+with zipfile.ZipFile(artifact) as jar:
+    refmap = json.loads(jar.read('tideborne-refmap.json'))
 
 expected = {
     'AnglingTableLeaderMixin': {

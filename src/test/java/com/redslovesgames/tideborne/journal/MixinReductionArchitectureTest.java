@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class MixinReductionArchitectureTest {
    @Test
    void journalSyncNoLongerInterceptsTidePlayerDataPacket() throws IOException {
-      try (InputStream stream = getClass().getResourceAsStream("/tide_team_journal.mixins.json")) {
+      try (InputStream stream = getClass().getResourceAsStream("/tideborne.mixins.json")) {
          assertNotNull(stream);
          String config = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
          assertFalse(config.contains("SyncPlayerDataMsgMixin"));

@@ -1,0 +1,18 @@
+{
+  "required": false,
+  "package": "com.redslovesgames.tideborne.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "specimen.client.FishDisplayBlockEntityMixin",
+    "specimen.client.ItemRendererMutationTintMixin",
+    "specimen.client.ItemStackMutationTooltipMixin",
+    "specimen.client.LivingEntityRendererMixin",
+    "specimen.client.MinecraftMutationRenderingMixin",
+    "specimen.client.TideFishRendererMixin",
+    "specimen.client.TideFishProfileMixin",
+    "specimen.client.FishProfileSizeRangeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

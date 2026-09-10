@@ -47,14 +47,12 @@
     ]
   },
   "mixins": [
-    "tide_traits.mixins.json",
+    "tideborne.mixins.json",
     {
-      "config": "tide_traits.client.mixins.json",
+      "config": "tideborne.client.mixins.json",
       "environment": "client"
     },
-    "tide_team_journal.mixins.json",
-    "tidebound_compatibility.mixins.json",
-    "tidebound_compatibility.apex.mixins.json"
+    "tideborne.apex.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.18.4",

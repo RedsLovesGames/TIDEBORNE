@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 class LegacyCleanupArchitectureTest {
-    private static final Path TRAITS_MIXIN_CONFIG = Path.of("src/main/resources/tide_traits.mixins.json");
+    private static final Path TRAITS_MIXIN_CONFIG = Path.of("src/main/resources/tideborne.mixins.json");
     private static final Path LEGACY_SCORE_MIXIN = Path.of(
             "src/main/java/com/redslovesgames/tideborne/mixin/specimen/LegacyFishScoreCalculatorMixin.java");
     private static final Path INACTIVE_SATCHEL_MIXIN = Path.of(

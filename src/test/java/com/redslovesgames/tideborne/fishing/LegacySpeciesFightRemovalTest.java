@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 class LegacySpeciesFightRemovalTest {
     @Test
     void legacyFishWeightMixinIsNotRegisteredButCanonicalSelectorIs() throws IOException {
-        String mixins = resource("/tidebound_compatibility.mixins.json");
+        String mixins = resource("/tideborne.mixins.json");
 
         assertFalse(mixins.contains("FishDataMixin"));
         assertTrue(mixins.contains("FishSelectorMixin"));
@@ -21,7 +21,7 @@ class LegacySpeciesFightRemovalTest {
 
     @Test
     void legacyLineConstantRewriteIsNotRegistered() throws IOException {
-        String mixins = resource("/tide_traits.mixins.json");
+        String mixins = resource("/tideborne.mixins.json");
 
         assertFalse(mixins.contains("FishCatchMinigameLineModifierMixin"));
     }

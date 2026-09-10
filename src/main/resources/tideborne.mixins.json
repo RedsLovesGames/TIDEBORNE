@@ -1,0 +1,40 @@
+{
+  "required": true,
+  "package": "com.redslovesgames.tideborne.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "specimen.AnglersSatchelRecipeMixin",
+    "specimen.ApplyFishEntityLengthFunctionMixin",
+    "specimen.BucketableMixin",
+    "specimen.FishDisplayPersistenceMixin",
+    "specimen.MobBucketItemMixin",
+    "specimen.MobSpecimenMixin",
+    "specimen.TideFishingHookMixin",
+    "specimen.TideItemBucketMixin",
+    "specimen.TidePlayerDataMixin",
+    "journal.TidePlayerDataMixin",
+    "journal.TideUtilsMixin",
+    "journal.TideFishingHookMixin",
+    "journal.TeamProgressCanonicalJournalMixin",
+    "journal.TopFishCanonicalIndexMixin",
+    "journal.ContributorCanonicalScorePayloadMixin",
+    "journal.RecordEventCanonicalScorePayloadMixin",
+    "journal.RecordHolderCanonicalJournalMixin",
+    "journal.RecordHolderNetworkProjectionMixin",
+    "tide.AnglingTableLeaderMixin",
+    "tide.CrateDataMixin",
+    "tide.FishCatchMinigameMixin",
+    "tide.FishSelectorMixin",
+    "tide.TideFishingHookMixin"
+  ],
+  "client": [
+    "journal.client.FishProfileMixin",
+    "journal.client.FishingJournalMixin",
+    "journal.client.GuiGraphicsMixin",
+    "journal.client.ScreenAccessor",
+    "tide.AnglingTableScreenLeaderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

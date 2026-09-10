@@ -1,0 +1,14 @@
+{
+  "mappings": {
+    "com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin": {
+      "registerGoals": "Lcom/acorsicanfrog/apexwaters/entity/GreatWhiteSharkEntity;method_5959()V"
+    }
+  },
+  "data": {
+    "named:intermediary": {
+      "com/redslovesgames/tideborne/mixin/compat/apex/GreatWhiteSharkMixin": {
+        "registerGoals": "Lcom/acorsicanfrog/apexwaters/entity/GreatWhiteSharkEntity;method_5959()V"
+      }
+    }
+  }
+}

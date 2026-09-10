@@ -2,7 +2,7 @@
   "required": false,
   "package": "com.redslovesgames.tideborne.mixin.compat.apex",
   "plugin": "com.redslovesgames.tideborne.mixin.tide.OptionalCompatMixinPlugin",
-  "refmap": "tidebound_compatibility.refmap.json",
+  "refmap": "tideborne.apex.refmap.json",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "GreatWhiteSharkMixin"
