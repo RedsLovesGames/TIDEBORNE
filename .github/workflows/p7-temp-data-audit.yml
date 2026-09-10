@@ -1,0 +1,27 @@
+name: P7 Temporary Data Audit
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+jobs:
+  audit:
+    if: "${{ github.event.head_commit.message == 'chore: stage P7.2 data audit' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Audit P7.2 data callers
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== rod_accessories literals ==='
+          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' 'rod_accessories' src/main/java src/test/java src/main/resources || true
+          echo '=== leviathan bait data literals ==='
+          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' -E 'bait/|leviathan_bait' src/main/java src/test/java src/main/resources || true
+          echo '=== resource reload/listener candidates ==='
+          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' -E 'ResourceManager|ResourceReloader|ResourceReload|ResourceManagerHelper|findResources|findAllResources|getAllResources' src/main/java || true
+          echo '=== historical namespace literals in Java ==='
+          grep -RIn --exclude-dir=.git --exclude='p7-temp-data-audit.yml' 'tidebound_compatibility' src/main/java | head -n 250 || true
