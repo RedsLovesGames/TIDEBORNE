@@ -40,7 +40,7 @@ abstract class FishingJournalMixin {
             bookTop + TEAM_RECORDS_BUTTON_Y,
             88,
             TEAM_RECORDS_BUTTON_HEIGHT,
-            Text.translatable("screen.tide_team_journal.open"),
+            Text.translatable("screen.tideborne.team_journal.open"),
             button -> TeamRecordsScreen.open(screen)
          );
          ((ScreenAccessor)this).tideTeamJournal$addWidget(this.tideTeamJournal$teamRecordsButton);

@@ -127,7 +127,7 @@ public abstract class ItemRendererMutationTintMixin {
       } else {
          return null;
       }
-      return Identifier.of("tide_traits", "textures/entity/traits/masks/" + file);
+      return Identifier.of("tideborne", "textures/entity/traits/masks/" + file);
    }
 
    private static int[] maskColor(FishMutation mutation) {

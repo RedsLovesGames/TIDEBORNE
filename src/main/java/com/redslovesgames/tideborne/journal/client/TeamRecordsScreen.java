@@ -56,7 +56,7 @@ public final class TeamRecordsScreen extends Screen {
    private List<Text> hoverTooltip = List.of();
 
    public TeamRecordsScreen(Screen parent) {
-      super(Text.translatable("screen.tide_team_journal.title"));
+      super(Text.translatable("screen.tideborne.team_journal.title"));
       this.parent = parent;
       this.tab = TeamRecordsScreen.Tab.from(ClientConfig.get().defaultTab);
       this.metric = ClientConfig.get().defaultMetric;
@@ -75,7 +75,7 @@ public final class TeamRecordsScreen extends Screen {
             left + 24,
             top + 46,
             82,
-            Text.translatable("screen.tide_team_journal.summary"),
+            Text.translatable("screen.tideborne.team_journal.summary"),
             button -> this.switchTab(TeamRecordsScreen.Tab.SUMMARY),
             () -> this.tab == TeamRecordsScreen.Tab.SUMMARY
          )
@@ -85,7 +85,7 @@ public final class TeamRecordsScreen extends Screen {
             left + 114,
             top + 46,
             82,
-            Text.translatable("screen.tide_team_journal.leaderboard"),
+            Text.translatable("screen.tideborne.team_journal.leaderboard"),
             button -> this.switchTab(TeamRecordsScreen.Tab.LEADERBOARD),
             () -> this.tab == TeamRecordsScreen.Tab.LEADERBOARD
          )
@@ -95,14 +95,14 @@ public final class TeamRecordsScreen extends Screen {
             left + 204,
             top + 46,
             82,
-            Text.translatable("screen.tide_team_journal.history"),
+            Text.translatable("screen.tideborne.team_journal.history"),
             button -> this.switchTab(TeamRecordsScreen.Tab.HISTORY),
             () -> this.tab == TeamRecordsScreen.Tab.HISTORY
          )
       );
       if (this.tab == TeamRecordsScreen.Tab.LEADERBOARD) {
          this.addDrawableChild(
-            this.journalButton(left + 50, top + 72, 126, Text.translatable("metric.tide_team_journal." + this.metric), button -> this.cycleMetric())
+            this.journalButton(left + 50, top + 72, 126, Text.translatable("metric.tideborne.team_journal." + this.metric), button -> this.cycleMetric())
          );
          this.previousPageButton = this.addDrawableChild(
             this.journalButton(left + 184, top + 72, 22, Text.literal("<"), button -> this.changePage(-1))
@@ -113,16 +113,16 @@ public final class TeamRecordsScreen extends Screen {
       }
 
       if (this.tab == TeamRecordsScreen.Tab.HISTORY) {
-         this.fishFilterBox = new TextFieldWidget(this.textRenderer, left + 50, top + 78, 158, 16, Text.translatable("screen.tide_team_journal.fish_filter"));
+         this.fishFilterBox = new TextFieldWidget(this.textRenderer, left + 50, top + 78, 158, 16, Text.translatable("screen.tideborne.team_journal.fish_filter"));
          this.fishFilterBox.setDrawsBackground(false);
          this.fishFilterBox.setEditableColor(5477982);
-         this.fishFilterBox.setPlaceholder(Text.translatable("screen.tide_team_journal.species_id"));
+         this.fishFilterBox.setPlaceholder(Text.translatable("screen.tideborne.team_journal.species_id"));
          this.fishFilterBox.setText(this.fishFilter);
          this.addDrawableChild(this.fishFilterBox);
          this.addDrawableChild(
-            this.journalButton(left + 216, top + 76, 80, Text.translatable("screen.tide_team_journal.apply_filter"), button -> this.applyFishFilter())
+            this.journalButton(left + 216, top + 76, 80, Text.translatable("screen.tideborne.team_journal.apply_filter"), button -> this.applyFishFilter())
          );
-         this.addDrawableChild(this.journalButton(left + 302, top + 76, 58, Text.translatable("screen.tide_team_journal.clear_filter"), button -> this.clearFishFilter()));
+         this.addDrawableChild(this.journalButton(left + 302, top + 76, 58, Text.translatable("screen.tideborne.team_journal.clear_filter"), button -> this.clearFishFilter()));
          this.previousPageButton = this.addDrawableChild(
             this.journalButton(left + 50, top + 218, 22, Text.literal("<"), button -> this.changePage(-1))
          );
@@ -131,7 +131,7 @@ public final class TeamRecordsScreen extends Screen {
          );
          this.addDrawableChild(
             this.journalButton(
-               left + 180, top + 218, 105, Text.translatable("event.tide_team_journal." + this.eventType), button -> this.cycleEventType()
+               left + 180, top + 218, 105, Text.translatable("event.tideborne.team_journal." + this.eventType), button -> this.cycleEventType()
             )
          );
       }
@@ -141,7 +141,7 @@ public final class TeamRecordsScreen extends Screen {
             left + 292,
             top + 218,
             68,
-            Text.translatable("screen.tide_team_journal.settings"),
+            Text.translatable("screen.tideborne.team_journal.settings"),
             button -> this.client.setScreen(ClientConfigScreen.create(this))
          )
       );
@@ -252,7 +252,7 @@ public final class TeamRecordsScreen extends Screen {
          graphics.fill(left + 201, top + 72, left + 202, top + 212, 14136724);
       }
       if (this.tab == TeamRecordsScreen.Tab.HISTORY) {
-         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.fish_filter"), left + 50, top + 67, PAPER_DARK);
+         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.fish_filter"), left + 50, top + 67, PAPER_DARK);
          graphics.fill(left + 48, top + 76, left + 210, top + 95, 1440860061);
          graphics.drawBorder(left + 48, top + 76, 162, 19, 14136724);
       }
@@ -285,14 +285,14 @@ public final class TeamRecordsScreen extends Screen {
       int rightPage = left + 215;
       int y = top + 79;
       if (!data.contains("tracking_started", 4)) {
-         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.loading"), leftPage, y, 6650722);
+         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.loading"), leftPage, y, 6650722);
       } else {
-         this.sectionTitle(graphics, Text.translatable("screen.tide_team_journal.progress"), leftPage, y, 140);
-         this.sectionTitle(graphics, Text.translatable("screen.tide_team_journal.recent"), rightPage, y, 145);
+         this.sectionTitle(graphics, Text.translatable("screen.tideborne.team_journal.progress"), leftPage, y, 140);
+         this.sectionTitle(graphics, Text.translatable("screen.tideborne.team_journal.recent"), rightPage, y, 145);
          String started = FishingUiFormat.timestamp(data.getLong("tracking_started"));
          this.drawWrapped(
             graphics,
-            Text.translatable("screen.tide_team_journal.completion", new Object[]{data.getInt("discovered"), data.getInt("available")}),
+            Text.translatable("screen.tideborne.team_journal.completion", new Object[]{data.getInt("discovered"), data.getInt("available")}),
             leftPage,
             y + 22,
             140,
@@ -302,7 +302,7 @@ public final class TeamRecordsScreen extends Screen {
          );
          this.drawWrapped(
             graphics,
-            Text.translatable("screen.tide_team_journal.total_catches", new Object[]{data.getLong("total_catches")}),
+            Text.translatable("screen.tideborne.team_journal.total_catches", new Object[]{data.getLong("total_catches")}),
             leftPage,
             y + 48,
             140,
@@ -312,7 +312,7 @@ public final class TeamRecordsScreen extends Screen {
          );
          this.drawWrapped(
             graphics,
-            Text.translatable("screen.tide_team_journal.contributors", new Object[]{data.getList("contributors", 10).size()}),
+            Text.translatable("screen.tideborne.team_journal.contributors", new Object[]{data.getList("contributors", 10).size()}),
             leftPage,
             y + 74,
             140,
@@ -321,7 +321,7 @@ public final class TeamRecordsScreen extends Screen {
             2
          );
          this.drawWrapped(
-            graphics, Text.translatable("screen.tide_team_journal.tracked_since", new Object[]{started}), leftPage, y + 105, 140, 6650722, 11, 3
+            graphics, Text.translatable("screen.tideborne.team_journal.tracked_since", new Object[]{started}), leftPage, y + 105, 140, 6650722, 11, 3
          );
          int row = 0;
 
@@ -338,7 +338,7 @@ public final class TeamRecordsScreen extends Screen {
          }
 
          if (row == 0) {
-            TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.no_history"), rightPage, y + 22, 6650722);
+            TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.no_history"), rightPage, y + 22, 6650722);
          }
       }
    }
@@ -347,11 +347,11 @@ public final class TeamRecordsScreen extends Screen {
       int x = left + 50;
       int y = top + 96;
       if (!data.getBoolean("leaderboard_enabled")) {
-         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.disabled"), x, y, 6650722);
+         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.disabled"), x, y, 6650722);
       } else {
-         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.rank_header"), x, y, 6650722);
-         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.member_header"), x + 34, y, 6650722);
-         Text metricLabel = Text.translatable("metric.tide_team_journal." + this.metric);
+         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.rank_header"), x, y, 6650722);
+         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.member_header"), x + 34, y, 6650722);
+         Text metricLabel = Text.translatable("metric.tideborne.team_journal." + this.metric);
          TideTextRenderer.draw(
             graphics,
             this.textRenderer,
@@ -366,7 +366,7 @@ public final class TeamRecordsScreen extends Screen {
          for (int index = this.page * 8; index < list.size() && row < 8; index++) {
             NbtCompound entry = list.get(index);
             String name = entry.getString("name")
-               + (entry.getBoolean("former") ? " " + Text.translatable("screen.tide_team_journal.former_suffix").getString() : "");
+               + (entry.getBoolean("former") ? " " + Text.translatable("screen.tideborne.team_journal.former_suffix").getString() : "");
             int rowY = y + 17 + row * 13;
             TideTextRenderer.draw(graphics, this.textRenderer, Integer.toString(index + 1), x + 8, rowY, 5477982);
             FittedText fittedName = FishingUiLayout.ellipsize(name, 205, this.textRenderer::getWidth);
@@ -387,7 +387,7 @@ public final class TeamRecordsScreen extends Screen {
 
          if (row == 0) {
             Text empty = Text.translatable(
-               "fish_score".equals(this.metric) ? "screen.tide_team_journal.no_contributor_scores" : "screen.tide_team_journal.no_tracking"
+               "fish_score".equals(this.metric) ? "screen.tideborne.team_journal.no_contributor_scores" : "screen.tideborne.team_journal.no_tracking"
             );
             TideTextRenderer.draw(graphics, this.textRenderer, empty, x, y + 20, 6650722);
          }
@@ -396,7 +396,7 @@ public final class TeamRecordsScreen extends Screen {
          TideTextRenderer.draw(
             graphics,
             this.textRenderer,
-            Text.translatable("screen.tide_team_journal.page", new Object[]{this.page + 1, pages}),
+            Text.translatable("screen.tideborne.team_journal.page", new Object[]{this.page + 1, pages}),
             left + 270,
             top + 77,
             6650722
@@ -408,7 +408,7 @@ public final class TeamRecordsScreen extends Screen {
       int x = left + 50;
       int y = top + 103;
       if (!data.getBoolean("history_enabled")) {
-         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.disabled"), x, y, 6650722);
+         TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.disabled"), x, y, 6650722);
       } else {
          NbtList list = data.getList("history", 10);
          int row = 0;
@@ -426,13 +426,13 @@ public final class TeamRecordsScreen extends Screen {
          }
 
          if (row == 0) {
-            TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tide_team_journal.no_history"), x, y, 6650722);
+            TideTextRenderer.draw(graphics, this.textRenderer, Text.translatable("screen.tideborne.team_journal.no_history"), x, y, 6650722);
          }
 
          TideTextRenderer.draw(
             graphics,
             this.textRenderer,
-            Text.translatable("screen.tide_team_journal.page", new Object[]{data.getInt("page") + 1, Math.max(1, data.getInt("pages"))}),
+            Text.translatable("screen.tideborne.team_journal.page", new Object[]{data.getInt("page") + 1, Math.max(1, data.getInt("pages"))}),
             left + 80,
             top + 223,
             6650722
@@ -450,7 +450,7 @@ public final class TeamRecordsScreen extends Screen {
       int mouseX,
       int mouseY
    ) {
-      String eventName = Text.translatable("event.tide_team_journal." + event.type().name().toLowerCase()).getString();
+      String eventName = Text.translatable("event.tideborne.team_journal." + event.type().name().toLowerCase()).getString();
       String firstLine = event.targetName() + " " + eventName + " " + this.fishName(event.fish());
       CanonicalRecordDisplay display = CanonicalRecordDisplay.from(tag).orElse(null);
       List<TraitDisplay> traits = display == null

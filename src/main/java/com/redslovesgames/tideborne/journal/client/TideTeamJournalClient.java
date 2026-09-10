@@ -82,7 +82,7 @@ public final class TideTeamJournalClient {
                   Text rarityName = Text.translatable("journal.rarity." + rarity.getKey()).styled(style -> style.withColor(6650722));
                   Text stars = Text.literal("\u2605".repeat(rarity.getNumStars())).styled(style -> style.withColor(10121284));
                   lines.add(
-                     Text.translatable("tooltip.tide_team_journal.rarity", new Object[]{rarityName, stars})
+                     Text.translatable("tooltip.tideborne.team_journal.rarity", new Object[]{rarityName, stars})
                         .styled(style -> style.withColor(6650722))
                   );
                }
@@ -90,14 +90,14 @@ public final class TideTeamJournalClient {
                ClientRecordFishMarkers.Status record = ClientRecordFishMarkers.get(stack);
                if (ClientConfig.get().showRecordTooltips && ClientServerSettings.recordTooltipsEnabled && record.largest()) {
                   lines.add(
-                     Text.translatable("tooltip.tide_team_journal.largest_record", new Object[]{TideUtils.getFormattedLength(record.largestSize())})
+                     Text.translatable("tooltip.tideborne.team_journal.largest_record", new Object[]{TideUtils.getFormattedLength(record.largestSize())})
                         .styled(style -> style.withBold(true).withColor(10121284))
                   );
                }
 
                if (ClientConfig.get().showRecordTooltips && ClientServerSettings.recordTooltipsEnabled && record.smallest()) {
                   lines.add(
-                     Text.translatable("tooltip.tide_team_journal.smallest_record", new Object[]{TideUtils.getFormattedLength(record.smallestSize())})
+                     Text.translatable("tooltip.tideborne.team_journal.smallest_record", new Object[]{TideUtils.getFormattedLength(record.smallestSize())})
                         .styled(style -> style.withBold(true).withColor(7757682))
                   );
                }
@@ -106,17 +106,17 @@ public final class TideTeamJournalClient {
                   ? BobberBonuses.forClientId(Registries.ITEM.getId(stack.getItem()))
                   : BobberBonuses.Bonus.NONE;
                if (!bonus.isEmpty()) {
-                  lines.add(Text.translatable("tooltip.tide_team_journal.bobber_bonus").styled(style -> style.withColor(14074789)));
+                  lines.add(Text.translatable("tooltip.tideborne.team_journal.bobber_bonus").styled(style -> style.withColor(14074789)));
                   if (bonus.luck() > 0) {
                      lines.add(
-                        Text.translatable("tooltip.tide_team_journal.bobber_luck", new Object[]{bonus.luck()})
+                        Text.translatable("tooltip.tideborne.team_journal.bobber_luck", new Object[]{bonus.luck()})
                            .styled(style -> style.withColor(10121284))
                      );
                   }
 
                   if (bonus.lureSpeed() > 0) {
                      lines.add(
-                        Text.translatable("tooltip.tide_team_journal.bobber_speed", new Object[]{bonus.lureSpeed()})
+                        Text.translatable("tooltip.tideborne.team_journal.bobber_speed", new Object[]{bonus.lureSpeed()})
                            .styled(style -> style.withColor(8628900))
                      );
                   }

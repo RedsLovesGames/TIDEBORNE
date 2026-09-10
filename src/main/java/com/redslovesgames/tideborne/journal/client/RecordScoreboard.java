@@ -40,10 +40,10 @@ public final class RecordScoreboard {
    public static void show(TeamProgressStore.RecordEvent event) {
       MinecraftClient minecraft = MinecraftClient.getInstance();
       ClientConfig.Values config = ClientConfig.get();
-      title = Text.translatable("scoreboard.tide_team_journal." + event.type().name().toLowerCase())
+      title = Text.translatable("scoreboard.tideborne.team_journal." + event.type().name().toLowerCase())
          .styled(style -> style.withBold(true).withColor(5477982));
       catcher = Text.translatable(
-            "scoreboard.tide_team_journal.caught_by",
+            "scoreboard.tideborne.team_journal.caught_by",
             new Object[]{Text.literal(event.targetName()).styled(style -> style.withColor(3496824))}
          )
          .styled(style -> style.withColor(6650722));
@@ -51,25 +51,25 @@ public final class RecordScoreboard {
       fish = Text.literal(fishStack.isEmpty() ? event.fish() : fishStack.getName().getString())
          .styled(style -> style.withBold(true).withColor(5477982));
       length = Text.translatable(
-            "scoreboard.tide_team_journal.length",
+            "scoreboard.tideborne.team_journal.length",
             new Object[]{TideUtils.getFormattedLength(event.newSize()).styled(style -> style.withColor(5207921))}
          )
          .styled(style -> style.withColor(6650722));
 
       improvement = switch (event.type()) {
          case LARGEST -> Text.translatable(
-               "scoreboard.tide_team_journal.improvement",
+               "scoreboard.tideborne.team_journal.improvement",
                new Object[]{
                   TideUtils.getFormattedLength(Math.abs(event.newSize() - event.previousSize())).styled(style -> style.withColor(6847056)),
-                  Text.translatable("scoreboard.tide_team_journal.larger").styled(style -> style.withColor(6847056))
+                  Text.translatable("scoreboard.tideborne.team_journal.larger").styled(style -> style.withColor(6847056))
                }
             )
             .styled(style -> style.withColor(6650722));
          case SMALLEST -> Text.translatable(
-               "scoreboard.tide_team_journal.improvement",
+               "scoreboard.tideborne.team_journal.improvement",
                new Object[]{
                   TideUtils.getFormattedLength(Math.abs(event.newSize() - event.previousSize())).styled(style -> style.withColor(6847056)),
-                  Text.translatable("scoreboard.tide_team_journal.smaller").styled(style -> style.withColor(6847056))
+                  Text.translatable("scoreboard.tideborne.team_journal.smaller").styled(style -> style.withColor(6847056))
                }
             )
             .styled(style -> style.withColor(6650722));
@@ -89,9 +89,9 @@ public final class RecordScoreboard {
       Text chatLength = TideUtils.getFormattedLength(event.newSize()).styled(style -> style.withColor(8628900));
       Text chatTitle = Text.literal(title.getString()).styled(style -> style.withBold(true).withColor(14074789));
       Text chat = improvement == null
-         ? Text.translatable("chat.tide_team_journal.catch", new Object[]{chatPlayer, chatFish, chatLength, chatTitle})
+         ? Text.translatable("chat.tideborne.team_journal.catch", new Object[]{chatPlayer, chatFish, chatLength, chatTitle})
          : Text.translatable(
-            "chat.tide_team_journal.catch_improved",
+            "chat.tideborne.team_journal.catch_improved",
             new Object[]{
                chatPlayer,
                chatFish,
@@ -99,7 +99,7 @@ public final class RecordScoreboard {
                chatTitle,
                TideUtils.getFormattedLength(Math.abs(event.newSize() - event.previousSize())).styled(style -> style.withColor(10201722)),
                Text.translatable(
-                     event.type() == TeamProgressStore.EventType.LARGEST ? "scoreboard.tide_team_journal.larger" : "scoreboard.tide_team_journal.smaller"
+                     event.type() == TeamProgressStore.EventType.LARGEST ? "scoreboard.tideborne.team_journal.larger" : "scoreboard.tideborne.team_journal.smaller"
                   )
                   .styled(style -> style.withColor(10201722))
             }

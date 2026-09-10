@@ -297,7 +297,7 @@ final class MutationTextureCache {
       }
 
       int index = Math.floorMod(key.maskVariant(), variants) + 1;
-      return Identifier.of("tide_traits", "textures/entity/traits/masks/" + prefix + "_0" + index + ".png");
+      return Identifier.of("tideborne", "textures/entity/traits/masks/" + prefix + "_0" + index + ".png");
    }
 
    private void evictOverflow() {

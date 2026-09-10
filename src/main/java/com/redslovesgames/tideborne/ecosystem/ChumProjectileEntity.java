@@ -76,7 +76,7 @@ public final class ChumProjectileEntity extends ThrownItemEntity {
          this.resolved = true;
          PlayerEntity player = this.getOwner() instanceof PlayerEntity owner ? owner : null;
          if (player != null) {
-            player.sendMessage(Text.translatable("message.tidebound_compatibility.chum_returned"), true);
+            player.sendMessage(Text.translatable("message.tideborne.fishing.chum_returned"), true);
          }
 
          this.returnItem(TideboundItems.CHUM_BUCKET);

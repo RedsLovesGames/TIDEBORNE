@@ -51,7 +51,7 @@ public final class TideboundGuideScreen extends Screen {
                "Kujira Bone Rod has 3 bait slots, 512 durability, and " + TideboundTooltips.multiplier("kujira_crates") + " ocean crate weight."
             ),
             Text.translatable(
-               "guide.tidebound_compatibility.leviathan_bait",
+               "guide.tideborne.fishing.leviathan_bait",
                new Object[]{
                   ClientTideboundSettings.integer("leviathan_fish_luck"),
                   TideboundTooltips.multiplier("leviathan_speed"),

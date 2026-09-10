@@ -62,7 +62,7 @@ public abstract class TidePlayerDataMixin {
                String formatted = String.format(Locale.ROOT, "%.1f", length);
                if (!before.hadStats() || length > before.largest() + tolerance(before.largest())) {
                   player.sendMessage(
-                     Text.translatable("message.tide_traits.new_record_largest", new Object[]{caught.getName(), formatted})
+                     Text.translatable("message.tideborne.new_record_largest", new Object[]{caught.getName(), formatted})
                         .formatted(Formatting.AQUA),
                      true
                   );
@@ -70,7 +70,7 @@ public abstract class TidePlayerDataMixin {
 
                if (!before.hadStats() || length < before.smallest() - tolerance(before.smallest())) {
                   player.sendMessage(
-                     Text.translatable("message.tide_traits.new_record_smallest", new Object[]{caught.getName(), formatted})
+                     Text.translatable("message.tideborne.new_record_smallest", new Object[]{caught.getName(), formatted})
                         .formatted(Formatting.AQUA),
                      true
                   );

@@ -178,10 +178,10 @@ public final class TideTeamJournal {
    }
 
    private static int help(CommandContext<ServerCommandSource> context) {
-      ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tide_team_journal.help.header"), false);
+      ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tideborne.team_journal.help.header"), false);
 
       for (String key : List.of("open", "leaderboard", "history", "member", "merge", "claim", "assign", "claimall", "status", "reload")) {
-         ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tide_team_journal.help." + key), false);
+         ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tideborne.team_journal.help." + key), false);
       }
 
       return 1;
@@ -193,7 +193,7 @@ public final class TideTeamJournal {
          ServerPlayNetworking.send(player, new OpenTeamRecordsPayload());
          return 1;
       } else {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.open.failed"));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.open.failed"));
          return 0;
       }
    }
@@ -202,16 +202,16 @@ public final class TideTeamJournal {
       TeamJournalService.ManualMergeResult result = TeamJournalService.manuallyMergePersonalJournal(((ServerCommandSource)context.getSource()).getPlayerOrThrow());
       switch (result) {
          case MERGED:
-            ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tide_team_journal.merge.success"), false);
+            ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tideborne.team_journal.merge.success"), false);
             break;
          case ALREADY_SHARED:
-            ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tide_team_journal.merge.already_shared"), false);
+            ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tideborne.team_journal.merge.already_shared"), false);
             break;
          case NOT_IN_PARTY:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.merge.not_in_party"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.merge.not_in_party"));
             break;
          case FAILED:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.merge.failed"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.merge.failed"));
       }
 
       return result == TeamJournalService.ManualMergeResult.FAILED ? 0 : 1;
@@ -228,7 +228,7 @@ public final class TideTeamJournal {
       TeamJournalService.ClaimResult result = TeamJournalService.assignHeldRecord(((ServerCommandSource)context.getSource()).getPlayerOrThrow(), target, largest);
       if (result == TeamJournalService.ClaimResult.CLAIMED) {
          ((ServerCommandSource)context.getSource())
-            .sendFeedback(() -> Text.translatable("command.tide_team_journal.assign.success", new Object[]{target.getGameProfile().getName()}), false);
+            .sendFeedback(() -> Text.translatable("command.tideborne.team_journal.assign.success", new Object[]{target.getGameProfile().getName()}), false);
       } else {
          reportClaim(context, result, largest);
       }
@@ -242,29 +242,29 @@ public final class TideTeamJournal {
             ((ServerCommandSource)context.getSource())
                .sendFeedback(
                   () -> Text.translatable(
-                     "command.tide_team_journal.claim.success",
-                     new Object[]{Text.translatable(largest ? "command.tide_team_journal.claim.largest" : "command.tide_team_journal.claim.smallest")}
+                     "command.tideborne.team_journal.claim.success",
+                     new Object[]{Text.translatable(largest ? "command.tideborne.team_journal.claim.largest" : "command.tideborne.team_journal.claim.smallest")}
                   ),
                   false
                );
             break;
          case NOT_IN_PARTY:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.merge.not_in_party"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.merge.not_in_party"));
             break;
          case INVALID_FISH:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.claim.invalid_fish"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.claim.invalid_fish"));
             break;
          case INVALID_PROOF:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.claim.invalid_proof"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.claim.invalid_proof"));
             break;
          case INVALID_TARGET:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.claim.invalid_target"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.claim.invalid_target"));
             break;
          case NOT_AUTHORIZED:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.claim.not_authorized"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.claim.not_authorized"));
             break;
          case FAILED:
-            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.claim.failed"));
+            ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.claim.failed"));
       }
    }
 
@@ -272,7 +272,7 @@ public final class TideTeamJournal {
       TeamJournalService.ClaimAllResult result = TeamJournalService.claimAllRecords(((ServerCommandSource)context.getSource()).getPlayerOrThrow());
       if (result.result() == TeamJournalService.ClaimResult.CLAIMED) {
          ((ServerCommandSource)context.getSource())
-            .sendFeedback(() -> Text.translatable("command.tide_team_journal.claimall.success", new Object[]{result.fishCount()}), false);
+            .sendFeedback(() -> Text.translatable("command.tideborne.team_journal.claimall.success", new Object[]{result.fishCount()}), false);
       } else {
          reportClaim(context, result.result(), true);
       }
@@ -287,7 +287,7 @@ public final class TideTeamJournal {
          ((ServerCommandSource)context.getSource())
             .sendFeedback(
                () -> Text.translatable(
-                  "command.tide_team_journal.claimall.target_success", new Object[]{result.fishCount(), target.getGameProfile().getName()}
+                  "command.tideborne.team_journal.claimall.target_success", new Object[]{result.fishCount(), target.getGameProfile().getName()}
                ),
                false
             );
@@ -307,10 +307,10 @@ public final class TideTeamJournal {
          ((ServerCommandSource)context.getSource())
             .sendFeedback(
                () -> Text.translatable(
-                  "command.tide_team_journal.status",
+                  "command.tideborne.team_journal.status",
                   new Object[]{
-                     status.largest().isBlank() ? Text.translatable("command.tide_team_journal.none") : status.largest(),
-                     status.smallest().isBlank() ? Text.translatable("command.tide_team_journal.none") : status.smallest()
+                     status.largest().isBlank() ? Text.translatable("command.tideborne.team_journal.none") : status.largest(),
+                     status.smallest().isBlank() ? Text.translatable("command.tideborne.team_journal.none") : status.smallest()
                   }
                ),
                false
@@ -325,26 +325,26 @@ public final class TideTeamJournal {
 
    private static int leaderboard(CommandContext<ServerCommandSource> context, String metric, int page) throws CommandSyntaxException {
       if (!List.of("catches", "species", "record_events", "active_records", "fish_score").contains(metric)) {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.metric.invalid", new Object[]{metric}));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.metric.invalid", new Object[]{metric}));
          return 0;
       }
 
       if (!ServerConfig.get().visibleMetrics.contains(metric)) {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.feature_disabled"));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.feature_disabled"));
          return 0;
       }
 
       NbtCompound data = TeamJournalService.teamData(((ServerCommandSource)context.getSource()).getPlayerOrThrow(), 0, metric, "");
       if (!data.getBoolean("leaderboard_enabled")) {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.feature_disabled"));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.feature_disabled"));
          return 0;
       }
 
       ((ServerCommandSource)context.getSource())
          .sendFeedback(
             () -> Text.translatable(
-               "command.tide_team_journal.leaderboard.title",
-               new Object[]{data.getString("team_name"), Text.translatable("metric.tide_team_journal." + metric)}
+               "command.tideborne.team_journal.leaderboard.title",
+               new Object[]{data.getString("team_name"), Text.translatable("metric.tideborne.team_journal." + metric)}
             ),
             false
          );
@@ -364,12 +364,12 @@ public final class TideTeamJournal {
             ((ServerCommandSource)context.getSource())
                .sendFeedback(
                   () -> Text.translatable(
-                     "command.tide_team_journal.leaderboard.row",
+                     "command.tideborne.team_journal.leaderboard.row",
                      new Object[]{
                         place,
                         entry.getString("name"),
                         entry.getInt(metric),
-                        entry.getBoolean("former") ? Text.translatable("screen.tide_team_journal.former_suffix") : ""
+                        entry.getBoolean("former") ? Text.translatable("screen.tideborne.team_journal.former_suffix") : ""
                      }
                   ),
                   false
@@ -383,13 +383,13 @@ public final class TideTeamJournal {
    private static int history(CommandContext<ServerCommandSource> context, int page, String fish) throws CommandSyntaxException {
       NbtCompound data = TeamJournalService.teamData(((ServerCommandSource)context.getSource()).getPlayerOrThrow(), page, "catches", fish);
       if (!data.getBoolean("history_enabled")) {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.feature_disabled"));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.feature_disabled"));
          return 0;
       }
 
       ((ServerCommandSource)context.getSource())
          .sendFeedback(
-            () -> Text.translatable("command.tide_team_journal.history.title", new Object[]{data.getInt("page") + 1, data.getInt("pages")}),
+            () -> Text.translatable("command.tideborne.team_journal.history.title", new Object[]{data.getInt("page") + 1, data.getInt("pages")}),
             false
          );
       int count = 0;
@@ -404,10 +404,10 @@ public final class TideTeamJournal {
             ((ServerCommandSource)context.getSource())
                .sendFeedback(
                   () -> Text.translatable(
-                     "command.tide_team_journal.history.row",
+                     "command.tideborne.team_journal.history.row",
                      new Object[]{
                         event.targetName(),
-                        Text.translatable("event.tide_team_journal." + event.type().name().toLowerCase()),
+                        Text.translatable("event.tideborne.team_journal." + event.type().name().toLowerCase()),
                         fishName,
                         TideUtils.getFormattedLength(event.newSize()),
                         Instant.ofEpochMilli(event.timestamp()).toString()
@@ -435,14 +435,14 @@ public final class TideTeamJournal {
       }
 
       if (matches.size() > 1) {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.member.ambiguous", new Object[]{name}));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.member.ambiguous", new Object[]{name}));
          return 0;
       } else if (matches.size() == 1) {
          NbtCompound entry = matches.getFirst();
          ((ServerCommandSource)context.getSource())
             .sendFeedback(
                () -> Text.translatable(
-                  "command.tide_team_journal.member",
+                  "command.tideborne.team_journal.member",
                   new Object[]{
                      entry.getString("name"),
                      entry.getInt("catches"),
@@ -455,17 +455,17 @@ public final class TideTeamJournal {
             );
          return 1;
       } else {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.member.not_found", new Object[]{name}));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.member.not_found", new Object[]{name}));
          return 0;
       }
    }
 
    private static int reloadConfig(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
       if (TeamJournalService.reloadServerConfig(((ServerCommandSource)context.getSource()).getServer())) {
-         ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tide_team_journal.config.reloaded"), true);
+         ((ServerCommandSource)context.getSource()).sendFeedback(() -> Text.translatable("command.tideborne.team_journal.config.reloaded"), true);
          return 1;
       } else {
-         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tide_team_journal.config.failed"));
+         ((ServerCommandSource)context.getSource()).sendError(Text.translatable("command.tideborne.team_journal.config.failed"));
          return 0;
       }
    }

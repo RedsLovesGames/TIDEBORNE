@@ -248,8 +248,8 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
       return new Badge(
          label,
          discoveryId,
-         Identifier.of("tide_traits", base + "locked/" + id + "_locked.png"),
-         Identifier.of("tide_traits", base + "unlocked/" + id + "_unlocked.png")
+         Identifier.of("tideborne", base + "locked/" + id + "_locked.png"),
+         Identifier.of("tideborne", base + "unlocked/" + id + "_unlocked.png")
       );
    }
 

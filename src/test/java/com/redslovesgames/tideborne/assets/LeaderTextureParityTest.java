@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 class LeaderTextureParityTest {
     private static final Path TEXTURES = Path.of(
-            "src/main/resources/assets/tidebound_compatibility/textures/item");
+            "src/main/resources/assets/tideborne/textures/item");
     private static final Path MODELS = Path.of(
             "src/main/resources/assets/tidebound_compatibility/models/item");
     private static final List<String> MATERIAL_VARIANTS =
@@ -53,7 +53,7 @@ class LeaderTextureParityTest {
         for (String variant : MATERIAL_VARIANTS) {
             String model = Files.readString(MODELS.resolve(variant + ".json"));
             assertTrue(
-                    model.contains("\"layer0\":\"tidebound_compatibility:item/" + variant + "\""),
+                    model.contains("\"layer0\":\"tideborne:item/" + variant + "\""),
                     variant + " must not reuse steel_leader");
         }
     }

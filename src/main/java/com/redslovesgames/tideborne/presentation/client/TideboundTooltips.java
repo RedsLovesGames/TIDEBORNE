@@ -29,7 +29,7 @@ final class TideboundTooltips {
          if (profile == FishingGearRegistry.GearProfile.KUJIRA_BONE_FISHING_ROD) {
             lines.add(flavor("Pale bone worn smooth by a sea that never forgets."));
          } else if (profile == FishingGearRegistry.GearProfile.LEVIATHAN_BAIT) {
-            lines.add(flavor(Text.translatable("tooltip.tidebound_compatibility.leviathan_bait.flavor")));
+            lines.add(flavor(Text.translatable("tooltip.tideborne.fishing.leviathan_bait.flavor")));
          } else if (stack.isOf(TideboundItems.CHUM_BUCKET)) {
             lines.add(flavor("The ocean always knows when dinner is served."));
          } else if (stack.isOf(TideboundItems.SHARK_TOOTH)) {
@@ -64,21 +64,21 @@ final class TideboundTooltips {
                      lines.add(Text.literal("Ocean crate weight: " + multiplier("kujira_crates")));
                   }
                   case LEVIATHAN_BAIT -> {
-                     lines.add(Text.translatable("tooltip.tidebound_compatibility.leviathan_bait.fish_only"));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.leviathan_bait.fish_only"));
                      lines.add(
                         Text.translatable(
-                           "tooltip.tidebound_compatibility.leviathan_bait.luck",
+                           "tooltip.tideborne.fishing.leviathan_bait.luck",
                            new Object[]{ClientTideboundSettings.integer("leviathan_fish_luck")}
                         )
                      );
                      lines.add(
                         Text.translatable(
-                           "tooltip.tidebound_compatibility.leviathan_bait.fight",
+                           "tooltip.tideborne.fishing.leviathan_bait.difficulty",
                            new Object[]{multiplier("leviathan_strength"), multiplier("leviathan_tempo")}
                         )
                      );
                      lines.add(Text.literal("Trait Luck: +" + ClientTideboundSettings.integer("leviathan_trait_luck")));
-                     lines.add(Text.translatable("tooltip.tidebound_compatibility.leviathan_bait.conditions"));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.leviathan_bait.conditions"));
                   }
                   default -> {
                      // Native Tide profiles are intentionally not Tideborne tooltip entries.

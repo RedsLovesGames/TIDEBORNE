@@ -20,7 +20,7 @@ import net.minecraft.text.Text;
 
 public final class TideboundCompatibilityClient {
    private static final KeyBinding OPEN_GUIDE = KeyBindingHelper.registerKeyBinding(
-      new KeyBinding("key.tidebound_compatibility.open_guide", 71, "key.categories.tidebound_compatibility")
+      new KeyBinding("key.tideborne.fishing.open_guide", 71, "key.categories.tideborne")
    );
    private static boolean initialized;
 
@@ -44,8 +44,8 @@ public final class TideboundCompatibilityClient {
          (payload, context) -> SystemToast.show(
             context.client().getToastManager(),
             SystemToast.Type.PERIODIC_NOTIFICATION,
-            Text.translatable("toast.tidebound_compatibility.catch_lost.title"),
-            Text.translatable("toast.tidebound_compatibility.catch_lost.body")
+            Text.translatable("toast.tideborne.fishing.catch_lost.title"),
+            Text.translatable("toast.tideborne.fishing.catch_lost.body")
          )
       );
       ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> TideboundTooltips.append(stack, type, lines));

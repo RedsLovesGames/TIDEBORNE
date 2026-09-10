@@ -140,7 +140,7 @@ public final class FishingGameplayInitializer {
                      return 0;
                   }
                   context.getSource().getServer().getPlayerManager().getPlayerList().forEach(TideborneConfigNetworking::syncSettings);
-                  context.getSource().sendFeedback(() -> Text.translatable("command.tidebound_compatibility.reload"), true);
+                  context.getSource().sendFeedback(() -> Text.translatable("command.tideborne.fishing.reload"), true);
                   return 1;
                })
          );
@@ -209,7 +209,7 @@ public final class FishingGameplayInitializer {
    private static int status(ServerCommandSource source) {
       source.sendFeedback(
          () -> Text.translatable(
-            "command.tidebound_compatibility.status",
+            "command.tideborne.fishing.status",
             new Object[]{isMythsIntegrationActive(), isApexIntegrationActive(), SharkScentManager.activeZoneCount()}
          ),
          false

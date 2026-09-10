@@ -1239,7 +1239,7 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private static Identifier ours(String path) {
-      return Identifier.of("tide_traits", path);
+      return Identifier.of("tideborne", path);
    }
 
    private static Identifier tide(String path) {

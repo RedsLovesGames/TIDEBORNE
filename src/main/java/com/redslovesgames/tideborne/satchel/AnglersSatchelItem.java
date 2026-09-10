@@ -36,9 +36,9 @@ public final class AnglersSatchelItem extends Item {
          if (player.isSneaking()) {
             SatchelService.toggleExclusiveActive(player, stack);
             boolean active = AnglersSatchelStorage.state(stack).isActive();
-            serverPlayer.sendMessage(Text.translatable(active ? "message.tide_traits.satchel_active" : "message.tide_traits.satchel_inactive"), true);
+            serverPlayer.sendMessage(Text.translatable(active ? "message.tideborne.satchel_active" : "message.tideborne.satchel_inactive"), true);
          } else if (!screenOpener.open(serverPlayer, hand, stack)) {
-            serverPlayer.sendMessage(Text.translatable("message.tide_traits.satchel_screen_unavailable"), true);
+            serverPlayer.sendMessage(Text.translatable("message.tideborne.satchel_screen_unavailable"), true);
          }
       }
 

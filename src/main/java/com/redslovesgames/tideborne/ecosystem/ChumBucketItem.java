@@ -67,7 +67,7 @@ public final class ChumBucketItem extends Item {
       if (config.enableChum && config.enableApexCompat && FishingGameplayInitializer.isApexLoaded()) {
          if (!level.getBiome(pos).isIn(BiomeTags.IS_OCEAN)) {
             if (player != null) {
-               player.sendMessage(Text.translatable("message.tidebound_compatibility.chum_ocean_only"), true);
+               player.sendMessage(Text.translatable("message.tideborne.fishing.chum_ocean_only"), true);
             }
 
             return false;
@@ -80,7 +80,7 @@ public final class ChumBucketItem extends Item {
          }
       } else {
          if (player != null) {
-            player.sendMessage(Text.translatable("message.tidebound_compatibility.chum_disabled"), true);
+            player.sendMessage(Text.translatable("message.tideborne.fishing.chum_disabled"), true);
          }
 
          return false;

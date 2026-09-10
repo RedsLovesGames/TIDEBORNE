@@ -150,13 +150,13 @@ abstract class TideFishingHookMixin implements LeviathanBaitHook {
          if (!(chance <= 0.0) && !(level.random.nextDouble() >= chance)) {
             FishingGearModifiers gear = SteelLeaderGearModifiers.forHook(hook, config);
             if (FishingGearEffects.preventsCatchLoss(gear, level.random::nextDouble)) {
-               serverPlayer.sendMessage(Text.translatable("message.tidebound_compatibility.steel_leader_saved"), true);
+               serverPlayer.sendMessage(Text.translatable("message.tideborne.fishing.steel_leader_saved"), true);
                level.playSound(null, hook.getBlockPos(), SoundEvents.BLOCK_TRIPWIRE_ATTACH, SoundCategory.PLAYERS, 0.7F, 1.4F);
             } else {
                hook.invalidateCatch();
                level.spawnParticles(ParticleTypes.SPLASH, hook.getX(), hook.getY(), hook.getZ(), 16, 0.6, 0.25, 0.6, 0.1);
                level.playSound(null, hook.getBlockPos(), SoundEvents.ENTITY_GENERIC_EAT, SoundCategory.PLAYERS, 1.1F, 0.75F);
-               serverPlayer.sendMessage(Text.translatable("message.tidebound_compatibility.shark_stole_catch"), true);
+               serverPlayer.sendMessage(Text.translatable("message.tideborne.fishing.shark_stole_catch"), true);
                if (ServerPlayNetworking.canSend(serverPlayer, SharkCatchLossPayload.TYPE)) {
                   ServerPlayNetworking.send(serverPlayer, new SharkCatchLossPayload());
                }
