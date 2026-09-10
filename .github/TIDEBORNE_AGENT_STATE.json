@@ -5,26 +5,27 @@
   "baseline_sha": "b2ea30d927c4bae15f2e9ccbdc48b61331ead9f4",
   "optimization_seed_sha": "053f14f17404d9ae41aeefa095116a6690d19bc2",
   "status": "IN_PROGRESS",
-  "phase": "P7.4",
-  "checkpoint_sequence": 5,
-  "last_product_checkpoint_sha": "43a34c52ba44d786c43bfa1d01a897f21e3d4a7f",
-  "last_checkpoint_utc": "2026-09-10T23:26:00+00:00",
+  "phase": "P7.5",
+  "checkpoint_sequence": 6,
+  "last_product_checkpoint_sha": "e31b4cebdd0533bfbfd7ca181b7c73c356621b38",
+  "last_checkpoint_utc": "2026-09-10T23:50:00+00:00",
   "completed_phases": [
     "P7.0",
     "P7.1",
     "P7.2",
-    "P7.3"
+    "P7.3",
+    "P7.4"
   ],
-  "next_action": "Consolidate historical mixin and refmap resource metadata toward Tideborne-owned names, updating fabric.mod.json, Gradle resource processing, tests, and artifact validation atomically while preserving common, client, and optional Apex classloading boundaries.",
+  "next_action": "Audit every remaining historical resource namespace and alias after the P7.1-P7.4 migrations, remove only aliases proven unnecessary, and preserve all externally persisted, datapack, network, upstream, and optional-integration identities required for compatibility.",
   "blockers": [],
   "validation": {
     "repository_structure": "pass_connector_inventory",
-    "java21_clean_build": "not_run",
-    "unit_architecture_tests": "p7_1_p7_2_and_p7_3_focused_tests_pass_java21_exact_dependencies",
+    "java21_clean_build": "pass_p7_4_full_clean_build",
+    "unit_architecture_tests": "pass_p7_4_full_build_and_tests_exact_dependencies",
     "resource_paths_translations": "pass_p7_3_java_resource_identifier_boundary_and_dynamic_texture_ownership",
-    "mixin_refmap_metadata": "not_run",
-    "optional_compatibility_safety": "not_run",
-    "release_artifact": "not_run"
+    "mixin_refmap_metadata": "pass_p7_4_canonical_configs_generated_tideborne_refmap_and_apex_only_refmap",
+    "optional_compatibility_safety": "pass_p7_4_optional_apex_boundary_and_historical_provides_preserved",
+    "release_artifact": "pass_p7_4_tideborne_2_0_1_sha256_589058fc53bfff7019ac9264e1f258e3b31e0091999a233858fffb2b4c56c402"
   },
   "phase_plan": [
     "P7.0 inventory_and_classification",
@@ -51,6 +52,11 @@
     "P7.3 audited remaining historical namespace literals in production Java. Registry IDs, item IDs, public tags, network payload IDs, NBT and save keys, data-component IDs, discovery IDs, historical mod identity constants, externally visible reload-listener IDs, upstream Tide IDs, and optional-integration IDs remain preserved compatibility identities.",
     "P7.3 product commit 43a34c52ba44d786c43bfa1d01a897f21e3d4a7f changed only the ephemeral generated client mutation-texture namespace and its generated-ID detection from tide_traits:dynamic/mutation/* to tideborne:dynamic/mutation/*. The historical tide_traits:mutation_textures reload-listener ID was deliberately preserved.",
     "DynamicTextureResourceOwnershipTest and CanonicalSpecimenPresentationTest passed under Java 21 with scripts/fetch_ci_dependencies.sh providing exact pinned dependencies. The focused Gradle run ended BUILD SUCCESSFUL.",
-    "The temporary P7.3 audit and validation workflow was removed by the successful product commit; only the normal build workflow and P7 checkpoint workflow remain."
+    "The temporary P7.3 audit and validation workflow was removed by the successful product commit; only the normal build workflow and P7 checkpoint workflow remain.",
+    "P7.4 product commit e31b4cebdd0533bfbfd7ca181b7c73c356621b38 replaced five historical mixin config filenames with tideborne.mixins.json, tideborne.client.mixins.json, and tideborne.apex.mixins.json while preserving strict common, tolerant specimen-client, and optional Apex failure/classloading boundaries.",
+    "P7.4 removed the two stale historical general refmaps. Fabric Loom now generates tideborne-refmap.json for current Tideborne mixins during remap packaging; its validated production map contained 26 current-package mixin entries. The optional compile-only Apex target remains isolated in source as tideborne.apex.refmap.json with only GreatWhiteSharkMixin.registerGoals.",
+    "P7.4 updated fabric.mod.json, affected architecture/source-safety tests, and scripts/validate_release_artifact.sh atomically. Historical fabric.mod.json provides aliases tide_traits, tide_team_journal, and tidebound_compatibility were deliberately preserved.",
+    "P7.4 repository validation reported Tideborne 2.0.1 with 254 top-level types, 18 registered GameTest classes, and all mixins and entrypoints resolved. The full Java 21 clean build and complete test suite passed with exact pinned dependencies.",
+    "P7.4 production artifact validation passed for build/libs/tideborne-2.0.1.jar with SHA-256 589058fc53bfff7019ac9264e1f258e3b31e0091999a233858fffb2b4c56c402. All temporary P7.4 audit, diagnostic, and validation workflows were removed before the product commit."
   ]
 }
