@@ -8,7 +8,7 @@ package com.redslovesgames.tideborne.journal.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.redslovesgames.tideborne.config.TideborneConfigStore;
+import com.redslovesgames.tideborne.config.TideborneClientConfig;
 import com.redslovesgames.tideborne.journal.TideTeamJournal;
 import java.io.IOException;
 
@@ -29,7 +29,7 @@ public final class ClientConfig {
 
    public static void load() {
       try {
-         JsonObject section = TideborneConfigStore.readSection(TideborneConfigStore.TEAM_CLIENT);
+         JsonObject section = TideborneClientConfig.readSection(TideborneClientConfig.JOURNAL);
          if (section != null) {
             Values parsed = GSON.fromJson(section, Values.class);
             if (parsed != null) values = parsed;
@@ -46,7 +46,7 @@ public final class ClientConfig {
    public static void save() {
       validate();
       try {
-         TideborneConfigStore.writeSection(TideborneConfigStore.TEAM_CLIENT, GSON.toJsonTree(values));
+         TideborneClientConfig.writeSection(TideborneClientConfig.JOURNAL, GSON.toJsonTree(values));
       } catch (IOException exception) {
          TideTeamJournal.LOGGER.error("Could not save Tideborne client journal configuration", exception);
       }
