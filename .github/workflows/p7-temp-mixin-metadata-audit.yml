@@ -1,0 +1,51 @@
+name: P7 Temporary Mixin Metadata Audit
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+jobs:
+  audit:
+    if: "${{ github.event.head_commit.message == 'chore: stage P7.4 mixin metadata audit' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Audit mixin and refmap metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== Root mixin/refmap resources ==='
+          find src/main/resources -maxdepth 1 -type f \( -name '*mixins.json' -o -name '*refmap.json' \) -print | sort
+          echo '=== Historical mixin/refmap name references ==='
+          grep -RIn --exclude-dir=.git --exclude-dir=build -E 'tide_traits(\.client)?\.mixins\.json|tide_team_journal\.mixins\.json|tidebound_compatibility(\.apex)?\.mixins\.json|tide_team_journal\.refmap\.json|tidebound_compatibility\.refmap\.json' . || true
+          echo '=== Mixin config metadata ==='
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for p in sorted(Path('src/main/resources').glob('*mixins.json')):
+              data=json.loads(p.read_text())
+              print(p.name)
+              print(' package=',data.get('package'))
+              print(' plugin=',data.get('plugin'))
+              print(' refmap=',data.get('refmap'))
+              print(' required=',data.get('required'))
+              print(' mixins=',data.get('mixins',[]))
+              print(' client=',data.get('client',[]))
+          PY
+          echo '=== Refmap class keys ==='
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for p in sorted(Path('src/main/resources').glob('*refmap.json')):
+              data=json.loads(p.read_text())
+              print(p.name)
+              for key in sorted(data.get('mappings',{})):
+                  print(' ',key)
+          PY
+          echo '=== Current mixin source packages ==='
+          find src/main/java/com/redslovesgames/tideborne/mixin -type f -name '*.java' -print | sort
+          echo '=== Build/artifact references ==='
+          grep -RIn --exclude-dir=.git --exclude-dir=build -Ei 'refmap|mixins\.json|processResources|artifact|jar tf|zipinfo|fabric\.mod\.json' build.gradle gradle.properties settings.gradle .github scripts src/test 2>/dev/null || true
