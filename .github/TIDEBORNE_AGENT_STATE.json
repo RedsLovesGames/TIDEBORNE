@@ -6,19 +6,19 @@
   "optimization_seed_sha": "053f14f17404d9ae41aeefa095116a6690d19bc2",
   "status": "IN_PROGRESS",
   "phase": "P7.1",
-  "checkpoint_sequence": 1,
-  "last_product_checkpoint_sha": "bac69f2338fd513cd2679db5053f6073190c19f2",
-  "last_checkpoint_utc": "2026-09-10T22:46:00+00:00",
+  "checkpoint_sequence": 2,
+  "last_product_checkpoint_sha": "8114aa233fb265a5412075b4f4482305d92578ee",
+  "last_checkpoint_utc": "2026-09-10T22:54:28+00:00",
   "completed_phases": [
     "P7.0"
   ],
-  "next_action": "Migrate current presentation textures and Tideborne-owned UI translation keys into assets/tideborne while retaining historical item/model/tag/upstream aliases identified by P7.0.",
+  "next_action": "Update the exact Java callers for the newly canonical Tideborne translation/texture paths, validate all moved presentation lookups, then remove only historical presentation duplicates proven unnecessary while retaining item/model/upstream compatibility aliases.",
   "blockers": [],
   "validation": {
     "repository_structure": "pass_connector_inventory",
     "java21_clean_build": "not_run",
     "unit_architecture_tests": "not_run",
-    "resource_paths_translations": "not_run",
+    "resource_paths_translations": "partial_asset_tree_and_model_aliases_verified",
     "mixin_refmap_metadata": "not_run",
     "optional_compatibility_safety": "not_run",
     "release_artifact": "not_run"
@@ -37,6 +37,7 @@
     "last_product_checkpoint_sha records the committed product/code/resource state immediately before the state-only checkpoint commit.",
     "GameTests and Minecraft boot tests are not part of the current required validation gate.",
     "P7.0 classification is recorded in .github/TIDEBORNE_P7_RESOURCE_CLASSIFICATION.md; the dependency gate was verified on the target branch through canonical config, specimen, gear, Tide-adapter, and ecosystem ownership paths.",
-    "A shell checkout was unavailable in this worker environment, so scripts/p7_agent.py and Gradle validation were not run. P7.0 state was checkpointed equivalently through branch-only GitHub commits after the read-only structural inventory."
+    "A shell checkout was unavailable in this worker environment, so scripts/p7_agent.py and Gradle validation were not run. P7.0 state was checkpointed equivalently through branch-only GitHub commits after the read-only structural inventory.",
+    "P7.1 first product substep copied the TideTraits and TideboundCompatibility presentation texture trees byte-identically into assets/tideborne, merged their item textures, repointed retained historical item-model aliases to tideborne textures, and added collision-safe Tideborne-owned UI translation keys. Historical texture/lang paths remain temporarily as compatibility aliases until exact Java callers are migrated and validated."
   ]
 }
