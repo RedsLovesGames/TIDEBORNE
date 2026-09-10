@@ -5,22 +5,23 @@
   "baseline_sha": "b2ea30d927c4bae15f2e9ccbdc48b61331ead9f4",
   "optimization_seed_sha": "053f14f17404d9ae41aeefa095116a6690d19bc2",
   "status": "IN_PROGRESS",
-  "phase": "P7.3",
-  "checkpoint_sequence": 4,
-  "last_product_checkpoint_sha": "0d13f196ca489606b49fa427cbdbf038e4b735c3",
-  "last_checkpoint_utc": "2026-09-10T23:20:00+00:00",
+  "phase": "P7.4",
+  "checkpoint_sequence": 5,
+  "last_product_checkpoint_sha": "43a34c52ba44d786c43bfa1d01a897f21e3d4a7f",
+  "last_checkpoint_utc": "2026-09-10T23:26:00+00:00",
   "completed_phases": [
     "P7.0",
     "P7.1",
-    "P7.2"
+    "P7.2",
+    "P7.3"
   ],
-  "next_action": "Audit and canonicalize remaining Java resource identifiers and references where they represent current Tideborne ownership, while preserving registry IDs, payload and network IDs, NBT and component keys, save identities, externally visible reload IDs, and optional integration identities.",
+  "next_action": "Consolidate historical mixin and refmap resource metadata toward Tideborne-owned names, updating fabric.mod.json, Gradle resource processing, tests, and artifact validation atomically while preserving common, client, and optional Apex classloading boundaries.",
   "blockers": [],
   "validation": {
     "repository_structure": "pass_connector_inventory",
     "java21_clean_build": "not_run",
-    "unit_architecture_tests": "p7_1_and_p7_2_focused_tests_pass_java21_exact_dependencies",
-    "resource_paths_translations": "pass_p7_2_flat_data_ownership_and_compatibility_validation",
+    "unit_architecture_tests": "p7_1_p7_2_and_p7_3_focused_tests_pass_java21_exact_dependencies",
+    "resource_paths_translations": "pass_p7_3_java_resource_identifier_boundary_and_dynamic_texture_ownership",
     "mixin_refmap_metadata": "not_run",
     "optional_compatibility_safety": "not_run",
     "release_artifact": "not_run"
@@ -46,6 +47,10 @@
     "Exact Tide 2.1.1 inspection established that TideData registers FlatDataLoader instances for bait and rod_accessories. FlatDataLoader scans the directory across resource namespaces, parses each JSON into a flat list, and does not retain the outer resource identifier as gameplay identity. External datapacks using the historical tidebound_compatibility namespace therefore remain loadable without a Tideborne dual loader.",
     "P7.2 preserved the embedded tidebound_compatibility item registry IDs inside all moved flat-data JSON. Historical recipe IDs and public tags under tidebound_compatibility and tide_traits, upstream data/tide tags, optional data/myths_of_the_sea tags, data/c, data/minecraft, and the test-only TideTraits mutation function were not moved or renamed.",
     "P7.2 static resource validation passed. DataResourceOwnershipTest and FishingGearRegistryTest passed under Java 21 with scripts/fetch_ci_dependencies.sh providing the exact Tide 2.1.1 and optional compile dependencies. The focused Gradle run ended BUILD SUCCESSFUL.",
-    "Temporary P7.2 audit and validation workflows were removed after use. The successful cleanup commit was 4a4602ca9baecf59e71f456ee35c6fb9c454c352, leaving only the normal build workflow and P7 checkpoint workflow."
+    "Temporary P7.2 audit and validation workflows were removed after use. The successful cleanup commit was 4a4602ca9baecf59e71f456ee35c6fb9c454c352, leaving only the normal build workflow and P7 checkpoint workflow.",
+    "P7.3 audited remaining historical namespace literals in production Java. Registry IDs, item IDs, public tags, network payload IDs, NBT and save keys, data-component IDs, discovery IDs, historical mod identity constants, externally visible reload-listener IDs, upstream Tide IDs, and optional-integration IDs remain preserved compatibility identities.",
+    "P7.3 product commit 43a34c52ba44d786c43bfa1d01a897f21e3d4a7f changed only the ephemeral generated client mutation-texture namespace and its generated-ID detection from tide_traits:dynamic/mutation/* to tideborne:dynamic/mutation/*. The historical tide_traits:mutation_textures reload-listener ID was deliberately preserved.",
+    "DynamicTextureResourceOwnershipTest and CanonicalSpecimenPresentationTest passed under Java 21 with scripts/fetch_ci_dependencies.sh providing exact pinned dependencies. The focused Gradle run ended BUILD SUCCESSFUL.",
+    "The temporary P7.3 audit and validation workflow was removed by the successful product commit; only the normal build workflow and P7 checkpoint workflow remain."
   ]
 }
