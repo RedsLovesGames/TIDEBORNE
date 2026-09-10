@@ -5,7 +5,7 @@
  */
 package com.redslovesgames.tideborne.client;
 
-import com.redslovesgames.tideborne.config.TideborneConfigBackend;
+import com.redslovesgames.tideborne.config.TideborneClientConfig;
 import com.redslovesgames.tideborne.presentation.client.TideboundCompatibilityClient;
 import com.redslovesgames.tideborne.journal.client.TideTeamJournalClient;
 import com.redslovesgames.tideborne.presentation.client.TideTraitsClient;
@@ -17,10 +17,14 @@ public final class TideborneClient implements ClientModInitializer {
    public void onInitializeClient() {
       if (!initialized) {
          initialized = true;
+         try {
+            TideborneClientConfig.initialize();
+         } catch (Exception exception) {
+            System.err.println("[Tideborne] Client config migration failed; client defaults will remain usable: " + exception.getMessage());
+         }
          TideTraitsClient.initialize();
          TideTeamJournalClient.initialize();
          TideboundCompatibilityClient.initialize();
-         TideborneConfigBackend.afterSubsystems();
          System.out.println("[Tideborne] Unified client configuration and rendering systems initialized.");
       }
    }
