@@ -21,6 +21,19 @@ if grep -R -n -E --include='*.java' '(^|[^[:alnum:]_])(class|method|field)_[0-9]
     exit 1
 fi
 
+# Mixin selector strings are not fully type-checked by javac. Reconstructed source
+# must use the Yarn namespace configured by this repository; Mojang-mapped JVM
+# descriptors can compile successfully and then fail catastrophically at startup.
+mixin_root="src/main/java/com/redslovesgames/tideborne/mixin"
+if grep -R -n -E --include='*.java' 'Lnet/minecraft/(client/gui/(Font|GuiGraphics)|world/(item|entity|level)/|server/level/)' "$mixin_root"; then
+    echo 'Mojang-mapped Minecraft descriptor remains in Tideborne mixin source; use the configured Yarn mapping names.' >&2
+    exit 1
+fi
+if grep -R -n -E --include='*.java' 'renderItemDecorations\(' "$mixin_root"; then
+    echo 'Known Mojang-mapped DrawContext selector renderItemDecorations remains in Tideborne mixin source.' >&2
+    exit 1
+fi
+
 python3 - <<'PY'
 import json
 import re
