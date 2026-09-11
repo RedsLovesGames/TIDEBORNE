@@ -4,15 +4,16 @@
   "branch": "agent/p8-legacy-ids",
   "baseline_sha": "94052f905b7c3bda33e9f1b0b3988ebf93dd327f",
   "status": "IN_PROGRESS",
-  "phase": "P8.1",
-  "checkpoint_sequence": 2,
-  "last_product_checkpoint_sha": "68eb805e3ae82f0e0e8011a86261964eeb624e8e",
-  "last_checkpoint_utc": "2026-09-11T02:46:28.728851+00:00",
+  "phase": "P8.2",
+  "checkpoint_sequence": 3,
+  "last_product_checkpoint_sha": "ad56170404172f886fefa885c4c7e5dc9fc88976",
+  "last_checkpoint_utc": "2026-09-11T02:46:29.095041+00:00",
   "completed_phases": [
     "P8.0",
-    "P8.1"
+    "P8.1",
+    "P8.2"
   ],
-  "next_action": "P8.2 network and persistence identity centralization.",
+  "next_action": "P8.3 compatibility and service identity centralization.",
   "blockers": [],
   "validation": {
     "repository_structure": "not_run",
@@ -36,6 +37,7 @@
     "P8 centralizes ownership of historical compatibility IDs; it does not casually rename externally observable values.",
     "GameTests and Minecraft boot tests are not part of the current required validation gate.",
     "Historical namespace families were exhaustively inventoried and classified in the P8 ID ledger.",
-    "Satchel, data-component, Tidebound item, and chum-projectile identities now resolve through LegacyRegistryIds without changing values."
+    "Satchel, data-component, Tidebound item, and chum-projectile identities now resolve through LegacyRegistryIds without changing values.",
+    "Historical payload IDs, journal/discovery persistence keys, and legacy config filenames now resolve through LegacyNetworkIds and LegacyPersistenceIds."
   ]
 }

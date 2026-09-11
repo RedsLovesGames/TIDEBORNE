@@ -3,14 +3,14 @@
 Branch: `agent/p8-legacy-ids`  
 Baseline: `94052f905b7c3bda33e9f1b0b3988ebf93dd327f`  
 Status: **IN_PROGRESS**  
-Phase: **P8.1**  
-Checkpoint sequence: **2**  
-Last safe product SHA: `68eb805e3ae82f0e0e8011a86261964eeb624e8e`  
-Last checkpoint UTC: `2026-09-11T02:46:28.728851+00:00`
+Phase: **P8.2**  
+Checkpoint sequence: **3**  
+Last safe product SHA: `ad56170404172f886fefa885c4c7e5dc9fc88976`  
+Last checkpoint UTC: `2026-09-11T02:46:29.095041+00:00`
 
 ## Exact next action
 
-P8.2 network and persistence identity centralization.
+P8.3 compatibility and service identity centralization.
 
 ## Blockers
 
