@@ -2,11 +2,11 @@
 package com.redslovesgames.tideborne.registry;
 
 import com.mojang.serialization.Codec;
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyRegistryIds;
 import net.minecraft.component.ComponentType;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
 
 public final class TideTraitsComponents {
    public static final ComponentType<String> MUTATION=register("mutation",ComponentType.<String>builder().codec(Codec.STRING).packetCodec(PacketCodecs.STRING).build());
@@ -32,5 +32,5 @@ public final class TideTraitsComponents {
    public static final ComponentType<Boolean> SPECIMEN_PERFECT_CATCH=register("specimen_perfect_catch",ComponentType.<Boolean>builder().codec(Codec.BOOL).packetCodec(PacketCodecs.BOOL).build());
    public static final ComponentType<Double> SPECIMEN_RAW_FISH_SCORE=register("specimen_raw_fish_score",ComponentType.<Double>builder().codec(Codec.DOUBLE).packetCodec(PacketCodecs.DOUBLE).build());
    public static final ComponentType<Integer> SPECIMEN_FISH_SCORE=register("specimen_fish_score",ComponentType.<Integer>builder().codec(Codec.INT).packetCodec(PacketCodecs.VAR_INT).build());
-   private TideTraitsComponents(){} public static void init(){} private static <T> ComponentType<T> register(String p,ComponentType<T> t){return Registry.register(Registries.DATA_COMPONENT_TYPE,Identifier.of("tide_traits",p),t);}
+   private TideTraitsComponents(){} public static void init(){} private static <T> ComponentType<T> register(String p,ComponentType<T> t){return Registry.register(Registries.DATA_COMPONENT_TYPE,LegacyRegistryIds.tideTraitsComponent(p),t);}
 }
