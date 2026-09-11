@@ -5,12 +5,13 @@ import com.li64.tide.registries.items.FishingHookItem;
 import com.li64.tide.registries.items.FishingLineItem;
 import com.li64.tide.registries.items.TideFishingRodItem;
 import com.redslovesgames.tideborne.ecosystem.ChumBucketItem;
-import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import com.redslovesgames.tideborne.fishing.gear.KujiraBoneFishingRodItem;
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyRegistryIds;
 import net.minecraft.item.Item;
 import net.minecraft.item.Item.Settings;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
 
 public final class TideboundItems {
    public static final Item TENTACLE_LINE=new FishingLineItem(new Settings().maxCount(1),"item.tidebound_compatibility.tentacle_line.desc");
@@ -25,6 +26,19 @@ public final class TideboundItems {
    public static final Item DIAMOND_LEADER=new FishingLineItem(new Settings().maxCount(1),"item.tidebound_compatibility.diamond_leader.desc");
    public static final Item SHARK_TOOTH=new Item(new Settings()); public static final Item SHARK_TOOTH_HOOK=new FishingHookItem(new Settings().maxCount(1),"item.tidebound_compatibility.shark_tooth_hook.desc");
    private TideboundItems(){}
-   public static void register(){register("tentacle_line",TENTACLE_LINE);register("seafarers_hook",SEAFARERS_HOOK);register("swift_line",SWIFT_LINE);register("kujira_bone_fishing_rod",KUJIRA_BONE_FISHING_ROD);register("leviathan_bait",LEVIATHAN_BAIT);register("chum_bucket",CHUM_BUCKET);register("copper_leader",COPPER_LEADER);register("steel_leader",IRON_LEADER);register("gold_leader",GOLD_LEADER);register("diamond_leader",DIAMOND_LEADER);register("shark_tooth",SHARK_TOOTH);register("shark_tooth_hook",SHARK_TOOTH_HOOK);}
-   private static void register(String p,Item i){Registry.register(Registries.ITEM,FishingGameplayInitializer.id(p),i);}
+   public static void register(){
+      register(LegacyRegistryIds.TENTACLE_LINE,TENTACLE_LINE);
+      register(LegacyRegistryIds.SEAFARERS_HOOK,SEAFARERS_HOOK);
+      register(LegacyRegistryIds.SWIFT_LINE,SWIFT_LINE);
+      register(LegacyRegistryIds.KUJIRA_BONE_FISHING_ROD,KUJIRA_BONE_FISHING_ROD);
+      register(LegacyRegistryIds.LEVIATHAN_BAIT,LEVIATHAN_BAIT);
+      register(LegacyRegistryIds.CHUM_BUCKET,CHUM_BUCKET);
+      register(LegacyRegistryIds.COPPER_LEADER,COPPER_LEADER);
+      register(LegacyRegistryIds.STEEL_LEADER,IRON_LEADER);
+      register(LegacyRegistryIds.GOLD_LEADER,GOLD_LEADER);
+      register(LegacyRegistryIds.DIAMOND_LEADER,DIAMOND_LEADER);
+      register(LegacyRegistryIds.SHARK_TOOTH,SHARK_TOOTH);
+      register(LegacyRegistryIds.SHARK_TOOTH_HOOK,SHARK_TOOTH_HOOK);
+   }
+   private static void register(Identifier id,Item item){Registry.register(Registries.ITEM,id,item);}
 }
