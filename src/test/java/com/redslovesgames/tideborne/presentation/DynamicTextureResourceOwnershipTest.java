@@ -30,9 +30,11 @@ class DynamicTextureResourceOwnershipTest {
     }
 
     @Test
-    void externallyVisibleHistoricalReloadIdentityIsPreserved() throws IOException {
+    void externallyVisibleHistoricalReloadIdentityIsPreservedByLegacyOwner() throws IOException {
         String rendering = Files.readString(RENDERING);
         assertTrue(rendering.contains(
-                "private static final Identifier RELOAD_LISTENER_ID = Identifier.of(\"tide_traits\", \"mutation_textures\");"));
+                "private static final Identifier RELOAD_LISTENER_ID = LegacyServiceIds.MUTATION_TEXTURES_RELOAD_LISTENER;"));
+        assertFalse(rendering.contains(
+                "Identifier.of(\"tide_traits\", \"mutation_textures\")"));
     }
 }
