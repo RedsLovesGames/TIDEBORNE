@@ -17,9 +17,8 @@ import com.redslovesgames.tideborne.satchel.AnglersSatchelStorage;
 import com.redslovesgames.tideborne.satchel.SatchelAutomaticProtection;
 import com.redslovesgames.tideborne.satchel.SatchelFeature;
 import com.redslovesgames.tideborne.satchel.SatchelService;
+import com.redslovesgames.tideborne.satchel.SatchelSorting;
 import com.redslovesgames.tideborne.satchel.SatchelState;
-import com.redslovesgames.tideborne.satchel.SatchelTraitSortData;
-import com.redslovesgames.tideborne.satchel.TideSatchelSortMetadataResolver;
 import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
 import com.redslovesgames.tideborne.fishing.specimen.legacy.TraitAxesRuntime;
 import java.util.List;
@@ -161,15 +160,15 @@ public abstract class TideFishingHookMixin {
       if (state.isFeatureUnlocked(SatchelFeature.TACKLE_ORGANIZER)
          && state.isFeatureEnabled(SatchelFeature.TACKLE_ORGANIZER)
          && !state.sortConfiguration().rules().isEmpty()) {
-         AnglersSatchelStorage.sort(satchel, state.sortConfiguration(), new TideSatchelSortMetadataResolver(this::tideTraits$sortTraits));
+         AnglersSatchelStorage.sort(satchel, state.sortConfiguration(), new SatchelSorting.TideMetadataResolver(this::tideTraits$sortTraits));
       }
    }
 
    @Unique
-   private SatchelTraitSortData tideTraits$sortTraits(ItemStack stack) {
+   private SatchelSorting.TraitData tideTraits$sortTraits(ItemStack stack) {
       String id = TraitAxesRuntime.condition(stack);
-      double probability = FishMutation.bySerializedName(id).map(CatchTraitService.INSTANCE.config()::probability).orElse(1.7976931348623157E308);
-      return new SatchelTraitSortData(
+      double probability = FishMutation.bySerializedName(id).map(CatchTraitService.INSTANCE.config()::probability).orElse(Double.MAX_VALUE);
+      return new SatchelSorting.TraitData(
          id,
          probability,
          (Double)stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0),
