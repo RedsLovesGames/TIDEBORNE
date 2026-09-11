@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(DrawContext.class)
 public abstract class GuiGraphicsMixin {
-   @Inject(method = "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V", at = @At("TAIL"))
+   @Inject(method = "drawItemInSlot(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;IILjava/lang/String;)V", at = @At("TAIL"))
    private void tideTeamJournal$renderRecordBadges(TextRenderer font, ItemStack stack, int x, int y, String countText, CallbackInfo callbackInfo) {
       if (ClientConfig.get().showRecordBadges && ClientServerSettings.recordBadgesEnabled) {
          ClientRecordFishMarkers.Status status = ClientRecordFishMarkers.get(stack);
