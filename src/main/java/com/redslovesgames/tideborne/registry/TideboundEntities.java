@@ -6,7 +6,7 @@
 package com.redslovesgames.tideborne.registry;
 
 import com.redslovesgames.tideborne.ecosystem.ChumProjectileEntity;
-import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyRegistryIds;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registry;
@@ -16,7 +16,7 @@ import net.minecraft.entity.EntityType.Builder;
 public final class TideboundEntities {
    public static final EntityType<ChumProjectileEntity> CHUM_PROJECTILE = (EntityType<ChumProjectileEntity>)Registry.register(
       Registries.ENTITY_TYPE,
-      FishingGameplayInitializer.id("chum_projectile"),
+      LegacyRegistryIds.CHUM_PROJECTILE,
       Builder.<ChumProjectileEntity>create(ChumProjectileEntity::new, SpawnGroup.MISC).dimensions(0.25F, 0.25F).maxTrackingRange(4).trackingTickInterval(10).build()
    );
 
