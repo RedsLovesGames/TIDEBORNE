@@ -190,7 +190,7 @@ public final class AnglersSatchelStorage {
    }
 
    public static AnglersSatchelStorage.SortStatus sort(
-      ItemStack satchel, SatchelSortConfiguration configuration, Function<ItemStack, SatchelSortDescriptor> descriptorResolver
+      ItemStack satchel, SatchelSortConfiguration configuration, Function<ItemStack, SatchelSorting.Descriptor> descriptorResolver
    ) {
       if (!SatchelRegistration.isAnglersSatchel(satchel)) {
          return AnglersSatchelStorage.SortStatus.INVALID_SATCHEL;
@@ -202,8 +202,8 @@ public final class AnglersSatchelStorage {
       }
 
       List<ItemStack> current = contents(satchel);
-      List<SatchelSorter.IndexedValue<ItemStack>> sorted = SatchelSorter.sortedEntries(current, configuration, descriptorResolver);
-      List<ItemStack> updated = sorted.stream().map(SatchelSorter.IndexedValue::value).toList();
+      List<SatchelSorting.IndexedValue<ItemStack>> sorted = SatchelSorting.sortedEntries(current, configuration, descriptorResolver);
+      List<ItemStack> updated = sorted.stream().map(SatchelSorting.IndexedValue::value).toList();
       Set<Integer> oldProtected = beforeState.protectedSlots();
       TreeSet<Integer> remappedProtected = new TreeSet<>();
 

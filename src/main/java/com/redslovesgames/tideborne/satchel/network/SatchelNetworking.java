@@ -22,9 +22,8 @@ import com.redslovesgames.tideborne.satchel.SatchelService;
 import com.redslovesgames.tideborne.satchel.SatchelSortConfiguration;
 import com.redslovesgames.tideborne.satchel.SatchelSortKey;
 import com.redslovesgames.tideborne.satchel.SatchelSortRule;
+import com.redslovesgames.tideborne.satchel.SatchelSorting;
 import com.redslovesgames.tideborne.satchel.SatchelState;
-import com.redslovesgames.tideborne.satchel.SatchelTraitSortData;
-import com.redslovesgames.tideborne.satchel.TideSatchelSortMetadataResolver;
 import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
 import com.redslovesgames.tideborne.fishing.specimen.legacy.TraitAxesRuntime;
 import java.util.ArrayList;
@@ -194,7 +193,7 @@ public final class SatchelNetworking {
       }
 
       AnglersSatchelStorage.SortStatus sortStatus = AnglersSatchelStorage.sort(
-         session.stack, configuration.get(), new TideSatchelSortMetadataResolver(SatchelNetworking::traitSortData)
+         session.stack, configuration.get(), new SatchelSorting.TideMetadataResolver(SatchelNetworking::traitSortData)
       );
 
       return switch (sortStatus) {
@@ -287,12 +286,12 @@ public final class SatchelNetworking {
       return status(SatchelNetworkStatus.SUCCESS);
    }
 
-   private static SatchelTraitSortData traitSortData(ItemStack stack) {
+   private static SatchelSorting.TraitData traitSortData(ItemStack stack) {
       String mutationId = TraitAxesRuntime.condition(stack);
       double probability = FishMutation.bySerializedName(mutationId)
          .map(TideTraitsConfigManager.current().mutations()::probability)
          .orElse(1.7976931348623157E308);
-      return new SatchelTraitSortData(
+      return new SatchelSorting.TraitData(
          mutationId,
          probability,
          (Double)stack.getOrDefault(TideTraitsComponents.SIZE_PERCENTILE, -1.0),
