@@ -33,6 +33,36 @@ Open reconstruction reports, historical stage reports, migration audits, old bal
 
 Historical documents are evidence and recovery material, not a competing source of current implementation instructions.
 
+## Minimal-diff agent discipline
+
+Tideborne uses a project-safe adaptation of the Ponytail "lazy senior developer" discipline from `DietrichGebert/ponytail`: be efficient, never careless. The best new code is code that does not need to exist.
+
+After understanding the task and tracing the real flow, stop at the first option that fully solves it:
+
+1. Do we need a change at all?
+2. Does Tideborne already have the needed owner/helper/pattern? Reuse it.
+3. Does Java's standard library already solve it cleanly?
+4. Does Fabric, Minecraft, or Tide already own the behavior?
+5. Does an already-installed dependency solve it without creating a worse boundary?
+6. Can the existing code be simplified or reused instead of adding another layer?
+7. Only then add the smallest implementation that completely satisfies the task.
+
+This is a minimization rule, not permission to cut correctness. Never remove or weaken validation at trust boundaries, persistence/data-loss safeguards, server authority, compatibility behavior, security, accessibility, or required error handling just to reduce line count.
+
+For bug fixes, find the root owner before patching the visible symptom. Inspect the callers/consumers of the behavior you change and prefer one correct shared fix over copies at individual call sites.
+
+Use surgical diffs:
+
+- touch only lines/files that trace directly to the assigned task;
+- do not reformat, rename, "improve," or delete adjacent unrelated code while passing through it;
+- remove imports/variables/helpers that your own change makes dead, not unrelated pre-existing debt;
+- if unrelated cleanup is discovered, report it for the appropriate cleanup task rather than silently expanding scope;
+- do not add abstractions, wrappers, factories, managers, helpers, or dependencies unless the task actually needs them;
+- prefer boring existing patterns over clever new ones;
+- do not golf code into a less readable or less robust form merely because it is shorter.
+
+Every non-trivial behavior change should leave the smallest runnable automated check that proves the changed behavior under Tideborne's validation routing below. Do not create a new testing framework or runtime harness just to satisfy this rule.
+
 ## Current architecture rules
 
 Fishing System 2.0 is already implemented. Do not create a parallel replacement architecture unless an existing boundary is proven insufficient.
