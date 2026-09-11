@@ -7,6 +7,7 @@ package com.redslovesgames.tideborne.satchel;
 
 import com.li64.tide.data.item.SatchelContents;
 import com.li64.tide.data.item.TideDataComponents;
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyRegistryIds;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registry;
@@ -18,8 +19,8 @@ import net.minecraft.component.ComponentType;
 import net.minecraft.item.Item.Settings;
 
 public final class SatchelRegistration {
-   public static final Identifier STATE_ID = id("satchel_state");
-   public static final Identifier ANGLERS_SATCHEL_ID = id("anglers_satchel");
+   public static final Identifier STATE_ID = LegacyRegistryIds.SATCHEL_STATE;
+   public static final Identifier ANGLERS_SATCHEL_ID = LegacyRegistryIds.ANGLERS_SATCHEL;
    public static final ComponentType<NbtCompound> SATCHEL_STATE = (ComponentType<NbtCompound>)Registry.register(
       Registries.DATA_COMPONENT_TYPE, STATE_ID, ComponentType.<NbtCompound>builder().codec(NbtCompound.CODEC).packetCodec(PacketCodecs.NBT_COMPOUND).build()
    );
@@ -43,9 +44,5 @@ public final class SatchelRegistration {
 
    public static boolean isAnglersSatchel(ItemStack stack) {
       return stack != null && !stack.isEmpty() && stack.isOf(ANGLERS_SATCHEL);
-   }
-
-   private static Identifier id(String path) {
-      return Identifier.of("tide_traits", path);
    }
 }
