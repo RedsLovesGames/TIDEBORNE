@@ -1,10 +1,10 @@
 # Tideborne post-2.0 backlog
 
-Updated: 2026-09-08
+Updated: 2026-09-11
 
-Fishing System 2.0 implementation, recovery tooling, integration polish, canonical gear identity, the dedicated Tideborne creative tab, Stage 64 record/balance work, release-versioning correction, canonical internal fishing API, canonical specimen presentation migration, Tide-targeting mixin inventory, focused Tide mixin reduction, the legacy/package cleanup pass, and the existing Fishing System 2.0 gear-path audit are complete on `dev`.
+Fishing System 2.0 implementation, recovery tooling, integration polish, canonical gear identity, the dedicated Tideborne creative tab, Stage 64 record/balance work, release-versioning correction, canonical internal fishing API, canonical specimen presentation migration, Tide-targeting mixin inventory, focused Tide mixin reduction, the legacy/package cleanup pass, the existing Fishing System 2.0 gear-path audit, the P1-P8 architecture sequence, and the P9 final architecture audit are complete on `dev` or its validated final-audit integration branch as applicable.
 
-The authoritative current state is documented in `docs/CURRENT_STATE.md`.
+The authoritative current state is documented in `docs/CURRENT_STATE.md`; the final integrated architecture evidence is recorded in `.github/TIDEBORNE_P9_AUDIT_LEDGER.md`.
 
 ## Fishing System 2.0
 
@@ -41,8 +41,9 @@ The authoritative current state is documented in `docs/CURRENT_STATE.md`.
 - [x] Inventory all active Tide-targeting mixins, separate Tide coupling from vanilla/Tideborne-owned/optional compatibility hooks, classify fragility, and document the genuinely version-sensitive remainder in `docs/TIDE_MIXIN_INVENTORY.md`.
 - [x] Replace or consolidate avoidable Tide mixins using stable Tideborne-owned/shared integration paths where behavior can be preserved. Journal specimen sync now uses a Tideborne-owned payload, Team Journal catch bookkeeping is centralized in `TeamJournalCatchBridge`, and the remaining Tide hooks are explicitly version-sensitive adapters.
 - [x] Remove high-confidence dead legacy implementation while preserving required migration reads, remove the obsolete FishScore self-mixin and inactive Satchel mixin source, then unify active Java ownership under `com.redslovesgames.tideborne` while preserving serialized compatibility identities. See `docs/ARCHITECTURE.md`.
+- [x] Complete P1-P8 ownership consolidation and P9 final audit: unified Tideborne entrypoints/config, explicit canonical-vs-legacy specimen boundaries, feature-owned fishing gear/Tide/ecosystem runtime, P7 resource aliases, P8 historical ID owners, consolidated Satchel ownership, and final architecture regression evidence. See `.github/TIDEBORNE_P9_AUDIT_LEDGER.md`.
 
-The architecture sequence is now complete. Future cleanup should follow the unified Tideborne feature ownership established by the internal API, canonical presentation layer, mixin inventory, and shared integration services. Serialized namespace/resource migration remains separate work and is not implied by Java package ownership.
+The architecture sequence is now complete. Future cleanup should follow the unified Tideborne feature ownership established by the internal API, canonical presentation layer, mixin inventory, shared integration services, and P9 audit ledger. Serialized namespace/resource migration remains separate work and is not implied by Java package ownership.
 
 - [x] Finish behavior-preserving cleanup B01-B15 in [CODE_CLEANUP_QUEUE.md](CODE_CLEANUP_QUEUE.md): direct canonical TeamProgress ownership, shared physical record tolerance, immutable gear contribution reuse, touched-code readability and contract tests. Final Java 21 build and 78 core GameTests pass; manual Minecraft visual/multiplayer checks remain the documented handoff.
 
