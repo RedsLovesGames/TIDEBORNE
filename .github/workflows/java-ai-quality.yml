@@ -1,0 +1,222 @@
+name: Tideborne Java + AI Quality Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'src/main/java/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'qodana.yaml'
+      - 'scripts/quality_gate.py'
+      - '.github/pmd/**'
+      - '.github/semgrep/**'
+      - '.github/workflows/java-ai-quality.yml'
+  push:
+    branches:
+      - dev
+      - 'agent/**'
+    paths:
+      - 'src/main/java/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'qodana.yaml'
+      - 'scripts/quality_gate.py'
+      - '.github/pmd/**'
+      - '.github/semgrep/**'
+      - '.github/workflows/java-ai-quality.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: tideborne-java-ai-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deterministic:
+    name: PMD + CPD + Semgrep delta
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout pull-request head
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Checkout branch
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Resolve delta baseline
+        id: base
+        run: python3 scripts/quality_gate.py resolve-base --default-branch dev
+
+      - name: Run PMD
+        id: pmd
+        uses: pmd/pmd-github-action@v2
+        with:
+          version: '7.27.0'
+          sourcePath: 'src/main/java'
+          rulesets: '.github/pmd/tideborne-ruleset.xml'
+          analyzeModifiedFilesOnly: false
+          createGitHubAnnotations: false
+          uploadSarifReport: false
+
+      - name: Run PMD CPD
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/quality-gate
+          docker run --rm \
+            -v "$PWD:/src" \
+            pmdcode/pmd:7.27.0 \
+            cpd \
+            --minimum-tokens 90 \
+            --language java \
+            --dir /src/src/main/java \
+            --format xml \
+            --no-fail-on-violation \
+            > build/quality-gate/cpd.xml
+
+      - name: Install Semgrep CE
+        run: python3 -m pip install --disable-pip-version-check 'semgrep==1.176.0'
+
+      - name: Run Tideborne Semgrep delta rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          semgrep scan \
+            --config .github/semgrep/tideborne-ai.yml \
+            --baseline-commit "${{ steps.base.outputs.sha }}" \
+            --sarif-output build/quality-gate/semgrep.sarif \
+            --metrics=off \
+            src/main/java
+
+      - name: Aggregate changed-line quality gate
+        run: |
+          python3 scripts/quality_gate.py analyze \
+            --base "${{ steps.base.outputs.sha }}" \
+            --pmd pmd-report.sarif \
+            --cpd build/quality-gate/cpd.xml \
+            --semgrep build/quality-gate/semgrep.sarif \
+            --json build/quality-gate/report.json \
+            --markdown build/quality-gate/report.md
+
+      - name: Publish deterministic summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f build/quality-gate/report.md ]]; then
+            cat build/quality-gate/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Tideborne deterministic quality gate" >> "$GITHUB_STEP_SUMMARY"
+            echo "Report generation did not complete; inspect the failed analyzer step." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload deterministic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tideborne-quality-report
+          path: |
+            pmd-report.sarif
+            build/quality-gate/cpd.xml
+            build/quality-gate/semgrep.sarif
+            build/quality-gate/report.json
+            build/quality-gate/report.md
+          if-no-files-found: warn
+          retention-days: 14
+
+  qodana:
+    name: Qodana JVM delta
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout pull-request head
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Checkout branch
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Resolve delta baseline
+        id: base
+        run: python3 scripts/quality_gate.py resolve-base --default-branch dev
+
+      - name: Fetch exact external compile dependencies
+        run: bash scripts/fetch_ci_dependencies.sh
+
+      - name: Qodana Community JVM changed-code gate
+        uses: JetBrains/qodana-action@v2026.2
+        with:
+          args: >-
+            --linter qodana-jvm-community
+            --within-docker false
+            --diff-start ${{ steps.base.outputs.sha }}
+          pr-mode: false
+          post-pr-comment: false
+          upload-result: true
+          artifact-name: qodana-delta-report
+          use-annotations: true
+
+  quality-gate:
+    name: Java / AI quality gate
+    if: always()
+    needs:
+      - deterministic
+      - qodana
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enforce component results
+        shell: bash
+        env:
+          DETERMINISTIC_RESULT: ${{ needs.deterministic.result }}
+          QODANA_RESULT: ${{ needs.qodana.result }}
+        run: |
+          {
+            echo "## Tideborne Java / AI quality gate"
+            echo ""
+            echo "- PMD + CPD + Semgrep: \`${DETERMINISTIC_RESULT}\`"
+            echo "- Qodana JVM: \`${QODANA_RESULT}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "$DETERMINISTIC_RESULT" != "success" || "$QODANA_RESULT" != "success" ]]; then
+            echo "Quality gate failed. Read the component summary/artifacts and fix only new-code findings." >&2
+            exit 1
+          fi

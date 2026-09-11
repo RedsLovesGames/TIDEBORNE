@@ -1,0 +1,64 @@
+rules:
+  - id: tideborne.raw-historical-namespace-literal
+    message: Historical Tideborne namespace literals must be owned by migration.legacy.ids; reference the explicit compatibility owner instead of creating a new raw literal.
+    languages: [java]
+    severity: ERROR
+    paths:
+      include:
+        - src/main/java/**
+      exclude:
+        - src/main/java/com/redslovesgames/tideborne/migration/legacy/ids/**
+    pattern-regex: '"(?:tide_traits|tide_team_journal|tidebound_compatibility)(?::[^"]*)?"'
+
+  - id: tideborne.forbidden-historical-package
+    message: Historical internal Java package ownership must not be reintroduced.
+    languages: [java]
+    severity: ERROR
+    pattern-regex: '(?m)^\s*(?:package|import)\s+com\.redslovesgames\.(?:tidetraits|tideteamjournal|tideboundcompatibility)(?:\.|;)'
+
+  - id: tideborne.forbidden-fishing-v2-package
+    message: Fishing System 2 is canonical; do not reintroduce the fishing.v2 package boundary.
+    languages: [java]
+    severity: ERROR
+    pattern-regex: '(?m)^\s*(?:package|import)\s+com\.redslovesgames\.tideborne\.fishing\.v2(?:\.|;)'
+
+  - id: tideborne.empty-catch
+    message: Empty catch blocks silently discard failures. Handle, propagate, or explicitly document/suppress a proven compatibility exception.
+    languages: [java]
+    severity: ERROR
+    pattern: |
+      try {
+        ...
+      } catch ($T $E) {
+      }
+
+  - id: tideborne.log-only-catch
+    message: Catch-and-log-only recovery hides failure from the caller. Propagate, recover explicitly, or suppress this rule with a concrete compatibility reason.
+    languages: [java]
+    severity: WARNING
+    patterns:
+      - pattern: |
+          try {
+            ...
+          } catch ($T $E) {
+            $LOG.$METHOD(...);
+          }
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: '^(trace|debug|info|warn|error|log)$'
+
+  - id: tideborne.print-stacktrace
+    message: Do not leave printStackTrace debugging in production Java; use the owned logger/error path.
+    languages: [java]
+    severity: WARNING
+    pattern: $E.printStackTrace(...)
+
+  - id: tideborne.system-stream-debug
+    message: Do not leave System.out/System.err debugging in production Java; use Tideborne logging or the intended command/UI surface.
+    languages: [java]
+    severity: WARNING
+    pattern-either:
+      - pattern: System.out.print(...)
+      - pattern: System.out.println(...)
+      - pattern: System.err.print(...)
+      - pattern: System.err.println(...)
