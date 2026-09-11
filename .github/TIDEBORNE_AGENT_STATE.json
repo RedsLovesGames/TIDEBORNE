@@ -5,27 +5,28 @@
   "baseline_sha": "b2ea30d927c4bae15f2e9ccbdc48b61331ead9f4",
   "optimization_seed_sha": "053f14f17404d9ae41aeefa095116a6690d19bc2",
   "status": "IN_PROGRESS",
-  "phase": "P7.5",
-  "checkpoint_sequence": 6,
-  "last_product_checkpoint_sha": "e31b4cebdd0533bfbfd7ca181b7c73c356621b38",
-  "last_checkpoint_utc": "2026-09-10T23:50:00+00:00",
+  "phase": "P7.6",
+  "checkpoint_sequence": 7,
+  "last_product_checkpoint_sha": "dcc866630251ae47a25db1ca698e8a3e7e417b8f",
+  "last_checkpoint_utc": "2026-09-11T00:01:00+00:00",
   "completed_phases": [
     "P7.0",
     "P7.1",
     "P7.2",
     "P7.3",
-    "P7.4"
+    "P7.4",
+    "P7.5"
   ],
-  "next_action": "Audit every remaining historical resource namespace and alias after the P7.1-P7.4 migrations, remove only aliases proven unnecessary, and preserve all externally persisted, datapack, network, upstream, and optional-integration identities required for compatibility.",
+  "next_action": "Run P7.6 full validation and closure: final repository/resource audit, Java 21 clean build, complete unit/architecture suite, production artifact validation and hash, dedicated-server-safe optional compatibility review, branch ancestry check, and final P7 state closure without merging.",
   "blockers": [],
   "validation": {
-    "repository_structure": "pass_connector_inventory",
+    "repository_structure": "pass_p7_5_compatibility_alias_inventory",
     "java21_clean_build": "pass_p7_4_full_clean_build",
-    "unit_architecture_tests": "pass_p7_4_full_build_and_tests_exact_dependencies",
-    "resource_paths_translations": "pass_p7_3_java_resource_identifier_boundary_and_dynamic_texture_ownership",
+    "unit_architecture_tests": "pass_p7_5_compatibility_data_and_gear_focused_tests_java21_exact_dependencies",
+    "resource_paths_translations": "pass_p7_5_alias_only_historical_resource_boundary",
     "mixin_refmap_metadata": "pass_p7_4_canonical_configs_generated_tideborne_refmap_and_apex_only_refmap",
-    "optional_compatibility_safety": "pass_p7_4_optional_apex_boundary_and_historical_provides_preserved",
-    "release_artifact": "pass_p7_4_tideborne_2_0_1_sha256_589058fc53bfff7019ac9264e1f258e3b31e0091999a233858fffb2b4c56c402"
+    "optional_compatibility_safety": "pass_p7_5_retained_alias_foreign_namespace_and_historical_provides_boundary",
+    "release_artifact": "pass_p7_5_tideborne_2_0_1_sha256_dd381588cb2d97cdb0315a6fe5a00cb5fa57a57dee2ae271990374f76db083eb"
   },
   "phase_plan": [
     "P7.0 inventory_and_classification",
@@ -57,6 +58,11 @@
     "P7.4 removed the two stale historical general refmaps. Fabric Loom now generates tideborne-refmap.json for current Tideborne mixins during remap packaging; its validated production map contained 26 current-package mixin entries. The optional compile-only Apex target remains isolated in source as tideborne.apex.refmap.json with only GreatWhiteSharkMixin.registerGoals.",
     "P7.4 updated fabric.mod.json, affected architecture/source-safety tests, and scripts/validate_release_artifact.sh atomically. Historical fabric.mod.json provides aliases tide_traits, tide_team_journal, and tidebound_compatibility were deliberately preserved.",
     "P7.4 repository validation reported Tideborne 2.0.1 with 254 top-level types, 18 registered GameTest classes, and all mixins and entrypoints resolved. The full Java 21 clean build and complete test suite passed with exact pinned dependencies.",
-    "P7.4 production artifact validation passed for build/libs/tideborne-2.0.1.jar with SHA-256 589058fc53bfff7019ac9264e1f258e3b31e0091999a233858fffb2b4c56c402. All temporary P7.4 audit, diagnostic, and validation workflows were removed before the product commit."
+    "P7.4 production artifact validation passed for build/libs/tideborne-2.0.1.jar with SHA-256 589058fc53bfff7019ac9264e1f258e3b31e0091999a233858fffb2b4c56c402. All temporary P7.4 audit, diagnostic, and validation workflows were removed before the product commit.",
+    "P7.5 product commit dcc866630251ae47a25db1ca698e8a3e7e417b8f documented the complete compatibility alias boundary in .github/TIDEBORNE_P7_COMPATIBILITY_ALIASES.md and added CompatibilityAliasOwnershipTest.",
+    "P7.5 confirmed that retained tide_traits resources are limited to four Satchel model aliases, item/tag translations, one historical recipe, eight public exclusion tags, the published diagnostic function alias, and the Fabric provides alias; retained tidebound_compatibility resources are limited to thirteen historical item models, item/tag translations, eleven recipes, eight public/integration tags, and the Fabric provides alias. No tide_team_journal asset or data resource tree remains.",
+    "The first P7.5 validation attempt correctly found that TIDE_TRAITS_LITERAL_OVERLAY_V3.txt explicitly advertised /function tide_traits:test_tuna_mutations. Rather than deleting a published command surface, P7.5 moved the seven-line diagnostic implementation to data/tideborne/function/test_tuna_mutations.mcfunction and retained data/tide_traits/function/test_tuna_mutations.mcfunction as the exact one-line forwarding alias 'function tideborne:test_tuna_mutations'. Historical mutation component IDs inside the diagnostic remain unchanged.",
+    "CompatibilityAliasOwnershipTest, DataResourceOwnershipTest, and FishingGearRegistryTest passed under Java 21 with exact pinned dependencies. remapJar succeeded, the packaged JAR contained both the canonical diagnostic and historical forwarding alias, and release-artifact validation passed for Tideborne 2.0.1 with SHA-256 dd381588cb2d97cdb0315a6fe5a00cb5fa57a57dee2ae271990374f76db083eb.",
+    "P7.5 preserved all historical Fabric provides aliases, persisted registry/component/network/save identities, externally addressable recipe and tag IDs, upstream Tide resource extensions, optional Myths integration resources, and data/c plus data/minecraft extension points. All temporary P7.5 validation files were removed before the product commit."
   ]
 }
