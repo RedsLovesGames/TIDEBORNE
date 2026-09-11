@@ -11,7 +11,7 @@
   <rule ref="category/java/errorprone.xml/EmptyCatchBlock"/>
   <rule ref="category/java/errorprone.xml/BrokenNullCheck"/>
   <rule ref="category/java/errorprone.xml/CompareObjectsWithEquals"/>
-  <rule ref="category/java/errorprone.xml/EmptyControlStatement"/>
+  <rule ref="category/java/codestyle.xml/EmptyControlStatement"/>
   <rule ref="category/java/errorprone.xml/ReturnFromFinallyBlock"/>
 
   <rule ref="category/java/bestpractices.xml/PreserveStackTrace"/>
