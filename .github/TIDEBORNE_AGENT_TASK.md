@@ -1,142 +1,112 @@
-# Tideborne Agent Task — P8 Historical ID Centralization
+# Tideborne Agent Task — P9 Final Architecture Audit
 
 Repository: `https://github.com/RedsLovesGames/TIDEBORNE`
-Assigned branch: `agent/p8-legacy-ids`
+Assigned branch: `agent/p9-final-audit`
 Model: GPT-5.6 Sol High
 
-Work ONLY on this branch. Never modify/push/merge/rebase/retarget/force-update `main`, `dev`, or another worker branch.
+Work ONLY on this branch. Never modify, push, merge, rebase, retarget, or force-update `main`, `dev`, or another worker branch.
 
 ## Start / continuation fast path
 
 1. Read `.github/TIDEBORNE_AGENT_PROMPTS.md` from `main` once.
-2. Run `python3 scripts/p8_agent.py report`.
-3. Read only these branch-local files before coding:
+2. Run `python3 scripts/p9_agent.py report`.
+3. Read only:
    - `.github/TIDEBORNE_AGENT_STATE.json`
    - `.github/TIDEBORNE_AGENT_HANDOFF.md`
-   - `.github/TIDEBORNE_P8_CONTEXT.md`
-   - `.github/TIDEBORNE_P8_ID_LEDGER.md`
-4. Follow `next_action` from the state file. Do NOT restart the whole audit in a continuation chat.
+   - `.github/TIDEBORNE_P9_CONTEXT.md`
+   - `.github/TIDEBORNE_P9_AUDIT_LEDGER.md`
+4. Follow `next_action` exactly. Do not restart the full audit in a continuation chat.
+5. Pull P7/P8 ledgers or subsystem docs only when the active phase needs their evidence.
 
-If a chat/tool budget is getting low, stop broad exploration. Finish the smallest coherent edit, validate it, commit the product change, then run the checkpoint command described below so another chat can resume exactly.
+If chat/tool budget is getting low: stop broad exploration, finish the smallest coherent edit, validate it, commit the product change, then checkpoint so another chat can resume exactly.
 
 ## Dependency gate
 
-P1–P7 are integrated into the baseline from which this branch was created.
+All architecture workers P1–P8, including the replacement P4 consolidation worker, are integrated into the baseline.
 
-P8 baseline: `94052f905b7c3bda33e9f1b0b3988ebf93dd327f`
+P9 baseline: `575f7525eb15988a6567e3942627a9021c756b60`
 
-Before product edits verify:
-- this branch descends from that baseline;
-- P7 resource ownership is present;
-- P7 compatibility aliases remain intact;
-- P7 final state was COMPLETE.
+The baseline has already passed:
+- repository validation;
+- Java 21 production compilation on the agent quality gate;
+- PMD + CPD + Semgrep delta analysis;
+- Qodana JVM delta analysis;
+- the combined Java/AI quality gate;
+- the normal `Build Tideborne` workflow including tests and release-artifact validation.
 
-If not, STOP and report the divergence. Never force-update.
+Before product edits, verify this branch still descends from that baseline and `dev` has not moved to an unreviewed architecture baseline. If the dependency baseline has materially diverged, STOP and report it. Never force-update.
 
 ## Goal
 
-Create one explicit, understandable ownership architecture for Tideborne's remaining HISTORICAL/PUBLIC COMPATIBILITY IDENTIFIERS while preserving their externally observable values exactly.
+Perform the FINAL architecture audit of Tideborne after P1–P8. Prove the intended architecture is actually true in the integrated tree, fix only concrete defects found by evidence, reconcile current documentation/tooling with reality, and produce a release-quality closure report.
 
-P8 is primarily a centralization/classification task, NOT an ID migration task.
+P9 is NOT permission for another redesign. Do not rename packages, rewrite subsystems, collapse classes, or migrate IDs merely because another arrangement looks cleaner. Prefer verification over churn and minimum diffs over speculative cleanup.
 
-Canonical current identifiers should remain feature-owned. Historical identifiers that must survive for old worlds, ItemStacks, components, saves, network peers, datapacks, dependency checks, commands, recipes, tags, config compatibility, or published extension points should be owned explicitly as legacy/compatibility identities instead of being scattered as unexplained string literals throughout normal runtime code.
+## Preserve exactly
 
-Preferred conceptual ownership is under `com.redslovesgames.tideborne.migration.legacy` (or a small focused subpackage such as `migration.legacy.ids`). Avoid one giant `LegacyIds` God class when separate small owners are clearer.
+Do not change behavior or external identity without a proven bug and a compatibility-safe reason. Preserve:
+- registry/item/entity/recipe/tag IDs;
+- component IDs, NBT/save keys and persistent-state IDs;
+- payload IDs, wire fields and networking semantics;
+- old-world/item/config migration behavior;
+- Fabric historical dependency aliases and P7 resource aliases;
+- specimen identity, BodyType, Condition, Pigmentation, SpecimenQuality;
+- FishScore, Trait Momentum, RNG behavior/order;
+- commands;
+- Satchel persistence and item conservation;
+- Journal/history/team/Top Fish persistence;
+- fishing gear, Tide bait and balance semantics;
+- optional Apex/Myths behavior and absence safety;
+- client/server ownership and server-authoritative specimen generation.
 
-## Historical namespace families to classify completely
+## Final audit responsibilities
 
-Every production occurrence of these Tideborne-owned historical namespace names must end P8 in one of three states: explicit compatibility owner, intentional resource alias documented by P7, or documented external/upstream reason.
+Verify with evidence:
+- package and ownership architecture;
+- only genuine Tideborne Fabric entrypoints initialize the mod;
+- unified Tideborne config ownership and UI;
+- canonical specimen model vs explicit legacy/migration boundaries;
+- fishing gear / Tide / ecosystem ownership;
+- optional compatibility ownership and absence-safe linkage;
+- Satchel consolidation has no stale symbol/reference leaks;
+- networking and persistence ownership;
+- P7 canonical resources and documented compatibility aliases;
+- P8 historical-ID owners and exact preserved values;
+- mixin responsibilities and client/server boundaries;
+- architecture/source tests are aligned with current ownership;
+- `docs/ARCHITECTURE.md`, `docs/CURRENT_STATE.md`, `docs/TODO.md`, and related current docs describe the actual tree;
+- worker/checkpoint tooling left in the repository is either still useful or explicitly retired without deleting useful audit evidence.
 
-- `tide_traits`
-- `tide_team_journal`
-- `tidebound_compatibility`
+## Known audit hotspots — inspect, do not assume
 
-P7 already established that retained historical resource trees are compatibility aliases. Do NOT redo P7 or move those aliases merely for cosmetic uniformity.
-
-Audit remaining Java/runtime identity families including:
-- Fabric `provides` aliases / historical mod identities
-- item and entity registry IDs
-- data-component IDs
-- payload/network channel IDs
-- persistent-state/save IDs
-- NBT/component/save keys where historical ownership is embedded
-- Journal/team/discovery identifiers
-- Satchel compatibility identifiers
-- specimen compatibility identifiers
-- reload-listener IDs
-- config filenames/compatibility IDs
-- command/function compatibility surfaces
-- public recipe/tag IDs referenced from Java/tests
-- migration lookup aliases
-- optional integration identities
-- tests/scripts/docs that define or verify the above
-
-Do not treat plain historical documentation text as production runtime debt unless it is used as a published compatibility contract.
-
-## Preserve EXACTLY
-
-Do not change externally observable identity values unless a proven compatibility bridge retains the old value and the task explicitly requires a canonical current alias.
-
-Preserve:
-- fish/item/entity/recipe/tag registry IDs
-- component IDs
-- NBT/save keys and persistent-state IDs
-- payload IDs and networking semantics
-- old-world/item migration behavior
-- Fabric historical dependency aliases
-- Satchel persistence/behavior
-- Journal/history/team/Top Fish persistence/behavior
-- specimen identity, BodyType, Condition, Pigmentation, SpecimenQuality
-- FishScore, Trait Momentum, RNG behavior/order
-- commands
-- gear/Tide bait/gameplay balance
-- optional Apex/Myths behavior and absence safety
-- dedicated-server safety
-- server-authoritative specimen generation
-- P7 resource compatibility aliases
-
-A successful P8 may change WHERE an ID constant is defined and HOW code references it. It must not casually change WHAT old external data sees.
-
-## Target architecture
-
-Prefer:
-- feature-owned constants for canonical current IDs;
-- focused legacy compatibility owners for historical IDs;
-- explicit names such as `LegacyNamespaces`, `LegacyRegistryIds`, `LegacyNetworkIds`, `LegacyPersistenceIds`, or smaller feature-specific equivalents when useful;
-- helper methods only when they remove repeated compatibility logic, not just to hide strings;
-- comments only where the compatibility reason is non-obvious;
-- tests that make accidental historical-ID changes fail loudly.
-
-Avoid:
-- broad global string replacement;
-- duplicate canonical+legacy constants with unclear authority;
-- reflection-based ID routing;
-- wrapper classes with no real ownership purpose;
-- migrating IDs just to remove a historical namespace literal;
-- a single mega-class containing every ID in the mod.
+1. Normal runtime references to `fishing.specimen.legacy` must be classified. A read-only compatibility bridge may be valid; normal gameplay depending on mutation-era authority is not.
+2. The top-level `tideborne.backend` package exists in the integrated tree. Determine whether it is legitimate application/composition ownership or stale architecture residue before changing anything.
+3. P4 folded Satchel sorting helpers into `SatchelSorting`. Prove there are no stale references to `SatchelSorter`, `SatchelSortDescriptor`, `SatchelTraitSortData`, or `TideSatchelSortMetadataResolver`.
+4. Current docs may still contain historical Java package/class prose. Distinguish intentionally historical evidence from stale current-architecture claims.
+5. P7/P8 checkpoint/context files are historical execution evidence. Do not delete them just to reduce file count; classify them during the tooling/docs phase.
 
 ## Resumable phase plan
 
-### P8.0 — Inventory + classification
-Use the precomputed P7 handoff/context. Enumerate remaining historical literals narrowly, update the ID ledger, and classify each runtime family before changing code.
+### P9.0 — Dependency gate + baseline inventory
+Verify ancestry, CI/build/artifact baseline, top-level package map, current entrypoints, and audit-ledger scope. Do not redesign.
 
-### P8.1 — Registry + component identities
-Centralize historical item/entity/data-component/registry identities. Preserve exact serialized registry IDs.
+### P9.1 — Ownership / entrypoint / config audit
+Verify package ownership, application/composition boundaries, initialization, config storage/network/UI ownership, and classify `backend`.
 
-### P8.2 — Network + persistence identities
-Centralize payload/channel, persistent-state, NBT/save, Journal/team/discovery/specimen compatibility identities. Preserve exact wire/save values.
+### P9.2 — Legacy / resource / historical-ID boundary audit
+Verify P5 canonical-vs-legacy specimen dependency direction, P7 resource aliases, P8 historical ID owners, and exact compatibility boundaries. Classify every normal-runtime legacy import.
 
-### P8.3 — Compatibility/service identities
-Centralize historical mod aliases, config compatibility names, reload-listener IDs, public command/function and Java-referenced tag/recipe compatibility identities where appropriate. Do not move P7 alias resources.
+### P9.3 — Runtime integration boundary audit
+Verify fishing gear/Tide/ecosystem/optional-compat ownership, client/server boundaries, networking/persistence, mixins, and the post-P4 Satchel consolidation. Fix only proven defects.
 
-### P8.4 — Remove stray ownership leaks
-Replace unexplained historical literals in normal production code with the correct canonical or explicit legacy owner. Add architecture/source tests preventing new unclassified leaks.
+### P9.4 — Minimal cleanup + docs/tooling consistency
+Remove or update only proven stale current docs, misleading comments, dead scaffolding, or obsolete worker residue. Keep historical evidence clearly labeled. No broad formatting churn.
 
-### P8.5 — Compatibility regression audit
-Prove every retained historical identity has a reason and exact value. Update the ledger to FINAL classifications; ensure P7 aliases and optional integrations still point at the intended IDs.
+### P9.5 — Full validation + release artifact
+Run repository validation, Java 21 clean build/tests, architecture tests, Java/AI gate, compatibility checks, and release artifact validation. GameTests/Minecraft boot are not required gates under current policy.
 
-### P8.6 — Full validation + closure
-Run the current repository gate and produce the final completion report/checkpoint.
+### P9.6 — Final closure
+Every ledger row must be PASS, FIXED, or ACCEPTED_EXCEPTION with evidence. Produce final architecture/validation report and exact integration notes.
 
 ## Checkpoint discipline
 
@@ -144,58 +114,49 @@ Product work and checkpoint metadata are separate commits.
 
 After a coherent product commit:
 
-`python3 scripts/p8_agent.py checkpoint --phase P8.X --completed --next "<exact next action>" --note "<important result>"`
+`python3 scripts/p9_agent.py checkpoint --phase P9.X --completed --next "<exact next action>" --note "<important result>"`
 
-Add validation results as needed:
+Add validation snapshots with repeated:
 
-`--validation repository_structure=pass`
-`--validation java21_clean_build=pass`
-`--validation unit_architecture_tests=pass`
-`--validation compatibility_id_audit=pass`
-`--validation optional_compatibility_safety=pass`
-`--validation release_artifact=pass`
+`--validation key=value`
 
-The checkpoint tool refuses dirty worktrees. This is intentional: continuation state must never claim unsaved edits are safe.
-
-For a blocker, commit any safe coherent product work first, then checkpoint with:
+For blockers, commit any safe coherent work first, then checkpoint with:
 
 `--status BLOCKED --blocker "<exact blocker>" --next "<exact recovery action>"`
 
 For final closure use `--complete`.
 
-## Validation
+The checkpoint tool intentionally refuses dirty worktrees.
 
-Use the repository's current policy. GameTests and Minecraft boot tests are not required blockers.
+## Required final validation
 
 Before COMPLETE:
 1. `scripts/validate_repository.sh` passes.
 2. Java 21 clean Gradle build passes.
-3. Normal unit + architecture tests pass.
-4. Historical-ID source/architecture tests pass.
-5. Exact persisted/wire/registry values are regression-tested where practical.
-6. P7 compatibility resources remain valid.
-7. Optional Apex-only, Myths-only, combined, and absent-mod boundaries remain safe where relevant.
+3. Normal unit + architecture tests pass and test count is reported.
+4. Java/AI quality gate passes: repository+compile, PMD/CPD/Semgrep, Qodana, combined gate.
+5. Historical-ID ownership regression checks pass.
+6. P7 compatibility aliases remain valid.
+7. Optional integration/classloading boundaries are safe where relevant.
 8. `scripts/validate_release_artifact.sh` passes.
-9. Production release artifact is produced.
-10. No unexplained `tide_traits`, `tide_team_journal`, or `tidebound_compatibility` literal remains in normal production code.
+9. Production release artifact is produced and SHA-256 recorded.
+10. Final audit ledger contains no unexplained PENDING/BLOCKED item.
 
-Do not weaken tests to make them green.
+Do not weaken tests or quality rules to make P9 green.
 
 ## Completion report
 
 Return:
-1. final branch SHA
-2. historical namespaces/families audited
-3. new legacy-ID ownership classes/files
-4. exact ID values deliberately preserved
-5. canonical IDs left feature-owned
-6. P7 compatibility aliases retained
-7. remaining historical literals and exact reason for each category
-8. architecture/regression tests added or changed
-9. repository validator result
-10. Java 21 build + normal test result
-11. optional compatibility safety result
-12. release artifact validation + artifact SHA if available
-13. exact integration notes for fast-forwarding P8 into `dev`
-
-Do not begin P9 from this branch.
+1. final branch SHA;
+2. every architecture area audited and disposition;
+3. concrete defects found/fixed;
+4. accepted exceptions and why they are safe;
+5. package/entrypoint/config findings;
+6. legacy/resource/ID compatibility findings;
+7. runtime/client/server/optional-mod findings;
+8. docs/tooling cleanup performed;
+9. repository/build/test/quality-gate results;
+10. test count;
+11. release artifact filename + SHA-256;
+12. remaining risks, if any;
+13. exact fast-forward integration notes for `dev`.

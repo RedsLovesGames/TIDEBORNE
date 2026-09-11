@@ -1,0 +1,41 @@
+name: P9 AI Checkpoint Report
+
+on:
+  push:
+    branches:
+      - agent/p9-final-audit
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout P9 branch state
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate compact continuation report
+        run: |
+          python3 scripts/p9_agent.py report --output p9-agent-report.txt
+          cat p9-agent-report.txt
+
+      - name: Publish Actions summary
+        run: |
+          {
+            echo '## P9 AI continuation report'
+            echo '```text'
+            cat p9-agent-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload continuation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: p9-agent-report
+          path: p9-agent-report.txt
+          if-no-files-found: error
+          retention-days: 7
