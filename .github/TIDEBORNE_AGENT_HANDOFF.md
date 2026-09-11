@@ -3,14 +3,14 @@
 Branch: `agent/p8-legacy-ids`  
 Baseline: `94052f905b7c3bda33e9f1b0b3988ebf93dd327f`  
 Status: **IN_PROGRESS**  
-Phase: **P8.3**  
-Checkpoint sequence: **4**  
-Last safe product SHA: `527be2a69f34f179a57aa129b44a08202036106a`  
-Last checkpoint UTC: `2026-09-11T02:46:29.161485+00:00`
+Phase: **P8.4**  
+Checkpoint sequence: **5**  
+Last safe product SHA: `f48a4d122cdca7db1590ffc724e90c2edae63331`  
+Last checkpoint UTC: `2026-09-11T02:46:29.226627+00:00`
 
 ## Exact next action
 
-P8.4 remove stray historical namespace ownership leaks.
+P8.5 perform final compatibility regression audit.
 
 ## Blockers
 
