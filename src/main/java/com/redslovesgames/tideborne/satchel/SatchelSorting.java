@@ -134,10 +134,10 @@ public final class SatchelSorting {
       @Override
       public Descriptor apply(ItemStack stack) {
          TraitData trait = Objects.requireNonNullElse(this.traitResolver.apply(stack), TraitData.NORMAL);
-         FishData data = (FishData)FishData.get(stack).orElse(null);
+         FishData data = FishData.get(stack).orElse(null);
          int rarity = data == null ? -1 : data.profile().rarity().ordinal();
          String region = data == null ? "other / unknown" : data.profile().location().orElse("other / unknown");
-         double length = (Double)TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
+         double length = TideItemData.FISH_LENGTH.getOrDefault(stack, 0.0);
          String registryId = Registries.ITEM.getId(stack.getItem()).toString();
          return new Descriptor(
             stack.getName().getString().toLowerCase(Locale.ROOT),
