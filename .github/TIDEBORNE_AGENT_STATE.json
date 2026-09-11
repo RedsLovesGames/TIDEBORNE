@@ -3,28 +3,32 @@
   "task": "P8 Historical ID Centralization",
   "branch": "agent/p8-legacy-ids",
   "baseline_sha": "94052f905b7c3bda33e9f1b0b3988ebf93dd327f",
-  "status": "IN_PROGRESS",
-  "phase": "P8.5",
-  "checkpoint_sequence": 6,
-  "last_product_checkpoint_sha": "7a7b897b29da13ced448671bcb3f85b218da7c55",
-  "last_checkpoint_utc": "2026-09-11T02:46:29.295509+00:00",
+  "status": "COMPLETE",
+  "phase": "P8.6",
+  "checkpoint_sequence": 7,
+  "last_product_checkpoint_sha": "602f83b121cbec9126acae8aa381b1fe61241420",
+  "last_checkpoint_utc": "2026-09-11T02:46:29.369899+00:00",
   "completed_phases": [
     "P8.0",
     "P8.1",
     "P8.2",
     "P8.3",
     "P8.4",
-    "P8.5"
+    "P8.5",
+    "P8.6"
   ],
-  "next_action": "P8.6 run full validation and close the branch.",
+  "next_action": "P8 is complete. Fast-forward agent/p8-legacy-ids into dev only after reviewing the completion report; do not begin P9 on this branch.",
   "blockers": [],
   "validation": {
-    "repository_structure": "not_run",
-    "java21_clean_build": "not_run",
-    "unit_architecture_tests": "not_run",
-    "compatibility_id_audit": "not_run",
-    "optional_compatibility_safety": "not_run",
-    "release_artifact": "not_run"
+    "repository_structure": "pass",
+    "java21_clean_build": "pass",
+    "unit_architecture_tests": "pass",
+    "compatibility_id_audit": "pass",
+    "optional_compatibility_safety": "pass",
+    "release_artifact": "pass",
+    "p7_compatibility_aliases": "pass",
+    "unit_test_count": "368",
+    "artifact_sha256": "6d9aaccc0ab83b45c62f26dfc7f01eca00ffa8373d1f16418a38cbde63a2febb"
   },
   "phase_plan": [
     "P8.0_inventory_and_classification",
@@ -44,6 +48,11 @@
     "Historical payload IDs, journal/discovery persistence keys, and legacy config filenames now resolve through LegacyNetworkIds and LegacyPersistenceIds.",
     "Historical namespace aliases, mutation lookup IDs, item-tag construction, and the mutation-texture reload listener now resolve through explicit legacy owners.",
     "HistoricalIdOwnershipTest guards exact values and normal production Java contains no unexplained raw quoted historical namespace owner literals.",
-    "Every retained historical literal category has an explicit compatibility reason and P7 aliases remain intact."
+    "Every retained historical literal category has an explicit compatibility reason and P7 aliases remain intact.",
+    "Repository validation passed for Tideborne 2.0.1 with 259 top-level types, 18 registered GameTest classes, all mixins and entrypoints resolved.",
+    "Java 21 clean build passed with 368 unit/architecture tests, zero failures, and zero errors.",
+    "Strict normal-production historical namespace audit reported zero leaks; P7 compatibility alias checks passed.",
+    "Validated release artifact build/libs/tideborne-2.0.1.jar SHA-256 6d9aaccc0ab83b45c62f26dfc7f01eca00ffa8373d1f16418a38cbde63a2febb.",
+    "Exact Tide, Apex Waters, Myths of the Sea, Cerbons API, and GeckoLib compatibility inputs were fetched successfully for the validated build."
   ]
 }

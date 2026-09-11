@@ -2,15 +2,15 @@
 
 Branch: `agent/p8-legacy-ids`  
 Baseline: `94052f905b7c3bda33e9f1b0b3988ebf93dd327f`  
-Status: **IN_PROGRESS**  
-Phase: **P8.5**  
-Checkpoint sequence: **6**  
-Last safe product SHA: `7a7b897b29da13ced448671bcb3f85b218da7c55`  
-Last checkpoint UTC: `2026-09-11T02:46:29.295509+00:00`
+Status: **COMPLETE**  
+Phase: **P8.6**  
+Checkpoint sequence: **7**  
+Last safe product SHA: `602f83b121cbec9126acae8aa381b1fe61241420`  
+Last checkpoint UTC: `2026-09-11T02:46:29.369899+00:00`
 
 ## Exact next action
 
-P8.6 run full validation and close the branch.
+P8 is complete. Fast-forward agent/p8-legacy-ids into dev only after reviewing the completion report; do not begin P9 on this branch.
 
 ## Blockers
 
@@ -18,12 +18,15 @@ P8.6 run full validation and close the branch.
 
 ## Validation snapshot
 
-- `repository_structure`: not_run
-- `java21_clean_build`: not_run
-- `unit_architecture_tests`: not_run
-- `compatibility_id_audit`: not_run
-- `optional_compatibility_safety`: not_run
-- `release_artifact`: not_run
+- `repository_structure`: pass
+- `java21_clean_build`: pass
+- `unit_architecture_tests`: pass
+- `compatibility_id_audit`: pass
+- `optional_compatibility_safety`: pass
+- `release_artifact`: pass
+- `p7_compatibility_aliases`: pass
+- `unit_test_count`: 368
+- `artifact_sha256`: 6d9aaccc0ab83b45c62f26dfc7f01eca00ffa8373d1f16418a38cbde63a2febb
 
 ## Resume command
 
