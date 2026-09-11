@@ -1,0 +1,58 @@
+name: P7 Temporary Final Checkpoint
+
+on:
+  push:
+    branches:
+      - agent/p7-resources
+
+permissions:
+  contents: write
+
+jobs:
+  checkpoint:
+    if: "${{ github.event.head_commit.message == 'chore: trigger P7.6 final checkpoint' }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record P7.6 complete state through checkpoint helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/p7_agent.py checkpoint \
+            --phase P7.6 \
+            --status COMPLETE \
+            --complete P7.6 \
+            --clear-blockers \
+            --next "P7 complete. Coordinator may review and integrate agent/p7-resources into dev; do not begin P8 or P9 from this branch." \
+            --validation repository_structure=pass_p7_6_validate_repository_254_types_18_gametests_all_mixins_entrypoints_resolved \
+            --validation java21_clean_build=pass_p7_6_clean_build_java21_gradle_8_12 \
+            --validation unit_architecture_tests=pass_p7_6_full_normal_suite_365_tests \
+            --validation resource_paths_translations=pass_p7_6_final_static_resource_metadata_alias_audit \
+            --validation mixin_refmap_metadata=pass_p7_6_packaged_canonical_mixins_refmaps_no_legacy_leaks \
+            --validation optional_compatibility_safety=pass_p7_6_apex_myths_dedicated_server_boundary \
+            --validation release_artifact=pass_p7_6_tideborne_2_0_1_sha256_dd381588cb2d97cdb0315a6fe5a00cb5fa57a57dee2ae271990374f76db083eb \
+            --note "P7.6 final validation passed on Java 21 with exact pinned dependencies: repository validator passed for Tideborne 2.0.1 with 254 top-level types and 18 registered GameTest classes, clean Gradle build passed, all 365 normal unit/architecture tests passed, final resource/mixin/refmap and optional Apex/Myths/dedicated-server boundary audits passed, and production artifact validation passed with SHA-256 dd381588cb2d97cdb0315a6fe5a00cb5fa57a57dee2ae271990374f76db083eb. GameTests and Minecraft boot tests remain outside the required P7 gate by task policy."
+
+      - name: Commit state-only checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "RedsLovesGames"
+          git config user.email "75150137+RedsLovesGames@users.noreply.github.com"
+          git add .github/TIDEBORNE_AGENT_STATE.json
+          git diff --cached --check
+          git commit -m "chore: checkpoint P7.6 complete state"
+          git push origin HEAD:agent/p7-resources
+
+      - name: Remove temporary checkpoint workflow and trigger
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/p7-temp-final-checkpoint.yml
+          rm -f .github/P7_6_FINAL_CHECKPOINT_TRIGGER
+          git add -A
+          git diff --cached --check
+          git commit -m "chore: remove P7.6 checkpoint workflow"
+          git push origin HEAD:agent/p7-resources
