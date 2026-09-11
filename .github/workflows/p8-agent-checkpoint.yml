@@ -1,0 +1,41 @@
+name: P8 AI Checkpoint Report
+
+on:
+  push:
+    branches:
+      - agent/p8-legacy-ids
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout P8 branch state
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate compact continuation report
+        run: |
+          python3 scripts/p8_agent.py report --output p8-agent-report.txt
+          cat p8-agent-report.txt
+
+      - name: Publish Actions summary
+        run: |
+          {
+            echo '## P8 AI continuation report'
+            echo '```text'
+            cat p8-agent-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload continuation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: p8-agent-report
+          path: p8-agent-report.txt
+          if-no-files-found: error
+          retention-days: 7

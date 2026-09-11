@@ -1,314 +1,201 @@
-# Tideborne Agent Task — P7 Resource Ownership
+# Tideborne Agent Task — P8 Historical ID Centralization
 
 Repository: `https://github.com/RedsLovesGames/TIDEBORNE`
+Assigned branch: `agent/p8-legacy-ids`
+Model: GPT-5.6 Sol High
 
-Assigned branch: `agent/p7-resources`
+Work ONLY on this branch. Never modify/push/merge/rebase/retarget/force-update `main`, `dev`, or another worker branch.
 
-Use GPT-5.6 Sol High.
+## Start / continuation fast path
 
-Work ONLY on this branch.
+1. Read `.github/TIDEBORNE_AGENT_PROMPTS.md` from `main` once.
+2. Run `python3 scripts/p8_agent.py report`.
+3. Read only these branch-local files before coding:
+   - `.github/TIDEBORNE_AGENT_STATE.json`
+   - `.github/TIDEBORNE_AGENT_HANDOFF.md`
+   - `.github/TIDEBORNE_P8_CONTEXT.md`
+   - `.github/TIDEBORNE_P8_ID_LEDGER.md`
+4. Follow `next_action` from the state file. Do NOT restart the whole audit in a continuation chat.
 
-Never modify, push, merge, rebase, retarget, or force-update:
-
-- `main`
-- `dev`
-- any other worker branch
-
-## AI execution protocol — mandatory
-
-P7 is intentionally optimized for short, resumable worker chats. Do not spend the beginning of each chat reconstructing project history.
-
-### Minimal startup
-
-On every fresh or continued worker chat:
-
-1. Fetch current repository state and verify the branch is `agent/p7-resources`.
-2. Read `.github/TIDEBORNE_AGENT_STATE.json` first.
-3. Read this task file.
-4. Read `.github/TIDEBORNE_P7_CONTEXT.md`.
-5. Read `.github/TIDEBORNE_AGENT_PROMPTS.md` from `main` once for global constraints.
-6. Run `python3 scripts/p7_agent.py report` when a shell checkout is available.
-7. Execute only the state's current `phase` and `next_action` before expanding scope.
-
-Do NOT begin by rereading the whole repository, all documentation, or all P1-P6 history. Use exact path/identifier searches driven by the current phase and context map.
-
-### Resumable phase plan
-
-Work in these independently checkpointable phases:
-
-- `P7.0` — inventory and classify every historical resource family as current ownership, compatibility identity, upstream extension, optional integration, or non-runtime documentation.
-- `P7.1` — client assets and translation-key ownership.
-- `P7.2` — data resources, recipes, tags, datapack paths and ownership.
-- `P7.3` — Java resource lookups, reload IDs, dynamic resource IDs and focused tests.
-- `P7.4` — mixin configs, refmaps, Fabric metadata and Gradle/resource-processing references.
-- `P7.5` — compatibility alias audit; explain every historical runtime namespace that remains.
-- `P7.6` — full current validation gate and closure report.
-
-Prefer one phase per chat. Start a later phase only after the current phase is committed and checkpointed and there is clearly enough execution budget remaining.
-
-### Mandatory checkpoint discipline
-
-After every coherent phase or subphase, and BEFORE tool/context limits become risky:
-
-1. Run focused validation for the work just completed.
-2. Commit the smallest coherent product/resource/code change to this branch.
-3. Ensure the worktree is clean.
-4. Run `python3 scripts/p7_agent.py checkpoint` with the current phase, status, completed phase(s), exact next action, blockers, and any validation results.
-5. Commit `.github/TIDEBORNE_AGENT_STATE.json` separately as a lightweight checkpoint commit.
-6. Push the branch.
-7. Run `python3 scripts/p7_agent.py report` and include its compact output in the chat status/completion message.
-
-Example:
-
-`python3 scripts/p7_agent.py checkpoint --phase P7.2 --status IN_PROGRESS --complete P7.1 --next "Migrate the remaining classified data resources and update their direct references" --validation resource_paths_translations=pass`
-
-The helper refuses to create a checkpoint while uncommitted work exists. Never mark a phase complete before its product changes are committed.
-
-If a chat is approaching a tool limit, checkpoint early rather than attempting one more large audit. A fresh chat must be able to resume from the last pushed checkpoint without needing the previous chat transcript.
-
-### Continuation recovery
-
-`.github/TIDEBORNE_AGENT_STATE.json` is the continuation source of truth.
-
-If branch HEAD differs from `last_product_checkpoint_sha`, do not restart the task. The normal reason is the separate state checkpoint commit or later product commits. Inspect only commits after the recorded product checkpoint, repair the state if it is stale, and resume its `next_action`.
-
-Do not redo phases listed in `completed_phases` unless a later validation failure proves that phase regressed.
-
-Unpushed edits from a previous chat are not assumed recoverable in a fresh execution environment. Never claim unpushed work survived.
-
-### Automatic reporting
-
-Every push to this branch runs `.github/workflows/p7-agent-checkpoint.yml`, which executes the compact P7 report and publishes it to the GitHub Actions job summary plus a short-lived artifact.
-
-This automatic report is a continuation aid only. It does not replace required build/test/artifact validation.
-
-See `.github/TIDEBORNE_AGENT_HANDOFF.md` for the minimal fresh-chat procedure.
-
-## Required reading
-
-Read `.github/TIDEBORNE_AGENT_PROMPTS.md` from `main` first after loading the branch-local state/task/context files described above.
+If a chat/tool budget is getting low, stop broad exploration. Finish the smallest coherent edit, validate it, commit the product change, then run the checkpoint command described below so another chat can resume exactly.
 
 ## Dependency gate
 
-P1, P2, P3, P5, and P6 are already integrated into the `dev` baseline from which this branch was created.
+P1–P7 are integrated into the baseline from which this branch was created.
 
-Baseline commit:
+P8 baseline: `94052f905b7c3bda33e9f1b0b3988ebf93dd327f`
 
-`b2ea30d927c4bae15f2e9ccbdc48b61331ead9f4`
+Before product edits verify:
+- this branch descends from that baseline;
+- P7 resource ownership is present;
+- P7 compatibility aliases remain intact;
+- P7 final state was COMPLETE.
 
-Before production editing:
-
-1. Verify this branch still descends from the baseline above.
-2. Verify P3 config unification is present.
-3. Verify P5 canonical/legacy specimen isolation is present.
-4. Verify P6 feature re-ownership is present.
-5. If the branch has diverged or required architecture is missing, STOP, checkpoint/report the blocker, and state exactly why instead of guessing.
+If not, STOP and report the divergence. Never force-update.
 
 ## Goal
 
-Unify CURRENT active Tideborne resources under Tideborne ownership while preserving persisted compatibility identities needed by existing worlds, items, saves, networking, and optional integrations.
+Create one explicit, understandable ownership architecture for Tideborne's remaining HISTORICAL/PUBLIC COMPATIBILITY IDENTIFIERS while preserving their externally observable values exactly.
 
-Resource ownership and persisted identity are separate concerns.
+P8 is primarily a centralization/classification task, NOT an ID migration task.
 
-Do not blindly rename historical IDs merely because active resources move under Tideborne ownership.
+Canonical current identifiers should remain feature-owned. Historical identifiers that must survive for old worlds, ItemStacks, components, saves, network peers, datapacks, dependency checks, commands, recipes, tags, config compatibility, or published extension points should be owned explicitly as legacy/compatibility identities instead of being scattered as unexplained string literals throughout normal runtime code.
 
-## Target active resource ownership
+Preferred conceptual ownership is under `com.redslovesgames.tideborne.migration.legacy` (or a small focused subpackage such as `migration.legacy.ids`). Avoid one giant `LegacyIds` God class when separate small owners are clearer.
 
-Current active assets should converge toward:
+## Historical namespace families to classify completely
 
-- `assets/tideborne/`
-- `data/tideborne/`
+Every production occurrence of these Tideborne-owned historical namespace names must end P8 in one of three states: explicit compatibility owner, intentional resource alias documented by P7, or documented external/upstream reason.
 
-Current translation keys should converge toward Tideborne ownership, including families such as:
+- `tide_traits`
+- `tide_team_journal`
+- `tidebound_compatibility`
 
-- `config.tideborne.*`
-- `tooltip.tideborne.*`
-- `message.tideborne.*`
-- `screen.tideborne.*`
-- `toast.tideborne.*`
-- `key.tideborne.*`
+P7 already established that retained historical resource trees are compatibility aliases. Do NOT redo P7 or move those aliases merely for cosmetic uniformity.
 
-Consolidate historical mixin config filenames under Tideborne ownership where safe, conceptually toward:
+Audit remaining Java/runtime identity families including:
+- Fabric `provides` aliases / historical mod identities
+- item and entity registry IDs
+- data-component IDs
+- payload/network channel IDs
+- persistent-state/save IDs
+- NBT/component/save keys where historical ownership is embedded
+- Journal/team/discovery identifiers
+- Satchel compatibility identifiers
+- specimen compatibility identifiers
+- reload-listener IDs
+- config filenames/compatibility IDs
+- command/function compatibility surfaces
+- public recipe/tag IDs referenced from Java/tests
+- migration lookup aliases
+- optional integration identities
+- tests/scripts/docs that define or verify the above
 
-- `tideborne.mixins.json`
-- `tideborne.client.mixins.json`
+Do not treat plain historical documentation text as production runtime debt unless it is used as a published compatibility contract.
 
-Keep integration-specific mixin/resource boundaries only where they have a real optional-mod or classloading reason.
+## Preserve EXACTLY
 
-## Audit
+Do not change externally observable identity values unless a proven compatibility bridge retains the old value and the task explicitly requires a canonical current alias.
 
-Audit current equivalents of all active resources and references, including:
-
-- `assets/tide/`
-- `assets/tide_traits/`
-- `assets/tide_team_journal/`
-- `assets/tidebound_compatibility/`
-- `assets/tideborne/`
-- analogous `data/*` namespaces
-- textures
-- models
-- item/block model references
-- lang files
-- translation keys
-- recipes
-- tags
-- loot/resource data
-- datapack paths
-- dynamically-created resource identifiers
-- reload listener identifiers
-- resource lookups in Java
-- Fabric metadata
-- mixin configs
-- refmaps
-- client-only resources
-- optional Apex/Myths resources
-- scripts/tests that encode resource locations
-- extension points that expect historical resource namespaces
-
-Do not assume all historical namespaces can be deleted. Determine whether each occurrence is current resource ownership or persisted compatibility identity.
-
-Use `.github/TIDEBORNE_P7_CONTEXT.md` as the precomputed initial inventory and `scripts/p7_agent.py report` to refresh counts after changes.
-
-## Preserve exactly
-
-Preserve gameplay and persisted compatibility semantics.
-
-Do not change:
-
-- fish IDs
-- item IDs
-- recipe identities that are externally persisted/referenced unless a compatibility alias is retained
+Preserve:
+- fish/item/entity/recipe/tag registry IDs
 - component IDs
-- NBT/save keys
-- payload IDs
-- canonical specimen identity
-- BodyType / Condition / Pigmentation / SpecimenQuality behavior
-- FishScore behavior
-- Trait Momentum
-- RNG behavior or RNG call order
-- Satchel persistence and behavior
-- Journal/history/team/Top Fish persistence and behavior
-- records/badges
+- NBT/save keys and persistent-state IDs
+- payload IDs and networking semantics
+- old-world/item migration behavior
+- Fabric historical dependency aliases
+- Satchel persistence/behavior
+- Journal/history/team/Top Fish persistence/behavior
+- specimen identity, BodyType, Condition, Pigmentation, SpecimenQuality
+- FishScore, Trait Momentum, RNG behavior/order
 - commands
-- networking semantics
-- gear balance
-- Tide bait behavior
-- optional Apex/Myths behavior
-- server-authoritative specimen generation
+- gear/Tide bait/gameplay balance
+- optional Apex/Myths behavior and absence safety
 - dedicated-server safety
-- old-world migration behavior
+- server-authoritative specimen generation
+- P7 resource compatibility aliases
 
-Historical namespace identifiers such as:
+A successful P8 may change WHERE an ID constant is defined and HOW code references it. It must not casually change WHAT old external data sees.
 
-- `tide_traits:*`
-- `tide_team_journal:*`
-- `tidebound_compatibility:*`
+## Target architecture
 
-may still be required as compatibility identities.
+Prefer:
+- feature-owned constants for canonical current IDs;
+- focused legacy compatibility owners for historical IDs;
+- explicit names such as `LegacyNamespaces`, `LegacyRegistryIds`, `LegacyNetworkIds`, `LegacyPersistenceIds`, or smaller feature-specific equivalents when useful;
+- helper methods only when they remove repeated compatibility logic, not just to hide strings;
+- comments only where the compatibility reason is non-obvious;
+- tests that make accidental historical-ID changes fail loudly.
 
-Do not rename those persisted identifiers just to make resources look uniform.
+Avoid:
+- broad global string replacement;
+- duplicate canonical+legacy constants with unclear authority;
+- reflection-based ID routing;
+- wrapper classes with no real ownership purpose;
+- migrating IDs just to remove a historical namespace literal;
+- a single mega-class containing every ID in the mod.
 
-P8 exists specifically to centralize the remaining historical identifier families after this resource pass.
+## Resumable phase plan
 
-## Ownership rules
+### P8.0 — Inventory + classification
+Use the precomputed P7 handoff/context. Enumerate remaining historical literals narrowly, update the ID ledger, and classify each runtime family before changing code.
 
-Use Tideborne namespace for current active presentation/data resources whenever compatibility does not require the historical namespace.
+### P8.1 — Registry + component identities
+Centralize historical item/entity/data-component/registry identities. Preserve exact serialized registry IDs.
 
-If an old namespace must remain for compatibility:
+### P8.2 — Network + persistence identities
+Centralize payload/channel, persistent-state, NBT/save, Journal/team/discovery/specimen compatibility identities. Preserve exact wire/save values.
 
-- keep the smallest necessary alias/bridge
-- make the compatibility purpose explicit
-- do not continue using the historical namespace as the normal current ownership surface
-- document why it remains
+### P8.3 — Compatibility/service identities
+Centralize historical mod aliases, config compatibility names, reload-listener IDs, public command/function and Java-referenced tag/recipe compatibility identities where appropriate. Do not move P7 alias resources.
 
-Avoid duplicate live resources in both historical and Tideborne namespaces unless the duplicate is intentionally required as a compatibility alias.
+### P8.4 — Remove stray ownership leaks
+Replace unexplained historical literals in normal production code with the correct canonical or explicit legacy owner. Add architecture/source tests preventing new unclassified leaks.
 
-## Mixin/resource safety
+### P8.5 — Compatibility regression audit
+Prove every retained historical identity has a reason and exact value. Update the ledger to FINAL classifications; ensure P7 aliases and optional integrations still point at the intended IDs.
 
-When consolidating mixin configuration:
+### P8.6 — Full validation + closure
+Run the current repository gate and produce the final completion report/checkpoint.
 
-- preserve client/common separation
-- preserve optional-mod classloading guards
-- preserve target resolution
-- preserve refmap behavior
-- do not load client classes on dedicated server
-- do not make Apex/Myths classes mandatory when their mods are absent
+## Checkpoint discipline
 
-Verify any renamed mixin config is reflected consistently in Fabric metadata, Gradle/resource processing, tests, and artifact validation.
+Product work and checkpoint metadata are separate commits.
 
-## Scope exclusions
+After a coherent product commit:
 
-Do NOT:
+`python3 scripts/p8_agent.py checkpoint --phase P8.X --completed --next "<exact next action>" --note "<important result>"`
 
-- perform P8 historical-ID centralization beyond what is necessary for this task
-- delete old-world compatibility identifiers
-- redesign P3 configuration
-- redo P5 specimen architecture
-- redo P6 gameplay ownership
-- perform broad class consolidation
-- mass-format unrelated Java
-- rename persisted IDs for cosmetic consistency
-- change gameplay or balance
-- change RNG probabilities or call ordering
-- remove migration readers still needed by old saves/items
+Add validation results as needed:
 
-The branch-local P7 state/context/handoff/reporting workflow and script are AI-execution scaffolding. Do not let them alter production behavior. They may be dropped during final integration or removed in the final cleanup phase after P7 is safely complete.
+`--validation repository_structure=pass`
+`--validation java21_clean_build=pass`
+`--validation unit_architecture_tests=pass`
+`--validation compatibility_id_audit=pass`
+`--validation optional_compatibility_safety=pass`
+`--validation release_artifact=pass`
+
+The checkpoint tool refuses dirty worktrees. This is intentional: continuation state must never claim unsaved edits are safe.
+
+For a blocker, commit any safe coherent product work first, then checkpoint with:
+
+`--status BLOCKED --blocker "<exact blocker>" --next "<exact recovery action>"`
+
+For final closure use `--complete`.
 
 ## Validation
 
-Use the repository's current validation policy.
+Use the repository's current policy. GameTests and Minecraft boot tests are not required blockers.
 
-Required before declaring P7 complete:
-
+Before COMPLETE:
 1. `scripts/validate_repository.sh` passes.
-2. Java 21 clean build passes.
-3. All normal unit and architecture tests pass through the Gradle build.
-4. Resource-path and translation-key tests are updated or added where useful.
-5. Fabric metadata resolves all entrypoints and mixin configs.
-6. Mixin/refmap validation passes.
-7. Optional Apex-only resource/mixin loading remains safe.
-8. Optional Myths-only resource/mixin loading remains safe.
-9. Apex + Myths together remain safe.
-10. Dedicated-server-sensitive resource/classloading boundaries remain valid.
-11. `scripts/validate_release_artifact.sh` passes.
-12. Production release artifact is produced successfully.
-13. No active current resource accidentally remains under a historical namespace without an explicit compatibility reason.
+2. Java 21 clean Gradle build passes.
+3. Normal unit + architecture tests pass.
+4. Historical-ID source/architecture tests pass.
+5. Exact persisted/wire/registry values are regression-tested where practical.
+6. P7 compatibility resources remain valid.
+7. Optional Apex-only, Myths-only, combined, and absent-mod boundaries remain safe where relevant.
+8. `scripts/validate_release_artifact.sh` passes.
+9. Production release artifact is produced.
+10. No unexplained `tide_traits`, `tide_team_journal`, or `tidebound_compatibility` literal remains in normal production code.
 
-GameTests and Minecraft boot tests are not part of the current required validation gate and must not be reintroduced as blockers.
-
-Do not weaken tests merely to make them green.
-
-Record validation results in `.github/TIDEBORNE_AGENT_STATE.json` through the checkpoint helper as they become known.
-
-## Commit rules
-
-Commit only to `agent/p7-resources`.
-
-Never update `dev` or `main` from this worker.
-
-Never force-update any ref.
-
-Keep product commits logically scoped and reviewable. Keep checkpoint-state commits separate and lightweight so continuation chats can distinguish actual implementation from orchestration state.
+Do not weaken tests to make them green.
 
 ## Completion report
 
-Before declaring complete, checkpoint with `--status COMPLETE --complete P7.6` and ensure all required validation fields are accurately recorded.
-
 Return:
-
 1. final branch SHA
-2. active asset namespaces before/after
-3. active data namespaces before/after
-4. translation-key migrations
-5. mixin config/refmap changes
-6. Java resource identifier changes
-7. compatibility aliases retained and exact reasons
-8. any historical namespaces still present and whether each is persisted compatibility or optional integration
-9. structural validator result
-10. Java 21 build/unit/architecture test result
-11. optional-mod resource/classloading validation result
-12. release artifact validation result
-13. exact integration notes for merging P7 into `dev`
-14. the final compact output of `python3 scripts/p7_agent.py report`
+2. historical namespaces/families audited
+3. new legacy-ID ownership classes/files
+4. exact ID values deliberately preserved
+5. canonical IDs left feature-owned
+6. P7 compatibility aliases retained
+7. remaining historical literals and exact reason for each category
+8. architecture/regression tests added or changed
+9. repository validator result
+10. Java 21 build + normal test result
+11. optional compatibility safety result
+12. release artifact validation + artifact SHA if available
+13. exact integration notes for fast-forwarding P8 into `dev`
 
-Do not begin P8 or P9 from this branch.
+Do not begin P9 from this branch.
