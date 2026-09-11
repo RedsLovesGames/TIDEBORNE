@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.migration.legacy;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -30,11 +32,11 @@ public final class TideborneMigrationManager {
          }
 
          backupOnce(var0.resolve("tideborne.json"));
-         backupOnce(var0.resolve("tide_traits.json"));
-         backupOnce(var0.resolve("tide_team_journal-server.json"));
-         backupOnce(var0.resolve("tide_team_journal-client.json"));
-         backupOnce(var0.resolve("tidebound_compatibility.json"));
-         backupOnce(var0.resolve("tidebound_compatibility-client.json"));
+         backupOnce(var0.resolve(LegacyPersistenceIds.TRAITS_CONFIG));
+         backupOnce(var0.resolve(LegacyPersistenceIds.JOURNAL_SERVER_CONFIG));
+         backupOnce(var0.resolve(LegacyPersistenceIds.JOURNAL_CLIENT_CONFIG));
+         backupOnce(var0.resolve(LegacyPersistenceIds.TIDEBOUND_SERVER_CONFIG));
+         backupOnce(var0.resolve(LegacyPersistenceIds.TIDEBOUND_CLIENT_CONFIG));
          String var3 = "{\n  \"migrationVersion\": 3,\n  \"legacyNamespacesPreserved\": true,\n  \"canonicalModId\": \"tideborne\",\n  \"canonicalConfig\": \"tideborne.json\",\n  \"completedAt\": \""
             + Instant.now()
             + "\"\n}\n";

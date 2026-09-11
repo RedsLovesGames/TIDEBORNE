@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.journal.client;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.redslovesgames.tideborne.journal.RecordHolderStore;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +20,7 @@ public final class ClientRecordHolders {
    }
 
    public static void update(NbtCompound packetTag) {
-      NbtCompound recordTag = packetTag.getCompound("tide_team_journal_record_holders");
+      NbtCompound recordTag = packetTag.getCompound(LegacyPersistenceIds.JOURNAL_RECORD_HOLDERS);
       Map<Identifier, RecordHolderStore.RecordNames> next = new HashMap<>();
 
       for (String key : recordTag.getKeys()) {

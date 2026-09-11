@@ -1,5 +1,7 @@
 package com.redslovesgames.tideborne.config;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -19,8 +21,8 @@ public final class TideborneClientConfig {
    public static final String FISHING = "fishing";
 
    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-   private static final String LEGACY_JOURNAL = "tide_team_journal-client.json";
-   private static final String LEGACY_FISHING = "tidebound_compatibility-client.json";
+   private static final String LEGACY_JOURNAL = LegacyPersistenceIds.JOURNAL_CLIENT_CONFIG;
+   private static final String LEGACY_FISHING = LegacyPersistenceIds.TIDEBOUND_CLIENT_CONFIG;
 
    private TideborneClientConfig() {
    }

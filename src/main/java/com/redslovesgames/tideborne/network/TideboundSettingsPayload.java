@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.network;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNetworkIds;
+
 import com.redslovesgames.tideborne.config.TideboundConfig;
 import com.redslovesgames.tideborne.fishing.FishingGameplayInitializer;
 import java.util.Objects;
@@ -15,7 +17,7 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload.Id;
 
 public record TideboundSettingsPayload(NbtCompound tag) implements CustomPayload {
-   public static final Id<TideboundSettingsPayload> TYPE = new Id(FishingGameplayInitializer.id("settings"));
+   public static final Id<TideboundSettingsPayload> TYPE = new Id(LegacyNetworkIds.TIDEBOUND_SETTINGS);
    public static final PacketCodec<RegistryByteBuf, TideboundSettingsPayload> CODEC = PacketCodec.ofStatic(
       (buffer, payload) -> buffer.writeNbt(payload.tag),
       buffer -> new TideboundSettingsPayload(Objects.requireNonNullElseGet(buffer.readNbt(), NbtCompound::new))

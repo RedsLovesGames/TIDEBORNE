@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.satchel.network;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNetworkIds;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +33,7 @@ public record SatchelRequestPayload(
    public static final int PROTOCOL_VERSION = 2;
    public static final int MAX_SORT_RULES = 6;
    private static final int MAX_ID_LENGTH = 32;
-   public static final Id<SatchelRequestPayload> TYPE = new Id(Identifier.of("tide_traits", "anglers_satchel_request"));
+   public static final Id<SatchelRequestPayload> TYPE = new Id(LegacyNetworkIds.SATCHEL_REQUEST);
    public static final PacketCodec<RegistryByteBuf, SatchelRequestPayload> STREAM_CODEC = new PacketCodec<RegistryByteBuf, SatchelRequestPayload>() {
       public SatchelRequestPayload decode(RegistryByteBuf buffer) {
          int protocol = buffer.readVarInt();

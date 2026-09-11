@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.journal.network;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNetworkIds;
+
 import java.util.Objects;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
@@ -14,7 +16,7 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload.Id;
 
 public record TeamDataPayload(NbtCompound tag) implements CustomPayload {
-   public static final Id<TeamDataPayload> TYPE = new Id(Identifier.of("tide_team_journal", "team_data"));
+   public static final Id<TeamDataPayload> TYPE = new Id(LegacyNetworkIds.TEAM_DATA);
    public static final PacketCodec<RegistryByteBuf, TeamDataPayload> CODEC = PacketCodec.ofStatic(
       (buffer, payload) -> buffer.writeNbt(payload.tag),
       buffer -> new TeamDataPayload(Objects.requireNonNullElseGet(buffer.readNbt(), NbtCompound::new))

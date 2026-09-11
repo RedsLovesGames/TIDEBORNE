@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.journal;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNamespaces;
+
 import com.li64.tide.util.TideUtils;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -45,8 +47,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class TideTeamJournal {
-   public static final String MOD_ID = "tide_team_journal";
-   public static final Logger LOGGER = LoggerFactory.getLogger("tide_team_journal");
+   public static final String MOD_ID = LegacyNamespaces.TIDE_TEAM_JOURNAL;
+   public static final Logger LOGGER = LoggerFactory.getLogger(LegacyNamespaces.TIDE_TEAM_JOURNAL);
    private static boolean initialized;
 
    private TideTeamJournal() {

@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.journal.client;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNamespaces;
+
 import com.li64.tide.Tide;
 import com.li64.tide.client.gui.screens.journal.ProfileComponent;
 import com.li64.tide.data.player.CatchTimestamp;
@@ -243,7 +245,7 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
    }
 
    private static Badge badge(String label, String id, String directory) {
-      Identifier discoveryId = Identifier.of("tide_traits", id);
+      Identifier discoveryId = LegacyNamespaces.tideTraits(id);
       String base = "textures/gui/journal/" + directory + "/";
       return new Badge(
          label,

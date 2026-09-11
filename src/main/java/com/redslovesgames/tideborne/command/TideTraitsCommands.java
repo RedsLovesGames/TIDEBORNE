@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.command;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyServiceIds;
+
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.item.TideItemData;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -325,7 +327,7 @@ public final class TideTraitsCommands {
    }
 
    private static TagKey<Item> itemTag(String path) {
-      return TagKey.of(RegistryKeys.ITEM, Identifier.of("tide_traits", path));
+      return LegacyServiceIds.tideTraitsItemTag(path);
    }
 
    private record SpecimenSnapshot(String location, String mutation, Long seed, Double percentile, Double lengthCm, boolean protectedSpecimen) {

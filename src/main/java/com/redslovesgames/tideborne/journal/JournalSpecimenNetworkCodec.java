@@ -1,5 +1,7 @@
 package com.redslovesgames.tideborne.journal;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
 import java.util.Locale;
 import java.util.Optional;
@@ -9,8 +11,8 @@ import net.minecraft.nbt.NbtCompound;
 
 /** Server-to-client projection for canonical Journal specimens. */
 public final class JournalSpecimenNetworkCodec {
-    public static final String CLIENT_KEY = "tide_team_journal_canonical_specimens";
-    public static final String RECORD_HOLDERS_KEY = "tide_team_journal_record_holders";
+    public static final String CLIENT_KEY = LegacyPersistenceIds.JOURNAL_CANONICAL_SPECIMENS;
+    public static final String RECORD_HOLDERS_KEY = LegacyPersistenceIds.JOURNAL_RECORD_HOLDERS;
     public static final int DISPLAY_SCHEMA_VERSION = 1;
 
     private static final String DISPLAY_SCHEMA_KEY = "display_schema";

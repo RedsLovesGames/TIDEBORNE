@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.discovery.multiplayer;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNetworkIds;
+
 import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
@@ -13,7 +15,7 @@ import net.minecraft.network.packet.CustomPayload.Id;
 
 public record SharedDiscoveryRequestPayload(int protocolVersion) implements CustomPayload {
    public static final int CURRENT_PROTOCOL = 1;
-   public static final Id<SharedDiscoveryRequestPayload> TYPE = new Id(Identifier.of("tide_traits", "shared_discovery_request"));
+   public static final Id<SharedDiscoveryRequestPayload> TYPE = new Id(LegacyNetworkIds.SHARED_DISCOVERY_REQUEST);
    public static final PacketCodec<RegistryByteBuf, SharedDiscoveryRequestPayload> STREAM_CODEC = new PacketCodec<RegistryByteBuf, SharedDiscoveryRequestPayload>() {
       public SharedDiscoveryRequestPayload decode(RegistryByteBuf buffer) {
          return new SharedDiscoveryRequestPayload(buffer.readVarInt());

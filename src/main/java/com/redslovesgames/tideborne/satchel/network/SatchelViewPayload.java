@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.satchel.network;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNetworkIds;
+
 import com.redslovesgames.tideborne.satchel.SatchelProtectionRule;
 import com.redslovesgames.tideborne.satchel.SatchelSortDirection;
 import com.redslovesgames.tideborne.satchel.SatchelSortKey;
@@ -27,7 +29,7 @@ public record SatchelViewPayload(SatchelView view) implements CustomPayload {
    private static final int MAX_FEATURES = 16;
    private static final int MAX_CONTENTS = 512;
    private static final int MAX_PROTECTION_RULES = SatchelProtectionRule.values().length;
-   public static final Id<SatchelViewPayload> TYPE = new Id(Identifier.of("tide_traits", "anglers_satchel_view"));
+   public static final Id<SatchelViewPayload> TYPE = new Id(LegacyNetworkIds.SATCHEL_VIEW);
    public static final PacketCodec<RegistryByteBuf, SatchelViewPayload> STREAM_CODEC = new PacketCodec<RegistryByteBuf, SatchelViewPayload>() {
       public SatchelViewPayload decode(RegistryByteBuf buffer) {
          int protocol = buffer.readVarInt();

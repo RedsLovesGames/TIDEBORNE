@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.command;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNamespaces;
+
 import com.redslovesgames.tideborne.fishing.specimen.legacy.FishMutation;
 import java.util.Arrays;
 import java.util.Locale;
@@ -24,7 +26,7 @@ final class CommandInputs {
          }
 
          Identifier id = Identifier.tryParse(normalized);
-         return id != null && "tide_traits".equals(id.getNamespace()) ? FishMutation.bySerializedName(id.getPath()) : Optional.empty();
+         return id != null && LegacyNamespaces.TIDE_TRAITS.equals(id.getNamespace()) ? FishMutation.bySerializedName(id.getPath()) : Optional.empty();
       } else {
          return Optional.empty();
       }

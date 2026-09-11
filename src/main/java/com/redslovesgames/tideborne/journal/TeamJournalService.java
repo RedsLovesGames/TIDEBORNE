@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.journal;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.redslovesgames.tideborne.discovery.multiplayer.PersonalTideJournal;
 
 import com.li64.tide.Tide;
@@ -477,11 +479,11 @@ public final class TeamJournalService {
 
    private static NbtCompound getOrCreateRoot(Team team) {
       NbtCompound extraData = team.getExtraData();
-      if (!extraData.contains("tide_team_journal", 10)) {
-         extraData.put("tide_team_journal", new NbtCompound());
+      if (!extraData.contains(LegacyPersistenceIds.TEAM_JOURNAL_ROOT, 10)) {
+         extraData.put(LegacyPersistenceIds.TEAM_JOURNAL_ROOT, new NbtCompound());
       }
 
-      return extraData.getCompound("tide_team_journal");
+      return extraData.getCompound(LegacyPersistenceIds.TEAM_JOURNAL_ROOT);
    }
 
    private static NbtCompound readJournal(Team team) {

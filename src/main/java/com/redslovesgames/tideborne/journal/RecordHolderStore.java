@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.journal;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.redslovesgames.tideborne.journal.JournalSpecimenStore;
 import com.redslovesgames.tideborne.journal.JournalSpecimenNetworkCodec;
 
@@ -24,7 +26,7 @@ import net.minecraft.registry.Registries;
 
 public final class RecordHolderStore {
    static final String ROOT_KEY = "record_holders";
-   public static final String CLIENT_KEY = "tide_team_journal_record_holders";
+   public static final String CLIENT_KEY = LegacyPersistenceIds.JOURNAL_RECORD_HOLDERS;
    private static final String LARGEST_UUID = "largest_uuid";
    private static final String LARGEST_NAME = "largest_name";
    private static final String SMALLEST_UUID = "smallest_uuid";
@@ -215,13 +217,13 @@ public final class RecordHolderStore {
 
    static NbtCompound attachForClient(NbtCompound journal, NbtCompound teamRoot) {
       NbtCompound packetTag = journal.copy();
-      packetTag.put("tide_team_journal_record_holders", records(teamRoot).copy());
+      packetTag.put(CLIENT_KEY, records(teamRoot).copy());
       JournalSpecimenNetworkCodec.attachDisplayData(packetTag, teamRoot);
       return packetTag;
    }
 
    public static RecordHolderStore.RecordNames readClientRecord(NbtCompound packetTag, Identifier fish) {
-      NbtCompound records = packetTag.getCompound("tide_team_journal_record_holders");
+      NbtCompound records = packetTag.getCompound(CLIENT_KEY);
       NbtCompound record = records.getCompound(fish.toString());
       return new RecordHolderStore.RecordNames(record.getString("largest_name"), record.getString("smallest_name"));
    }

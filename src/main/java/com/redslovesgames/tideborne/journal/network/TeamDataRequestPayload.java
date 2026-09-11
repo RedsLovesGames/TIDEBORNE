@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.journal.network;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNetworkIds;
+
 import net.minecraft.util.Identifier;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.RegistryByteBuf;
@@ -12,7 +14,7 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload.Id;
 
 public record TeamDataRequestPayload(int page, String metric, String fishFilter, String eventType) implements CustomPayload {
-   public static final Id<TeamDataRequestPayload> TYPE = new Id(Identifier.of("tide_team_journal", "team_data_request"));
+   public static final Id<TeamDataRequestPayload> TYPE = new Id(LegacyNetworkIds.TEAM_DATA_REQUEST);
    public static final PacketCodec<RegistryByteBuf, TeamDataRequestPayload> CODEC = PacketCodec.ofStatic((buffer, payload) -> {
       buffer.writeVarInt(payload.page);
       buffer.writeString(payload.metric, 32);

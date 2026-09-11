@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.discovery.multiplayer;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.redslovesgames.tideborne.discovery.DiscoverySnapshot;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,8 +23,8 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.util.Identifier;
 
 final class SharedDiscoveryNbt {
-   static final String TEAM_JOURNAL_KEY = "tide_team_journal";
-   static final String TIDE_TRAITS_KEY = "tide_traits";
+   static final String TEAM_JOURNAL_KEY = LegacyPersistenceIds.TEAM_JOURNAL_ROOT;
+   static final String TIDE_TRAITS_KEY = LegacyPersistenceIds.SHARED_DISCOVERY_TRAITS;
    static final String VERSION_KEY = "data_version";
    static final String DISCOVERIES_KEY = "discoveries";
    static final String MUTATIONS_KEY = "mutations";
@@ -42,8 +44,8 @@ final class SharedDiscoveryNbt {
    static boolean add(NbtCompound teamExtraData, Identifier canonicalSpeciesId, Identifier mutationId, Identifier sizeBandId) {
       if (teamExtraData != null && valid(canonicalSpeciesId) && (valid(mutationId) || valid(sizeBandId))) {
          SharedDiscoveryNbt.Change change = new SharedDiscoveryNbt.Change();
-         NbtCompound journalRoot = childCompound(teamExtraData, "tide_team_journal", "PreservedTideTeamJournalValue", change);
-         NbtCompound traits = childCompound(journalRoot, "tide_traits", "PreservedTideTraitsValue", change);
+         NbtCompound journalRoot = childCompound(teamExtraData, TEAM_JOURNAL_KEY, "PreservedTideTeamJournalValue", change);
+         NbtCompound traits = childCompound(journalRoot, TIDE_TRAITS_KEY, "PreservedTideTraitsValue", change);
          if (!traits.contains("data_version", 3) || traits.getInt("data_version") < 1) {
             traits.putInt("data_version", 1);
             change.mark();
@@ -76,8 +78,8 @@ final class SharedDiscoveryNbt {
          return DiscoverySnapshot.empty();
       }
 
-      if (teamExtraData.get("tide_team_journal") instanceof NbtCompound journalRoot) {
-         if (journalRoot.get("tide_traits") instanceof NbtCompound traits) {
+      if (teamExtraData.get(TEAM_JOURNAL_KEY) instanceof NbtCompound journalRoot) {
+         if (journalRoot.get(TIDE_TRAITS_KEY) instanceof NbtCompound traits) {
             return traits.get("discoveries") instanceof NbtCompound discoveries ? decodeDiscoveries(discoveries) : DiscoverySnapshot.empty();
          } else {
             return DiscoverySnapshot.empty();

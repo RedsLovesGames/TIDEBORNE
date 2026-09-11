@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.fishing;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNamespaces;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -35,8 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class FishingGameplayInitializer {
-   public static final String MOD_ID = "tidebound_compatibility";
-   public static final Logger LOGGER = LoggerFactory.getLogger("tidebound_compatibility");
+   public static final String MOD_ID = LegacyNamespaces.TIDEBOUND_COMPATIBILITY;
+   public static final Logger LOGGER = LoggerFactory.getLogger(LegacyNamespaces.TIDEBOUND_COMPATIBILITY);
    private static final String APEX_COMPAT_CLASS = "com.redslovesgames.tideborne.compat.apex.ApexCompat";
    private static boolean mythsEnabledAtStartup;
    private static boolean apexEnabledAtStartup;
@@ -94,7 +96,7 @@ public final class FishingGameplayInitializer {
    }
 
    public static Identifier id(String path) {
-      return Identifier.of("tidebound_compatibility", path);
+      return LegacyNamespaces.tideboundCompatibility(path);
    }
 
    public static boolean isMythsLoaded() {

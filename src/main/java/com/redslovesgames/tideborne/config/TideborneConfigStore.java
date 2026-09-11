@@ -1,5 +1,7 @@
 package com.redslovesgames.tideborne.config;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -86,9 +88,9 @@ public final class TideborneConfigStore {
 
    private static Map<String, String> legacyFiles() {
       Map<String, String> result = new LinkedHashMap<>();
-      result.put(TRAITS, "tide_traits.json");
-      result.put(TEAM_SERVER, "tide_team_journal-server.json");
-      result.put(FISHING_SERVER, "tidebound_compatibility.json");
+      result.put(TRAITS, LegacyPersistenceIds.TRAITS_CONFIG);
+      result.put(TEAM_SERVER, LegacyPersistenceIds.JOURNAL_SERVER_CONFIG);
+      result.put(FISHING_SERVER, LegacyPersistenceIds.TIDEBOUND_SERVER_CONFIG);
       return Map.copyOf(result);
    }
 

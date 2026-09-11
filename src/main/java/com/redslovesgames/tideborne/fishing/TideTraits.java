@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.fishing;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNamespaces;
+
 import com.redslovesgames.tideborne.fishing.specimen.CatchTraitService;
 import com.redslovesgames.tideborne.command.TideTraitsCommands;
 import com.redslovesgames.tideborne.discovery.multiplayer.MultiplayerDiscoveryCompat;
@@ -17,8 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class TideTraits {
-   public static final String MOD_ID = "tide_traits";
-   public static final Logger LOGGER = LoggerFactory.getLogger("tide_traits");
+   public static final String MOD_ID = LegacyNamespaces.TIDE_TRAITS;
+   public static final Logger LOGGER = LoggerFactory.getLogger(LegacyNamespaces.TIDE_TRAITS);
    private static boolean initialized;
 
    private TideTraits() {

@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.presentation.render;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyServiceIds;
+
 import com.li64.tide.data.FishLengthHolder;
 import com.li64.tide.data.fishing.FishData;
 import com.redslovesgames.tideborne.fishing.TideTraits;
@@ -38,7 +40,7 @@ import net.minecraft.client.util.math.MatrixStack;
 @Environment(EnvType.CLIENT)
 public final class MutationRendering {
    private static final MutationTextureCache TEXTURES = new MutationTextureCache(TideTraitsConfigManager.current().rendering().dynamicTextureCacheMaximum());
-   private static final Identifier RELOAD_LISTENER_ID = Identifier.of("tide_traits", "mutation_textures");
+   private static final Identifier RELOAD_LISTENER_ID = LegacyServiceIds.MUTATION_TEXTURES_RELOAD_LISTENER;
    private static final long VARIANT_SALT = -3335678366873096957L;
    private static boolean initialized;
 

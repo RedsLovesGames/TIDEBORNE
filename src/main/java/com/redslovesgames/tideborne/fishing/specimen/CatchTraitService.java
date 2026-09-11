@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.fishing.specimen;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyServiceIds;
+
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.item.TideItemData;
 import com.redslovesgames.tideborne.fishing.TideTraits;
@@ -249,7 +251,7 @@ public final class CatchTraitService {
    }
 
    private static Identifier namespaced(String path) {
-      return Identifier.of("tide_traits", path);
+      return LegacyServiceIds.mutation(path);
    }
 
    private static String serialized(Enum<?> value) {

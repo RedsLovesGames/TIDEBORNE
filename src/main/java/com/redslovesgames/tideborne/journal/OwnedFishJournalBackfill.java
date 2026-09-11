@@ -1,5 +1,7 @@
 package com.redslovesgames.tideborne.journal;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyPersistenceIds;
+
 import com.li64.tide.data.fishing.FishData;
 import com.li64.tide.data.player.TidePlayerData;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
@@ -27,7 +29,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
  * species is already unlocked and no real/latest canonical specimen has previously been stored.
  */
 public final class OwnedFishJournalBackfill {
-    private static final String TEAM_ROOT_KEY = "tide_team_journal";
+    private static final String TEAM_ROOT_KEY = LegacyPersistenceIds.TEAM_JOURNAL_ROOT;
     private static final String JOURNAL_KEY = "journal";
     private static boolean initialized;
 

@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.discovery.multiplayer;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyServiceIds;
+
 import com.redslovesgames.tideborne.fishing.TideTraits;
 import com.redslovesgames.tideborne.discovery.DiscoveryManager;
 import java.util.Collection;
@@ -28,7 +30,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 public final class MultiplayerDiscoveryCompat {
    public static final String TIDE_TEAM_JOURNAL_MOD_ID = "tideborne";
    public static final String FTB_TEAMS_MOD_ID = "ftbteams";
-   private static final Identifier NORMAL_MUTATION = Identifier.of("tide_traits", "normal");
+   private static final Identifier NORMAL_MUTATION = LegacyServiceIds.NORMAL_MUTATION;
    private static final WarningThrottle WARNINGS = new WarningThrottle();
    private static final long REQUEST_COOLDOWN_TICKS = 10L;
    private static final ConcurrentHashMap<UUID, Long> LAST_REQUEST_TICK = new ConcurrentHashMap<>();

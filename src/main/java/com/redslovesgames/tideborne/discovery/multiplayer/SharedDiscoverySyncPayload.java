@@ -5,6 +5,8 @@
  */
 package com.redslovesgames.tideborne.discovery.multiplayer;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNetworkIds;
+
 import java.util.Objects;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
@@ -15,7 +17,7 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload.Id;
 
 public record SharedDiscoverySyncPayload(SharedDiscoverySnapshot snapshot) implements CustomPayload {
-   public static final Id<SharedDiscoverySyncPayload> TYPE = new Id(Identifier.of("tide_traits", "shared_discovery_sync"));
+   public static final Id<SharedDiscoverySyncPayload> TYPE = new Id(LegacyNetworkIds.SHARED_DISCOVERY_SYNC);
    private static final PacketCodec<RegistryByteBuf, NbtCompound> TAG_CODEC = PacketCodecs.NBT_COMPOUND.cast();
    public static final PacketCodec<RegistryByteBuf, SharedDiscoverySyncPayload> STREAM_CODEC = PacketCodec.tuple(
       TAG_CODEC, payload -> SharedDiscoveryNbt.encodePacket(payload.snapshot), tag -> new SharedDiscoverySyncPayload(SharedDiscoveryNbt.decodePacket(tag))

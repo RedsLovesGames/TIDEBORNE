@@ -1,5 +1,7 @@
 package com.redslovesgames.tideborne.fishing.gear;
 
+import com.redslovesgames.tideborne.migration.legacy.ids.LegacyNamespaces;
+
 import java.util.*;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -136,16 +138,16 @@ public final class FishingGearRegistry {
         TIDE_IRON_LINE("tide","iron_line",Origin.TIDE,Slot.LINE),
         TIDE_GOLDEN_LINE("tide","golden_line",Origin.TIDE,Slot.LINE),
         TIDE_DIAMOND_LINE("tide","diamond_line",Origin.TIDE,Slot.LINE),
-        TENTACLE_LINE("tidebound_compatibility","tentacle_line",Origin.TIDEBORNE,Slot.LINE),
-        SWIFT_LINE("tidebound_compatibility","swift_line",Origin.TIDEBORNE,Slot.LINE),
-        COPPER_LEADER("tidebound_compatibility","copper_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
-        IRON_LEADER("tidebound_compatibility","steel_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
-        GOLD_LEADER("tidebound_compatibility","gold_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
-        DIAMOND_LEADER("tidebound_compatibility","diamond_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
-        SEAFARERS_HOOK("tidebound_compatibility","seafarers_hook",Origin.TIDEBORNE,Slot.HOOK),
-        SHARK_TOOTH_HOOK("tidebound_compatibility","shark_tooth_hook",Origin.TIDEBORNE,Slot.HOOK),
-        KUJIRA_BONE_FISHING_ROD("tidebound_compatibility","kujira_bone_fishing_rod",Origin.TIDEBORNE,Slot.ROD),
-        LEVIATHAN_BAIT("tidebound_compatibility","leviathan_bait",Origin.TIDEBORNE,Slot.BAIT);
+        TENTACLE_LINE(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"tentacle_line",Origin.TIDEBORNE,Slot.LINE),
+        SWIFT_LINE(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"swift_line",Origin.TIDEBORNE,Slot.LINE),
+        COPPER_LEADER(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"copper_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
+        IRON_LEADER(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"steel_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
+        GOLD_LEADER(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"gold_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
+        DIAMOND_LEADER(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"diamond_leader",Origin.TIDEBORNE,Slot.ATTACHMENT),
+        SEAFARERS_HOOK(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"seafarers_hook",Origin.TIDEBORNE,Slot.HOOK),
+        SHARK_TOOTH_HOOK(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"shark_tooth_hook",Origin.TIDEBORNE,Slot.HOOK),
+        KUJIRA_BONE_FISHING_ROD(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"kujira_bone_fishing_rod",Origin.TIDEBORNE,Slot.ROD),
+        LEVIATHAN_BAIT(LegacyNamespaces.TIDEBOUND_COMPATIBILITY,"leviathan_bait",Origin.TIDEBORNE,Slot.BAIT);
         private final Identifier itemId; private final Origin origin; private final Slot slot;
         GearProfile(String namespace,String path,Origin origin,Slot slot){this.itemId=Identifier.of(namespace,path);this.origin=origin;this.slot=slot;}
         public Identifier itemId(){return itemId;} public Origin origin(){return origin;} public Slot slot(){return slot;}
