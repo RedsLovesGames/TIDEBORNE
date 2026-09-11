@@ -5,6 +5,7 @@ import net.minecraft.util.Identifier;
 /** Frozen historical registry identities retained for persisted ItemStacks, entities, and components. */
 public final class LegacyRegistryIds {
     public static final Identifier ANGLERS_SATCHEL = LegacyNamespaces.tideTraits("anglers_satchel");
+    public static final Identifier SATCHEL_STATE = LegacyNamespaces.tideTraits("satchel_state");
 
     public static final Identifier TENTACLE_LINE = LegacyNamespaces.tideboundCompatibility("tentacle_line");
     public static final Identifier SEAFARERS_HOOK = LegacyNamespaces.tideboundCompatibility("seafarers_hook");
