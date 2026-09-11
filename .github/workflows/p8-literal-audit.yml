@@ -1,0 +1,29 @@
+name: P8 Temporary Historical ID Audit
+
+on:
+  push:
+    branches:
+      - agent/p8-legacy-ids
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Historical namespace inventory
+        shell: bash
+        run: |
+          set -o pipefail
+          echo '=== PRODUCTION JAVA ==='
+          git grep -n -E 'tide_traits|tide_team_journal|tidebound_compatibility' -- src/main/java || true
+          echo '=== TEST JAVA ==='
+          git grep -n -E 'tide_traits|tide_team_journal|tidebound_compatibility' -- src/test/java || true
+          echo '=== FABRIC METADATA ==='
+          git grep -n -E 'tide_traits|tide_team_journal|tidebound_compatibility' -- src/main/resources/fabric.mod.json || true
+          echo '=== SCRIPTS/GITHUB ==='
+          git grep -n -E 'tide_traits|tide_team_journal|tidebound_compatibility' -- scripts .github ':!.github/workflows/p8-literal-audit.yml' || true
