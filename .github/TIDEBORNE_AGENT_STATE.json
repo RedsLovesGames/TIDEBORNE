@@ -4,18 +4,19 @@
   "branch": "agent/p8-legacy-ids",
   "baseline_sha": "94052f905b7c3bda33e9f1b0b3988ebf93dd327f",
   "status": "IN_PROGRESS",
-  "phase": "P8.4",
-  "checkpoint_sequence": 5,
-  "last_product_checkpoint_sha": "f48a4d122cdca7db1590ffc724e90c2edae63331",
-  "last_checkpoint_utc": "2026-09-11T02:46:29.226627+00:00",
+  "phase": "P8.5",
+  "checkpoint_sequence": 6,
+  "last_product_checkpoint_sha": "7a7b897b29da13ced448671bcb3f85b218da7c55",
+  "last_checkpoint_utc": "2026-09-11T02:46:29.295509+00:00",
   "completed_phases": [
     "P8.0",
     "P8.1",
     "P8.2",
     "P8.3",
-    "P8.4"
+    "P8.4",
+    "P8.5"
   ],
-  "next_action": "P8.5 perform final compatibility regression audit.",
+  "next_action": "P8.6 run full validation and close the branch.",
   "blockers": [],
   "validation": {
     "repository_structure": "not_run",
@@ -42,6 +43,7 @@
     "Satchel, data-component, Tidebound item, and chum-projectile identities now resolve through LegacyRegistryIds without changing values.",
     "Historical payload IDs, journal/discovery persistence keys, and legacy config filenames now resolve through LegacyNetworkIds and LegacyPersistenceIds.",
     "Historical namespace aliases, mutation lookup IDs, item-tag construction, and the mutation-texture reload listener now resolve through explicit legacy owners.",
-    "HistoricalIdOwnershipTest guards exact values and normal production Java contains no unexplained raw quoted historical namespace owner literals."
+    "HistoricalIdOwnershipTest guards exact values and normal production Java contains no unexplained raw quoted historical namespace owner literals.",
+    "Every retained historical literal category has an explicit compatibility reason and P7 aliases remain intact."
   ]
 }

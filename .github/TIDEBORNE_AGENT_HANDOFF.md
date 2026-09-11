@@ -3,14 +3,14 @@
 Branch: `agent/p8-legacy-ids`  
 Baseline: `94052f905b7c3bda33e9f1b0b3988ebf93dd327f`  
 Status: **IN_PROGRESS**  
-Phase: **P8.4**  
-Checkpoint sequence: **5**  
-Last safe product SHA: `f48a4d122cdca7db1590ffc724e90c2edae63331`  
-Last checkpoint UTC: `2026-09-11T02:46:29.226627+00:00`
+Phase: **P8.5**  
+Checkpoint sequence: **6**  
+Last safe product SHA: `7a7b897b29da13ced448671bcb3f85b218da7c55`  
+Last checkpoint UTC: `2026-09-11T02:46:29.295509+00:00`
 
 ## Exact next action
 
-P8.5 perform final compatibility regression audit.
+P8.6 run full validation and close the branch.
 
 ## Blockers
 
