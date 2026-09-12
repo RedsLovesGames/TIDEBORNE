@@ -38,6 +38,28 @@ public final class FishingUiLayout {
         return rightEdge - Math.max(0, textWidth);
     }
 
+    public static float fitScale(int screenWidth, int screenHeight, int contentWidth, int contentHeight, int margin) {
+        if (contentWidth <= 0 || contentHeight <= 0) {
+            return 1.0F;
+        }
+
+        int safeMargin = Math.max(0, margin);
+        int availableWidth = Math.max(1, screenWidth - safeMargin * 2);
+        int availableHeight = Math.max(1, screenHeight - safeMargin * 2);
+        float widthScale = availableWidth / (float) contentWidth;
+        float heightScale = availableHeight / (float) contentHeight;
+        return Math.min(1.0F, Math.min(widthScale, heightScale));
+    }
+
+    public static double inverseCenteredCoordinate(double coordinate, int screenExtent, float scale) {
+        if (!(scale > 0.0F) || !Float.isFinite(scale)) {
+            return coordinate;
+        }
+
+        double center = screenExtent / 2.0;
+        return center + (coordinate - center) / scale;
+    }
+
     public record FittedText(String text, boolean clipped) {
     }
 }
