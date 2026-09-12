@@ -54,7 +54,7 @@ Successful jobs:
 - Qodana JVM changed-code gate
 - aggregate Java / AI quality gate
 
-Earlier production runs `34665708393`, `34665708393`, and `34663816681` cover the prior Satchel, settings, and bobber production slices.
+Earlier production runs `34665708393` and `34663816681` cover the prior Satchel, settings, and bobber production slices.
 
 Focused regression tests present on the branch include:
 - `TideboundTooltipsTest`, covering all supported bobber presentation mappings
