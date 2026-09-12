@@ -24,7 +24,7 @@ class SatchelPresentationSourceTest {
     @Test
     void actionAndServerFeedbackIsRenderedInsideTheBook() throws IOException {
         String source = Files.readString(SCREEN);
-        assertTrue(source.contains("renderStatus(graphics, left, top, mouseX, mouseY)"));
+        assertTrue(source.contains("renderStatus(graphics, left, top, logicalMouseX, logicalMouseY)"));
         assertTrue(source.contains("FishingUiLayout.ellipsize(this.localStatus, STATUS_MAX_WIDTH"));
         assertTrue(source.contains("responseStatus(updated)"));
         assertTrue(source.contains("STATUS_Y = 242"));
@@ -36,15 +36,36 @@ class SatchelPresentationSourceTest {
         assertTrue(source.contains("private boolean sortingAvailable()"));
         assertTrue(source.contains("Tackle Organizer locked or disabled"));
         assertTrue(source.contains("Unlock and enable Tackle Organizer first"));
-        assertTrue(source.contains("this.tab = AnglersSatchelScreen.Tab.UPGRADES"));
+        assertTrue(source.contains("this.selectTab(AnglersSatchelScreen.Tab.UPGRADES)"));
     }
 
     @Test
     void recordsHaveBoundedNamesAndScrollPresentation() throws IOException {
         String source = Files.readString(SCREEN);
         assertTrue(source.contains("RECORD_VISIBLE = 16"));
-        assertTrue(source.contains("FishingUiLayout.ellipsize(stack.getName().getString(), RECORD_NAME_WIDTH"));
+        assertTrue(source.contains("FishingUiLayout.ellipsize(fullName, RECORD_NAME_WIDTH"));
         assertTrue(source.contains("renderRecordScrollbar(graphics, left, top)"));
         assertTrue(source.contains("Showing \" + first + \"-\" + last + \" of \" + this.contents.size()"));
+    }
+
+    @Test
+    void narrowWindowsScaleTheWholeBookAndInvertPointerCoordinates() throws IOException {
+        String source = Files.readString(SCREEN);
+        assertTrue(source.contains("SCREEN_MARGIN = 6"));
+        assertTrue(source.contains("FishingUiLayout.fitScale(this.width, this.height, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, SCREEN_MARGIN)"));
+        assertTrue(source.contains("graphics.getMatrices().scale(scale, scale, 1.0F)"));
+        assertTrue(source.contains("FishingUiLayout.inverseCenteredCoordinate(mouseX, this.width, scale)"));
+        assertTrue(source.contains("inside(logicalMouseX, logicalMouseY"));
+    }
+
+    @Test
+    void satchelHasReadableTitleAndKeyboardNavigation() throws IOException {
+        String source = Files.readString(SCREEN);
+        assertTrue(source.contains("super(Text.literal(\"Angler's Satchel\"))"));
+        assertTrue(source.contains("GLFW.GLFW_KEY_TAB"));
+        assertTrue(source.contains("GLFW.GLFW_KEY_1"));
+        assertTrue(source.contains("handleContentsKey(keyCode)"));
+        assertTrue(source.contains("handleRecordsKey(keyCode)"));
+        assertTrue(source.contains("GLFW.GLFW_KEY_PAGE_DOWN"));
     }
 }
