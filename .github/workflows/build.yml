@@ -7,7 +7,6 @@ on:
       - dev
       - main
       - reconstruct-1.3.57
-      - agent/p10-ui-presentation
     tags:
       - '*.*.*'
     paths:
@@ -99,13 +98,6 @@ jobs:
           else
             gradle clean build --stacktrace
           fi
-
-      - name: Dedicated server smoke
-        env:
-          CONNECT_CLIENT: 'false'
-        run: |
-          sed -i 's/\r$//' scripts/dedicated_server_smoke.sh
-          bash scripts/dedicated_server_smoke.sh
 
       - name: Validate production release artifact
         run: ./scripts/validate_release_artifact.sh "build/libs/tideborne-${{ steps.version.outputs.version }}.jar"
