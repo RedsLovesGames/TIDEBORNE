@@ -1260,7 +1260,7 @@ public final class AnglersSatchelScreen extends Screen {
          return false;
       }
 
-      int current = this.selectedSlot >= 0 ? this.selectedSlot : 0;
+      int current = Math.max(this.selectedSlot, 0);
       int target = switch (keyCode) {
          case GLFW.GLFW_KEY_LEFT -> current - 1;
          case GLFW.GLFW_KEY_RIGHT -> current + 1;
