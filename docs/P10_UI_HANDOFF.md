@@ -71,7 +71,13 @@ Final full-build run `34668254116` completed successfully for `3b8213c8918abd1cf
 
 The uploaded Actions artifact was independently downloaded and hashed after the run. The contained `tideborne-2.0.1.jar` produced the same SHA-256: `cfff923f6bc30fd36bd490dcfe9df45282b22e02f0f0ffb7c54803acc4648f31`.
 
-The build workflow was temporarily enabled for pushes to this worker branch solely to run the final build, then restored to its original trigger configuration. There is no intended net workflow change in the P10 diff.
+Dedicated-server runtime smoke was also exercised. The repository's existing `scripts/dedicated_server_smoke.sh` is stored with CRLF line endings, which causes Bash `pipefail` parsing to fail on a Linux runner unless the line endings are normalized. P10 did not modify that unrelated script; validation normalized its checkout copy only inside the temporary runner.
+
+Combined server/client attempt `34668589711` confirmed that the dedicated server initialized Tide, Tideborne traits/specimen systems, team journal, compatibility, native backend/config/networking, world data, recipes, advancements, and Tide fishing data, then bound successfully to `127.0.0.1:25565`. The client also initialized Tideborne successfully under Xvfb, but Minecraft explicitly logged `Completely ignored arguments: [--server, 127.0.0.1, --port, 25565]`, so the automated client never joined and that combined smoke timed out. This is an auto-connect harness limitation, not a demonstrated Tideborne connection failure.
+
+A follow-up server-only run, `34668898791`, completed successfully. Its `Dedicated server smoke` step passed along with the full build, release artifact validation, unit-test count step, and JAR upload. This provides a green dedicated-server startup smoke for the final P10 source state.
+
+The build workflow was temporarily enabled for pushes to this worker branch solely for these validation runs and then restored byte-for-byte to its original trigger configuration. There is no intended net `.github/workflows/build.yml` change in the P10 diff.
 
 Focused regression tests present on the branch include:
 - `TideboundTooltipsTest`, covering all supported bobber presentation mappings including the canonical colored-bobber lure bonus
@@ -81,8 +87,8 @@ Focused regression tests present on the branch include:
 
 ## Final review status
 
-Automated P10 validation is complete. Static/code-level review confirms the intended presentation contracts for Settings, bobbers, lines/leaders, Satchel layout, compact-window scaling, keyboard navigation, and client/server authority boundaries.
+Automated P10 validation is complete. Static/code-level review confirms the intended presentation contracts for Settings, bobbers, lines/leaders, Satchel layout, compact-window scaling, keyboard navigation, and client/server authority boundaries. Dedicated-server startup is also smoke-tested successfully on the final P10 source state.
 
-A live Minecraft client GUI smoke test at small, normal, and large GUI scales, plus an actual dedicated-server launch/connect smoke test for this final branch state, cannot be truthfully claimed from GitHub Actions alone. Those remain the only human runtime checks before final integration if the release process requires visual confirmation.
+The remaining checks require an interactive Minecraft client rather than the current GitHub runner: visually inspect Settings and Satchel at small, normal, and large GUI scales across 16:9, ultrawide, and compact/windowed layouts, and perform a real multiplayer join through the normal client UI or another connection mechanism that Minecraft 1.21.1 actually honors. Do not treat the ignored CLI auto-connect arguments as a Tideborne networking failure.
 
 Do not merge `dev` as part of P10 worker completion.
