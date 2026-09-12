@@ -6,21 +6,30 @@
 package com.redslovesgames.tideborne.presentation.client;
 
 import com.li64.tide.util.BaitUtils;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearEffects;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearModifiers;
 import com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry;
 import com.redslovesgames.tideborne.fishing.gear.LeaderTier;
 import com.redslovesgames.tideborne.registry.TideboundItems;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 
 final class TideboundTooltips {
+   private static final double EPSILON = 1.0E-9;
+
    private TideboundTooltips() {
    }
 
    static void append(ItemStack stack, TooltipType flag, List<Text> lines) {
       FishingGearRegistry.GearProfile profile = FishingGearRegistry.resolve(stack).orElse(null);
+      if (appendTideBobberEffects(stack, flag, lines)) {
+         return;
+      }
       if (isTideboundItem(stack)) {
          if (profile == FishingGearRegistry.GearProfile.LEVIATHAN_BAIT) {
             lines.removeAll(BaitUtils.getDescriptionLines(stack));
@@ -81,7 +90,7 @@ final class TideboundTooltips {
                      lines.add(Text.translatable("tooltip.tideborne.fishing.leviathan_bait.conditions"));
                   }
                   default -> {
-                     // Native Tide profiles are intentionally not Tideborne tooltip entries.
+                     // Native Tide profiles are intentionally not duplicated here.
                   }
                }
             } else if (stack.isOf(TideboundItems.CHUM_BUCKET)) {
@@ -98,6 +107,55 @@ final class TideboundTooltips {
             }
          }
       }
+   }
+
+   private static boolean appendTideBobberEffects(ItemStack stack, TooltipType flag, List<Text> lines) {
+      if (!FishingGearRegistry.isSupportedBobber(stack)) {
+         return false;
+      }
+      if (!flag.isAdvanced() || !TideboundClientConfig.get().showEquipmentTooltips) {
+         return true;
+      }
+
+      FishingGearRegistry.bobberModifiers(Registries.ITEM.getId(stack.getItem())).ifPresent(modifiers -> {
+         List<String> effects = bobberEffectLabels(modifiers);
+         if (!effects.isEmpty()) {
+            lines.add(gray("Tideborne fishing effects"));
+            effects.forEach(effect -> lines.add(Text.literal(effect)));
+         }
+      });
+      return true;
+   }
+
+   static List<String> bobberEffectLabels(FishingGearModifiers modifiers) {
+      List<String> effects = new ArrayList<>();
+      if (Math.abs(modifiers.fishingLuck()) > EPSILON) {
+         effects.add("Fishing Luck: " + formatSigned(modifiers.fishingLuck()));
+      }
+      if (Math.abs(modifiers.traitLuck()) > EPSILON) {
+         effects.add("Trait Luck: " + formatSigned(modifiers.traitLuck()));
+      }
+
+      double lure = modifiers.namedAdditiveModifier(FishingGearEffects.LURE_BONUS);
+      if (Math.abs(lure) > EPSILON) {
+         effects.add("Lure bonus: " + formatSigned(lure));
+      }
+
+      double catchZone = modifiers.namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER);
+      if (Math.abs(catchZone - 1.0) > EPSILON) {
+         effects.add("Catch zone: " + formatMultiplier(catchZone));
+      }
+
+      double crateWeight = modifiers.namedMultiplierModifier(FishingGearEffects.CRATE_WEIGHT_MULTIPLIER);
+      if (Math.abs(crateWeight - 1.0) > EPSILON) {
+         effects.add("Crate weight: " + formatMultiplier(crateWeight));
+      }
+
+      double protection = modifiers.namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PREVENTION_CHANCE);
+      if (Math.abs(protection) > EPSILON) {
+         effects.add("Catch-loss protection: " + formatPercent(protection));
+      }
+      return List.copyOf(effects);
    }
 
    static boolean isTideboundItem(ItemStack stack) {
@@ -137,6 +195,13 @@ final class TideboundTooltips {
 
    static String percent(String key) {
       return formatPercent(ClientTideboundSettings.decimal(key));
+   }
+
+   private static String formatSigned(double value) {
+      if (Math.abs(value - Math.rint(value)) <= EPSILON) {
+         return String.format(Locale.ROOT, "%+.0f", value);
+      }
+      return String.format(Locale.ROOT, "%+.1f", value);
    }
 
    private static String formatMultiplier(double value) {
