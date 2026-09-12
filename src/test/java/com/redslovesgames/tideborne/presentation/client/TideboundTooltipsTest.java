@@ -10,7 +10,7 @@ import net.minecraft.util.Identifier;
 import org.junit.jupiter.api.Test;
 
 class TideboundTooltipsTest {
-    private static final Set<String> NEUTRAL_COLORED_BOBBERS = Set.of(
+    private static final Set<String> COLORED_BOBBERS = Set.of(
             "red_bobber",
             "orange_bobber",
             "yellow_bobber",
@@ -49,10 +49,10 @@ class TideboundTooltipsTest {
     @Test
     void allSupportedBobbersHaveIntentionalTidebornePresentation() {
         assertEquals(32, FishingGearRegistry.supportedBobberIds().size());
-        assertEquals(32, NEUTRAL_COLORED_BOBBERS.size() + EFFECT_BOBBERS.size());
+        assertEquals(32, COLORED_BOBBERS.size() + EFFECT_BOBBERS.size());
 
-        for (String path : NEUTRAL_COLORED_BOBBERS) {
-            assertEquals(List.of(), effects(path), path);
+        for (String path : COLORED_BOBBERS) {
+            assertEquals(List.of("Lure bonus: +1"), effects(path), path);
         }
         EFFECT_BOBBERS.forEach((path, expected) -> assertEquals(expected, effects(path), path));
     }
