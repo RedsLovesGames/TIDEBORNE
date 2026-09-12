@@ -57,6 +57,22 @@ public final class AnglersSatchelScreen extends Screen {
    private static final int GRID_COLUMNS = 10;
    private static final int GRID_VISIBLE_ROWS = 7;
    private static final int GRID_CELL = 20;
+   private static final int BUTTON_HEIGHT = 16;
+   private static final int BADGE_STRIP_WIDTH = 124;
+   private static final int FOOTER_ACTIVE_X = 136;
+   private static final int FOOTER_REFRESH_X = 214;
+   private static final int FOOTER_BUTTON_Y = 223;
+   private static final int FOOTER_BUTTON_WIDTH = 72;
+   private static final int STATUS_X = 29;
+   private static final int STATUS_Y = 242;
+   private static final int STATUS_MAX_WIDTH = 342;
+   private static final int RECORD_VISIBLE = 16;
+   private static final int RECORD_ROWS_PER_COLUMN = 8;
+   private static final int RECORD_NAME_WIDTH = 91;
+   private static final int RECORD_SCROLL_X = 386;
+   private static final int RECORD_SCROLL_Y = 94;
+   private static final int RECORD_SCROLL_HEIGHT = 120;
+   private static final String ORGANIZER_REQUIRED = "Unlock and enable Tackle Organizer first";
    private static final Identifier JOURNAL_BACKGROUND = tide("textures/gui/journal/journal_bg.png");
    private static final Identifier BADGE_STRIP = ours("textures/gui/satchel/badge_strip.png");
    private static final Identifier BUTTON_NORMAL = ours("textures/gui/satchel/button_normal.png");
@@ -108,7 +124,7 @@ public final class AnglersSatchelScreen extends Screen {
          this.sortDirty = false;
       }
 
-      this.localStatus = "";
+      this.localStatus = responseStatus(updated);
       this.requestSharedDiscovery();
    }
 
@@ -129,9 +145,9 @@ public final class AnglersSatchelScreen extends Screen {
       this.renderBackground(graphics, mouseX, mouseY, partialTick);
       int left = this.left();
       int top = this.top();
-      blit(graphics, JOURNAL_BACKGROUND, left, top, 400, 260);
-      graphics.drawText(this.textRenderer, this.title, left + 27, top + 32, -12965349, false);
-      graphics.drawText(this.textRenderer, this.view.hand() == Hand.MAIN_HAND ? "" : "", left + 27, top + 29, -9282236, false);
+      blit(graphics, JOURNAL_BACKGROUND, left, top, BACKGROUND_WIDTH, BACKGROUND_HEIGHT);
+      graphics.drawText(this.textRenderer, this.title, left + 27, top + 32, TEXT, false);
+      graphics.drawText(this.textRenderer, this.view.hand() == Hand.MAIN_HAND ? "" : "", left + 27, top + 29, MUTED_TEXT, false);
       this.renderExperience(graphics, left, top);
       this.renderTabs(graphics, left, top, mouseX, mouseY);
       switch (this.tab) {
@@ -149,13 +165,14 @@ public final class AnglersSatchelScreen extends Screen {
       }
 
       this.renderFooter(graphics, left, top, mouseX, mouseY);
+      this.renderStatus(graphics, left, top, mouseX, mouseY);
       this.renderControlTooltip(graphics, left, top, mouseX, mouseY);
    }
 
    private void renderExperience(DrawContext graphics, int left, int top) {
       int x = left + 240;
       int y = top + 24;
-      graphics.drawText(this.textRenderer, "XP " + this.view.experiencePoints(), x, y, -12965349, false);
+      graphics.drawText(this.textRenderer, "XP " + this.view.experiencePoints(), x, y, TEXT, false);
       blit(graphics, XP_BACKGROUND, x + 40, y + 2, 96, 5);
       int target = this.nextMeaningfulCost();
       int filled = target <= 0 ? 96 : MathHelper.clamp((int)Math.round(96.0 * this.view.experiencePoints() / target), 0, 96);
@@ -178,23 +195,23 @@ public final class AnglersSatchelScreen extends Screen {
          }
 
          blit(graphics, candidate.icon, x + 5, y + 4, 9, 9);
-         graphics.drawText(this.textRenderer, candidate.label, x + 18, y + 5, -12965349, false);
+         graphics.drawText(this.textRenderer, candidate.label, x + 18, y + 5, TEXT, false);
       }
    }
 
    private void renderContents(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
       int gridX = left + 29;
       int gridY = top + 66;
-      int firstSlot = this.contentScrollRow * 10;
-      int visibleSlots = 70;
+      int firstSlot = this.contentScrollRow * GRID_COLUMNS;
+      int visibleSlots = GRID_COLUMNS * GRID_VISIBLE_ROWS;
       int hoveredSlot = -1;
 
       for (int visible = 0; visible < visibleSlots; visible++) {
-         int column = visible % 10;
-         int row = visible / 10;
+         int column = visible % GRID_COLUMNS;
+         int row = visible / GRID_COLUMNS;
          int slot = firstSlot + visible;
-         int x = gridX + column * 20;
-         int y = gridY + row * 20;
+         int x = gridX + column * GRID_CELL;
+         int y = gridY + row * GRID_CELL;
          boolean hovered = inside(mouseX, mouseY, x, y, 18, 18);
          int fill = hovered ? -1594628408 : 1892531096;
          graphics.fill(x, y, x + 18, y + 18, fill);
@@ -216,7 +233,7 @@ public final class AnglersSatchelScreen extends Screen {
 
       this.renderContentScrollbar(graphics, left, top);
       this.renderSpecimenDetails(graphics, left, top, mouseX, mouseY);
-      graphics.drawText(this.textRenderer, this.contents.size() + " / " + this.view.capacity() + " specimens", gridX + 5, top + 210, -9282236, false);
+      graphics.drawText(this.textRenderer, this.contents.size() + " / " + this.view.capacity() + " specimens", gridX + 5, top + 210, MUTED_TEXT, false);
       if (hoveredSlot >= 0) {
          this.renderSpecimenTooltip(graphics, this.contents.get(hoveredSlot), mouseX, mouseY);
       }
@@ -239,14 +256,14 @@ public final class AnglersSatchelScreen extends Screen {
    private void renderSpecimenDetails(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
       int x = left + 250;
       int y = top + 68;
-      graphics.drawText(this.textRenderer, "Specimen", x, y, -12965349, false);
+      graphics.drawText(this.textRenderer, "Specimen", x, y, TEXT, false);
       if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          ItemStack stack = this.contents.get(this.selectedSlot);
          Optional<SatchelSpecimenDisplay> canonical = SatchelSpecimenDisplay.from(stack);
          String fullName = stack.getName().getString();
          FittedText name = FishingUiLayout.ellipsize(fullName, 86, this.textRenderer::getWidth);
-         graphics.drawText(this.textRenderer, canonical.map(SatchelSpecimenDisplay::rarityStarsLabel).orElse("?"), x, y + 10, -12965349, false);
-         graphics.drawText(this.textRenderer, name.text(), x + 34, y + 10, -12965349, false);
+         graphics.drawText(this.textRenderer, canonical.map(SatchelSpecimenDisplay::rarityStarsLabel).orElse("?"), x, y + 10, TEXT, false);
+         graphics.drawText(this.textRenderer, name.text(), x + 34, y + 10, TEXT, false);
          if (this.view.isProtected(this.selectedSlot)) {
             blit(graphics, statusIcon("protected"), x + 112, y + 1, 7, 7);
          }
@@ -259,9 +276,9 @@ public final class AnglersSatchelScreen extends Screen {
             if (canonical.isPresent()) {
                SatchelSpecimenDisplay specimen = canonical.get();
                graphics.drawText(this.textRenderer, "FishScore " + specimen.scoreLabel(), x, y + 20, CanonicalSpecimenPresentation.SCORE_COLOR, false);
-               graphics.drawText(this.textRenderer, "Length " + specimen.lengthLabel(), x, y + 29, -12965349, false);
-               graphics.drawText(this.textRenderer, "Percentile " + specimen.percentileLabel(), x, y + 38, -12965349, false);
-               graphics.drawText(this.textRenderer, "Traits", x, y + 49, -12965349, false);
+               graphics.drawText(this.textRenderer, "Length " + specimen.lengthLabel(), x, y + 29, TEXT, false);
+               graphics.drawText(this.textRenderer, "Percentile " + specimen.percentileLabel(), x, y + 38, TEXT, false);
+               graphics.drawText(this.textRenderer, "Traits", x, y + 49, TEXT, false);
                List<TraitDisplay> traits = specimen.traits();
                for (int index = 0; index < traits.size(); index++) {
                   TraitDisplay trait = traits.get(index);
@@ -276,12 +293,12 @@ public final class AnglersSatchelScreen extends Screen {
                }
             } else {
                graphics.drawTextWrapped(
-                  this.textRenderer, Text.literal("Canonical specimen data is unavailable for this stored fish."), x, y + 24, 120, -9282236
+                  this.textRenderer, Text.literal("Canonical specimen data is unavailable for this stored fish."), x, y + 24, 120, MUTED_TEXT
                );
             }
          } else {
             graphics.drawTextWrapped(
-               this.textRenderer, Text.literal("Trait Scanner locked/off. Enable it to reveal specimen details."), x, y + 24, 120, -9282236
+               this.textRenderer, Text.literal("Trait Scanner locked/off. Enable it to reveal specimen details."), x, y + 24, 120, MUTED_TEXT
             );
          }
 
@@ -293,19 +310,18 @@ public final class AnglersSatchelScreen extends Screen {
          boolean canChangeProtection = lock != null && lock.unlocked() && (this.view.isProtected(this.selectedSlot) || lock.enabled());
          drawButton(graphics, x + 74, extractY, this.view.isProtected(this.selectedSlot) ? "Unlock" : "Protect", canChangeProtection, mouseX, mouseY);
       } else {
-         graphics.drawTextWrapped(this.textRenderer, Text.literal("Select a specimen to inspect server-synchronized traits."), x, y + 16, 120, -9282236);
+         graphics.drawTextWrapped(this.textRenderer, Text.literal("Select a specimen to inspect server-synchronized traits."), x, y + 16, 120, MUTED_TEXT);
       }
    }
 
    private void renderSorting(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
-      SatchelFeatureView organizer = this.view.feature(SatchelFeature.TACKLE_ORGANIZER.id());
-      boolean available = organizer != null && organizer.unlocked() && organizer.enabled();
+      boolean available = this.sortingAvailable();
       graphics.drawText(
          this.textRenderer,
-         available ? "Sort Priority" : "Tackle Organizer must be unlocked and enabled",
+         available ? "Sort Priority" : "Tackle Organizer locked or disabled",
          left + 29,
          top + 63,
-         available ? -12965349 : -6671571,
+         available ? TEXT : BAD_TEXT,
          false
       );
       int rowX = left + 38;
@@ -319,25 +335,36 @@ public final class AnglersSatchelScreen extends Screen {
          int priority = this.draftIndex(key);
          String label = TraitAxesRuntime.titleCase(key.id());
          String prefix = priority < 0 ? "+ " : priority + 1 + ". ";
-         graphics.drawText(this.textRenderer, prefix + label, rowX + 17, y + 5, priority < 0 ? -9282236 : -12965349, false);
+         int labelColor = available ? (priority < 0 ? MUTED_TEXT : TEXT) : MUTED_TEXT;
+         graphics.drawText(this.textRenderer, prefix + label, rowX + 17, y + 5, labelColor, false);
          if (priority >= 0) {
             String direction = this.draftSortRules.get(priority).directionId().equals("desc") ? "↓ Desc" : "↑ Asc";
-            graphics.drawText(this.textRenderer, direction, rowX + 106, y + 5, -12965349, false);
-            graphics.fill(rowX + 147, y, rowX + 159, y + 18, 1619751761);
-            graphics.fill(rowX + 161, y, rowX + 173, y + 18, 1619751761);
-            graphics.drawText(this.textRenderer, "^", rowX + 150, y + 5, -12965349, false);
-            graphics.drawText(this.textRenderer, "v", rowX + 164, y + 5, -12965349, false);
+            graphics.drawText(this.textRenderer, direction, rowX + 106, y + 5, available ? TEXT : MUTED_TEXT, false);
+            if (available) {
+               graphics.fill(rowX + 147, y, rowX + 159, y + 18, 1619751761);
+               graphics.fill(rowX + 161, y, rowX + 173, y + 18, 1619751761);
+               graphics.drawText(this.textRenderer, "^", rowX + 150, y + 5, TEXT, false);
+               graphics.drawText(this.textRenderer, "v", rowX + 164, y + 5, TEXT, false);
+            }
+         }
+         if (!available) {
+            graphics.fill(rowX, y, rowX + 173, y + 18, 0x44E1D5BC);
          }
       }
 
       int buttonY = top + 118;
-      drawButton(graphics, left + 260, buttonY, this.sortDirty ? "Apply sort" : "Applied", available && this.sortDirty, mouseX, mouseY);
-      graphics.drawText(this.textRenderer, "Click direction to reverse", left + 232, top + 92, -9282236, false);
-      graphics.drawText(this.textRenderer, "Use arrows to reorder", left + 239, top + 104, -9282236, false);
+      if (available) {
+         drawButton(graphics, left + 260, buttonY, this.sortDirty ? "Apply sort" : "Applied", this.sortDirty, mouseX, mouseY);
+         graphics.drawText(this.textRenderer, "Click direction to reverse", left + 232, top + 92, MUTED_TEXT, false);
+         graphics.drawText(this.textRenderer, "Use arrows to reorder", left + 239, top + 104, MUTED_TEXT, false);
+      } else {
+         drawButton(graphics, left + 260, buttonY, "Upgrades", true, mouseX, mouseY);
+         graphics.drawText(this.textRenderer, "Enable Organizer in Upgrades", left + 226, top + 92, MUTED_TEXT, false);
+      }
    }
 
    private void renderUpgrades(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
-      graphics.drawText(this.textRenderer, "Installed Upgrades", left + 29, top + 63, -12965349, false);
+      graphics.drawText(this.textRenderer, "Installed Upgrades", left + 29, top + 63, TEXT, false);
 
       for (int index = 0; index <= SATCHEL_UPGRADES.size(); index++) {
          int column = index / 3;
@@ -365,7 +392,7 @@ public final class AnglersSatchelScreen extends Screen {
          unlocked ? "Trophy Lock Automatic Rules" : "Unlock Trophy Lock to configure automatic rules.",
          left + 29,
          top + 187,
-         unlocked ? -12965349 : -9282236,
+         unlocked ? TEXT : MUTED_TEXT,
          false
       );
       if (unlocked) {
@@ -379,35 +406,20 @@ public final class AnglersSatchelScreen extends Screen {
             int y = top + 198 + row * 14;
             boolean ruleEnabled = this.view.protectionRuleEnabled(rule.id());
             blit(graphics, ruleEnabled ? TOGGLE_ON : TOGGLE_OFF, x, y + 1, 14, 7);
-            graphics.drawText(this.textRenderer, protectionRuleLabel(rule), x + 18, y, !enabled && !ruleEnabled ? -9282236 : -12965349, false);
+            graphics.drawText(this.textRenderer, protectionRuleLabel(rule), x + 18, y, !enabled && !ruleEnabled ? MUTED_TEXT : TEXT, false);
          }
       }
    }
 
    private void renderCapacityUpgrade(DrawContext graphics, int x, int y) {
-      boolean var4;
-      if (this.view.nextCapacityLevel() < 0) {
-         var4 = true;
-      } else {
-         var4 = false;
-      }
-
-      blit(graphics, upgradeIcon("capacity", !var4), x + 2, y + 2, 16, 16);
-      int var5 = this.view.capacityLevel();
-      graphics.drawText(this.textRenderer, "Capacity " + roman(var5), x + 21, y + 3, -12965349, false);
-      int var6 = this.view.capacity();
-      String var7 = var6 + " slots";
-      int var8;
-      if (var5 <= 1) {
-         var8 = -4628402;
-      } else if (var5 == 2) {
-         var8 = -3100082;
-      } else {
-         var8 = -10772903;
-      }
-
-      int var9 = x + 154 - this.textRenderer.getWidth(var7);
-      graphics.drawText(this.textRenderer, var7, var9, y + 7, var8, false);
+      boolean maxed = this.view.nextCapacityLevel() < 0;
+      blit(graphics, upgradeIcon("capacity", !maxed), x + 2, y + 2, 16, 16);
+      int level = this.view.capacityLevel();
+      graphics.drawText(this.textRenderer, "Capacity " + roman(level), x + 21, y + 3, TEXT, false);
+      String slots = this.view.capacity() + " slots";
+      int slotsColor = level <= 1 ? -4628402 : level == 2 ? -3100082 : -10772903;
+      int slotsX = x + 154 - this.textRenderer.getWidth(slots);
+      graphics.drawText(this.textRenderer, slots, slotsX, y + 7, slotsColor, false);
    }
 
    private void renderFeatureUpgrade(DrawContext graphics, SatchelFeature feature, int x, int y) {
@@ -416,20 +428,21 @@ public final class AnglersSatchelScreen extends Screen {
       boolean enabled = featureView != null && featureView.enabled();
       boolean available = featureView != null && featureView.available();
       blit(graphics, upgradeIcon(feature.id(), unlocked), x + 2, y + 2, 16, 16);
-      graphics.drawText(this.textRenderer, featureLabel(feature), x + 21, y + 3, available ? -12965349 : -9282236, false);
+      graphics.drawText(this.textRenderer, featureLabel(feature), x + 21, y + 3, unlocked || available ? TEXT : MUTED_TEXT, false);
       if (unlocked) {
          blit(graphics, enabled ? TOGGLE_ON : TOGGLE_OFF, x + 136, y + 7, 14, 7);
+         String state = enabled ? "ON" : "OFF";
          graphics.drawText(
             this.textRenderer,
-            enabled ? "ON" : "OFF",
-            x + 132 - MinecraftClient.getInstance().textRenderer.getWidth(enabled ? "ON" : "OFF"),
+            state,
+            x + 132 - this.textRenderer.getWidth(state),
             y + 6,
-            enabled ? -13932478 : -9282236,
+            enabled ? GOOD_TEXT : MUTED_TEXT,
             false
          );
       } else {
          String state = available ? featureView.xpCost() + " XP" : "ADDON";
-         graphics.drawText(this.textRenderer, state, x + 108, y + 7, available ? -12965349 : -6671571, false);
+         graphics.drawText(this.textRenderer, state, x + 108, y + 7, available ? TEXT : BAD_TEXT, false);
       }
    }
 
@@ -437,53 +450,104 @@ public final class AnglersSatchelScreen extends Screen {
       SatchelFeatureView keeper = this.view.feature(SatchelFeature.RECORD_KEEPER.id());
       boolean enabled = keeper != null && keeper.unlocked() && keeper.enabled();
       if (!enabled) {
-         graphics.drawText(this.textRenderer, "Record Keeper is locked or disabled.", left + 30, top + 72, -6671571, false);
+         graphics.drawText(this.textRenderer, "Record Keeper is locked or disabled.", left + 30, top + 72, BAD_TEXT, false);
          graphics.drawTextWrapped(
             this.textRenderer,
             Text.literal("Unlock it in Upgrades to summarize synchronized specimen components in this satchel."),
             left + 30,
             top + 89,
             220,
-            -9282236
+            MUTED_TEXT
          );
          drawButton(graphics, left + 30, top + 134, "Upgrades", true, mouseX, mouseY);
       } else {
          int listX = left + 38;
          graphics.drawText(
-            this.textRenderer, "Satchel Records", (400 - this.textRenderer.getWidth("Satchel Records")) / 2 + left, top + 64, -12965349, false
+            this.textRenderer,
+            "Satchel Records",
+            (BACKGROUND_WIDTH - this.textRenderer.getWidth("Satchel Records")) / 2 + left,
+            top + 64,
+            TEXT,
+            false
          );
+         String subtitle = "Top satchel specimens by canonical V2 FishScore";
          graphics.drawText(
             this.textRenderer,
-            "Top satchel specimens by canonical V2 FishScore",
-            (400 - this.textRenderer.getWidth("Top satchel specimens by canonical V2 FishScore")) / 2 + left,
+            subtitle,
+            (BACKGROUND_WIDTH - this.textRenderer.getWidth(subtitle)) / 2 + left,
             top + 75,
-            -9282236,
+            MUTED_TEXT,
             false
          );
          List<ItemStack> sorted = this.contents.stream().sorted(Comparator.comparingInt(AnglersSatchelScreen::recordScoreValue).reversed()).toList();
-         byte visible = 16;
+         String hoveredName = null;
 
-         for (int index = 0; index < visible; index++) {
+         for (int index = 0; index < RECORD_VISIBLE; index++) {
             int actual = this.recordScroll + index;
             if (actual >= sorted.size()) {
                break;
             }
 
             ItemStack stack = sorted.get(actual);
-            int columnX = listX + index / 8 * 174;
-            int rowY = top + 94 + index % 8 * 15;
-            graphics.drawText(this.textRenderer, Integer.toString(actual + 1), columnX, rowY, -9282236, false);
+            int columnX = listX + index / RECORD_ROWS_PER_COLUMN * 174;
+            int rowY = top + 94 + index % RECORD_ROWS_PER_COLUMN * 15;
+            graphics.drawText(this.textRenderer, Integer.toString(actual + 1), columnX, rowY, MUTED_TEXT, false);
             graphics.drawItem(stack, columnX + 18, rowY - 4);
-            FittedText name = FishingUiLayout.ellipsize(stack.getName().getString(), 91, this.textRenderer::getWidth);
-            graphics.drawText(
-               this.textRenderer, name.text(), columnX + 37, rowY, -12965349, false
-            );
+            String fullName = stack.getName().getString();
+            FittedText name = FishingUiLayout.ellipsize(fullName, RECORD_NAME_WIDTH, this.textRenderer::getWidth);
+            graphics.drawText(this.textRenderer, name.text(), columnX + 37, rowY, TEXT, false);
+            if (name.clipped() && inside(mouseX, mouseY, columnX + 37, rowY - 1, RECORD_NAME_WIDTH, 11)) {
+               hoveredName = fullName;
+            }
             String score = recordScoreLabel(stack);
             graphics.drawText(
-               this.textRenderer, score, FishingUiLayout.rightAlignedX(columnX + 170, this.textRenderer.getWidth(score)), rowY, 0xFF43A8D8, false
+               this.textRenderer,
+               score,
+               FishingUiLayout.rightAlignedX(columnX + 170, this.textRenderer.getWidth(score)),
+               rowY,
+               CanonicalSpecimenPresentation.SCORE_COLOR,
+               false
             );
          }
+
+         if (sorted.isEmpty()) {
+            graphics.drawText(this.textRenderer, "No specimens stored yet.", left + 145, top + 132, MUTED_TEXT, false);
+         }
+
+         int first = sorted.isEmpty() ? 0 : this.recordScroll + 1;
+         int last = Math.min(sorted.size(), this.recordScroll + RECORD_VISIBLE);
+         String showing = "Showing " + first + "-" + last + " of " + this.contents.size();
+         graphics.drawText(
+            this.textRenderer,
+            showing,
+            (BACKGROUND_WIDTH - this.textRenderer.getWidth(showing)) / 2 + left,
+            top + 210,
+            MUTED_TEXT,
+            false
+         );
+         this.renderRecordScrollbar(graphics, left, top);
+         if (hoveredName != null) {
+            this.showTooltip(graphics, mouseX, mouseY, List.of(Text.literal(hoveredName)));
+         }
       }
+   }
+
+   private void renderRecordScrollbar(DrawContext graphics, int left, int top) {
+      int maximum = this.maximumRecordScroll();
+      if (maximum <= 0) {
+         return;
+      }
+
+      int x = left + RECORD_SCROLL_X;
+      int y = top + RECORD_SCROLL_Y;
+      for (int offset = 0; offset < RECORD_SCROLL_HEIGHT; offset += 48) {
+         int height = Math.min(48, RECORD_SCROLL_HEIGHT - offset);
+         graphics.drawTexture(SCROLL_TRACK, x, y + offset, 0.0F, 0.0F, 6, height, 6, 48);
+      }
+
+      int thumbTravel = RECORD_SCROLL_HEIGHT - 12;
+      int thumbY = y + thumbTravel * this.recordScroll / maximum;
+      blit(graphics, SCROLL_THUMB, x, thumbY, 6, 12);
    }
 
    private void renderRecordBadge(DrawContext graphics, int x, int y, String icon, String label, ItemStack stack) {
@@ -493,7 +557,7 @@ public final class AnglersSatchelScreen extends Screen {
          : stack.getName().getString() + " " + CanonicalSpecimenPresentation.length(length(stack));
       int valueWidth = Math.max(18, 155 - this.textRenderer.getWidth(label + " "));
       String value = this.textRenderer.trimToWidth(rawValue, valueWidth);
-      graphics.drawText(this.textRenderer, label + " " + value, x + 11, y - 1, -12965349, false);
+      graphics.drawText(this.textRenderer, label + " " + value, x + 11, y - 1, TEXT, false);
    }
 
    private void renderPersonalRecordMarkers(DrawContext graphics, int x, int y, int slot) {
@@ -521,14 +585,14 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private void renderPersonalRecordSummary(DrawContext graphics, int x, int y, int slot) {
-      graphics.drawText(this.textRenderer, "Records", x, y, -12965349, false);
+      graphics.drawText(this.textRenderer, "Records", x, y, TEXT, false);
       Optional<PersonalRecordView> record = this.view.personalRecordAt(slot);
       if (record.isEmpty()) {
-         graphics.drawText(this.textRenderer, "No personal record yet", x, y + 10, -9282236, false);
+         graphics.drawText(this.textRenderer, "No personal record yet", x, y + 10, MUTED_TEXT, false);
       } else {
          PersonalRecordView stats = record.get();
-         graphics.drawText(this.textRenderer, "Personal largest: " + CanonicalSpecimenPresentation.length(stats.largest()), x, y + 10, -9282236, false);
-         graphics.drawText(this.textRenderer, "Personal smallest: " + CanonicalSpecimenPresentation.length(stats.smallest()), x, y + 19, -9282236, false);
+         graphics.drawText(this.textRenderer, "Largest " + CanonicalSpecimenPresentation.length(stats.largest()), x, y + 10, MUTED_TEXT, false);
+         graphics.drawText(this.textRenderer, "Smallest " + CanonicalSpecimenPresentation.length(stats.smallest()), x, y + 19, MUTED_TEXT, false);
       }
    }
 
@@ -558,15 +622,25 @@ public final class AnglersSatchelScreen extends Screen {
          case ERROR -> "Team journal sync error";
       };
       int statusColor = shared.availability() == SharedDiscoveryAvailability.AVAILABLE
-         ? -13932478
-         : (shared.availability() == SharedDiscoveryAvailability.UNKNOWN ? -9282236 : -6671571);
+         ? GOOD_TEXT
+         : (shared.availability() == SharedDiscoveryAvailability.UNKNOWN ? MUTED_TEXT : BAD_TEXT);
       blit(graphics, statusIcon("shared"), x, y, 7, 7);
       graphics.drawText(this.textRenderer, status, x + 11, y - 1, statusColor, false);
       graphics.drawText(
-         this.textRenderer, (teamSnapshot ? "Team " : "Personal ") + totals.speciesCount() + " species", x, y + 13, teamSnapshot ? -13932478 : -9282236, false
+         this.textRenderer,
+         (teamSnapshot ? "Team " : "Personal ") + totals.speciesCount() + " species",
+         x,
+         y + 13,
+         teamSnapshot ? GOOD_TEXT : MUTED_TEXT,
+         false
       );
       graphics.drawText(
-         this.textRenderer, "Traits " + totals.mutationCount() + "  Size bands " + totals.sizeBandCount(), x, y + 26, teamSnapshot ? -12965349 : -9282236, false
+         this.textRenderer,
+         "Traits " + totals.mutationCount() + "  Size bands " + totals.sizeBandCount(),
+         x,
+         y + 26,
+         teamSnapshot ? TEXT : MUTED_TEXT,
+         false
       );
    }
 
@@ -577,13 +651,31 @@ public final class AnglersSatchelScreen extends Screen {
          int x = left + 29 + column * 178;
          int y = top + 77 + row * 27;
          if (inside(mouseX, mouseY, x, y, 160, 20)) {
-            List<Text> lines = index == 0
-               ? List.of(
-                  Text.literal("Capacity"),
-                  Text.literal("Adds more individual specimen slots."),
-                  Text.literal("Current: " + this.view.capacity() + " slots")
-               )
-               : upgradeTooltip(SATCHEL_UPGRADES.get(index - 1));
+            List<Text> lines;
+            if (index == 0) {
+               lines = new ArrayList<>();
+               lines.add(Text.literal("Capacity"));
+               lines.add(Text.literal("Adds more individual specimen slots."));
+               lines.add(Text.literal("Current: " + this.view.capacity() + " slots"));
+               if (this.view.nextCapacityLevel() < 0) {
+                  lines.add(Text.literal("Maximum capacity reached."));
+               } else {
+                  lines.add(Text.literal("Next: Capacity " + roman(this.view.nextCapacityLevel()) + " for " + this.view.nextCapacityCost() + " XP"));
+               }
+            } else {
+               SatchelFeature feature = SATCHEL_UPGRADES.get(index - 1);
+               lines = new ArrayList<>(upgradeTooltip(feature));
+               SatchelFeatureView featureView = this.view.feature(feature.id());
+               if (featureView == null) {
+                  lines.add(Text.literal("Server state unavailable."));
+               } else if (featureView.unlocked()) {
+                  lines.add(Text.literal(featureView.enabled() ? "Enabled" : "Disabled"));
+               } else if (featureView.available()) {
+                  lines.add(Text.literal("Unlock cost: " + featureView.xpCost() + " XP"));
+               } else {
+                  lines.add(Text.literal("Optional server prerequisite unavailable."));
+               }
+            }
             graphics.drawOrderedTooltip(this.textRenderer, lines.stream().map(Text::asOrderedText).toList(), mouseX, mouseY);
             return;
          }
@@ -614,8 +706,7 @@ public final class AnglersSatchelScreen extends Screen {
          }
       }
 
-      int footerY = top + 222;
-      if (inside(mouseX, mouseY, left + 125, footerY + 1, 72, 16)) {
+      if (inside(mouseX, mouseY, left + FOOTER_ACTIVE_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
          this.showTooltip(
             graphics,
             mouseX,
@@ -625,7 +716,7 @@ public final class AnglersSatchelScreen extends Screen {
                Text.literal("The active satchel receives Auto-Stow catches when several satchels qualify.")
             )
          );
-      } else if (inside(mouseX, mouseY, left + 203, footerY + 1, 72, 16)) {
+      } else if (inside(mouseX, mouseY, left + FOOTER_REFRESH_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
          this.showTooltip(
             graphics,
             mouseX,
@@ -645,7 +736,7 @@ public final class AnglersSatchelScreen extends Screen {
                break;
             case RECORDS:
                SatchelFeatureView keeper = this.view.feature(SatchelFeature.RECORD_KEEPER.id());
-               if ((keeper == null || !keeper.unlocked() || !keeper.enabled()) && inside(mouseX, mouseY, left + 30, top + 134, 72, 16)) {
+               if ((keeper == null || !keeper.unlocked() || !keeper.enabled()) && inside(mouseX, mouseY, left + 30, top + 134, 72, BUTTON_HEIGHT)) {
                   this.showTooltip(
                      graphics,
                      mouseX,
@@ -661,7 +752,7 @@ public final class AnglersSatchelScreen extends Screen {
       if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          int x = left + 258;
          int y = top + 202;
-         if (inside(mouseX, mouseY, x, y, 48, 16)) {
+         if (inside(mouseX, mouseY, x, y, 48, BUTTON_HEIGHT)) {
             this.showTooltip(
                graphics,
                mouseX,
@@ -675,7 +766,7 @@ public final class AnglersSatchelScreen extends Screen {
                   )
                )
             );
-         } else if (inside(mouseX, mouseY, x + 58, y, 48, 16)) {
+         } else if (inside(mouseX, mouseY, x + 58, y, 48, BUTTON_HEIGHT)) {
             boolean protectedFish = this.view.isProtected(this.selectedSlot);
             this.showTooltip(
                graphics,
@@ -695,6 +786,24 @@ public final class AnglersSatchelScreen extends Screen {
    private void renderSortingControlTooltip(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
       int rowX = left + 38;
       int rowY = top + 72;
+      if (!this.sortingAvailable()) {
+         if (inside(mouseX, mouseY, left + 260, top + 118, 72, BUTTON_HEIGHT)) {
+            this.showTooltip(
+               graphics,
+               mouseX,
+               mouseY,
+               List.of(Text.literal("Open Upgrades"), Text.literal("Unlock and enable Tackle Organizer to edit sorting."))
+            );
+         } else if (inside(mouseX, mouseY, rowX, rowY, 173, SatchelSortKey.values().length * 22)) {
+            this.showTooltip(
+               graphics,
+               mouseX,
+               mouseY,
+               List.of(Text.literal("Sorting unavailable"), Text.literal("Unlock and enable Tackle Organizer first."))
+            );
+         }
+         return;
+      }
 
       for (int index = 0; index < SatchelSortKey.values().length; index++) {
          SatchelSortKey key = SatchelSortKey.values()[index];
@@ -721,7 +830,7 @@ public final class AnglersSatchelScreen extends Screen {
          }
       }
 
-      if (inside(mouseX, mouseY, left + 260, top + 118, 72, 16)) {
+      if (inside(mouseX, mouseY, left + 260, top + 118, 72, BUTTON_HEIGHT)) {
          this.showTooltip(
             graphics,
             mouseX,
@@ -754,6 +863,19 @@ public final class AnglersSatchelScreen extends Screen {
                return;
             }
          }
+      }
+   }
+
+   private void renderStatus(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
+      if (this.localStatus.isBlank()) {
+         return;
+      }
+
+      FittedText status = FishingUiLayout.ellipsize(this.localStatus, STATUS_MAX_WIDTH, this.textRenderer::getWidth);
+      int color = this.pending == AnglersSatchelScreen.Pending.NONE ? BAD_TEXT : MUTED_TEXT;
+      graphics.drawText(this.textRenderer, status.text(), left + STATUS_X, top + STATUS_Y, color, false);
+      if (status.clipped() && inside(mouseX, mouseY, left + STATUS_X, top + STATUS_Y - 1, STATUS_MAX_WIDTH, 11)) {
+         this.showTooltip(graphics, mouseX, mouseY, List.of(Text.literal(this.localStatus)));
       }
    }
 
@@ -790,16 +912,24 @@ public final class AnglersSatchelScreen extends Screen {
 
    private void renderFooter(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
       int y = top + 220;
-      blit(graphics, BADGE_STRIP, left + 28, y, 0, 20);
+      blit(graphics, BADGE_STRIP, left + 28, y, BADGE_STRIP_WIDTH, 20);
       int badgeX = left + 34;
       blit(graphics, statusIcon("active"), badgeX, y + 3, 7, 7);
-      graphics.drawText(this.textRenderer, this.view.active() ? "Active" : "Inactive", badgeX + 10, y + 3, this.view.active() ? -13932478 : -9282236, false);
-      graphics.drawText(this.textRenderer, this.view.open() ? "Open" : "Closed", badgeX + 55, y + 3, this.view.open() ? -13932478 : -6671571, false);
-      drawButton(graphics, left + 136, y + 3, this.view.active() ? "Deactivate" : "Make active", true, mouseX, mouseY);
+      graphics.drawText(this.textRenderer, this.view.active() ? "Active" : "Inactive", badgeX + 10, y + 3, this.view.active() ? GOOD_TEXT : MUTED_TEXT, false);
+      graphics.drawText(this.textRenderer, this.view.open() ? "Open" : "Closed", badgeX + 55, y + 3, this.view.open() ? GOOD_TEXT : BAD_TEXT, false);
       drawButton(
          graphics,
-         left + 214,
-         y + 3,
+         left + FOOTER_ACTIVE_X,
+         top + FOOTER_BUTTON_Y,
+         this.view.active() ? "Deactivate" : "Make active",
+         true,
+         mouseX,
+         mouseY
+      );
+      drawButton(
+         graphics,
+         left + FOOTER_REFRESH_X,
+         top + FOOTER_BUTTON_Y,
          this.pending == AnglersSatchelScreen.Pending.NONE ? "Refresh" : "Waiting...",
          this.pending == AnglersSatchelScreen.Pending.NONE,
          mouseX,
@@ -822,17 +952,18 @@ public final class AnglersSatchelScreen extends Screen {
                }
 
                this.tab = selected;
+               this.localStatus = "";
                this.requestSharedDiscovery();
                return true;
             }
          }
 
-         if (inside(mouseX, mouseY, left + 125, top + 223, 72, 16)) {
+         if (inside(mouseX, mouseY, left + FOOTER_ACTIVE_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
             this.dispatch(AnglersSatchelScreen.Pending.ACTIVE, SatchelClientNetworking.toggleActive(this.view));
             return true;
          }
 
-         if (inside(mouseX, mouseY, left + 203, top + 223, 72, 16)) {
+         if (inside(mouseX, mouseY, left + FOOTER_REFRESH_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
             this.dispatch(AnglersSatchelScreen.Pending.REFRESH, SatchelClientNetworking.refresh(this.view));
             return true;
          }
@@ -871,10 +1002,12 @@ public final class AnglersSatchelScreen extends Screen {
    private boolean clickContents(double mouseX, double mouseY, int left, int top) {
       int gridX = left + 29;
       int gridY = top + 66;
-      if (inside(mouseX, mouseY, gridX, gridY, 200, 140)) {
-         int column = ((int)mouseX - gridX) / 20;
-         int row = ((int)mouseY - gridY) / 20;
-         int slot = this.contentScrollRow * 10 + row * 10 + column;
+      int gridWidth = GRID_COLUMNS * GRID_CELL;
+      int gridHeight = GRID_VISIBLE_ROWS * GRID_CELL;
+      if (inside(mouseX, mouseY, gridX, gridY, gridWidth, gridHeight)) {
+         int column = ((int)mouseX - gridX) / GRID_CELL;
+         int row = ((int)mouseY - gridY) / GRID_CELL;
+         int slot = this.contentScrollRow * GRID_COLUMNS + row * GRID_COLUMNS + column;
          if (slot < this.contents.size()) {
             this.selectedSlot = slot;
          }
@@ -883,7 +1016,7 @@ public final class AnglersSatchelScreen extends Screen {
       } else if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          int x = left + 258;
          int buttonY = top + 202;
-         if (inside(mouseX, mouseY, x, buttonY, 48, 16)) {
+         if (inside(mouseX, mouseY, x, buttonY, 48, BUTTON_HEIGHT)) {
             if (this.view.isProtected(this.selectedSlot)) {
                this.localStatus = "Unprotect that specimen before extracting it";
                return true;
@@ -891,7 +1024,7 @@ public final class AnglersSatchelScreen extends Screen {
                this.dispatch(AnglersSatchelScreen.Pending.EXTRACT, SatchelClientNetworking.extract(this.view, this.selectedSlot));
                return true;
             }
-         } else if (!inside(mouseX, mouseY, x + 58, buttonY, 48, 16)) {
+         } else if (!inside(mouseX, mouseY, x + 58, buttonY, 48, BUTTON_HEIGHT)) {
             return false;
          } else {
             SatchelFeatureView lock = this.view.feature(SatchelFeature.TROPHY_LOCK.id());
@@ -915,6 +1048,18 @@ public final class AnglersSatchelScreen extends Screen {
    private boolean clickSorting(double mouseX, double mouseY, int left, int top) {
       int rowX = left + 38;
       int rowY = top + 72;
+      if (!this.sortingAvailable()) {
+         if (inside(mouseX, mouseY, left + 260, top + 118, 72, BUTTON_HEIGHT)) {
+            this.tab = AnglersSatchelScreen.Tab.UPGRADES;
+            this.localStatus = "";
+            return true;
+         }
+         if (inside(mouseX, mouseY, rowX, rowY, 173, SatchelSortKey.values().length * 22)) {
+            this.localStatus = ORGANIZER_REQUIRED;
+            return true;
+         }
+         return false;
+      }
 
       for (int index = 0; index < SatchelSortKey.values().length; index++) {
          SatchelSortKey key = SatchelSortKey.values()[index];
@@ -946,18 +1091,11 @@ public final class AnglersSatchelScreen extends Screen {
          }
       }
 
-      if (inside(mouseX, mouseY, left + 260, top + 118, 72, 16) && this.sortDirty) {
-         SatchelFeatureView organizer = this.view.feature(SatchelFeature.TACKLE_ORGANIZER.id());
-         if (organizer != null && organizer.unlocked() && organizer.enabled()) {
-            this.dispatch(AnglersSatchelScreen.Pending.SORT, SatchelClientNetworking.sort(this.view, this.draftSortRules));
-            return true;
-         } else {
-            this.localStatus = "Unlock and enable Tackle Organizer first";
-            return true;
-         }
-      } else {
-         return false;
+      if (inside(mouseX, mouseY, left + 260, top + 118, 72, BUTTON_HEIGHT) && this.sortDirty) {
+         this.dispatch(AnglersSatchelScreen.Pending.SORT, SatchelClientNetworking.sort(this.view, this.draftSortRules));
+         return true;
       }
+      return false;
    }
 
    private boolean clickUpgrades(double mouseX, double mouseY, int left, int top) {
@@ -970,8 +1108,9 @@ public final class AnglersSatchelScreen extends Screen {
             if (index == 0) {
                if (this.view.nextCapacityLevel() >= 0) {
                   this.dispatch(AnglersSatchelScreen.Pending.PURCHASE, SatchelClientNetworking.purchaseNextCapacity(this.view));
+               } else {
+                  this.localStatus = "Maximum capacity reached";
                }
-
                return true;
             }
 
@@ -1026,8 +1165,9 @@ public final class AnglersSatchelScreen extends Screen {
    private boolean clickRecords(double mouseX, double mouseY, int left, int top) {
       SatchelFeatureView keeper = this.view.feature(SatchelFeature.RECORD_KEEPER.id());
       boolean enabled = keeper != null && keeper.unlocked() && keeper.enabled();
-      if (!enabled && inside(mouseX, mouseY, left + 30, top + 134, 72, 16)) {
+      if (!enabled && inside(mouseX, mouseY, left + 30, top + 134, 72, BUTTON_HEIGHT)) {
          this.tab = AnglersSatchelScreen.Tab.UPGRADES;
+         this.localStatus = "";
          return true;
       } else {
          return false;
@@ -1040,7 +1180,7 @@ public final class AnglersSatchelScreen extends Screen {
       if (this.tab == AnglersSatchelScreen.Tab.CONTENTS && inside(mouseX, mouseY, left + 28, top + 64, 211, 143)) {
          this.contentScrollRow = MathHelper.clamp(this.contentScrollRow - (int)Math.signum(verticalAmount), 0, this.maximumContentScroll());
          return true;
-      } else if (this.tab == AnglersSatchelScreen.Tab.RECORDS && inside(mouseX, mouseY, left + 30, top + 80, 340, 136)) {
+      } else if (this.tab == AnglersSatchelScreen.Tab.RECORDS && inside(mouseX, mouseY, left + 30, top + 80, 362, 136)) {
          this.recordScroll = MathHelper.clamp(this.recordScroll - (int)Math.signum(verticalAmount), 0, this.maximumRecordScroll());
          return true;
       } else {
@@ -1074,6 +1214,11 @@ public final class AnglersSatchelScreen extends Screen {
       }
    }
 
+   private boolean sortingAvailable() {
+      SatchelFeatureView organizer = this.view.feature(SatchelFeature.TACKLE_ORGANIZER.id());
+      return organizer != null && organizer.unlocked() && organizer.enabled();
+   }
+
    private void moveDraft(int index, int direction) {
       int target = index + direction;
       if (target >= 0 && target < this.draftSortRules.size()) {
@@ -1094,12 +1239,12 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private int maximumContentScroll() {
-      int rows = (this.contents.size() + 10 - 1) / 10;
-      return Math.max(0, rows - 7);
+      int rows = (this.contents.size() + GRID_COLUMNS - 1) / GRID_COLUMNS;
+      return Math.max(0, rows - GRID_VISIBLE_ROWS);
    }
 
    private int maximumRecordScroll() {
-      return Math.max(0, this.contents.size() - 16);
+      return Math.max(0, this.contents.size() - RECORD_VISIBLE);
    }
 
    private void requestSharedDiscovery() {
@@ -1118,6 +1263,16 @@ public final class AnglersSatchelScreen extends Screen {
       }
 
       return target;
+   }
+
+   private static String responseStatus(SatchelView updated) {
+      return switch (updated.status()) {
+         case OPENED, REFRESHED, SUCCESS -> "";
+         default -> {
+            String detail = updated.detail().strip();
+            yield detail.isEmpty() ? TraitAxesRuntime.titleCase(updated.status().id()) : detail;
+         }
+      };
    }
 
    private static double length(ItemStack stack) {
@@ -1141,39 +1296,21 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private static void drawButton(DrawContext graphics, int x, int y, String text, boolean enabled, int mouseX, int mouseY) {
-      byte var7 = 72;
-      if (text.equals("Take") || text.equals("Unlock") || text.equals("Protect")) {
-         var7 = 48;
-      }
-
-      byte var8 = 0;
-      if (!text.equals("Take")) {
-         if (text.equals("Unlock") || text.equals("Protect")) {
-            var8 = -8;
-         }
-      } else {
-         var8 = 8;
-      }
-
-      Identifier var9;
+      int width = text.equals("Take") || text.equals("Unlock") || text.equals("Protect") ? 48 : 72;
+      int offsetX = text.equals("Take") ? 8 : text.equals("Unlock") || text.equals("Protect") ? -8 : 0;
+      Identifier texture;
       if (!enabled) {
-         var9 = BUTTON_LOCKED;
-      } else if (inside(mouseX, mouseY, x + var8, y, var7, 16)) {
-         var9 = BUTTON_HOVERED;
+         texture = BUTTON_LOCKED;
+      } else if (inside(mouseX, mouseY, x + offsetX, y, width, BUTTON_HEIGHT)) {
+         texture = BUTTON_HOVERED;
       } else {
-         var9 = BUTTON_NORMAL;
+         texture = BUTTON_NORMAL;
       }
 
-      blit(graphics, var9, x + var8, y, var7, 16);
-      int var10;
-      if (enabled) {
-         var10 = -12965349;
-      } else {
-         var10 = -9282236;
-      }
-
-      TextRenderer var11 = MinecraftClient.getInstance().textRenderer;
-      graphics.drawText(var11, text, x + var8 + (var7 - var11.getWidth(text)) / 2, y + 4, var10, false);
+      blit(graphics, texture, x + offsetX, y, width, BUTTON_HEIGHT);
+      int color = enabled ? TEXT : MUTED_TEXT;
+      TextRenderer renderer = MinecraftClient.getInstance().textRenderer;
+      graphics.drawText(renderer, text, x + offsetX + (width - renderer.getWidth(text)) / 2, y + 4, color, false);
    }
 
    private static void blit(DrawContext graphics, Identifier texture, int x, int y, int width, int height) {
@@ -1247,11 +1384,11 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    private int left() {
-      return (this.width - 400) / 2;
+      return (this.width - BACKGROUND_WIDTH) / 2;
    }
 
    private int top() {
-      return (this.height - 260) / 2;
+      return (this.height - BACKGROUND_HEIGHT) / 2;
    }
 
    @Environment(EnvType.CLIENT)
