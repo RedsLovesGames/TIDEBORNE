@@ -42,11 +42,13 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.item.Item.TooltipContext;
 import net.minecraft.item.tooltip.TooltipType.Default;
+import org.lwjgl.glfw.GLFW;
 
 @Environment(EnvType.CLIENT)
 public final class AnglersSatchelScreen extends Screen {
    private static final int BACKGROUND_WIDTH = 400;
    private static final int BACKGROUND_HEIGHT = 260;
+   private static final int SCREEN_MARGIN = 6;
    private static final int TEXT = -12965349;
    private static final int MUTED_TEXT = -9282236;
    private static final int GOOD_TEXT = -13932478;
@@ -101,7 +103,7 @@ public final class AnglersSatchelScreen extends Screen {
    private String localStatus = "";
 
    public AnglersSatchelScreen(SatchelView initialView) {
-      super(Text.literal(""));
+      super(Text.literal("Angler's Satchel"));
       this.view = initialView;
       this.contents = initialView.contents();
       this.draftSortRules = wireRules(initialView.sortRules());
@@ -143,30 +145,41 @@ public final class AnglersSatchelScreen extends Screen {
 
    public void render(DrawContext graphics, int mouseX, int mouseY, float partialTick) {
       this.renderBackground(graphics, mouseX, mouseY, partialTick);
-      int left = this.left();
-      int top = this.top();
-      blit(graphics, JOURNAL_BACKGROUND, left, top, BACKGROUND_WIDTH, BACKGROUND_HEIGHT);
-      graphics.drawText(this.textRenderer, this.title, left + 27, top + 32, TEXT, false);
-      graphics.drawText(this.textRenderer, this.view.hand() == Hand.MAIN_HAND ? "" : "", left + 27, top + 29, MUTED_TEXT, false);
-      this.renderExperience(graphics, left, top);
-      this.renderTabs(graphics, left, top, mouseX, mouseY);
-      switch (this.tab) {
-         case CONTENTS:
-            this.renderContents(graphics, left, top, mouseX, mouseY);
-            break;
-         case SORTING:
-            this.renderSorting(graphics, left, top, mouseX, mouseY);
-            break;
-         case UPGRADES:
-            this.renderUpgrades(graphics, left, top, mouseX, mouseY);
-            break;
-         case RECORDS:
-            this.renderRecords(graphics, left, top, mouseX, mouseY);
-      }
+      float scale = this.interfaceScale();
+      int logicalMouseX = (int)Math.round(this.logicalMouseX(mouseX, scale));
+      int logicalMouseY = (int)Math.round(this.logicalMouseY(mouseY, scale));
+      graphics.getMatrices().push();
 
-      this.renderFooter(graphics, left, top, mouseX, mouseY);
-      this.renderStatus(graphics, left, top, mouseX, mouseY);
-      this.renderControlTooltip(graphics, left, top, mouseX, mouseY);
+      try {
+         graphics.getMatrices().translate(this.width / 2.0F, this.height / 2.0F, 0.0F);
+         graphics.getMatrices().scale(scale, scale, 1.0F);
+         graphics.getMatrices().translate(-this.width / 2.0F, -this.height / 2.0F, 0.0F);
+         int left = this.left();
+         int top = this.top();
+         blit(graphics, JOURNAL_BACKGROUND, left, top, BACKGROUND_WIDTH, BACKGROUND_HEIGHT);
+         graphics.drawText(this.textRenderer, this.title, left + 27, top + 28, TEXT, false);
+         this.renderExperience(graphics, left, top);
+         this.renderTabs(graphics, left, top, logicalMouseX, logicalMouseY);
+         switch (this.tab) {
+            case CONTENTS:
+               this.renderContents(graphics, left, top, logicalMouseX, logicalMouseY);
+               break;
+            case SORTING:
+               this.renderSorting(graphics, left, top, logicalMouseX, logicalMouseY);
+               break;
+            case UPGRADES:
+               this.renderUpgrades(graphics, left, top, logicalMouseX, logicalMouseY);
+               break;
+            case RECORDS:
+               this.renderRecords(graphics, left, top, logicalMouseX, logicalMouseY);
+         }
+
+         this.renderFooter(graphics, left, top, logicalMouseX, logicalMouseY);
+         this.renderStatus(graphics, left, top, logicalMouseX, logicalMouseY);
+         this.renderControlTooltip(graphics, left, top, logicalMouseX, logicalMouseY);
+      } finally {
+         graphics.getMatrices().pop();
+      }
    }
 
    private void renderExperience(DrawContext graphics, int left, int top) {
@@ -695,11 +708,11 @@ public final class AnglersSatchelScreen extends Screen {
                mouseY,
                switch (hovered) {
                   case CONTENTS -> List.of(
-                     Text.literal("Contents"), Text.literal("Browse stored fish, inspect traits, and take a fish out.")
+                     Text.literal("Contents"), Text.literal("Browse stored fish, inspect traits, and take a fish out."), Text.literal("Keyboard: arrows move selection; Tab or 1-4 changes page.")
                   );
-                  case SORTING -> List.of(Text.literal("Sorting"), Text.literal("Choose the order used for stored fish."));
-                  case UPGRADES -> List.of(Text.literal("Upgrades"), Text.literal("Spend XP to unlock satchel abilities and settings."));
-                  case RECORDS -> List.of(Text.literal("Records"), Text.literal("Browse stored specimens and record fish."));
+                  case SORTING -> List.of(Text.literal("Sorting"), Text.literal("Choose the order used for stored fish."), Text.literal("Keyboard: Tab or 1-4 changes page."));
+                  case UPGRADES -> List.of(Text.literal("Upgrades"), Text.literal("Spend XP to unlock satchel abilities and settings."), Text.literal("Keyboard: Tab or 1-4 changes page."));
+                  case RECORDS -> List.of(Text.literal("Records"), Text.literal("Browse stored specimens and record fish."), Text.literal("Keyboard: Up/Down or Page Up/Page Down scrolls."));
                }
             );
             return;
@@ -938,6 +951,8 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+      double logicalMouseX = this.logicalMouseX(mouseX, this.interfaceScale());
+      double logicalMouseY = this.logicalMouseY(mouseY, this.interfaceScale());
       if (button == 0 && this.pending == AnglersSatchelScreen.Pending.NONE) {
          int left = this.left();
          int top = this.top();
@@ -945,58 +960,68 @@ public final class AnglersSatchelScreen extends Screen {
 
          for (int index = 0; index < AnglersSatchelScreen.Tab.values().length; index++) {
             int x = left + 27 + index * 87;
-            if (inside(mouseX, mouseY, x, tabY, 82, 17)) {
-               AnglersSatchelScreen.Tab selected = AnglersSatchelScreen.Tab.values()[index];
-               if (selected == AnglersSatchelScreen.Tab.RECORDS && this.tab != AnglersSatchelScreen.Tab.RECORDS) {
-                  this.sharedSyncRequested = false;
-               }
-
-               this.tab = selected;
-               this.localStatus = "";
-               this.requestSharedDiscovery();
+            if (inside(logicalMouseX, logicalMouseY, x, tabY, 82, 17)) {
+               this.selectTab(AnglersSatchelScreen.Tab.values()[index]);
                return true;
             }
          }
 
-         if (inside(mouseX, mouseY, left + FOOTER_ACTIVE_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
+         if (inside(logicalMouseX, logicalMouseY, left + FOOTER_ACTIVE_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
             this.dispatch(AnglersSatchelScreen.Pending.ACTIVE, SatchelClientNetworking.toggleActive(this.view));
             return true;
          }
 
-         if (inside(mouseX, mouseY, left + FOOTER_REFRESH_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
+         if (inside(logicalMouseX, logicalMouseY, left + FOOTER_REFRESH_X, top + FOOTER_BUTTON_Y, FOOTER_BUTTON_WIDTH, BUTTON_HEIGHT)) {
             this.dispatch(AnglersSatchelScreen.Pending.REFRESH, SatchelClientNetworking.refresh(this.view));
             return true;
          }
 
          switch (this.tab) {
             case CONTENTS:
-               if (this.clickContents(mouseX, mouseY, left, top)) {
+               if (this.clickContents(logicalMouseX, logicalMouseY, left, top)) {
                   return true;
                }
                break;
             case SORTING:
-               if (this.clickSorting(mouseX, mouseY, left, top)) {
+               if (this.clickSorting(logicalMouseX, logicalMouseY, left, top)) {
                   return true;
                }
                break;
             case UPGRADES:
-               if (this.clickUpgrades(mouseX, mouseY, left, top)) {
+               if (this.clickUpgrades(logicalMouseX, logicalMouseY, left, top)) {
                   return true;
                }
                break;
             case RECORDS:
-               if (this.clickRecords(mouseX, mouseY, left, top)) {
+               if (this.clickRecords(logicalMouseX, logicalMouseY, left, top)) {
                   return true;
                }
                break;
             default:
                throw new MatchException(null, null);
          }
-
-         return super.mouseClicked(mouseX, mouseY, button);
-      } else {
-         return super.mouseClicked(mouseX, mouseY, button);
       }
+      return super.mouseClicked(mouseX, mouseY, button);
+   }
+
+   public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+      if (this.pending == AnglersSatchelScreen.Pending.NONE) {
+         if (keyCode >= GLFW.GLFW_KEY_1 && keyCode <= GLFW.GLFW_KEY_4) {
+            this.selectTab(AnglersSatchelScreen.Tab.values()[keyCode - GLFW.GLFW_KEY_1]);
+            return true;
+         }
+         if (keyCode == GLFW.GLFW_KEY_TAB) {
+            this.cycleTab((modifiers & GLFW.GLFW_MOD_SHIFT) != 0 ? -1 : 1);
+            return true;
+         }
+         if (this.tab == AnglersSatchelScreen.Tab.CONTENTS && this.handleContentsKey(keyCode)) {
+            return true;
+         }
+         if (this.tab == AnglersSatchelScreen.Tab.RECORDS && this.handleRecordsKey(keyCode)) {
+            return true;
+         }
+      }
+      return super.keyPressed(keyCode, scanCode, modifiers);
    }
 
    private boolean clickContents(double mouseX, double mouseY, int left, int top) {
@@ -1050,8 +1075,7 @@ public final class AnglersSatchelScreen extends Screen {
       int rowY = top + 72;
       if (!this.sortingAvailable()) {
          if (inside(mouseX, mouseY, left + 260, top + 118, 72, BUTTON_HEIGHT)) {
-            this.tab = AnglersSatchelScreen.Tab.UPGRADES;
-            this.localStatus = "";
+            this.selectTab(AnglersSatchelScreen.Tab.UPGRADES);
             return true;
          }
          if (inside(mouseX, mouseY, rowX, rowY, 173, SatchelSortKey.values().length * 22)) {
@@ -1166,8 +1190,7 @@ public final class AnglersSatchelScreen extends Screen {
       SatchelFeatureView keeper = this.view.feature(SatchelFeature.RECORD_KEEPER.id());
       boolean enabled = keeper != null && keeper.unlocked() && keeper.enabled();
       if (!enabled && inside(mouseX, mouseY, left + 30, top + 134, 72, BUTTON_HEIGHT)) {
-         this.tab = AnglersSatchelScreen.Tab.UPGRADES;
-         this.localStatus = "";
+         this.selectTab(AnglersSatchelScreen.Tab.UPGRADES);
          return true;
       } else {
          return false;
@@ -1175,12 +1198,15 @@ public final class AnglersSatchelScreen extends Screen {
    }
 
    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+      float scale = this.interfaceScale();
+      double logicalMouseX = this.logicalMouseX(mouseX, scale);
+      double logicalMouseY = this.logicalMouseY(mouseY, scale);
       int left = this.left();
       int top = this.top();
-      if (this.tab == AnglersSatchelScreen.Tab.CONTENTS && inside(mouseX, mouseY, left + 28, top + 64, 211, 143)) {
+      if (this.tab == AnglersSatchelScreen.Tab.CONTENTS && inside(logicalMouseX, logicalMouseY, left + 28, top + 64, 211, 143)) {
          this.contentScrollRow = MathHelper.clamp(this.contentScrollRow - (int)Math.signum(verticalAmount), 0, this.maximumContentScroll());
          return true;
-      } else if (this.tab == AnglersSatchelScreen.Tab.RECORDS && inside(mouseX, mouseY, left + 30, top + 80, 362, 136)) {
+      } else if (this.tab == AnglersSatchelScreen.Tab.RECORDS && inside(logicalMouseX, logicalMouseY, left + 30, top + 80, 362, 136)) {
          this.recordScroll = MathHelper.clamp(this.recordScroll - (int)Math.signum(verticalAmount), 0, this.maximumRecordScroll());
          return true;
       } else {
@@ -1212,6 +1238,74 @@ public final class AnglersSatchelScreen extends Screen {
       } else {
          this.localStatus = "Satchel networking is unavailable";
       }
+   }
+
+   private void selectTab(AnglersSatchelScreen.Tab selected) {
+      if (selected == AnglersSatchelScreen.Tab.RECORDS && this.tab != AnglersSatchelScreen.Tab.RECORDS) {
+         this.sharedSyncRequested = false;
+      }
+      this.tab = selected;
+      this.localStatus = "";
+      this.requestSharedDiscovery();
+   }
+
+   private void cycleTab(int direction) {
+      AnglersSatchelScreen.Tab[] tabs = AnglersSatchelScreen.Tab.values();
+      int next = Math.floorMod(this.tab.ordinal() + direction, tabs.length);
+      this.selectTab(tabs[next]);
+   }
+
+   private boolean handleContentsKey(int keyCode) {
+      if (this.contents.isEmpty()) {
+         return false;
+      }
+
+      int current = this.selectedSlot >= 0 ? this.selectedSlot : 0;
+      int target = switch (keyCode) {
+         case GLFW.GLFW_KEY_LEFT -> current - 1;
+         case GLFW.GLFW_KEY_RIGHT -> current + 1;
+         case GLFW.GLFW_KEY_UP -> current - GRID_COLUMNS;
+         case GLFW.GLFW_KEY_DOWN -> current + GRID_COLUMNS;
+         case GLFW.GLFW_KEY_PAGE_UP -> current - GRID_COLUMNS * GRID_VISIBLE_ROWS;
+         case GLFW.GLFW_KEY_PAGE_DOWN -> current + GRID_COLUMNS * GRID_VISIBLE_ROWS;
+         case GLFW.GLFW_KEY_HOME -> 0;
+         case GLFW.GLFW_KEY_END -> this.contents.size() - 1;
+         default -> Integer.MIN_VALUE;
+      };
+      if (target == Integer.MIN_VALUE) {
+         return false;
+      }
+
+      this.selectContentsSlot(target);
+      return true;
+   }
+
+   private void selectContentsSlot(int target) {
+      this.selectedSlot = MathHelper.clamp(target, 0, this.contents.size() - 1);
+      int selectedRow = this.selectedSlot / GRID_COLUMNS;
+      if (selectedRow < this.contentScrollRow) {
+         this.contentScrollRow = selectedRow;
+      } else if (selectedRow >= this.contentScrollRow + GRID_VISIBLE_ROWS) {
+         this.contentScrollRow = selectedRow - GRID_VISIBLE_ROWS + 1;
+      }
+      this.contentScrollRow = MathHelper.clamp(this.contentScrollRow, 0, this.maximumContentScroll());
+   }
+
+   private boolean handleRecordsKey(int keyCode) {
+      int delta = switch (keyCode) {
+         case GLFW.GLFW_KEY_UP -> -1;
+         case GLFW.GLFW_KEY_DOWN -> 1;
+         case GLFW.GLFW_KEY_PAGE_UP -> -RECORD_ROWS_PER_COLUMN;
+         case GLFW.GLFW_KEY_PAGE_DOWN -> RECORD_ROWS_PER_COLUMN;
+         case GLFW.GLFW_KEY_HOME -> -this.recordScroll;
+         case GLFW.GLFW_KEY_END -> this.maximumRecordScroll() - this.recordScroll;
+         default -> 0;
+      };
+      if (delta == 0 && keyCode != GLFW.GLFW_KEY_HOME && keyCode != GLFW.GLFW_KEY_END) {
+         return false;
+      }
+      this.recordScroll = MathHelper.clamp(this.recordScroll + delta, 0, this.maximumRecordScroll());
+      return true;
    }
 
    private boolean sortingAvailable() {
@@ -1381,6 +1475,18 @@ public final class AnglersSatchelScreen extends Screen {
 
    private static Identifier tide(String path) {
       return Identifier.of("tide", path);
+   }
+
+   private float interfaceScale() {
+      return FishingUiLayout.fitScale(this.width, this.height, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, SCREEN_MARGIN);
+   }
+
+   private double logicalMouseX(double mouseX, float scale) {
+      return FishingUiLayout.inverseCenteredCoordinate(mouseX, this.width, scale);
+   }
+
+   private double logicalMouseY(double mouseY, float scale) {
+      return FishingUiLayout.inverseCenteredCoordinate(mouseY, this.height, scale);
    }
 
    private int left() {
