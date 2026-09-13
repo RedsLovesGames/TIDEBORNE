@@ -1,0 +1,93 @@
+name: P10.5 Runtime Matrix
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/p10_5-runtime-matrix.yml'
+      - 'scripts/dedicated_server_smoke.sh'
+      - 'scripts/fetch_ci_dependencies.sh'
+      - 'src/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'docs/RELEASE_VALIDATION_CHECKLIST.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-matrix:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: required-only
+            apex: 'false'
+            myths: 'false'
+          - name: apex-only
+            apex: 'true'
+            myths: 'false'
+          - name: myths-only
+            apex: 'false'
+            myths: 'true'
+          - name: apex-and-myths
+            apex: 'true'
+            myths: 'true'
+    env:
+      APEX_ARTIFACT_ID: '59017507'
+      MYTHS_ARTIFACT_ID: '59337054'
+      TIDE_ARTIFACT_ID: '59368171'
+      TIDE_REPO_TOKEN: ${{ secrets.TIDE_REPO_TOKEN }}
+      ALEXSMOBS_REPO_TOKEN: ${{ secrets.ALEXSMOBS_REPO_TOKEN }}
+      ORG_GRADLE_PROJECT_includeApexRuntime: ${{ matrix.apex }}
+      ORG_GRADLE_PROJECT_includeMythsRuntime: ${{ matrix.myths }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install runtime smoke dependencies
+        run: sudo apt-get update && sudo apt-get install -y xvfb ripgrep
+
+      - name: Fetch exact external runtime dependencies
+        run: scripts/fetch_ci_dependencies.sh dev/libs "$APEX_ARTIFACT_ID" "$MYTHS_ARTIFACT_ID" "$TIDE_ARTIFACT_ID"
+
+      - name: Validate repository
+        run: scripts/validate_repository.sh
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon test --stacktrace
+
+      - name: Fabric GameTests
+        run: ./gradlew --no-daemon runGametest --stacktrace
+
+      - name: Dedicated server plus real client join
+        env:
+          CONNECT_CLIENT: 'true'
+        run: scripts/dedicated_server_smoke.sh
+
+      - name: Upload P10.5 runtime logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p10-5-${{ matrix.name }}-logs
+          if-no-files-found: ignore
+          path: |
+            build/dedicated-server-smoke.log
+            build/dedicated-client-smoke.log
+            build/junit.xml
+            run/quickplay-smoke.json
+            run/logs/latest.log
