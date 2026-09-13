@@ -63,8 +63,11 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         exit 1
     fi
 
+    # Minecraft 1.20+ removed --server/--port. Quick Play is the supported
+    # command-line path for joining a multiplayer server.
     timeout 180s xvfb-run -a "$gradle_bin" runClient --console=plain --no-daemon \
-        --args='--server 127.0.0.1 --port 25565' >"$client_log" 2>&1 &
+        --args='--quickPlayMultiplayer 127.0.0.1:25565 --quickPlayPath quickplay-smoke.json' \
+        >"$client_log" 2>&1 &
     client_pid=$!
     connected=0
     for _ in $(seq 1 180); do
@@ -86,7 +89,7 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         exit 1
     fi
 
-    # Allow the login/configuration protocol to complete before closing the client.
+    # Allow login/configuration and normal client initialization to complete.
     for _ in $(seq 1 30); do
         if ! kill -0 "$client_pid" 2>/dev/null; then
             break
@@ -97,6 +100,16 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
     kill "$client_pid" 2>/dev/null || true
     wait "$client_pid" 2>/dev/null || true
     client_pid=""
+
+    if rg -n 'Mixin apply failed|Could not execute entrypoint|NoClassDefFoundError|ClassNotFoundException|ExceptionInInitializerError|ReportedException' "$client_log"; then
+        echo 'Dedicated client log contains a startup or classloading failure.' >&2
+        exit 1
+    fi
+    if ! rg -q '\[Tideborne\] Unified client configuration and rendering systems initialized\.' "$client_log"; then
+        echo 'Dedicated client did not finish Tideborne client initialization.' >&2
+        sed -n '1,220p' "$client_log" >&2
+        exit 1
+    fi
 fi
 
 printf 'stop\n' >&3
