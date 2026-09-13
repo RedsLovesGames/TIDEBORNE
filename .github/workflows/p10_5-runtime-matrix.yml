@@ -38,11 +38,6 @@ jobs:
             apex: 'true'
             myths: 'true'
     env:
-      APEX_ARTIFACT_ID: '59017507'
-      MYTHS_ARTIFACT_ID: '59337054'
-      TIDE_ARTIFACT_ID: '59368171'
-      TIDE_REPO_TOKEN: ${{ secrets.TIDE_REPO_TOKEN }}
-      ALEXSMOBS_REPO_TOKEN: ${{ secrets.ALEXSMOBS_REPO_TOKEN }}
       ORG_GRADLE_PROJECT_includeApexRuntime: ${{ matrix.apex }}
       ORG_GRADLE_PROJECT_includeMythsRuntime: ${{ matrix.myths }}
 
@@ -58,15 +53,17 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.12'
 
       - name: Install runtime smoke dependencies
         run: sudo apt-get update && sudo apt-get install -y xvfb ripgrep
 
       - name: Fetch exact external runtime dependencies
-        run: scripts/fetch_ci_dependencies.sh dev/libs "$APEX_ARTIFACT_ID" "$MYTHS_ARTIFACT_ID" "$TIDE_ARTIFACT_ID"
+        run: bash scripts/fetch_ci_dependencies.sh
 
       - name: Validate repository
-        run: scripts/validate_repository.sh
+        run: ./scripts/validate_repository.sh
 
       - name: Unit tests
         run: ./gradlew --no-daemon test --stacktrace
@@ -77,7 +74,7 @@ jobs:
       - name: Dedicated server plus real client join
         env:
           CONNECT_CLIENT: 'true'
-        run: scripts/dedicated_server_smoke.sh
+        run: bash scripts/dedicated_server_smoke.sh
 
       - name: Upload P10.5 runtime logs
         if: always()
