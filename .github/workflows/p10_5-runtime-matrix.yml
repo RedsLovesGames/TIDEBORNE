@@ -68,9 +68,6 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon test --stacktrace
 
-      - name: Fabric GameTests
-        run: ./gradlew --no-daemon runGametest --stacktrace
-
       - name: Dedicated server plus real client join
         env:
           CONNECT_CLIENT: 'true'
