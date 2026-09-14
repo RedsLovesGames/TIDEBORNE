@@ -112,7 +112,7 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         sed -n '1,240p' "$client_log" >&2
         exit 1
     fi
-    if ! rg -q '\[Tideborne\] CI direct-connect attempting localhost:25565\.' "$client_log"; then
+    if ! rg -q 'CI direct-connect attempting localhost:25565\.' "$client_log"; then
         echo 'Dedicated client never attempted the CI direct connection.' >&2
         sed -n '1,240p' "$client_log" >&2
         exit 1
