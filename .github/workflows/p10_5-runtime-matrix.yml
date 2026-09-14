@@ -2,7 +2,7 @@ name: P10.5 Runtime Matrix
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, agent/p10-5-runtime-fixes]
     paths:
       - '.github/workflows/p10_5-runtime-matrix.yml'
       - 'scripts/dedicated_server_smoke.sh'
