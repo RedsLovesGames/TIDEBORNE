@@ -22,18 +22,21 @@ The `P10.5 Runtime Matrix` workflow must pass all four runtime combinations:
 Each matrix leg must pass:
 
 - repository validation;
-- unit tests;
-- all registered Fabric GameTests;
+- JUnit unit tests;
 - dedicated-server startup;
 - real client initialization under Xvfb;
-- a real Minecraft multiplayer login using `--quickPlayMultiplayer`;
+- a real Minecraft multiplayer login through Tideborne's CI-only direct-connect hook;
 - clean client/server classloading and Mixin checks.
 
-The matrix intentionally sets `includeApexRuntime` and `includeMythsRuntime` independently. GameTest bootstrap assertions must agree with the runtime that is actually present.
+The matrix intentionally sets `includeApexRuntime` and `includeMythsRuntime` independently. It validates dependency-presence combinations without making Fabric GameTests part of the matrix job.
+
+### Separate Fabric GameTest gate
+
+Registered Fabric GameTests remain a release gate, but they are run and reviewed separately from the runtime matrix. Record the successful GameTest result before release. A runtime-matrix pass does not imply a GameTest pass, and a GameTest pass does not replace the dedicated-server/client-login matrix.
 
 ## 3. Persistence and old-world compatibility
 
-These are release blockers and are covered by the registered GameTests. Do not replace them with hand-written approximations.
+These are release blockers covered by the registered Fabric GameTests. They are validated in the separate GameTest run, not approximated by the runtime matrix.
 
 - [ ] Current canonical specimen data survives item/entity transfers unchanged.
 - [ ] Legacy mutation/body-type specimen data migrates once and is then idempotent.
@@ -61,7 +64,7 @@ Relevant automated coverage includes:
 
 ## 4. Gameplay smoke coverage
 
-Automated GameTests/unit tests must remain green for:
+JUnit tests and the separate Fabric GameTest run must remain green for their respective coverage areas:
 
 - [ ] normal specimen generation;
 - [ ] deterministic RNG and specimen identity;
@@ -80,7 +83,7 @@ Automated GameTests/unit tests must remain green for:
 - [ ] crate/progression bridge behavior;
 - [ ] dedicated-server safety.
 
-Do not manually re-test every mathematical combination that is already deterministic unit-test coverage. Manual testing is reserved for presentation and human interaction.
+Do not manually re-test every mathematical combination already covered deterministically. Manual testing is reserved for presentation and human interaction.
 
 ## 5. Manual client visual sign-off
 
@@ -110,7 +113,7 @@ Record screenshots for any failure before changing code.
 
 ## 6. Manual multiplayer gameplay sign-off
 
-CI now proves that a real 1.21.1 client can initialize and complete a dedicated-server login. Before release, also perform one human gameplay session with two clients when practical:
+CI proves that a real 1.21.1 client can initialize and complete a dedicated-server login. Before release, also perform one human gameplay session with two clients when practical:
 
 - [ ] Client A catches a fish and server owns the generated specimen identity.
 - [ ] Client A stores/protects/sorts the specimen in the Satchel.
@@ -126,6 +129,7 @@ This human session is for interaction/synchronization confidence. It does not re
 
 - [ ] `./gradlew clean build --stacktrace` succeeds on Java 21.
 - [ ] Expected unit-test count is reported and all tests pass.
+- [ ] Separate Fabric GameTest run passes and its result is recorded.
 - [ ] `scripts/validate_repository.sh` passes.
 - [ ] Java/AI quality gate passes.
 - [ ] Runtime matrix passes all four combinations.
@@ -138,4 +142,6 @@ This human session is for interaction/synchronization confidence. It does not re
 
 P10 integration was fast-forwarded into `dev` from `agent/p10-ui-presentation` because the worker branch was ahead of `dev` with no divergence. The normal post-integration Build Tideborne and Java/AI Quality Gate workflows both passed on `4de98e4ef581d0e27685ed5a8141bfc218400f15`.
 
-P10.5 adds the runtime matrix and changes the dedicated client connection smoke from the removed `--server` / `--port` arguments to Minecraft Quick Play (`--quickPlayMultiplayer`).
+P10.5 validates four exact optional-dependency combinations with a real dedicated server and a real Minecraft client under Xvfb. Minecraft 1.21.1 Quick Play arguments were verified to reach the Loom development client but did not initiate a connection reliably there, so the smoke test uses a dormant CI-only Tideborne client hook that calls Vanilla's normal direct-connect path after client startup. Normal launches do not register the hook because the CI environment variable is absent.
+
+Fabric GameTests are intentionally kept as a separate release gate so their persistence/gameplay assertions can be run and reviewed independently from dependency-matrix and real-login validation.
