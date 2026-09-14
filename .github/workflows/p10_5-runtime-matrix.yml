@@ -85,6 +85,7 @@ jobs:
           path: |
             build/dedicated-server-smoke.log
             build/dedicated-client-smoke.log
-            build/junit.xml
+            build/test-results/test/*.xml
             run/quickplay-smoke.json
-            run/logs/latest.log
+            run/gametest-*/logs/latest.log
+            run/gametest-*/crash-reports/**
