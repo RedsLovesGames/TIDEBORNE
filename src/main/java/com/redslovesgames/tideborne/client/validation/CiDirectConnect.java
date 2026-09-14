@@ -1,0 +1,58 @@
+package com.redslovesgames.tideborne.client.validation;
+
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.TitleScreen;
+import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
+import net.minecraft.client.network.ServerAddress;
+import net.minecraft.client.network.ServerInfo;
+
+/**
+ * CI-only client connection hook used by the dedicated-server smoke test.
+ * Normal launches never register this hook because the environment variable is absent.
+ */
+public final class CiDirectConnect {
+    private static final String TARGET_ENV = "TIDEBORNE_CI_DIRECT_CONNECT_TARGET";
+    private static boolean registered;
+    private static boolean attempted;
+
+    private CiDirectConnect() {
+    }
+
+    public static void initializeFromEnvironment() {
+        if (registered) {
+            return;
+        }
+
+        String target = System.getenv(TARGET_ENV);
+        if (target == null || target.isBlank()) {
+            return;
+        }
+
+        registered = true;
+        String normalizedTarget = target.trim();
+        ClientTickEvents.END_CLIENT_TICK.register(client -> connectOnce(client, normalizedTarget));
+        System.out.println("[Tideborne] CI direct-connect armed for " + normalizedTarget + '.');
+    }
+
+    private static void connectOnce(MinecraftClient client, String target) {
+        if (attempted || !(client.currentScreen instanceof TitleScreen)) {
+            return;
+        }
+        if (client.world != null || client.getNetworkHandler() != null) {
+            return;
+        }
+
+        attempted = true;
+        ServerInfo serverInfo = new ServerInfo("Tideborne CI smoke", target, ServerInfo.ServerType.OTHER);
+        System.out.println("[Tideborne] CI direct-connect attempting " + target + '.');
+        ConnectScreen.connect(
+                client.currentScreen,
+                client,
+                ServerAddress.parse(target),
+                serverInfo,
+                false,
+                null
+        );
+    }
+}
