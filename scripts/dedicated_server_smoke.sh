@@ -63,10 +63,12 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         exit 1
     fi
 
-    # Minecraft 1.20+ removed --server/--port. Quick Play is the supported
-    # command-line path for joining a multiplayer server.
-    timeout 180s xvfb-run -a "$gradle_bin" runClient --console=plain --no-daemon \
-        --args='--quickPlayMultiplayer 127.0.0.1:25565 --quickPlayPath quickplay-smoke.json' \
+    # Put the Quick Play arguments into Loom's client run configuration. This is
+    # more deterministic than replacing JavaExec arguments from the Gradle CLI and
+    # mirrors how Fabric expects Minecraft program arguments to be supplied.
+    mkdir -p "$repo_root/run/client/quickPlay"
+    env TIDEBORNE_CI_QUICKPLAY_TARGET='localhost:25565' \
+        timeout 180s xvfb-run -a "$gradle_bin" runClient --console=plain --no-daemon \
         >"$client_log" 2>&1 &
     client_pid=$!
     connected=0
