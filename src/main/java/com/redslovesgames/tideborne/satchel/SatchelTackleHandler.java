@@ -22,7 +22,6 @@ public final class SatchelTackleHandler extends ScreenHandler {
     private final ItemStack satchel;
     private final Hand hand;
     private final SimpleInventory pockets = new SimpleInventory(SatchelPreset.SLOTS.size());
-    private final SimpleInventory equipmentPreview = new SimpleInventory(SatchelPreset.SLOTS.size());
     private int selectedPreset;
     private List<SatchelPreset> decodedPresets;
 
@@ -47,6 +46,7 @@ public final class SatchelTackleHandler extends ScreenHandler {
         }
         // Preserve the twelve-slot tackle/equipment layout used by the physical-preset protocol.
         // These six projection slots are server read-only; the first player-inventory slot remains 12.
+        SimpleInventory equipmentPreview = new SimpleInventory(SatchelPreset.SLOTS.size());
         for (int i = 0; i < SatchelPreset.SLOTS.size(); i++) {
             addSlot(new Slot(equipmentPreview, i, 8 + i * 18, 36) {
                 @Override public boolean canInsert(ItemStack stack) {
