@@ -22,6 +22,7 @@ public final class SatchelTackleHandler extends ScreenHandler {
     private final ItemStack satchel;
     private final Hand hand;
     private final SimpleInventory pockets = new SimpleInventory(SatchelPreset.SLOTS.size());
+    private final SimpleInventory equipmentPreview = new SimpleInventory(SatchelPreset.SLOTS.size());
     private int selectedPreset;
     private List<SatchelPreset> decodedPresets;
 
@@ -44,14 +45,23 @@ public final class SatchelTackleHandler extends ScreenHandler {
                 }
             });
         }
+        // Preserve the twelve-slot tackle/equipment layout used by the physical-preset protocol.
+        // These six projection slots are server read-only; the first player-inventory slot remains 12.
+        for (int i = 0; i < SatchelPreset.SLOTS.size(); i++) {
+            addSlot(new Slot(equipmentPreview, i, 8 + i * 18, 36) {
+                @Override public boolean canInsert(ItemStack stack) {
+                    return false;
+                }
+            });
+        }
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
                 int index = column + row * 9 + 9;
-                addSlot(new Slot(playerInventory, index, 8 + column * 18, 50 + row * 18));
+                addSlot(new Slot(playerInventory, index, 8 + column * 18, 68 + row * 18));
             }
         }
         for (int column = 0; column < 9; column++) {
-            addSlot(new Slot(playerInventory, column, 8 + column * 18, 108));
+            addSlot(new Slot(playerInventory, column, 8 + column * 18, 126));
         }
     }
 
@@ -68,9 +78,10 @@ public final class SatchelTackleHandler extends ScreenHandler {
         ItemStack moving = source.getStack();
         ItemStack original = moving.copy();
         int tackleSlots = SatchelPreset.SLOTS.size();
+        int playerStart = tackleSlots * 2;
         if (slot < tackleSlots) {
-            if (!insertItem(moving, tackleSlots, this.slots.size(), true)) return ItemStack.EMPTY;
-        } else {
+            if (!insertItem(moving, playerStart, this.slots.size(), true)) return ItemStack.EMPTY;
+        } else if (slot >= playerStart) {
             int target = -1;
             for (int i = 0; i < tackleSlots; i++) {
                 if (!this.slots.get(i).hasStack() && FishingGearRegistry.accepts(SatchelPreset.SLOTS.get(i), moving)) {
@@ -79,6 +90,8 @@ public final class SatchelTackleHandler extends ScreenHandler {
                 }
             }
             if (target < 0 || !insertItem(moving, target, target + 1, false)) return ItemStack.EMPTY;
+        } else {
+            return ItemStack.EMPTY;
         }
         if (moving.isEmpty()) source.setStack(ItemStack.EMPTY);
         else source.markDirty();
