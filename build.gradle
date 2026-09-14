@@ -26,7 +26,6 @@ def cerbonsApiJar = file('dev/libs/cerbons-api-fabric-1.21.1-1.3.0.jar')
 def geckolibJar = file('dev/libs/geckolib-fabric-1.21.1-4.9.2.jar')
 def includeApexRuntime = project.findProperty('includeApexRuntime') == 'true'
 def includeMythsRuntime = project.findProperty('includeMythsRuntime') == 'true'
-def ciQuickPlayTarget = System.getenv('TIDEBORNE_CI_QUICKPLAY_TARGET')
 def optionalRuntimeLabel = includeApexRuntime && includeMythsRuntime
         ? 'apex-myths'
         : includeApexRuntime ? 'apex' : includeMythsRuntime ? 'myths' : 'none'
@@ -91,12 +90,6 @@ loom {
             client()
             name 'Tideborne Client'
             runDir 'run/client'
-            if (ciQuickPlayTarget) {
-                programArg '--quickPlayMultiplayer'
-                programArg ciQuickPlayTarget
-                programArg '--quickPlayPath'
-                programArg 'quickPlay/ci-smoke.json'
-            }
         }
         server {
             server()
