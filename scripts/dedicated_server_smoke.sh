@@ -11,7 +11,6 @@ input_fifo="$repo_root/build/dedicated-server-input.fifo"
 server_pid=""
 client_pid=""
 client_log="$repo_root/build/dedicated-client-smoke.log"
-client_argv_log="$repo_root/build/dedicated-client-argv.log"
 
 mkdir -p "$smoke_dir" "$repo_root/build"
 printf 'eula=true\n' > "$smoke_dir/eula.txt"
@@ -64,44 +63,13 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         exit 1
     fi
 
-    # Put the Quick Play arguments into Loom's client run configuration. This is
-    # more deterministic than replacing JavaExec arguments from the Gradle CLI and
-    # mirrors how Fabric expects Minecraft program arguments to be supplied.
-    mkdir -p "$repo_root/run/client/quickPlay"
-    : > "$client_argv_log"
-    env TIDEBORNE_CI_QUICKPLAY_TARGET='localhost:25565' \
+    # Tideborne's client initializer exposes a dormant CI-only direct-connect hook.
+    # Using Vanilla's ConnectScreen path avoids Quick Play startup behavior, which is
+    # unreliable in Loom's development client even when the arguments arrive intact.
+    env TIDEBORNE_CI_DIRECT_CONNECT_TARGET='localhost:25565' \
         timeout 180s xvfb-run -a "$gradle_bin" runClient --console=plain --no-daemon \
         >"$client_log" 2>&1 &
     client_pid=$!
-
-    # Capture the real JavaExec child and any Loom argfile. This makes failures
-    # distinguish a missing launch argument from a client-side Quick Play refusal.
-    (
-        for _ in $(seq 1 90); do
-            for proc_dir in /proc/[0-9]*; do
-                proc_cwd="$(readlink "$proc_dir/cwd" 2>/dev/null || true)"
-                [[ "$proc_cwd" == "$repo_root/run/client" ]] || continue
-                proc_pid="${proc_dir##*/}"
-                printf 'pid=%s\ncwd=%s\n' "$proc_pid" "$proc_cwd" >> "$client_argv_log"
-                mapfile -d '' -t proc_args < "$proc_dir/cmdline" 2>/dev/null || true
-                printf 'argv:\n' >> "$client_argv_log"
-                printf '  %s\n' "${proc_args[@]}" >> "$client_argv_log"
-                for proc_arg in "${proc_args[@]}"; do
-                    if [[ "$proc_arg" == @* ]]; then
-                        argfile="${proc_arg#@}"
-                        if [[ -f "$argfile" ]]; then
-                            printf 'argfile=%s\n' "$argfile" >> "$client_argv_log"
-                            sed 's/^/  /' "$argfile" >> "$client_argv_log"
-                        fi
-                    fi
-                done
-                exit 0
-            done
-            sleep 1
-        done
-        printf 'No run/client process was captured.\n' >> "$client_argv_log"
-    ) &
-    argv_capture_pid=$!
 
     connected=0
     for _ in $(seq 1 180); do
@@ -115,12 +83,10 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         fi
         sleep 1
     done
-    wait "$argv_capture_pid" 2>/dev/null || true
 
     if [[ "$connected" -ne 1 ]]; then
         echo 'Client did not establish a connection to the dedicated server.' >&2
-        cat "$client_argv_log" >&2 || true
-        sed -n '1,220p' "$client_log" >&2
+        sed -n '1,240p' "$client_log" >&2
         sed -n '1,260p' "$smoke_log" >&2
         exit 1
     fi
@@ -143,7 +109,12 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
     fi
     if ! rg -q '\[Tideborne\] Unified client configuration and rendering systems initialized\.' "$client_log"; then
         echo 'Dedicated client did not finish Tideborne client initialization.' >&2
-        sed -n '1,220p' "$client_log" >&2
+        sed -n '1,240p' "$client_log" >&2
+        exit 1
+    fi
+    if ! rg -q '\[Tideborne\] CI direct-connect attempting localhost:25565\.' "$client_log"; then
+        echo 'Dedicated client never attempted the CI direct connection.' >&2
+        sed -n '1,240p' "$client_log" >&2
         exit 1
     fi
 fi
@@ -160,7 +131,7 @@ for _ in $(seq 1 60); do
         if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
             if ! rg -q ' joined the game' "$smoke_log"; then
                 echo 'Client connected at the socket layer but did not finish joining the dedicated server.' >&2
-                sed -n '1,220p' "$client_log" >&2
+                sed -n '1,240p' "$client_log" >&2
                 sed -n '1,260p' "$smoke_log" >&2
                 exit 1
             fi
