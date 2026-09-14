@@ -5,6 +5,7 @@
  */
 package com.redslovesgames.tideborne.client;
 
+import com.redslovesgames.tideborne.client.validation.CiDirectConnect;
 import com.redslovesgames.tideborne.config.TideborneClientConfig;
 import com.redslovesgames.tideborne.presentation.client.TideboundCompatibilityClient;
 import com.redslovesgames.tideborne.journal.client.TideTeamJournalClient;
@@ -25,6 +26,7 @@ public final class TideborneClient implements ClientModInitializer {
          TideTraitsClient.initialize();
          TideTeamJournalClient.initialize();
          TideboundCompatibilityClient.initialize();
+         CiDirectConnect.initializeFromEnvironment();
          System.out.println("[Tideborne] Unified client configuration and rendering systems initialized.");
       }
    }
