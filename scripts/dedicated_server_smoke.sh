@@ -11,6 +11,7 @@ input_fifo="$repo_root/build/dedicated-server-input.fifo"
 server_pid=""
 client_pid=""
 client_log="$repo_root/build/dedicated-client-smoke.log"
+client_argv_log="$repo_root/build/dedicated-client-argv.log"
 
 mkdir -p "$smoke_dir" "$repo_root/build"
 printf 'eula=true\n' > "$smoke_dir/eula.txt"
@@ -67,10 +68,41 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
     # more deterministic than replacing JavaExec arguments from the Gradle CLI and
     # mirrors how Fabric expects Minecraft program arguments to be supplied.
     mkdir -p "$repo_root/run/client/quickPlay"
+    : > "$client_argv_log"
     env TIDEBORNE_CI_QUICKPLAY_TARGET='localhost:25565' \
         timeout 180s xvfb-run -a "$gradle_bin" runClient --console=plain --no-daemon \
         >"$client_log" 2>&1 &
     client_pid=$!
+
+    # Capture the real JavaExec child and any Loom argfile. This makes failures
+    # distinguish a missing launch argument from a client-side Quick Play refusal.
+    (
+        for _ in $(seq 1 90); do
+            for proc_dir in /proc/[0-9]*; do
+                proc_cwd="$(readlink "$proc_dir/cwd" 2>/dev/null || true)"
+                [[ "$proc_cwd" == "$repo_root/run/client" ]] || continue
+                proc_pid="${proc_dir##*/}"
+                printf 'pid=%s\ncwd=%s\n' "$proc_pid" "$proc_cwd" >> "$client_argv_log"
+                mapfile -d '' -t proc_args < "$proc_dir/cmdline" 2>/dev/null || true
+                printf 'argv:\n' >> "$client_argv_log"
+                printf '  %s\n' "${proc_args[@]}" >> "$client_argv_log"
+                for proc_arg in "${proc_args[@]}"; do
+                    if [[ "$proc_arg" == @* ]]; then
+                        argfile="${proc_arg#@}"
+                        if [[ -f "$argfile" ]]; then
+                            printf 'argfile=%s\n' "$argfile" >> "$client_argv_log"
+                            sed 's/^/  /' "$argfile" >> "$client_argv_log"
+                        fi
+                    fi
+                done
+                exit 0
+            done
+            sleep 1
+        done
+        printf 'No run/client process was captured.\n' >> "$client_argv_log"
+    ) &
+    argv_capture_pid=$!
+
     connected=0
     for _ in $(seq 1 180); do
         if awk '$2 ~ /:63DD$/ && $4 == "01" { found = 1 } END { exit !found }' \
@@ -83,9 +115,11 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         fi
         sleep 1
     done
+    wait "$argv_capture_pid" 2>/dev/null || true
 
     if [[ "$connected" -ne 1 ]]; then
         echo 'Client did not establish a connection to the dedicated server.' >&2
+        cat "$client_argv_log" >&2 || true
         sed -n '1,220p' "$client_log" >&2
         sed -n '1,260p' "$smoke_log" >&2
         exit 1
