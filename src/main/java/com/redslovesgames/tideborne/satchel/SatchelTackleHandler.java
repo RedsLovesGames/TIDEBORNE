@@ -44,6 +44,15 @@ public final class SatchelTackleHandler extends ScreenHandler {
                 }
             });
         }
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 9; column++) {
+                int index = column + row * 9 + 9;
+                addSlot(new Slot(playerInventory, index, 8 + column * 18, 50 + row * 18));
+            }
+        }
+        for (int column = 0; column < 9; column++) {
+            addSlot(new Slot(playerInventory, column, 8 + column * 18, 108));
+        }
     }
 
     @Override
@@ -56,21 +65,25 @@ public final class SatchelTackleHandler extends ScreenHandler {
         if (!attached(player) || slot < 0 || slot >= this.slots.size()) return ItemStack.EMPTY;
         Slot source = this.slots.get(slot);
         if (!source.hasStack()) return ItemStack.EMPTY;
-        ItemStack original = source.getStack().copy();
-        if (slot < SatchelPreset.SLOTS.size()) {
-            source.setStack(ItemStack.EMPTY);
-            saveSelected();
-            return original;
-        }
-        for (int i = 0; i < SatchelPreset.SLOTS.size(); i++) {
-            if (!this.slots.get(i).hasStack() && FishingGearRegistry.accepts(SatchelPreset.SLOTS.get(i), original)) {
-                this.slots.get(i).setStack(original.copy());
-                source.setStack(ItemStack.EMPTY);
-                saveSelected();
-                return original;
+        ItemStack moving = source.getStack();
+        ItemStack original = moving.copy();
+        int tackleSlots = SatchelPreset.SLOTS.size();
+        if (slot < tackleSlots) {
+            if (!insertItem(moving, tackleSlots, this.slots.size(), true)) return ItemStack.EMPTY;
+        } else {
+            int target = -1;
+            for (int i = 0; i < tackleSlots; i++) {
+                if (!this.slots.get(i).hasStack() && FishingGearRegistry.accepts(SatchelPreset.SLOTS.get(i), moving)) {
+                    target = i;
+                    break;
+                }
             }
+            if (target < 0 || !insertItem(moving, target, target + 1, false)) return ItemStack.EMPTY;
         }
-        return ItemStack.EMPTY;
+        if (moving.isEmpty()) source.setStack(ItemStack.EMPTY);
+        else source.markDirty();
+        saveSelected();
+        return original;
     }
 
     @Override
@@ -86,7 +99,9 @@ public final class SatchelTackleHandler extends ScreenHandler {
         }
         if (id == DELETE) {
             ArrayList<SatchelPreset> presets = new ArrayList<>(AnglersSatchelStorage.presets(satchel, player.getRegistryManager()));
-            if (selectedPreset >= 0 && selectedPreset < presets.size()) presets.remove(selectedPreset);
+            if (selectedPreset < 0 || selectedPreset >= presets.size()) return false;
+            if (presets.get(selectedPreset).items().stream().anyMatch(stack -> !stack.isEmpty())) return false;
+            presets.remove(selectedPreset);
             if (presets.isEmpty()) presets.add(SatchelPreset.empty("Custom Preset"));
             AnglersSatchelStorage.setPresets(satchel, presets, player.getRegistryManager());
             selectedPreset = Math.min(selectedPreset, presets.size() - 1);
