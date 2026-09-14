@@ -8,6 +8,7 @@ package com.redslovesgames.tideborne.satchel;
 import com.li64.tide.data.item.SatchelContents;
 import com.li64.tide.data.item.TideDataComponents;
 import com.li64.tide.registries.items.FishSatchelItem;
+import com.redslovesgames.tideborne.fishing.gear.FishingGearRegistry;
 import com.redslovesgames.tideborne.fishing.specimen.CanonicalSpecimenStorage;
 import com.redslovesgames.tideborne.migration.legacy.LegacyPersistenceMigration;
 import com.redslovesgames.tideborne.registry.TideTraitsComponents;
@@ -70,7 +71,9 @@ public final class AnglersSatchelStorage {
          return AnglersSatchelStorage.InsertionResult.failed(AnglersSatchelStorage.InsertionStatus.EMPTY_INPUT, ItemStack.EMPTY);
       }
 
-      if (offered.getItem().canBeNested() && FishSatchelItem.canPutInSatchel(offered)) {
+      boolean storable = FishSatchelItem.canPutInSatchel(offered)
+         || SatchelPreset.SLOTS.stream().anyMatch(slot -> FishingGearRegistry.accepts(slot, offered));
+      if (offered.getItem().canBeNested() && storable) {
          List<ItemStack> current = contents(satchel);
          List<ItemStack> incoming = new ArrayList<>(offered.getCount());
 
@@ -234,8 +237,12 @@ public final class AnglersSatchelStorage {
          NbtList encodedItems = encoded.getList("items", NbtElement.COMPOUND_TYPE);
          ArrayList<ItemStack> items = new ArrayList<>();
          for (int slot = 0; slot < SatchelPreset.SLOTS.size(); slot++) {
-            if (slot < encodedItems.size()) items.add(ItemStack.fromNbt(registries, encodedItems.getCompound(slot)).orElse(ItemStack.EMPTY));
-            else items.add(ItemStack.EMPTY);
+            if (slot < encodedItems.size()) {
+               NbtCompound encodedStack = encodedItems.getCompound(slot);
+               items.add(encodedStack.isEmpty() ? ItemStack.EMPTY : ItemStack.fromNbt(registries, encodedStack).orElse(ItemStack.EMPTY));
+            } else {
+               items.add(ItemStack.EMPTY);
+            }
          }
          result.add(new SatchelPreset(id, name, items, legacyRod));
       }
@@ -266,7 +273,7 @@ public final class AnglersSatchelStorage {
       ArrayList<SatchelPreset> migrated = new ArrayList<>();
       List<ItemStack> stored = new ArrayList<>(contents(satchel));
       String[] names = {"Trophy Hunter", "Trait Hunter", "Deep Water", "Custom Preset"};
-      for (int index = 0; index < 16; index++) {
+      for (int index = 0; index < 7; index++) {
          Optional<UUID> reference = state(satchel).presetRod(index);
          if (reference.isEmpty()) continue;
          UUID rodId = reference.get();
