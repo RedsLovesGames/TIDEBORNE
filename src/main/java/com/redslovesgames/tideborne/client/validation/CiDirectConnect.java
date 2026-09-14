@@ -2,7 +2,6 @@ package com.redslovesgames.tideborne.client.validation;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 import net.minecraft.client.network.ServerAddress;
 import net.minecraft.client.network.ServerInfo;
@@ -36,7 +35,7 @@ public final class CiDirectConnect {
     }
 
     private static void connectOnce(MinecraftClient client, String target) {
-        if (attempted || !(client.currentScreen instanceof TitleScreen)) {
+        if (attempted || client.currentScreen == null || client.getOverlay() != null) {
             return;
         }
         if (client.world != null || client.getNetworkHandler() != null) {
