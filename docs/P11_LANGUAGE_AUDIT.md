@@ -1,6 +1,6 @@
 # P11 Player Language Audit
 
-Status: substantially implemented on `agent/p10-5-runtime-fixes`; final non-GameTest validation is in progress.
+Status: implemented on `agent/p10-5-runtime-fixes`; final non-GameTest validation is in progress.
 
 This audit covers player-visible language only. Public item IDs, fish IDs, recipe IDs, networking IDs, persistence keys, NBT/component IDs, commands, specimen identity, RNG, balance, catch selection, FishScore math, Satchel storage behavior, Journal behavior, records, and external Tide IDs are out of scope for renaming or behavioral changes.
 
@@ -152,6 +152,30 @@ Resolved on the current worker:
 
 The screen still uses the existing percentile value because its ranking direction has not been changed or reinterpreted.
 
+### Angler's Satchel
+
+Resolved on the current worker with display-string-only changes. Internal specimen classes, score accessors, network calls, sorting, storage, and interaction logic were left unchanged.
+
+- ordinary `Specimen` / `specimens` labels -> `Fish` / `fish`
+- `FishScore` -> `Score`
+- `Percentile` -> `Size percentile`
+- `Canonical specimen data is unavailable` -> player-facing fish-details message
+- `server-synchronized traits` -> `Select a fish to inspect its traits`
+- `synchronized specimen components` -> stored-fish record wording
+- `canonical V2 FishScore` -> `Highest-scoring fish in this satchel`
+- `multi-rule satchel sorting` -> sorting rules in priority order
+- `native Tide largest and smallest records` -> largest and smallest fish records
+- `optional server prerequisite unavailable` -> upgrade unavailable on this server
+- `Server state unavailable` -> `Upgrade status unavailable`
+- `Send the current sorting rules to the server` -> `Apply the current sorting rules`
+- `Refresh from server` -> `Refresh satchel`
+- `Waiting for server` -> `Updating satchel`
+- `Satchel networking is unavailable` -> `Could not reach the server`
+- dormant `Shared Ledger` feature label -> `Shared Discoveries`
+- Trait Scanner now describes player-visible `Body`, `Color`, `Size percentile`, and `Score` terms
+
+The internal `renderSharedLedger`, `SatchelSpecimenDisplay`, `CanonicalSpecimenPresentation`, request payloads, specimen variables, and feature IDs remain unchanged because they are implementation details rather than UI copy.
+
 ### Main Tideborne config
 
 Resolved on the current worker:
@@ -266,7 +290,7 @@ Retained where the term is already a player mechanic or the most accurate concis
 - chance when the value is an actual probability
 - multiplier in advanced/server configuration when exposing the exact mathematical control is useful
 - Species
-- specimen in limited collection/detail contexts where it reads naturally
+- percentile when it is explicitly labeled as size percentile
 
 ### 4. Player-facing and rewritten
 
@@ -285,17 +309,16 @@ Rewritten during this pass where found on ordinary surfaces:
 - Fishing System 2.0
 - unnecessary canonical adjectives
 - authoritative/synchronized config prose
-- optional server prerequisite language on normal config surfaces
+- server-synchronized traits
+- synchronized specimen components
+- multi-rule sorting
+- optional server prerequisite language
 
 ## Known findings still open
 
-The remaining language work is concentrated in one large reconstructed UI class and a broader localization follow-up. It is safer to leave these isolated than to risk storage or interaction churn in this presentation pass:
+No known high-priority architecture-style language remains on the audited normal player surfaces.
 
-- `AnglersSatchelScreen.java` still contains hardcoded ordinary-player strings such as `Specimen`, `FishScore`, `Percentile`, `Canonical specimen data is unavailable`, `server-synchronized traits`, `synchronized specimen components`, `canonical V2 FishScore`, `multi-rule satchel sorting`, and `optional server prerequisite unavailable`.
-- `AnglersSatchelScreen.java` also still exposes `Shared Ledger` as a feature label even though that feature is filtered out of the normal upgrade list. This is currently an internal/dead-normal-path label, but should become `Shared Discoveries` if that feature becomes visible again.
-- remaining normal `Text.literal(...)` strings in reconstructed screens should move to translation keys in a dedicated localization pass where doing so does not create risky churn.
-
-These are presentation findings, not gameplay defects.
+A future localization-only maintenance pass can move additional hardcoded `Text.literal(...)` strings from reconstructed screens into `en_us.json`. Those strings now use acceptable player-facing wording, so this is localization cleanup rather than an unresolved language defect. It should remain separate from behavior-sensitive reconstructed code unless there is a concrete localization requirement.
 
 ## Newly discovered issues during implementation
 
@@ -304,6 +327,7 @@ These are presentation findings, not gameplay defects.
 - Leviathan Bait's selection modifier is a real `Fishing Luck` value in `FishingGearModifiers`, so that label is correct and remains distinct from Trait Luck.
 - `Server values unavailable` did not tell players whether the feature was broken or still loading. It now explains that fishing stats are unavailable until server sync finishes.
 - Chum particle density was present in the advanced item tooltip even though it is presentation detail rather than a fishing decision. That line was removed from the item tooltip and remains available only as an advanced config control.
+- The Satchel mixed reconstructed implementation terminology directly into ordinary UI even though the underlying mechanics were already stable. Those strings were changed without changing its data or interaction paths.
 - `No verified churn yet` from the earlier audit appears to have been stale/reconstructed wording and was not present in the current worker version of `TideboundTooltips.java` during implementation.
 
 ## Validation policy
