@@ -31,7 +31,7 @@ abstract class FishingJournalMixin {
    @Inject(method = "init", at = @At("TAIL"))
    private void tideTeamJournal$addTeamRecordsButton(CallbackInfo callbackInfo) {
       this.tideTeamJournal$teamRecordsButton = null;
-      if (ClientConfig.get().showTeamRecordsButton) {
+      if (ClientConfig.get().debugTeamRecordsButton) {
          Screen screen = (Screen)(Object)this;
          int bookLeft = (screen.width - 400) / 2;
          int bookTop = (screen.height - 260) / 2;
