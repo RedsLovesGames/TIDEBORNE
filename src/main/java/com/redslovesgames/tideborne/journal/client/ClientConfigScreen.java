@@ -36,12 +36,6 @@ public final class ClientConfigScreen {
             .build()
       );
       display.addEntry(
-         entries.startBooleanToggle(Text.translatable("config.tideborne.team_journal.button"), values.showTeamRecordsButton)
-            .setDefaultValue(true)
-            .setSaveConsumer(value -> values.showTeamRecordsButton = value)
-            .build()
-      );
-      display.addEntry(
          entries.startBooleanToggle(Text.translatable("config.tideborne.team_journal.former"), values.showFormerMembers)
             .setDefaultValue(true)
             .setSaveConsumer(value -> values.showFormerMembers = value)
@@ -100,6 +94,13 @@ public final class ClientConfigScreen {
          entries.startColorField(Text.translatable("config.tideborne.team_journal.discovery_color"), values.discoveryColor)
             .setDefaultValue(5207921)
             .setSaveConsumer(value -> values.discoveryColor = value)
+            .build()
+      );
+      ConfigCategory debug = builder.getOrCreateCategory(Text.translatable("config.tideborne.team_journal.debug"));
+      debug.addEntry(
+         entries.startBooleanToggle(Text.translatable("config.tideborne.team_journal.debug_team_records"), values.debugTeamRecordsButton)
+            .setDefaultValue(false)
+            .setSaveConsumer(value -> values.debugTeamRecordsButton = value)
             .build()
       );
       return builder.build();
