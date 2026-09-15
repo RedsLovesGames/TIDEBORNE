@@ -28,9 +28,9 @@ public final class CanonicalSpecimenPresentation {
 
     /** Stable display order, naming, abbreviation, and color for every canonical specimen trait axis. */
     public enum TraitAxis {
-        BODY_TYPE("Body Type", "Body", BODY_TYPE_COLOR),
+        BODY_TYPE("Body", "Body", BODY_TYPE_COLOR),
         CONDITION("Condition", "Cond", CONDITION_COLOR),
-        PIGMENTATION("Pigmentation", "Pig", PIGMENTATION_COLOR),
+        PIGMENTATION("Color", "Color", PIGMENTATION_COLOR),
         QUALITY("Quality", "Qual", QUALITY_COLOR);
 
         private final String label;
