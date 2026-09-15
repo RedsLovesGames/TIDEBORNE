@@ -62,7 +62,11 @@ Current defaults verified from `TideboundConfig.Values`:
 
 ### Catch selection modifiers
 
-Seafarer's Hook, Shark Tooth Hook, Kujira Bone Rod, and some bait/bobber effects use relative catch-selection weighting. The UI must not convert those multipliers into direct probability claims. Current wording uses `favors` plus the configured relative multiplier where an exact value is useful.
+Seafarer's Hook, Shark Tooth Hook, Kujira Bone Rod, and some bait/bobber effects use relative catch-selection weighting. The UI must not convert those multipliers into direct probability claims. Current wording uses `favored` or `preference` plus the configured relative multiplier where an exact value is useful.
+
+### Leviathan Fishing Luck
+
+`TideborneFishingGearModifiers.LEVIATHAN_BAIT` contributes `fishingLuck(4.0)` and `traitLuck(1.0)` as separate modifiers. The player-facing `Fishing Luck` label is therefore mechanically correct and does not rename Trait Luck or a raw selection weight.
 
 ### Shark catch loss
 
@@ -89,7 +93,7 @@ Resolved:
 - `Catch-loss protection` -> `Shark Protection`
 - `Lure bonus` -> `Lure Speed`
 - Leviathan `fish-only` wording -> always hooks a Tide fish instead of junk, treasure, or crates
-- Chum's single semicolon-heavy density line split into scent range/duration and cloud density lines
+- Chum tooltip now shows scent range and duration only; raw particle density was removed because it does not help a player make a gameplay decision
 - several ordinary hardcoded strings moved into `en_us.json`
 
 Intentionally retained:
@@ -119,7 +123,7 @@ Resolved:
 - waiting message describes server stat sync in player terms
 - `native movement` removed
 - gear lines distinguish Catch Zone from Fish Movement
-- Kujira crate behavior described as relative selection value, not guaranteed crate chance
+- Kujira crate behavior described as a relative selection value, not guaranteed crate chance
 - Shark Protection described as protection from a stolen catch
 - Chum explanation uses ocean-only, duration, range, and shark attraction language
 - compatibility heading changed to integrations
@@ -144,8 +148,33 @@ Resolved on the current worker:
 - `FishScore` -> `Fish Score`
 - `Percentile` -> `Size Percentile`
 - `No specimen selected` -> `No fish selected`
+- `Catch Info` -> `Caught`
 
 The screen still uses the existing percentile value because its ranking direction has not been changed or reinterpreted.
+
+### Main Tideborne config
+
+Resolved on the current worker:
+
+- ordinary descriptions no longer say `authoritative`, `synchronized`, `server-side discovery ledger`, or `canonical stored-specimen records`
+- Tentacle and Abaia controls use `Catch Zone` and `Fish Movement`
+- Seafarer and Kujira selection controls use `preference` rather than presenting weight as direct probability
+- Leviathan Bait uses `Always hook fish`, `Fishing Luck bonus`, `Fish Movement multiplier`, and `Catch Zone multiplier`
+- Satchel config descriptions use fish records, Sort Rules, and server-controlled balance language
+- journal descriptions use team catch history, record claiming, and shared discoveries
+- shark controls use detection range, scent strength, and `Sharks can steal catches`
+- raw chum particle `density` is presented as particles per pulse in the advanced tuning screen
+
+Intentionally retained in advanced/operator tuning:
+
+- exact multipliers
+- exact percentages
+- percentile controls
+- spawn intervals and 1-in-N spawn chance
+- scent chance coefficients
+- diagnostic compatibility controls
+
+These are mathematical/operator controls where the technical value is useful.
 
 ### Team Records and localization
 
@@ -156,15 +185,20 @@ Resolved in `en_us.json`:
 - `Shared all-time catches` -> `Team catches`
 - `Tracked contributors` -> `Contributors`
 - `Fish Filter` -> `Species Filter`
+- `Journal completion` -> `Species found`
 - `post-update contributions` wording removed
 - `record events` -> `records set`
+- `active records` -> `current records`
 - ordinary no-history text simplified
+- transient ownership-repair alerts -> `Record Fixed`
 - command status no longer says client metadata was resynchronized
 - journal merge wording no longer says progress is `represented` in a ledger-like structure
 - record badge capitalization normalized
 - transient chat separators simplified
+- Apex player message now says `integration`, not compatibility
+- shark catch-loss message now says a shark stole the catch rather than teaching an uncertain reel-in sequence
 
-Technical ownership-repair terms remain where they describe actual maintenance/admin operations.
+Technical ownership and repair terms remain in operator command flows where they describe actual maintenance actions.
 
 ### Command UI
 
@@ -250,14 +284,16 @@ Rewritten during this pass where found on ordinary surfaces:
 - server values unavailable
 - Fishing System 2.0
 - unnecessary canonical adjectives
+- authoritative/synchronized config prose
+- optional server prerequisite language on normal config surfaces
 
 ## Known findings still open
 
-The remaining language work is lower risk to defer than to force into the current reconstructed UI pass:
+The remaining language work is concentrated in one large reconstructed UI class and a broader localization follow-up. It is safer to leave these isolated than to risk storage or interaction churn in this presentation pass:
 
-- `AnglersSatchelScreen.java`: the large reconstructed screen still contains hardcoded labels such as `Specimen`, `Canonical specimen data`, `server-synchronized traits`, `synchronized specimen components`, and `canonical V2 FishScore`. These should receive a narrow localization-only pass without touching selection, storage, sorting, protection, or upgrade behavior.
-- `TideborneConfigScreen.java`: advanced server tuning still exposes several raw `weight`, `density`, and `multiplier` labels. Some are legitimate advanced mathematical controls; the remaining ordinary-facing labels should be rewritten only after each control is traced to its exact mechanic.
-- remaining normal `Text.literal(...)` strings in reconstructed screens should move to translation keys where doing so does not create risky churn.
+- `AnglersSatchelScreen.java` still contains hardcoded ordinary-player strings such as `Specimen`, `FishScore`, `Percentile`, `Canonical specimen data is unavailable`, `server-synchronized traits`, `synchronized specimen components`, `canonical V2 FishScore`, `multi-rule satchel sorting`, and `optional server prerequisite unavailable`.
+- `AnglersSatchelScreen.java` also still exposes `Shared Ledger` as a feature label even though that feature is filtered out of the normal upgrade list. This is currently an internal/dead-normal-path label, but should become `Shared Discoveries` if that feature becomes visible again.
+- remaining normal `Text.literal(...)` strings in reconstructed screens should move to translation keys in a dedicated localization pass where doing so does not create risky churn.
 
 These are presentation findings, not gameplay defects.
 
@@ -265,7 +301,9 @@ These are presentation findings, not gameplay defects.
 
 - The earlier wording direction `Tentacle Line ... native movement` was mechanically false for current defaults because Tentacle Line changes Fish Movement to 116%. The implementation now shows the real configured value.
 - Abaia Line also changes both Catch Zone and Fish Movement. It is now shown as two minigame stats rather than an inferred tradeoff sentence.
+- Leviathan Bait's selection modifier is a real `Fishing Luck` value in `FishingGearModifiers`, so that label is correct and remains distinct from Trait Luck.
 - `Server values unavailable` did not tell players whether the feature was broken or still loading. It now explains that fishing stats are unavailable until server sync finishes.
+- Chum particle density was present in the advanced item tooltip even though it is presentation detail rather than a fishing decision. That line was removed from the item tooltip and remains available only as an advanced config control.
 - `No verified churn yet` from the earlier audit appears to have been stale/reconstructed wording and was not present in the current worker version of `TideboundTooltips.java` during implementation.
 
 ## Validation policy
