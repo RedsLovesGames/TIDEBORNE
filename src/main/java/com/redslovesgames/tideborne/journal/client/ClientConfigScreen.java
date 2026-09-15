@@ -96,9 +96,9 @@ public final class ClientConfigScreen {
             .setSaveConsumer(value -> values.discoveryColor = value)
             .build()
       );
-      ConfigCategory debug = builder.getOrCreateCategory(Text.translatable("config.tideborne.team_journal.debug"));
+      ConfigCategory debug = builder.getOrCreateCategory(Text.literal("Debug"));
       debug.addEntry(
-         entries.startBooleanToggle(Text.translatable("config.tideborne.team_journal.debug_team_records"), values.debugTeamRecordsButton)
+         entries.startBooleanToggle(Text.literal("Show Team Records debug button"), values.debugTeamRecordsButton)
             .setDefaultValue(false)
             .setSaveConsumer(value -> values.debugTeamRecordsButton = value)
             .build()
