@@ -283,7 +283,6 @@ public final class TideborneConfigScreen {
       SubCategoryBuilder hud = section(entries, "HUD", "Fishing and record information shown during normal play.");
       hud.add(entries.startBooleanToggle(text("Show fishing HUD"), fishingClient.showFishingHud).setSaveConsumer(value -> fishingClient.showFishingHud = value).build());
       hud.add(entries.startBooleanToggle(text("Show record badges"), journalClient.showRecordBadges).setSaveConsumer(value -> journalClient.showRecordBadges = value).build());
-      hud.add(entries.startBooleanToggle(text("Show Team Records button"), journalClient.showTeamRecordsButton).setSaveConsumer(value -> journalClient.showTeamRecordsButton = value).build());
       category.addEntry(hud.build());
 
       SubCategoryBuilder tooltips = section(entries, "Tooltips", "Extra fishing and record details shown on item tooltips.");
@@ -300,6 +299,13 @@ public final class TideborneConfigScreen {
       accessibility.add(entries.startColorField(text("Smallest record color"), journalClient.smallestColor).setSaveConsumer(value -> journalClient.smallestColor = value).build());
       accessibility.add(entries.startColorField(text("Discovery color"), journalClient.discoveryColor).setSaveConsumer(value -> journalClient.discoveryColor = value).build());
       category.addEntry(accessibility.build());
+
+      SubCategoryBuilder debug = section(entries, "Debug", "Troubleshooting-only presentation controls hidden during normal play.");
+      debug.add(entries.startBooleanToggle(text("Show Team Records debug button"), journalClient.debugTeamRecordsButton)
+         .setDefaultValue(false)
+         .setSaveConsumer(value -> journalClient.debugTeamRecordsButton = value)
+         .build());
+      category.addEntry(debug.build());
    }
 
    private static void addAdvanced(ConfigCategory category, ConfigEntryBuilder entries, TideborneTraitsDraft draft, boolean editable) {
