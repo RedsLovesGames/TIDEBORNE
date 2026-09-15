@@ -47,30 +47,30 @@ final class TideboundTooltips {
 
          if (flag.isAdvanced() && TideboundClientConfig.get().showEquipmentTooltips) {
             if (!ClientTideboundSettings.available()) {
-               lines.add(gray("Server values unavailable"));
+               lines.add(gray(Text.translatable("tooltip.tideborne.fishing.stats_syncing")));
             } else if (profile != null) {
                switch (profile) {
                   case TENTACLE_LINE -> {
-                     lines.add(stat("Catch zone", "tentacle_zone"));
-                     lines.add(stat("Fish speed", "tentacle_speed"));
+                     lines.add(stat("Catch Zone", "tentacle_zone"));
+                     lines.add(stat("Fish Movement", "tentacle_speed"));
                   }
                   case SWIFT_LINE -> {
-                     lines.add(stat("Catch zone", "swift_zone"));
-                     lines.add(stat("Fish speed", "swift_speed"));
+                     lines.add(stat("Catch Zone", "swift_zone"));
+                     lines.add(stat("Fish Movement", "swift_speed"));
                   }
                   case COPPER_LEADER -> appendLeader(lines, LeaderTier.COPPER);
                   case IRON_LEADER -> appendLeader(lines, LeaderTier.IRON);
                   case GOLD_LEADER -> appendLeader(lines, LeaderTier.GOLD);
                   case DIAMOND_LEADER -> appendLeader(lines, LeaderTier.DIAMOND);
                   case SEAFARERS_HOOK ->
-                     lines.add(Text.literal("Night ocean legendary weight: " + multiplier("seafarer_rare")));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.seafarer.legendary_focus", multiplier("seafarer_rare")));
                   case SHARK_TOOTH_HOOK -> {
-                     lines.add(Text.literal("Large/predatory weight: " + multiplier("tooth_predatory")));
-                     lines.add(Text.literal("Very-small weight: " + multiplier("tooth_small")));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.shark_tooth.large_focus", multiplier("tooth_predatory")));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.shark_tooth.small_focus", multiplier("tooth_small")));
                   }
                   case KUJIRA_BONE_FISHING_ROD -> {
-                     lines.add(Text.literal("Bait slots: 3 | Durability: 512"));
-                     lines.add(Text.literal("Ocean crate weight: " + multiplier("kujira_crates")));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.kujira.rod_stats"));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.kujira.crate_focus", multiplier("kujira_crates")));
                   }
                   case LEVIATHAN_BAIT -> {
                      lines.add(Text.translatable("tooltip.tideborne.fishing.leviathan_bait.fish_only"));
@@ -86,7 +86,7 @@ final class TideboundTooltips {
                            new Object[]{multiplier("leviathan_strength"), multiplier("leviathan_tempo")}
                         )
                      );
-                     lines.add(Text.literal("Trait Luck: +" + ClientTideboundSettings.integer("leviathan_trait_luck")));
+                     lines.add(Text.translatable("tooltip.tideborne.fishing.trait_luck", ClientTideboundSettings.integer("leviathan_trait_luck")));
                      lines.add(Text.translatable("tooltip.tideborne.fishing.leviathan_bait.conditions"));
                   }
                   default -> {
@@ -95,15 +95,13 @@ final class TideboundTooltips {
                }
             } else if (stack.isOf(TideboundItems.CHUM_BUCKET)) {
                lines.add(
-                  Text.literal(
-                     "Scent: "
-                        + ClientTideboundSettings.integer("chum_radius")
-                        + " blocks for "
-                        + ClientTideboundSettings.integer("chum_duration")
-                        + "s; density "
-                        + ClientTideboundSettings.integer("chum_particles")
+                  Text.translatable(
+                     "tooltip.tideborne.fishing.chum.scent",
+                     ClientTideboundSettings.integer("chum_radius"),
+                     ClientTideboundSettings.integer("chum_duration")
                   )
                );
+               lines.add(Text.translatable("tooltip.tideborne.fishing.chum.cloud", ClientTideboundSettings.integer("chum_particles")));
             }
          }
       }
@@ -120,7 +118,7 @@ final class TideboundTooltips {
       FishingGearRegistry.bobberModifiers(Registries.ITEM.getId(stack.getItem())).ifPresent(modifiers -> {
          List<String> effects = bobberEffectLabels(modifiers);
          if (!effects.isEmpty()) {
-            lines.add(gray("Tideborne fishing effects"));
+            lines.add(gray(Text.translatable("tooltip.tideborne.fishing.effects")));
             effects.forEach(effect -> lines.add(Text.literal(effect)));
          }
       });
@@ -138,22 +136,22 @@ final class TideboundTooltips {
 
       double lure = modifiers.namedAdditiveModifier(FishingGearEffects.LURE_BONUS);
       if (Math.abs(lure) > EPSILON) {
-         effects.add("Lure bonus: " + formatSigned(lure));
+         effects.add("Lure Speed: " + formatSigned(lure));
       }
 
       double catchZone = modifiers.namedMultiplierModifier(FishingGearEffects.CATCH_ZONE_AREA_MULTIPLIER);
       if (Math.abs(catchZone - 1.0) > EPSILON) {
-         effects.add("Catch zone: " + formatMultiplier(catchZone));
+         effects.add("Catch Zone: " + formatMultiplier(catchZone));
       }
 
       double crateWeight = modifiers.namedMultiplierModifier(FishingGearEffects.CRATE_WEIGHT_MULTIPLIER);
       if (Math.abs(crateWeight - 1.0) > EPSILON) {
-         effects.add("Crate weight: " + formatMultiplier(crateWeight));
+         effects.add("Crates favored: " + formatMultiplier(crateWeight));
       }
 
       double protection = modifiers.namedAdditiveModifier(FishingGearEffects.CATCH_LOSS_PREVENTION_CHANCE);
       if (Math.abs(protection) > EPSILON) {
-         effects.add("Catch-loss protection: " + formatPercent(protection));
+         effects.add("Shark Protection: " + formatPercent(protection));
       }
       return List.copyOf(effects);
    }
@@ -168,9 +166,9 @@ final class TideboundTooltips {
    }
 
    private static void appendLeader(List<Text> lines, LeaderTier tier) {
-      lines.add(Text.literal("Catch zone: " + formatMultiplier(tier.catchZoneMultiplier())));
-      lines.add(Text.literal("Fish speed: " + formatMultiplier(tier.fishSpeedMultiplier())));
-      lines.add(Text.literal("Catch-loss protection: " + formatPercent(tier.protection())));
+      lines.add(Text.literal("Catch Zone: " + formatMultiplier(tier.catchZoneMultiplier())));
+      lines.add(Text.literal("Fish Movement: " + formatMultiplier(tier.fishSpeedMultiplier())));
+      lines.add(Text.literal("Shark Protection: " + formatPercent(tier.protection())));
    }
 
    private static Text flavor(String text) {
@@ -182,7 +180,11 @@ final class TideboundTooltips {
    }
 
    private static Text gray(String text) {
-      return Text.literal(text).styled(style -> style.withColor(8947848));
+      return gray(Text.literal(text));
+   }
+
+   private static Text gray(Text text) {
+      return text.copy().styled(style -> style.withColor(8947848));
    }
 
    private static Text stat(String name, String key) {
