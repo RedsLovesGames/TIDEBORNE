@@ -47,15 +47,16 @@ class TideborneConfigScreenStructureTest {
                 "Records",
                 "Journal",
                 "Teams",
-                "Multiplayer & Shared",
+                "Shared Discoveries",
                 "Sharks",
                 "Chum",
-                "Catch Loss",
+                "Shark Catch Loss",
                 "Optional Spawning",
                 "Rendering",
                 "HUD",
                 "Tooltips",
                 "Accessibility & Presentation",
+                "Debug",
                 "Specimen Distribution",
                 "Diagnostics & Compatibility");
 
