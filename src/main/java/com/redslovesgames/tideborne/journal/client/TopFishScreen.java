@@ -189,7 +189,7 @@ public final class TopFishScreen extends Screen {
       NbtCompound selected = (NbtCompound)list.get(selectedIndex);
       ItemStack stack = stacks[selectedIndex];
       CanonicalRecordDisplay display = displays[selectedIndex];
-      renderFish3D(graphics, stack, left + 300, detailTop + 86);
+      renderFish3D(graphics, stack, left + 300, detailTop + 89, left + 236, detailTop + 73, left + 364, detailTop + 106);
       this.drawValue(
          graphics,
          stack.getName().getString(),
@@ -316,51 +316,66 @@ public final class TopFishScreen extends Screen {
       this.client.setScreen(this.parent);
    }
 
-   private void renderFish3D(DrawContext graphics, ItemStack stack, int x, int y) {
-      MinecraftClient client = MinecraftClient.getInstance();
-      if (client.world != null) {
-         FishData fish = FishData.getExact(stack).orElse(null);
-         if (fish != null) {
-            DisplayData display = fish.display().orElse(null);
-            if (display != null) {
-               EntityType<?> type = display.entityType();
-               if (previewStack != stack || previewFish != fish
-                     || previewEntity != null && previewEntity.getWorld() != client.world) {
-                  previewStack = stack;
-                  previewFish = fish;
-                  previewEntity = type == null ? null : type.create(client.world);
-                  if (previewEntity != null) {
-                     display.nbt().ifPresent(previewEntity::readNbt);
-                     SpecimenTransfer.stackToEntity(stack, previewEntity);
+   private void renderFish3D(
+      DrawContext graphics,
+      ItemStack stack,
+      int x,
+      int y,
+      int clipLeft,
+      int clipTop,
+      int clipRight,
+      int clipBottom
+   ) {
+      graphics.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+      try {
+         MinecraftClient client = MinecraftClient.getInstance();
+         if (client.world != null) {
+            FishData fish = FishData.getExact(stack).orElse(null);
+            if (fish != null) {
+               DisplayData display = fish.display().orElse(null);
+               if (display != null) {
+                  EntityType<?> type = display.entityType();
+                  if (previewStack != stack || previewFish != fish
+                        || previewEntity != null && previewEntity.getWorld() != client.world) {
+                     previewStack = stack;
+                     previewFish = fish;
+                     previewEntity = type == null ? null : type.create(client.world);
+                     if (previewEntity != null) {
+                        display.nbt().ifPresent(previewEntity::readNbt);
+                        SpecimenTransfer.stackToEntity(stack, previewEntity);
+                     }
                   }
-               }
-               Entity entity = previewEntity;
-               if (entity != null) {
-                  MatrixStack matrices = graphics.getMatrices();
-                  matrices.push();
-                  matrices.translate(x, y, 200.0F);
-                  float largest = Math.max(Math.max(type.getWidth(), type.getHeight()), 0.5F);
-                  float scale = Math.min(58.0F, 46.0F / largest);
-                  matrices.scale(scale, -scale, scale);
-                  float rotation = (float)(System.currentTimeMillis() % 9000L) / 9000.0F * 6.2831855F;
-                  Quaternionf quaternion = new Quaternionf()
-                     .rotationY(rotation)
-                     .rotateZ((float)Math.toRadians(display.roll() + 90.0F))
-                     .rotateX((float)Math.toRadians(display.pitch()))
-                     .rotateY((float)Math.toRadians(display.yaw()));
-                  matrices.multiply(quaternion);
-                  EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
-                  Immediate consumers = client.getBufferBuilders().getEntityVertexConsumers();
-                  dispatcher.setRenderShadows(false);
-                  dispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 0.0F, matrices, consumers, 15728880);
-                  consumers.draw();
-                  dispatcher.setRenderShadows(true);
-                  matrices.pop();
-                  return;
+                  Entity entity = previewEntity;
+                  if (entity != null) {
+                     MatrixStack matrices = graphics.getMatrices();
+                     matrices.push();
+                     matrices.translate(x, y, 200.0F);
+                     float entityWidth = Math.max(entity.getWidth(), 0.25F);
+                     float entityHeight = Math.max(entity.getHeight(), 0.25F);
+                     float scale = Math.min(30.0F, Math.min(52.0F / entityWidth, 24.0F / entityHeight));
+                     matrices.scale(scale, -scale, scale);
+                     float rotation = (float)(System.currentTimeMillis() % 9000L) / 9000.0F * 6.2831855F;
+                     Quaternionf quaternion = new Quaternionf()
+                        .rotationY(rotation)
+                        .rotateZ((float)Math.toRadians(display.roll() + 90.0F))
+                        .rotateX((float)Math.toRadians(display.pitch()))
+                        .rotateY((float)Math.toRadians(display.yaw()));
+                     matrices.multiply(quaternion);
+                     EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
+                     Immediate consumers = client.getBufferBuilders().getEntityVertexConsumers();
+                     dispatcher.setRenderShadows(false);
+                     dispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 0.0F, matrices, consumers, 15728880);
+                     consumers.draw();
+                     dispatcher.setRenderShadows(true);
+                     matrices.pop();
+                     return;
+                  }
                }
             }
          }
+         graphics.drawItem(stack, x - 8, y - 8);
+      } finally {
+         graphics.disableScissor();
       }
-      graphics.drawItem(stack, x - 8, y - 8);
    }
 }
