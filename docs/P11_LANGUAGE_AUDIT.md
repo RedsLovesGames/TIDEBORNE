@@ -102,6 +102,30 @@ Do not use minigame terms for these systems.
 | fish-only pool | Only hooks fish |
 | trait luck | Trait Luck only if retained as a visible mechanic; otherwise explain the outcome |
 
+## Centralized presentation opportunity
+
+File: `presentation/CanonicalSpecimenPresentation.java`
+
+A large part of the specimen language is already centralized. P11 should use that instead of patching every screen independently.
+
+Current central labels:
+- `Body Type` / `Body`
+- `Condition` / `Cond`
+- `Pigmentation` / `Pig`
+- `Quality` / `Qual`
+- percentile formatted as `P18.5`
+
+P11 direction:
+- full `Body Type` label -> `Body`
+- `Pigmentation` -> `Color`
+- short `Pig` -> `Color` or `Clr` only where width forces an abbreviation
+- avoid `Cond` / `Qual` unless the screen cannot fit full words
+- percentile display -> human-readable size rank such as `Top 18.5%` where mathematically correct for the existing percentile direction
+
+Before changing percentile formatting, verify whether a larger internal percentile means a larger fish. The text must not invert the ranking semantics.
+
+This class is a high-leverage implementation point because Satchel, Journal, Top Fish, inspection surfaces, and other specimen views consume it.
+
 ## High-priority findings
 
 ### Tide fishing HUD
@@ -199,6 +223,28 @@ Findings:
 - `proof-based ownership claims`, `exact team-record fish`, `represented in the party journal`, and `client metadata was resynchronized` are admin/debug wording and should not appear in normal user flows.
 
 The Team Records screen is currently debug-hidden by default, but its language should still be cleaned because it remains accessible as a troubleshooting feature.
+
+### Alerts, chat, and short-lived messages
+
+Source: `assets/tideborne/lang/en_us.json`
+
+Short-lived text has to be even easier to scan than menus because it disappears quickly.
+
+Good or nearly good existing strings:
+- `Catch Lost!`
+- `New Largest Record!`
+- `New Smallest Record!`
+- `Caught by: %s`
+- `Length: %s`
+
+Needs simplification:
+- `First Team Discovery!` -> `New Team Fish!` or `First Team Catch!` depending exact semantics
+- `Record Ownership Repaired` -> `Record Fixed` for normal visibility
+- `Improvement` -> `New record by` or a compact direct comparison if space permits
+- `A shark ate the fish before you could reel it in.` is clear, but verify mechanics: if the catch-loss event happens after the minigame rather than before reeling, use `A shark stole your catch.` to avoid teaching a false sequence.
+- `Your leader held through a sudden bite!` -> `Your Steel Leader saved the catch!` if Steel Leader is always the cause
+
+Chat record announcements currently combine several values with dash separators. Prefer a consistent, short structure and avoid requiring the player to infer what each unlabeled value means.
 
 ### Satchel
 
@@ -369,7 +415,7 @@ The P11 implementation should also make future translations easier.
 1. Finish inventory of player-facing text surfaces.
 2. Lock the vocabulary table above.
 3. Rewrite fishing HUD and equipment tooltips first because they can currently misdescribe minigame stats as world-fish behavior.
-4. Rewrite specimen/stat labels.
+4. Rewrite specimen/stat labels through `CanonicalSpecimenPresentation` where possible.
 5. Rewrite Satchel labels, errors, and help text.
 6. Rewrite Journal/Team Records text.
 7. Simplify normal config descriptions; keep detailed balance language in Advanced/Admin areas.
