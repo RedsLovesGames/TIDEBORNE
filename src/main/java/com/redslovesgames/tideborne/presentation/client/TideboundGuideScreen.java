@@ -16,7 +16,7 @@ public final class TideboundGuideScreen extends Screen {
    }
 
    public void render(DrawContext graphics, int mouseX, int mouseY, float partialTick) {
-      this.renderBackground(graphics, mouseX, mouseY, partialTick);
+      graphics.fill(0, 0, this.width, this.height, 0x55000000);
       int width = Math.min(430, this.width - 24);
       int left = (this.width - width) / 2;
       int y = 24;
