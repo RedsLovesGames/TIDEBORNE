@@ -101,7 +101,6 @@ final class TideboundTooltips {
                      ClientTideboundSettings.integer("chum_duration")
                   )
                );
-               lines.add(Text.translatable("tooltip.tideborne.fishing.chum.cloud", ClientTideboundSettings.integer("chum_particles")));
             }
          }
       }
