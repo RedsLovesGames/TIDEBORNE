@@ -45,7 +45,15 @@ public final class TideboundGuideScreen extends Screen {
          ? List.of(Text.literal("Fishing stats are still syncing from the server."))
          : List.of(
             Text.literal(
-               "[Fishing Gear] Tentacle Line widens the Catch Zone without changing Fish Movement. Abaia Line trades a smaller Catch Zone for faster movement. Seafarer's Hook favors legendary ocean fish at night without bypassing habitat rules."
+               "[Fishing Gear] Tentacle Line: Catch Zone "
+                  + TideboundTooltips.multiplier("tentacle_zone")
+                  + ", Fish Movement "
+                  + TideboundTooltips.multiplier("tentacle_speed")
+                  + ". Abaia Line: Catch Zone "
+                  + TideboundTooltips.multiplier("swift_zone")
+                  + ", Fish Movement "
+                  + TideboundTooltips.multiplier("swift_speed")
+                  + ". Seafarer's Hook favors legendary ocean fish at night without bypassing habitat rules."
             ),
             Text.literal(
                "[Kujira Bone Rod] Holds 3 bait, has 512 durability, and favors ocean crates at " + TideboundTooltips.multiplier("kujira_crates") + " of their normal selection value."
