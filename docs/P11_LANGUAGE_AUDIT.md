@@ -1,6 +1,6 @@
 # P11 Player Language Audit
 
-Status: implementation in progress on `agent/p10-5-runtime-fixes`.
+Status: substantially implemented on `agent/p10-5-runtime-fixes`; final non-GameTest validation is in progress.
 
 This audit covers player-visible language only. Public item IDs, fish IDs, recipe IDs, networking IDs, persistence keys, NBT/component IDs, commands, specimen identity, RNG, balance, catch selection, FishScore math, Satchel storage behavior, Journal behavior, records, and external Tide IDs are out of scope for renaming or behavioral changes.
 
@@ -135,6 +135,18 @@ Internal class names, enum names, persistence names, and API names remain unchan
 
 Percentile formatting remains `Pxx.x` for now. The numeric direction must be verified end-to-end before replacing it with a `Top X%` phrase so the ranking cannot be inverted.
 
+### Top Fish
+
+Resolved on the current worker:
+
+- `CANONICAL SPECIMEN` -> `FISH DETAILS`
+- `Specimen` -> `Fish`
+- `FishScore` -> `Fish Score`
+- `Percentile` -> `Size Percentile`
+- `No specimen selected` -> `No fish selected`
+
+The screen still uses the existing percentile value because its ranking direction has not been changed or reinterpreted.
+
 ### Team Records and localization
 
 Resolved in `en_us.json`:
@@ -241,12 +253,11 @@ Rewritten during this pass where found on ordinary surfaces:
 
 ## Known findings still open
 
-The following surfaces still need a dedicated follow-up if the current branch remains stable after validation:
+The remaining language work is lower risk to defer than to force into the current reconstructed UI pass:
 
-- `TopFishScreen.java`: `CANONICAL SPECIMEN`, `Specimen`, `FishScore`, `Percentile`, and `No specimen selected` are still hardcoded in a large reconstructed UI class.
-- `AnglersSatchelScreen.java`: large reconstructed UI class still contains hardcoded Satchel labels and needs a careful localization-only pass without storage/selection behavior changes.
-- `TideborneConfigScreen.java`: advanced server tuning still exposes several raw `weight`, `density`, and `multiplier` labels. Those should be split between normal player wording and explicitly advanced mathematical controls.
-- remaining normal `Text.literal(...)` strings in reconstructed screens should move to translation keys when doing so does not create risky churn.
+- `AnglersSatchelScreen.java`: the large reconstructed screen still contains hardcoded labels such as `Specimen`, `Canonical specimen data`, `server-synchronized traits`, `synchronized specimen components`, and `canonical V2 FishScore`. These should receive a narrow localization-only pass without touching selection, storage, sorting, protection, or upgrade behavior.
+- `TideborneConfigScreen.java`: advanced server tuning still exposes several raw `weight`, `density`, and `multiplier` labels. Some are legitimate advanced mathematical controls; the remaining ordinary-facing labels should be rewritten only after each control is traced to its exact mechanic.
+- remaining normal `Text.literal(...)` strings in reconstructed screens should move to translation keys where doing so does not create risky churn.
 
 These are presentation findings, not gameplay defects.
 
@@ -265,6 +276,7 @@ For this pass:
 - verify translation keys used by modified Java exist
 - run repository validation and unit tests through the branch CI where available
 - run clean production build/release validation where the repository workflow provides it
+- run the non-GameTest P10.5 runtime matrix relevant to these changes
 - do not run or fix GameTests, per project direction
 - inspect final worker diff for generated files, formatting churn, line-ending noise, and behavior changes
 - leave `build.gradle` untouched unless a validation failure proves it is required
