@@ -68,11 +68,11 @@ public final class TideborneConfigScreen {
          return new FishingSettingsAccess(TideboundConfig.valuesFromJson(TideboundConfig.settingsJson()), null);
       }
       if (!ClientTideboundSettings.available()) {
-         return new FishingSettingsAccess(null, "Join a server or world first to receive authoritative fishing settings.");
+         return new FishingSettingsAccess(null, "Join a server or world first to receive fishing settings.");
       }
       MinecraftClient client = MinecraftClient.getInstance();
       if (client.player == null || !client.player.hasPermissionLevel(2)) {
-         return new FishingSettingsAccess(null, "Only server operators can edit synchronized fishing gameplay settings.");
+         return new FishingSettingsAccess(null, "Only server operators can edit server fishing settings.");
       }
       return new FishingSettingsAccess(TideboundConfig.valuesFromJson(ClientTideboundSettings.settingsJson()), null);
    }
@@ -84,56 +84,56 @@ public final class TideborneConfigScreen {
       ServerConfig.Values teamServer,
       boolean localServer
    ) {
-      SubCategoryBuilder general = section(entries, "General & Catching", "Authoritative fishing behavior and catch selection live on the server.");
+      SubCategoryBuilder general = section(entries, "General & Catching", "The server controls fishing behavior and catch selection.");
       if (access.values() == null) {
          addDescription(general, entries, access.readOnlyReason());
       } else {
-         addDescription(general, entries, "Gameplay values shown below are synchronized with the authoritative server.");
+         addDescription(general, entries, "These gameplay values come from the server.");
       }
       category.addEntry(general.build());
 
-      SubCategoryBuilder gear = section(entries, "Gear, Lines & Leaders", "Equipment modifiers applied to Tideborne fishing.");
+      SubCategoryBuilder gear = section(entries, "Gear, Lines & Leaders", "Fishing effects from Tideborne gear.");
       if (access.values() != null) {
          TideboundConfig.Values values = access.values();
-         gear.add(doubleEntry(entries, "Tentacle Line catch-zone multiplier", values.tentacleCatchZoneMultiplier, x -> values.tentacleCatchZoneMultiplier = x));
-         gear.add(doubleEntry(entries, "Tentacle Line fish-speed multiplier", values.tentacleFishSpeedMultiplier, x -> values.tentacleFishSpeedMultiplier = x));
-         gear.add(doubleEntry(entries, "Abaia Line catch-zone multiplier", values.swiftCatchZoneMultiplier, x -> values.swiftCatchZoneMultiplier = x));
-         gear.add(doubleEntry(entries, "Abaia Line fish-speed multiplier", values.swiftFishSpeedMultiplier, x -> values.swiftFishSpeedMultiplier = x));
-         gear.add(doubleEntry(entries, "Seafarer night legendary-weight multiplier", values.seafarersRareWeightMultiplier, x -> values.seafarersRareWeightMultiplier = x));
-         gear.add(doubleEntry(entries, "Kujira ocean-crate weight multiplier", values.kujiraOceanCrateMultiplier, x -> values.kujiraOceanCrateMultiplier = x));
+         gear.add(doubleEntry(entries, "Tentacle Line Catch Zone", values.tentacleCatchZoneMultiplier, x -> values.tentacleCatchZoneMultiplier = x));
+         gear.add(doubleEntry(entries, "Tentacle Line Fish Movement", values.tentacleFishSpeedMultiplier, x -> values.tentacleFishSpeedMultiplier = x));
+         gear.add(doubleEntry(entries, "Abaia Line Catch Zone", values.swiftCatchZoneMultiplier, x -> values.swiftCatchZoneMultiplier = x));
+         gear.add(doubleEntry(entries, "Abaia Line Fish Movement", values.swiftFishSpeedMultiplier, x -> values.swiftFishSpeedMultiplier = x));
+         gear.add(doubleEntry(entries, "Seafarer legendary fish preference (night ocean)", values.seafarersRareWeightMultiplier, x -> values.seafarersRareWeightMultiplier = x));
+         gear.add(doubleEntry(entries, "Kujira ocean crate preference", values.kujiraOceanCrateMultiplier, x -> values.kujiraOceanCrateMultiplier = x));
       } else {
          addDescription(gear, entries, access.readOnlyReason());
       }
       category.addEntry(gear.build());
 
-      SubCategoryBuilder bait = section(entries, "Bait", "Catch selection and minigame modifiers while Leviathan Bait is active.");
+      SubCategoryBuilder bait = section(entries, "Bait", "Catch selection and fishing-minigame effects while Leviathan Bait is active.");
       if (access.values() != null) {
          TideboundConfig.Values values = access.values();
-         bait.add(entries.startBooleanToggle(text("Force fish-only catches"), values.leviathanBaitFishOnly).setSaveConsumer(x -> values.leviathanBaitFishOnly = x).build());
-         bait.add(intEntry(entries, "Fish-selection luck bonus", values.leviathanBaitFishSelectionLuckBonus, x -> values.leviathanBaitFishSelectionLuckBonus = x));
-         bait.add(doubleEntry(entries, "Minigame speed multiplier", values.leviathanBaitMinigameSpeedMultiplier, x -> values.leviathanBaitMinigameSpeedMultiplier = x));
-         bait.add(doubleEntry(entries, "Catch-zone multiplier", values.leviathanBaitCatchZoneMultiplier, x -> values.leviathanBaitCatchZoneMultiplier = x));
+         bait.add(entries.startBooleanToggle(text("Always hook fish"), values.leviathanBaitFishOnly).setSaveConsumer(x -> values.leviathanBaitFishOnly = x).build());
+         bait.add(intEntry(entries, "Fishing Luck bonus", values.leviathanBaitFishSelectionLuckBonus, x -> values.leviathanBaitFishSelectionLuckBonus = x));
+         bait.add(doubleEntry(entries, "Fish Movement multiplier", values.leviathanBaitMinigameSpeedMultiplier, x -> values.leviathanBaitMinigameSpeedMultiplier = x));
+         bait.add(doubleEntry(entries, "Catch Zone multiplier", values.leviathanBaitCatchZoneMultiplier, x -> values.leviathanBaitCatchZoneMultiplier = x));
       } else {
          addDescription(bait, entries, access.readOnlyReason());
       }
       category.addEntry(bait.build());
 
-      SubCategoryBuilder bobbers = section(entries, "Bobbers", "Controls whether Tide bobber bonuses contribute to shared journal gameplay.");
+      SubCategoryBuilder bobbers = section(entries, "Bobbers", "Controls whether Tide bobber bonuses count toward team fishing progress.");
       if (localServer) {
          bobbers.add(entries.startBooleanToggle(text("Enable bobber bonuses"), teamServer.bobberBonusesEnabled)
             .setSaveConsumer(value -> teamServer.bobberBonusesEnabled = value).build());
       } else {
-         addDescription(bobbers, entries, "This journal gameplay rule is controlled by the connected server.");
+         addDescription(bobbers, entries, "This rule is controlled by the connected server.");
       }
       category.addEntry(bobbers.build());
 
-      SubCategoryBuilder balance = section(entries, "Advanced Balance", "Low-level specimen distribution controls are kept in Advanced to avoid accidental edits.");
-      addDescription(balance, entries, "Use Advanced > Specimen Distribution for body, condition, and percentile tuning.");
+      SubCategoryBuilder balance = section(entries, "Advanced Balance", "Low-level fish trait and size controls are kept in Advanced to avoid accidental edits.");
+      addDescription(balance, entries, "Use Advanced > Specimen Distribution for body, condition, and size-roll tuning.");
       category.addEntry(balance.build());
    }
 
    private static void addSatchel(ConfigCategory category, ConfigEntryBuilder entries, TideborneTraitsDraft draft, boolean editable) {
-      SubCategoryBuilder behavior = section(entries, "Behavior", "Conversion cost and default specimen-protection behavior.");
+      SubCategoryBuilder behavior = section(entries, "Behavior", "Conversion cost and default fish-protection behavior.");
       if (editable) {
          behavior.add(intEntry(entries, "Fish Satchel conversion cost (XP)", draft.conversionXpCost, value -> draft.conversionXpCost = value));
          for (String id : new ArrayList<>(draft.protectionDefaults.keySet())) {
@@ -141,15 +141,15 @@ public final class TideborneConfigScreen {
                .setSaveConsumer(value -> draft.protectionDefaults.put(id, value)).build());
          }
       } else {
-         addDescription(behavior, entries, "Read-only here on multiplayer servers. The connected server owns Satchel balance.");
+         addDescription(behavior, entries, "Read-only on multiplayer. The server controls Satchel balance.");
       }
       category.addEntry(behavior.build());
 
-      SubCategoryBuilder sorting = section(entries, "Sorting", "Per-satchel sorting order stays with each Satchel rather than a global config value.");
-      addDescription(sorting, entries, "Open a Satchel and use its Sorting tab to configure multi-rule sorting.");
+      SubCategoryBuilder sorting = section(entries, "Sorting", "Each Satchel keeps its own sorting order.");
+      addDescription(sorting, entries, "Open a Satchel and use its Sorting tab to configure Sort Rules.");
       category.addEntry(sorting.build());
 
-      SubCategoryBuilder upgrades = section(entries, "Upgrades", "Capacity multipliers, capacity costs, and feature unlock costs.");
+      SubCategoryBuilder upgrades = section(entries, "Upgrades", "Capacity size, XP costs, and feature unlock costs.");
       if (editable) {
          while (draft.capacityMultipliers.size() < 4) draft.capacityMultipliers.add(1.0);
          while (draft.capacityXpCosts.size() < 4) draft.capacityXpCosts.add(0);
@@ -162,12 +162,12 @@ public final class TideborneConfigScreen {
             upgrades.add(intEntry(entries, pretty(id) + " cost (XP)", draft.featureXpCosts.get(id), value -> draft.featureXpCosts.put(id, value)));
          }
       } else {
-         addDescription(upgrades, entries, "Read-only here on multiplayer servers. The connected server owns Satchel upgrade costs.");
+         addDescription(upgrades, entries, "Read-only on multiplayer. The server controls Satchel upgrade costs.");
       }
       category.addEntry(upgrades.build());
 
-      SubCategoryBuilder records = section(entries, "Records", "Record Keeper and specimen records are stored per Satchel and synchronized by the server.");
-      addDescription(records, entries, "Open a Satchel and use its Records tab to browse canonical stored-specimen records.");
+      SubCategoryBuilder records = section(entries, "Records", "Each Satchel keeps its own fish records. The server keeps them up to date.");
+      addDescription(records, entries, "Open a Satchel and use its Records tab to browse stored fish records.");
       category.addEntry(records.build());
    }
 
@@ -178,15 +178,15 @@ public final class TideborneConfigScreen {
       ServerConfig.Values server,
       boolean serverEditable
    ) {
-      SubCategoryBuilder journal = section(entries, "Journal", "Shared journal history and discovery tracking rules.");
+      SubCategoryBuilder journal = section(entries, "Journal", "Team catch history and discovery tracking rules.");
       if (serverEditable) {
          journal.add(entries.startBooleanToggle(text("Team history"), server.historyEnabled).setSaveConsumer(value -> server.historyEnabled = value).build());
-         journal.add(intEntry(entries, "Team history limit (events)", server.historyLimit, value -> server.historyLimit = value));
+         journal.add(intEntry(entries, "Team history limit (entries)", server.historyLimit, value -> server.historyLimit = value));
          journal.add(entries.startBooleanToggle(text("Track discoveries"), server.trackDiscoveries).setSaveConsumer(value -> server.trackDiscoveries = value).build());
          journal.add(entries.startBooleanToggle(text("Track largest records"), server.trackLargestRecords).setSaveConsumer(value -> server.trackLargestRecords = value).build());
          journal.add(entries.startBooleanToggle(text("Track smallest records"), server.trackSmallestRecords).setSaveConsumer(value -> server.trackSmallestRecords = value).build());
       } else {
-         addDescription(journal, entries, "Server journal rules are read-only on remote multiplayer clients.");
+         addDescription(journal, entries, "Team journal rules are controlled by the connected server.");
       }
       category.addEntry(journal.build());
 
@@ -196,36 +196,36 @@ public final class TideborneConfigScreen {
          teams.add(entries.startBooleanToggle(text("Track contributions"), server.contributionTracking).setSaveConsumer(value -> server.contributionTracking = value).build());
          teams.add(entries.startBooleanToggle(text("Team announcements"), server.announcementsEnabled).setSaveConsumer(value -> server.announcementsEnabled = value).build());
       } else {
-         addDescription(teams, entries, "Server team rules are read-only on remote multiplayer clients.");
+         addDescription(teams, entries, "Team rules are controlled by the connected server.");
       }
       category.addEntry(teams.build());
 
-      SubCategoryBuilder records = section(entries, "Records", "Server rules for record badges, tooltips, and proof-based ownership claims.");
+      SubCategoryBuilder records = section(entries, "Records", "Server rules for record badges, tooltips, and record claiming.");
       if (serverEditable) {
          records.add(entries.startBooleanToggle(text("Record badges (server)"), server.recordBadgesEnabled).setSaveConsumer(value -> server.recordBadgesEnabled = value).build());
          records.add(entries.startBooleanToggle(text("Record tooltips (server)"), server.recordTooltipsEnabled).setSaveConsumer(value -> server.recordTooltipsEnabled = value).build());
-         records.add(entries.startBooleanToggle(text("Members may claim records with exact fish"), server.membersMayClaimWithExactFish)
+         records.add(entries.startBooleanToggle(text("Members may claim records with the exact fish"), server.membersMayClaimWithExactFish)
             .setSaveConsumer(value -> server.membersMayClaimWithExactFish = value).build());
       } else {
-         addDescription(records, entries, "Server record rules are read-only on remote multiplayer clients.");
+         addDescription(records, entries, "Record rules are controlled by the connected server.");
       }
       category.addEntry(records.build());
 
-      SubCategoryBuilder shared = section(entries, "Multiplayer & Shared", "Controls whether trait and size discoveries are shared by the server-side discovery ledger.");
+      SubCategoryBuilder shared = section(entries, "Shared Discoveries", "Controls whether team members share trait and size discoveries.");
       if (serverEditable) {
-         shared.add(entries.startBooleanToggle(text("Shared trait/size discoveries"), traits.sharedDiscovery)
+         shared.add(entries.startBooleanToggle(text("Share trait and size discoveries"), traits.sharedDiscovery)
             .setSaveConsumer(value -> traits.sharedDiscovery = value).build());
       } else {
-         addDescription(shared, entries, "Shared discovery behavior is controlled by the connected server.");
+         addDescription(shared, entries, "Shared discoveries are controlled by the connected server.");
       }
       category.addEntry(shared.build());
    }
 
    private static void addEcosystem(ConfigCategory category, ConfigEntryBuilder entries, FishingSettingsAccess access) {
-      SubCategoryBuilder sharks = section(entries, "Sharks", "Fish scent, shark attraction, and living Tide fish predation behavior.");
-      SubCategoryBuilder chum = section(entries, "Chum", "Chum duration, scent field, and particle presentation.");
-      SubCategoryBuilder loss = section(entries, "Catch Loss", "Chance that shark pressure removes a catch before it is landed.");
-      SubCategoryBuilder spawning = section(entries, "Optional Spawning", "Optional chum-driven shark spawning. Existing shark behavior is unaffected when disabled.");
+      SubCategoryBuilder sharks = section(entries, "Sharks", "Fish scent, shark attraction, and shark hunting behavior.");
+      SubCategoryBuilder chum = section(entries, "Chum", "Chum duration, scent range, and visible particles.");
+      SubCategoryBuilder loss = section(entries, "Shark Catch Loss", "Controls when sharks can steal a catch before it is landed.");
+      SubCategoryBuilder spawning = section(entries, "Optional Spawning", "Optional shark spawning from chum. Existing shark behavior is unchanged when disabled.");
 
       if (access.values() == null) {
          addDescription(sharks, entries, access.readOnlyReason());
@@ -235,27 +235,27 @@ public final class TideborneConfigScreen {
       } else {
          TideboundConfig.Values values = access.values();
          sharks.add(entries.startBooleanToggle(text("Enable fish scent and attraction"), values.enableSharkFishAttraction).setSaveConsumer(x -> values.enableSharkFishAttraction = x).build());
-         sharks.add(entries.startBooleanToggle(text("Enable living Tide fish predation"), values.enableSharkFishPredation).setSaveConsumer(x -> values.enableSharkFishPredation = x).build());
-         sharks.add(doubleEntry(entries, "Detection radius (blocks)", values.sharkFishDetectionRadius, x -> values.sharkFishDetectionRadius = x));
+         sharks.add(entries.startBooleanToggle(text("Enable sharks hunting living Tide fish"), values.enableSharkFishPredation).setSaveConsumer(x -> values.enableSharkFishPredation = x).build());
+         sharks.add(doubleEntry(entries, "Shark detection range (blocks)", values.sharkFishDetectionRadius, x -> values.sharkFishDetectionRadius = x));
          sharks.add(intEntry(entries, "Maximum fullness for food targeting", values.maximumFullnessForFoodTargeting, x -> values.maximumFullnessForFoodTargeting = x));
-         sharks.add(doubleEntry(entries, "Large-fish scent multiplier", values.largeFishScentMultiplier, x -> values.largeFishScentMultiplier = x));
-         sharks.add(doubleEntry(entries, "Strong shark-food scent multiplier", values.strongSharkFoodScentMultiplier, x -> values.strongSharkFoodScentMultiplier = x));
+         sharks.add(doubleEntry(entries, "Large Fish Scent Strength", values.largeFishScentMultiplier, x -> values.largeFishScentMultiplier = x));
+         sharks.add(doubleEntry(entries, "Shark Food Scent Strength", values.strongSharkFoodScentMultiplier, x -> values.strongSharkFoodScentMultiplier = x));
 
          chum.add(entries.startBooleanToggle(text("Enable Chum Buckets"), values.enableChum).setSaveConsumer(x -> values.enableChum = x).build());
          chum.add(intEntry(entries, "Duration (seconds)", values.chumDuration, x -> values.chumDuration = x));
-         chum.add(doubleEntry(entries, "Scent radius (blocks)", values.chumRadius, x -> values.chumRadius = x));
+         chum.add(doubleEntry(entries, "Scent range (blocks)", values.chumRadius, x -> values.chumRadius = x));
          chum.add(doubleEntry(entries, "Scent strength", values.chumScentStrength, x -> values.chumScentStrength = x));
-         chum.add(intEntry(entries, "Particle density per pulse", values.chumParticleCount, x -> values.chumParticleCount = x));
+         chum.add(intEntry(entries, "Particles per pulse", values.chumParticleCount, x -> values.chumParticleCount = x));
          chum.add(intEntry(entries, "Particle pulse interval (ticks)", values.chumParticlePulseInterval, x -> values.chumParticlePulseInterval = x));
 
-         loss.add(entries.startBooleanToggle(text("Enable abstract shark catch loss"), values.enableSharkCatchLoss).setSaveConsumer(x -> values.enableSharkCatchLoss = x).build());
+         loss.add(entries.startBooleanToggle(text("Sharks can steal catches"), values.enableSharkCatchLoss).setSaveConsumer(x -> values.enableSharkCatchLoss = x).build());
          loss.add(percentEntry(entries, "Base chance", values.sharkTheftBaseChance, x -> values.sharkTheftBaseChance = x));
          loss.add(percentEntry(entries, "Scent chance per strength", values.sharkTheftScentChancePerStrength, x -> values.sharkTheftScentChancePerStrength = x));
          loss.add(percentEntry(entries, "Scent bonus cap", values.sharkTheftScentBonusCap, x -> values.sharkTheftScentBonusCap = x));
-         loss.add(percentEntry(entries, "Large-fish bonus", values.sharkTheftLargeFishBonus, x -> values.sharkTheftLargeFishBonus = x));
+         loss.add(percentEntry(entries, "Large fish bonus", values.sharkTheftLargeFishBonus, x -> values.sharkTheftLargeFishBonus = x));
          loss.add(percentEntry(entries, "Tuna bonus", values.sharkTheftTunaBonus, x -> values.sharkTheftTunaBonus = x));
          loss.add(percentEntry(entries, "Maximum chance", values.sharkTheftMaximumChance, x -> values.sharkTheftMaximumChance = x));
-         loss.add(percentEntry(entries, "Steel Leader protection", values.steelLeaderCatchLossPreventionChance, x -> values.steelLeaderCatchLossPreventionChance = x));
+         loss.add(percentEntry(entries, "Steel Leader Shark Protection", values.steelLeaderCatchLossPreventionChance, x -> values.steelLeaderCatchLossPreventionChance = x));
 
          spawning.add(entries.startBooleanToggle(text("Allow chum-triggered shark spawns"), values.allowChumTriggeredSpawns).setSaveConsumer(x -> values.allowChumTriggeredSpawns = x).build());
          spawning.add(intEntry(entries, "Spawn check interval (ticks)", values.chumSpawnCheckInterval, x -> values.chumSpawnCheckInterval = x));
@@ -277,7 +277,7 @@ public final class TideborneConfigScreen {
       TideboundClientConfig.Values fishingClient
    ) {
       SubCategoryBuilder rendering = section(entries, "Rendering", "Client-only visual preferences. These settings never change server gameplay.");
-      addDescription(rendering, entries, "Condition item overlays, Fish Displays, and entity condition visuals use Tideborne's shared rendering pipeline.");
+      addDescription(rendering, entries, "Condition item overlays, Fish Displays, and fish condition visuals use Tideborne's shared rendering.");
       category.addEntry(rendering.build());
 
       SubCategoryBuilder hud = section(entries, "HUD", "Fishing and record information shown during normal play.");
@@ -309,9 +309,9 @@ public final class TideborneConfigScreen {
    }
 
    private static void addAdvanced(ConfigCategory category, ConfigEntryBuilder entries, TideborneTraitsDraft draft, boolean editable) {
-      SubCategoryBuilder specimen = section(entries, "Specimen Distribution", "Low-level body type, condition, size, and percentile tuning.");
+      SubCategoryBuilder specimen = section(entries, "Specimen Distribution", "Low-level body, condition, size, and percentile tuning.");
       if (editable) {
-         addDescription(specimen, entries, "Trait odds use values from 0.0 to 1.0. Body type and condition are rolled independently.");
+         addDescription(specimen, entries, "Trait odds use values from 0.0 to 1.0. Body and condition are rolled independently.");
          for (FishMutation mutation : FishMutation.mutations()) {
             specimen.add(doubleEntry(entries, pretty(mutation.serializedName()) + " chance", draft.odds.get(mutation), value -> draft.odds.put(mutation, value)));
          }
@@ -326,16 +326,16 @@ public final class TideborneConfigScreen {
          specimen.add(doubleEntry(entries, "Perfect condition minimum percentile", draft.perfectMinPercentile, value -> draft.perfectMinPercentile = value));
          specimen.add(doubleEntry(entries, "Perfect condition maximum percentile", draft.perfectMaxPercentile, value -> draft.perfectMaxPercentile = value));
       } else {
-         addDescription(specimen, entries, "Read-only here on multiplayer servers. The connected server owns specimen distribution.");
+         addDescription(specimen, entries, "Read-only on multiplayer. The server controls specimen distribution.");
       }
       category.addEntry(specimen.build());
 
-      SubCategoryBuilder diagnostics = section(entries, "Diagnostics & Compatibility", "Uncommon diagnostics and client resource limits for troubleshooting.");
+      SubCategoryBuilder diagnostics = section(entries, "Diagnostics & Compatibility", "Diagnostics and client resource limits for troubleshooting.");
       if (editable) {
          diagnostics.add(entries.startBooleanToggle(text("Debug logging"), draft.debugLogging).setSaveConsumer(value -> draft.debugLogging = value).build());
          diagnostics.add(intEntry(entries, "Dynamic condition texture cache (entries)", draft.dynamicTextureCacheMaximum, value -> draft.dynamicTextureCacheMaximum = value));
       } else {
-         addDescription(diagnostics, entries, "Server diagnostic values are read-only on remote multiplayer clients.");
+         addDescription(diagnostics, entries, "Server diagnostic values are read-only on multiplayer clients.");
       }
       category.addEntry(diagnostics.build());
    }
