@@ -105,7 +105,7 @@ public final class TopFishScreen extends Screen {
          listHeadingY,
          MUTED
       );
-      TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("CANONICAL SPECIMEN"), left + 300, detailTop + 63, MUTED);
+      TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("FISH DETAILS"), left + 300, detailTop + 63, MUTED);
 
       NbtList list = ClientTeamData.get().getList(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_KEY, 10);
       int visibleCount = Math.min(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_LIMIT, list.size());
@@ -182,7 +182,7 @@ public final class TopFishScreen extends Screen {
       }
 
       if (selectedIndex < 0) {
-         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No specimen selected"), left + 300, detailTop + 151, MUTED);
+         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No fish selected"), left + 300, detailTop + 151, MUTED);
          return;
       }
 
@@ -207,7 +207,7 @@ public final class TopFishScreen extends Screen {
       int rightColumn = x + 64;
       int columnWidth = 60;
 
-      this.section(graphics, "Specimen", x, detailTop + 120);
+      this.section(graphics, "Fish", x, detailTop + 120);
       String score = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.scoreLabel();
       String rarity = CanonicalSpecimenPresentation.rarityStars(selected.getInt("fish_stars"));
       String percentile = display == null
@@ -215,12 +215,12 @@ public final class TopFishScreen extends Screen {
          : CanonicalSpecimenPresentation.percentile(display.percentile());
       double lengthValue = display != null && Double.isFinite(display.length()) ? display.length() : selected.getDouble("length");
       String length = CanonicalSpecimenPresentation.length(lengthValue);
-      this.label(graphics, "FishScore", leftColumn, detailTop + 132);
+      this.label(graphics, "Fish Score", leftColumn, detailTop + 132);
       this.label(graphics, "Stars", rightColumn, detailTop + 132);
       this.drawValue(
          graphics,
          score,
-         "FishScore: " + score,
+         "Fish Score: " + score,
          leftColumn,
          detailTop + 141,
          columnWidth,
@@ -229,9 +229,9 @@ public final class TopFishScreen extends Screen {
          mouseY
       );
       this.drawValue(graphics, rarity, "Stars: " + rarity, rightColumn, detailTop + 141, columnWidth, MUTED, mouseX, mouseY);
-      this.label(graphics, "Percentile", leftColumn, detailTop + 151);
+      this.label(graphics, "Size Percentile", leftColumn, detailTop + 151);
       this.label(graphics, "Length", rightColumn, detailTop + 151);
-      this.drawValue(graphics, percentile, "Percentile: " + percentile, leftColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
+      this.drawValue(graphics, percentile, "Size Percentile: " + percentile, leftColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
       this.drawValue(graphics, length, "Length: " + length, rightColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
 
       this.section(graphics, "Traits", x, detailTop + 173);
@@ -258,7 +258,7 @@ public final class TopFishScreen extends Screen {
          );
       }
 
-      this.section(graphics, "Catch Info", x, detailTop + 226);
+      this.section(graphics, "Caught", x, detailTop + 226);
       String catcher = selected.getString("catcher_name");
       String catcherLabel = catcher.isBlank() ? CanonicalSpecimenPresentation.UNAVAILABLE : catcher;
       long timestampValue = selected.contains("timestamp", 99) ? selected.getLong("timestamp") : -1L;
