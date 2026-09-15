@@ -39,11 +39,11 @@ final class TideboundFishingHud {
             List<Text> rows = new ArrayList<>();
             rows.add(Text.literal("Tideborne Fishing").styled(style -> style.withBold(true)));
             if (ClientTideboundSettings.bool("myths_active") && hook.getLine().isOf(TideboundItems.TENTACLE_LINE)) {
-               rows.add(Text.literal("Tentacle Line: Catch Zone " + TideboundTooltips.multiplier("tentacle_zone") + "; Fish Movement unchanged"));
+               rows.add(Text.literal("Tentacle Line: Catch Zone " + TideboundTooltips.multiplier("tentacle_zone") + "; Fish Movement " + TideboundTooltips.multiplier("tentacle_speed")));
             }
 
             if (ClientTideboundSettings.bool("myths_active") && hook.getLine().isOf(TideboundItems.SWIFT_LINE)) {
-               rows.add(Text.literal("Abaia Line: Catch Zone " + TideboundTooltips.multiplier("swift_zone")));
+               rows.add(Text.literal("Abaia Line: Catch Zone " + TideboundTooltips.multiplier("swift_zone") + "; Fish Movement " + TideboundTooltips.multiplier("swift_speed")));
             }
 
             if (ClientTideboundSettings.bool("apex_active") && SteelLeaderAttachment.hasOnHook(hook)) {
