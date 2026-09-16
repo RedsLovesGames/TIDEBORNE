@@ -71,7 +71,7 @@ public final class ClientConfig {
    public static final class Values {
       public boolean showRecordBadges = true;
       public boolean showRecordTooltips = true;
-      public boolean showTeamRecordsButton = true;
+      public boolean debugTeamRecordsButton = false;
       public boolean showFormerMembers = true;
       public String defaultTab = "summary";
       public String defaultMetric = "catches";

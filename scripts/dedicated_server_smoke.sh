@@ -63,12 +63,14 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
         exit 1
     fi
 
-    # Minecraft 1.20+ removed --server/--port. Quick Play is the supported
-    # command-line path for joining a multiplayer server.
-    timeout 180s xvfb-run -a "$gradle_bin" runClient --console=plain --no-daemon \
-        --args='--quickPlayMultiplayer 127.0.0.1:25565 --quickPlayPath quickplay-smoke.json' \
+    # Tideborne's client initializer exposes a dormant CI-only direct-connect hook.
+    # Using Vanilla's ConnectScreen path avoids Quick Play startup behavior, which is
+    # unreliable in Loom's development client even when the arguments arrive intact.
+    env TIDEBORNE_CI_DIRECT_CONNECT_TARGET='localhost:25565' \
+        timeout 180s xvfb-run -a "$gradle_bin" runClient --console=plain --no-daemon \
         >"$client_log" 2>&1 &
     client_pid=$!
+
     connected=0
     for _ in $(seq 1 180); do
         if awk '$2 ~ /:63DD$/ && $4 == "01" { found = 1 } END { exit !found }' \
@@ -84,7 +86,7 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
 
     if [[ "$connected" -ne 1 ]]; then
         echo 'Client did not establish a connection to the dedicated server.' >&2
-        sed -n '1,220p' "$client_log" >&2
+        sed -n '1,240p' "$client_log" >&2
         sed -n '1,260p' "$smoke_log" >&2
         exit 1
     fi
@@ -107,7 +109,12 @@ if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
     fi
     if ! rg -q '\[Tideborne\] Unified client configuration and rendering systems initialized\.' "$client_log"; then
         echo 'Dedicated client did not finish Tideborne client initialization.' >&2
-        sed -n '1,220p' "$client_log" >&2
+        sed -n '1,240p' "$client_log" >&2
+        exit 1
+    fi
+    if ! rg -q 'CI direct-connect attempting localhost:25565\.' "$client_log"; then
+        echo 'Dedicated client never attempted the CI direct connection.' >&2
+        sed -n '1,240p' "$client_log" >&2
         exit 1
     fi
 fi
@@ -124,7 +131,7 @@ for _ in $(seq 1 60); do
         if [[ "${CONNECT_CLIENT:-false}" == "true" ]]; then
             if ! rg -q ' joined the game' "$smoke_log"; then
                 echo 'Client connected at the socket layer but did not finish joining the dedicated server.' >&2
-                sed -n '1,220p' "$client_log" >&2
+                sed -n '1,240p' "$client_log" >&2
                 sed -n '1,260p' "$smoke_log" >&2
                 exit 1
             fi

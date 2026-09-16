@@ -69,12 +69,12 @@ public abstract class FishProfileSizeRangeMixin {
 
             String score = this.tideTraits$recordedFishScore(speciesId);
             String scoreLine = CanonicalSpecimenPresentation.UNAVAILABLE.equals(score)
-               ? "No canonical specimen recorded"
-               : "Recorded FishScore: " + score;
+               ? "No recorded fish details"
+               : "Recorded Score: " + score;
             this.tideTraits$drawCenteredFit(graphics, Text.literal(scoreLine), center, y + 11, 160);
          } else {
             this.tideTraits$drawCenteredFit(graphics, Text.literal("Size range unavailable"), center, y, 160);
-            this.tideTraits$drawCenteredFit(graphics, Text.literal("No canonical specimen recorded"), center, y + 11, 160);
+            this.tideTraits$drawCenteredFit(graphics, Text.literal("No recorded fish details"), center, y + 11, 160);
          }
       } finally {
          JournalRenderContext.end();

@@ -4,7 +4,6 @@ import com.redslovesgames.tideborne.command.HistoryBadgeMeta;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
 import com.redslovesgames.tideborne.fishing.specimen.CanonicalSpecimenStorage;
 import com.redslovesgames.tideborne.journal.StoredFishScoreStorage;
-import com.redslovesgames.tideborne.journal.TeamCanonicalJournalCapture;
 import com.redslovesgames.tideborne.journal.TeamProgressStore;
 import java.util.Locale;
 import net.minecraft.item.ItemStack;
@@ -130,11 +129,6 @@ abstract class TeamProgressCanonicalJournalMixin {
         syncRootMirrors(root);
     }
 
-    @Inject(method = "tideborneBeginCatch", at = @At("HEAD"))
-    private static void tideborne$beginCanonicalJournalCatch(ItemStack stack, CallbackInfo callback) {
-        TeamCanonicalJournalCapture.begin(stack);
-    }
-
     /**
      * Enriches the existing server-owned temporary top-fish/history display tag from the finalized
      * canonical specimen. No client or UI code derives these values.
@@ -159,11 +153,6 @@ abstract class TeamProgressCanonicalJournalMixin {
             tag.putInt(StoredFishScoreStorage.LEGACY_SCORE_KEY, score);
         });
         HistoryBadgeMeta.capture(tag);
-    }
-
-    @Inject(method = "tideborneClearCatch", at = @At("TAIL"))
-    private static void tideborne$clearCanonicalJournalCatch(CallbackInfo callback) {
-        TeamCanonicalJournalCapture.clear();
     }
 
     private static void syncThreadLocalMirror(ThreadLocal threadLocal) {

@@ -479,7 +479,7 @@ public final class TeamRecordsScreen extends Screen {
             TraitDisplay quality = CanonicalSpecimenPresentation.traitForAxis(traits, TraitAxis.QUALITY);
             tooltip.add(
                Text.literal(
-                  "FishScore: " + display.scoreLabel()
+                  "Score: " + display.scoreLabel()
                      + "  " + pigmentation.shortLabel() + ": " + pigmentation.value()
                      + "  " + quality.shortLabel() + ": " + quality.value()
                )

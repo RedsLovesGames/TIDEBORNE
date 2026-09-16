@@ -105,7 +105,7 @@ public final class TopFishScreen extends Screen {
          listHeadingY,
          MUTED
       );
-      TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("CANONICAL SPECIMEN"), left + 300, detailTop + 63, MUTED);
+      TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("FISH DETAILS"), left + 300, detailTop + 63, MUTED);
 
       NbtList list = ClientTeamData.get().getList(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_KEY, 10);
       int visibleCount = Math.min(CanonicalSpecimenRecordIndexer.TEAM_TOP_FISH_LIMIT, list.size());
@@ -182,14 +182,14 @@ public final class TopFishScreen extends Screen {
       }
 
       if (selectedIndex < 0) {
-         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No specimen selected"), left + 300, detailTop + 151, MUTED);
+         TideTextRenderer.drawCentered(graphics, this.textRenderer, Text.literal("No fish selected"), left + 300, detailTop + 151, MUTED);
          return;
       }
 
       NbtCompound selected = (NbtCompound)list.get(selectedIndex);
       ItemStack stack = stacks[selectedIndex];
       CanonicalRecordDisplay display = displays[selectedIndex];
-      renderFish3D(graphics, stack, left + 300, detailTop + 86);
+      renderFish3D(graphics, stack, left + 300, detailTop + 89, left + 236, detailTop + 73, left + 364, detailTop + 106);
       this.drawValue(
          graphics,
          stack.getName().getString(),
@@ -207,7 +207,7 @@ public final class TopFishScreen extends Screen {
       int rightColumn = x + 64;
       int columnWidth = 60;
 
-      this.section(graphics, "Specimen", x, detailTop + 120);
+      this.section(graphics, "Fish", x, detailTop + 120);
       String score = display == null ? CanonicalSpecimenPresentation.UNAVAILABLE : display.scoreLabel();
       String rarity = CanonicalSpecimenPresentation.rarityStars(selected.getInt("fish_stars"));
       String percentile = display == null
@@ -215,12 +215,12 @@ public final class TopFishScreen extends Screen {
          : CanonicalSpecimenPresentation.percentile(display.percentile());
       double lengthValue = display != null && Double.isFinite(display.length()) ? display.length() : selected.getDouble("length");
       String length = CanonicalSpecimenPresentation.length(lengthValue);
-      this.label(graphics, "FishScore", leftColumn, detailTop + 132);
+      this.label(graphics, "Fish Score", leftColumn, detailTop + 132);
       this.label(graphics, "Stars", rightColumn, detailTop + 132);
       this.drawValue(
          graphics,
          score,
-         "FishScore: " + score,
+         "Fish Score: " + score,
          leftColumn,
          detailTop + 141,
          columnWidth,
@@ -229,9 +229,9 @@ public final class TopFishScreen extends Screen {
          mouseY
       );
       this.drawValue(graphics, rarity, "Stars: " + rarity, rightColumn, detailTop + 141, columnWidth, MUTED, mouseX, mouseY);
-      this.label(graphics, "Percentile", leftColumn, detailTop + 151);
+      this.label(graphics, "Size Percentile", leftColumn, detailTop + 151);
       this.label(graphics, "Length", rightColumn, detailTop + 151);
-      this.drawValue(graphics, percentile, "Percentile: " + percentile, leftColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
+      this.drawValue(graphics, percentile, "Size Percentile: " + percentile, leftColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
       this.drawValue(graphics, length, "Length: " + length, rightColumn, detailTop + 160, columnWidth, MUTED, mouseX, mouseY);
 
       this.section(graphics, "Traits", x, detailTop + 173);
@@ -258,7 +258,7 @@ public final class TopFishScreen extends Screen {
          );
       }
 
-      this.section(graphics, "Catch Info", x, detailTop + 226);
+      this.section(graphics, "Caught", x, detailTop + 226);
       String catcher = selected.getString("catcher_name");
       String catcherLabel = catcher.isBlank() ? CanonicalSpecimenPresentation.UNAVAILABLE : catcher;
       long timestampValue = selected.contains("timestamp", 99) ? selected.getLong("timestamp") : -1L;
@@ -316,51 +316,66 @@ public final class TopFishScreen extends Screen {
       this.client.setScreen(this.parent);
    }
 
-   private void renderFish3D(DrawContext graphics, ItemStack stack, int x, int y) {
-      MinecraftClient client = MinecraftClient.getInstance();
-      if (client.world != null) {
-         FishData fish = FishData.getExact(stack).orElse(null);
-         if (fish != null) {
-            DisplayData display = fish.display().orElse(null);
-            if (display != null) {
-               EntityType<?> type = display.entityType();
-               if (previewStack != stack || previewFish != fish
-                     || previewEntity != null && previewEntity.getWorld() != client.world) {
-                  previewStack = stack;
-                  previewFish = fish;
-                  previewEntity = type == null ? null : type.create(client.world);
-                  if (previewEntity != null) {
-                     display.nbt().ifPresent(previewEntity::readNbt);
-                     SpecimenTransfer.stackToEntity(stack, previewEntity);
+   private void renderFish3D(
+      DrawContext graphics,
+      ItemStack stack,
+      int x,
+      int y,
+      int clipLeft,
+      int clipTop,
+      int clipRight,
+      int clipBottom
+   ) {
+      graphics.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+      try {
+         MinecraftClient client = MinecraftClient.getInstance();
+         if (client.world != null) {
+            FishData fish = FishData.getExact(stack).orElse(null);
+            if (fish != null) {
+               DisplayData display = fish.display().orElse(null);
+               if (display != null) {
+                  EntityType<?> type = display.entityType();
+                  if (previewStack != stack || previewFish != fish
+                        || previewEntity != null && previewEntity.getWorld() != client.world) {
+                     previewStack = stack;
+                     previewFish = fish;
+                     previewEntity = type == null ? null : type.create(client.world);
+                     if (previewEntity != null) {
+                        display.nbt().ifPresent(previewEntity::readNbt);
+                        SpecimenTransfer.stackToEntity(stack, previewEntity);
+                     }
                   }
-               }
-               Entity entity = previewEntity;
-               if (entity != null) {
-                  MatrixStack matrices = graphics.getMatrices();
-                  matrices.push();
-                  matrices.translate(x, y, 200.0F);
-                  float largest = Math.max(Math.max(type.getWidth(), type.getHeight()), 0.5F);
-                  float scale = Math.min(58.0F, 46.0F / largest);
-                  matrices.scale(scale, -scale, scale);
-                  float rotation = (float)(System.currentTimeMillis() % 9000L) / 9000.0F * 6.2831855F;
-                  Quaternionf quaternion = new Quaternionf()
-                     .rotationY(rotation)
-                     .rotateZ((float)Math.toRadians(display.roll() + 90.0F))
-                     .rotateX((float)Math.toRadians(display.pitch()))
-                     .rotateY((float)Math.toRadians(display.yaw()));
-                  matrices.multiply(quaternion);
-                  EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
-                  Immediate consumers = client.getBufferBuilders().getEntityVertexConsumers();
-                  dispatcher.setRenderShadows(false);
-                  dispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 0.0F, matrices, consumers, 15728880);
-                  consumers.draw();
-                  dispatcher.setRenderShadows(true);
-                  matrices.pop();
-                  return;
+                  Entity entity = previewEntity;
+                  if (entity != null) {
+                     MatrixStack matrices = graphics.getMatrices();
+                     matrices.push();
+                     matrices.translate(x, y, 200.0F);
+                     float entityWidth = Math.max(entity.getWidth(), 0.25F);
+                     float entityHeight = Math.max(entity.getHeight(), 0.25F);
+                     float scale = Math.min(30.0F, Math.min(52.0F / entityWidth, 24.0F / entityHeight));
+                     matrices.scale(scale, -scale, scale);
+                     float rotation = (float)(System.currentTimeMillis() % 9000L) / 9000.0F * 6.2831855F;
+                     Quaternionf quaternion = new Quaternionf()
+                        .rotationY(rotation)
+                        .rotateZ((float)Math.toRadians(display.roll() + 90.0F))
+                        .rotateX((float)Math.toRadians(display.pitch()))
+                        .rotateY((float)Math.toRadians(display.yaw()));
+                     matrices.multiply(quaternion);
+                     EntityRenderDispatcher dispatcher = client.getEntityRenderDispatcher();
+                     Immediate consumers = client.getBufferBuilders().getEntityVertexConsumers();
+                     dispatcher.setRenderShadows(false);
+                     dispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 0.0F, matrices, consumers, 15728880);
+                     consumers.draw();
+                     dispatcher.setRenderShadows(true);
+                     matrices.pop();
+                     return;
+                  }
                }
             }
          }
+         graphics.drawItem(stack, x - 8, y - 8);
+      } finally {
+         graphics.disableScissor();
       }
-      graphics.drawItem(stack, x - 8, y - 8);
    }
 }

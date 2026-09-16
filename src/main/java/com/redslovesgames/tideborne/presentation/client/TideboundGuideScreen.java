@@ -12,11 +12,11 @@ import net.minecraft.client.gui.screen.Screen;
 
 public final class TideboundGuideScreen extends Screen {
    public TideboundGuideScreen() {
-      super(Text.literal("Tidebound Field Guide"));
+      super(Text.literal("Tideborne Field Guide"));
    }
 
    public void render(DrawContext graphics, int mouseX, int mouseY, float partialTick) {
-      this.renderBackground(graphics, mouseX, mouseY, partialTick);
+      graphics.fill(0, 0, this.width, this.height, 0x55000000);
       int width = Math.min(430, this.width - 24);
       int left = (this.width - width) / 2;
       int y = 24;
@@ -42,13 +42,21 @@ public final class TideboundGuideScreen extends Screen {
 
    private static List<Text> rows() {
       return !ClientTideboundSettings.available()
-         ? List.of(Text.literal("Waiting for server settings. Open this after joining a world."))
+         ? List.of(Text.literal("Fishing stats are still syncing from the server."))
          : List.of(
             Text.literal(
-               "[Fishing Gear] Tentacle Line widens the catch zone but preserves each fish's native movement. Abaia Line adds a nimble current tradeoff. Seafarer's Hook favors legendary ocean fish only at night; no habitat rules are bypassed."
+               "[Fishing Gear] Tentacle Line: Catch Zone "
+                  + TideboundTooltips.multiplier("tentacle_zone")
+                  + ", Fish Movement "
+                  + TideboundTooltips.multiplier("tentacle_speed")
+                  + ". Abaia Line: Catch Zone "
+                  + TideboundTooltips.multiplier("swift_zone")
+                  + ", Fish Movement "
+                  + TideboundTooltips.multiplier("swift_speed")
+                  + ". Seafarer's Hook favors legendary ocean fish at night without bypassing habitat rules."
             ),
             Text.literal(
-               "Kujira Bone Rod has 3 bait slots, 512 durability, and " + TideboundTooltips.multiplier("kujira_crates") + " ocean crate weight."
+               "[Kujira Bone Rod] Holds 3 bait, has 512 durability, and favors ocean crates at " + TideboundTooltips.multiplier("kujira_crates") + " of their normal selection value."
             ),
             Text.translatable(
                "guide.tideborne.fishing.leviathan_bait",
@@ -59,18 +67,18 @@ public final class TideboundGuideScreen extends Screen {
                }
             ),
             Text.literal(
-               "[Shark Risk] Catches can be lost to a sudden shark bite without a nearby entity. Steel Leader has "
+               "[Shark Risk] A shark can steal a catch before it is reeled in. Steel Leader gives "
                   + TideboundTooltips.percent("steel_prevent")
-                  + " protection. Real Great Whites still hunt living and dropped Tide fish."
+                  + " Shark Protection. Great Whites can also hunt living or dropped Tide fish."
             ),
             Text.literal(
-               "[Chum] Ocean-only scent lasts "
+               "[Chum] Works only in ocean water. Shark scent lasts "
                   + ClientTideboundSettings.integer("chum_duration")
-                  + " seconds over "
+                  + " seconds across "
                   + ClientTideboundSettings.integer("chum_radius")
-                  + " blocks. It creates a dense visible chum cloud and can optionally call sharks under native spawn rules."
+                  + " blocks. The chum cloud can attract sharks when shark attraction is enabled."
             ),
-            Text.literal("[Compatibility] Master integrations are chosen at server startup. /tideboundcompat reload updates balance values only.")
+            Text.literal("[Integrations] Myths and Apex are enabled when the server starts. /tideboundcompat reload refreshes balance values only.")
          );
    }
 }

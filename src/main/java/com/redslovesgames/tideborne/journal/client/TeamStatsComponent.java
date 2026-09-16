@@ -36,7 +36,7 @@ public final class TeamStatsComponent extends ProfileComponent {
       this.hasSizeRecords = !stats.isEmpty() && stats.getLargestCatch() > 0.0;
    }
 
-   // A single catch is already described by Best Specimen; without that payload its size records remain visible.
+   // A single catch is already described by Best Fish; without that payload its size records remain visible.
    private boolean showSizeRecords(boolean hasBest) {
       return hasSizeRecords && (stats.getAmountCaught() != 1 || !hasBest);
    }
@@ -72,8 +72,8 @@ public final class TeamStatsComponent extends ProfileComponent {
          String tooltip = drawColumn(
             graphics,
             font,
-            "Best Specimen",
-            "Best Specimen",
+            "Best Fish",
+            "Best Fish",
             x + 4,
             y + cursorY,
             100,

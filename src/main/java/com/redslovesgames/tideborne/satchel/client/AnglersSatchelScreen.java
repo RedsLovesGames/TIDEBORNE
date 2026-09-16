@@ -246,7 +246,7 @@ public final class AnglersSatchelScreen extends Screen {
 
       this.renderContentScrollbar(graphics, left, top);
       this.renderSpecimenDetails(graphics, left, top, mouseX, mouseY);
-      graphics.drawText(this.textRenderer, this.contents.size() + " / " + this.view.capacity() + " specimens", gridX + 5, top + 210, MUTED_TEXT, false);
+      graphics.drawText(this.textRenderer, this.contents.size() + " / " + this.view.capacity() + " fish", gridX + 5, top + 210, MUTED_TEXT, false);
       if (hoveredSlot >= 0) {
          this.renderSpecimenTooltip(graphics, this.contents.get(hoveredSlot), mouseX, mouseY);
       }
@@ -269,7 +269,7 @@ public final class AnglersSatchelScreen extends Screen {
    private void renderSpecimenDetails(DrawContext graphics, int left, int top, int mouseX, int mouseY) {
       int x = left + 250;
       int y = top + 68;
-      graphics.drawText(this.textRenderer, "Specimen", x, y, TEXT, false);
+      graphics.drawText(this.textRenderer, "Fish", x, y, TEXT, false);
       if (this.selectedSlot >= 0 && this.selectedSlot < this.contents.size()) {
          ItemStack stack = this.contents.get(this.selectedSlot);
          Optional<SatchelSpecimenDisplay> canonical = SatchelSpecimenDisplay.from(stack);
@@ -288,9 +288,9 @@ public final class AnglersSatchelScreen extends Screen {
          if (scannerEnabled) {
             if (canonical.isPresent()) {
                SatchelSpecimenDisplay specimen = canonical.get();
-               graphics.drawText(this.textRenderer, "FishScore " + specimen.scoreLabel(), x, y + 20, CanonicalSpecimenPresentation.SCORE_COLOR, false);
+               graphics.drawText(this.textRenderer, "Score " + specimen.scoreLabel(), x, y + 20, CanonicalSpecimenPresentation.SCORE_COLOR, false);
                graphics.drawText(this.textRenderer, "Length " + specimen.lengthLabel(), x, y + 29, TEXT, false);
-               graphics.drawText(this.textRenderer, "Percentile " + specimen.percentileLabel(), x, y + 38, TEXT, false);
+               graphics.drawText(this.textRenderer, "Size percentile " + specimen.percentileLabel(), x, y + 38, TEXT, false);
                graphics.drawText(this.textRenderer, "Traits", x, y + 49, TEXT, false);
                List<TraitDisplay> traits = specimen.traits();
                for (int index = 0; index < traits.size(); index++) {
@@ -306,12 +306,12 @@ public final class AnglersSatchelScreen extends Screen {
                }
             } else {
                graphics.drawTextWrapped(
-                  this.textRenderer, Text.literal("Canonical specimen data is unavailable for this stored fish."), x, y + 24, 120, MUTED_TEXT
+                  this.textRenderer, Text.literal("Fish details are unavailable for this stored fish."), x, y + 24, 120, MUTED_TEXT
                );
             }
          } else {
             graphics.drawTextWrapped(
-               this.textRenderer, Text.literal("Trait Scanner locked/off. Enable it to reveal specimen details."), x, y + 24, 120, MUTED_TEXT
+               this.textRenderer, Text.literal("Trait Scanner is locked or off. Enable it to reveal fish details."), x, y + 24, 120, MUTED_TEXT
             );
          }
 
@@ -323,7 +323,7 @@ public final class AnglersSatchelScreen extends Screen {
          boolean canChangeProtection = lock != null && lock.unlocked() && (this.view.isProtected(this.selectedSlot) || lock.enabled());
          drawButton(graphics, x + 74, extractY, this.view.isProtected(this.selectedSlot) ? "Unlock" : "Protect", canChangeProtection, mouseX, mouseY);
       } else {
-         graphics.drawTextWrapped(this.textRenderer, Text.literal("Select a specimen to inspect server-synchronized traits."), x, y + 16, 120, MUTED_TEXT);
+         graphics.drawTextWrapped(this.textRenderer, Text.literal("Select a fish to inspect its traits."), x, y + 16, 120, MUTED_TEXT);
       }
    }
 
@@ -454,7 +454,7 @@ public final class AnglersSatchelScreen extends Screen {
             false
          );
       } else {
-         String state = available ? featureView.xpCost() + " XP" : "ADDON";
+         String state = available ? featureView.xpCost() + " XP" : "UNAVAILABLE";
          graphics.drawText(this.textRenderer, state, x + 108, y + 7, available ? TEXT : BAD_TEXT, false);
       }
    }
@@ -466,7 +466,7 @@ public final class AnglersSatchelScreen extends Screen {
          graphics.drawText(this.textRenderer, "Record Keeper is locked or disabled.", left + 30, top + 72, BAD_TEXT, false);
          graphics.drawTextWrapped(
             this.textRenderer,
-            Text.literal("Unlock it in Upgrades to summarize synchronized specimen components in this satchel."),
+            Text.literal("Unlock it in Upgrades to browse records for fish stored in this satchel."),
             left + 30,
             top + 89,
             220,
@@ -483,7 +483,7 @@ public final class AnglersSatchelScreen extends Screen {
             TEXT,
             false
          );
-         String subtitle = "Top satchel specimens by canonical V2 FishScore";
+         String subtitle = "Highest-scoring fish in this satchel";
          graphics.drawText(
             this.textRenderer,
             subtitle,
@@ -524,7 +524,7 @@ public final class AnglersSatchelScreen extends Screen {
          }
 
          if (sorted.isEmpty()) {
-            graphics.drawText(this.textRenderer, "No specimens stored yet.", left + 145, top + 132, MUTED_TEXT, false);
+            graphics.drawText(this.textRenderer, "No fish stored yet.", left + 145, top + 132, MUTED_TEXT, false);
          }
 
          int first = sorted.isEmpty() ? 0 : this.recordScroll + 1;
@@ -628,8 +628,8 @@ public final class AnglersSatchelScreen extends Screen {
       DiscoveryTotals totals = DiscoveryTotals.from(discoveries);
 
       String status = switch (shared.availability()) {
-         case UNKNOWN -> "Team journal syncing";
-         case AVAILABLE -> "Team journal synced";
+         case UNKNOWN -> "Team journal updating";
+         case AVAILABLE -> "Team journal ready";
          case MISSING_MODS -> "Team journal add-on missing";
          case TEAM_UNRESOLVED -> "No active team journal";
          case ERROR -> "Team journal sync error";
@@ -668,7 +668,7 @@ public final class AnglersSatchelScreen extends Screen {
             if (index == 0) {
                lines = new ArrayList<>();
                lines.add(Text.literal("Capacity"));
-               lines.add(Text.literal("Adds more individual specimen slots."));
+               lines.add(Text.literal("Adds more fish slots."));
                lines.add(Text.literal("Current: " + this.view.capacity() + " slots"));
                if (this.view.nextCapacityLevel() < 0) {
                   lines.add(Text.literal("Maximum capacity reached."));
@@ -680,13 +680,13 @@ public final class AnglersSatchelScreen extends Screen {
                lines = new ArrayList<>(upgradeTooltip(feature));
                SatchelFeatureView featureView = this.view.feature(feature.id());
                if (featureView == null) {
-                  lines.add(Text.literal("Server state unavailable."));
+                  lines.add(Text.literal("Upgrade status unavailable."));
                } else if (featureView.unlocked()) {
                   lines.add(Text.literal(featureView.enabled() ? "Enabled" : "Disabled"));
                } else if (featureView.available()) {
                   lines.add(Text.literal("Unlock cost: " + featureView.xpCost() + " XP"));
                } else {
-                  lines.add(Text.literal("Optional server prerequisite unavailable."));
+                  lines.add(Text.literal("This upgrade is unavailable on this server."));
                }
             }
             graphics.drawOrderedTooltip(this.textRenderer, lines.stream().map(Text::asOrderedText).toList(), mouseX, mouseY);
@@ -712,7 +712,7 @@ public final class AnglersSatchelScreen extends Screen {
                   );
                   case SORTING -> List.of(Text.literal("Sorting"), Text.literal("Choose the order used for stored fish."), Text.literal("Keyboard: Tab or 1-4 changes page."));
                   case UPGRADES -> List.of(Text.literal("Upgrades"), Text.literal("Spend XP to unlock satchel abilities and settings."), Text.literal("Keyboard: Tab or 1-4 changes page."));
-                  case RECORDS -> List.of(Text.literal("Records"), Text.literal("Browse stored specimens and record fish."), Text.literal("Keyboard: Up/Down or Page Up/Page Down scrolls."));
+                  case RECORDS -> List.of(Text.literal("Records"), Text.literal("Browse stored fish and records."), Text.literal("Keyboard: Up/Down or Page Up/Page Down scrolls."));
                }
             );
             return;
@@ -734,7 +734,7 @@ public final class AnglersSatchelScreen extends Screen {
             graphics,
             mouseX,
             mouseY,
-            List.of(Text.literal("Refresh from server"), Text.literal("Reload the current contents, records, and upgrade state."))
+            List.of(Text.literal("Refresh satchel"), Text.literal("Reload the current contents, records, and upgrade status."))
          );
       } else {
          switch (this.tab) {
@@ -848,7 +848,7 @@ public final class AnglersSatchelScreen extends Screen {
             graphics,
             mouseX,
             mouseY,
-            List.of(Text.literal("Apply sorting"), Text.literal("Send the current sorting rules to the server."))
+            List.of(Text.literal("Apply sorting"), Text.literal("Apply the current sorting rules."))
          );
       }
    }
@@ -898,7 +898,10 @@ public final class AnglersSatchelScreen extends Screen {
 
    private static List<Text> upgradeTooltip(SatchelFeature feature) {
       return switch (feature) {
-         case TACKLE_ORGANIZER -> List.of(Text.literal("Tackle Organizer"), Text.literal("Enables custom multi-rule satchel sorting."));
+         case TACKLE_ORGANIZER -> List.of(
+            Text.literal("Tackle Organizer"),
+            Text.literal("Lets you set several sorting rules in priority order.")
+         );
          case AUTO_STOW -> List.of(
             Text.literal("Auto-Stow"),
             Text.literal("Stores eligible catches in this satchel automatically."),
@@ -906,17 +909,17 @@ public final class AnglersSatchelScreen extends Screen {
          );
          case RECORD_KEEPER -> List.of(
             Text.literal("Record Keeper"),
-            Text.literal("Shows this player's native Tide largest and smallest records."),
-            Text.literal("It never replaces team-journal records.")
+            Text.literal("Shows your largest and smallest fish records."),
+            Text.literal("Team Records remain separate.")
          );
          case TRAIT_SCANNER -> List.of(
             Text.literal("Trait Scanner"),
-            Text.literal("Reveals canonical percentile, Body Type, Condition, Pigmentation, Quality, and FishScore."),
-            Text.literal("Select a specimen in Contents to inspect it.")
+            Text.literal("Reveals size percentile, Body, Condition, Color, Quality, and Score."),
+            Text.literal("Select a fish in Contents to inspect it.")
          );
          case TROPHY_LOCK -> List.of(
             Text.literal("Trophy Lock"),
-            Text.literal("Protects selected or automatically matched specimens from extraction."),
+            Text.literal("Protects selected or matching fish from being taken out."),
             Text.literal("Configure its automatic rules below.")
          );
          case SHARED_LEDGER -> List.of();
@@ -1043,7 +1046,7 @@ public final class AnglersSatchelScreen extends Screen {
          int buttonY = top + 202;
          if (inside(mouseX, mouseY, x, buttonY, 48, BUTTON_HEIGHT)) {
             if (this.view.isProtected(this.selectedSlot)) {
-               this.localStatus = "Unprotect that specimen before extracting it";
+               this.localStatus = "Unlock that fish before taking it out";
                return true;
             } else {
                this.dispatch(AnglersSatchelScreen.Pending.EXTRACT, SatchelClientNetworking.extract(this.view, this.selectedSlot));
@@ -1141,7 +1144,7 @@ public final class AnglersSatchelScreen extends Screen {
             SatchelFeature feature = SATCHEL_UPGRADES.get(index - 1);
             SatchelFeatureView featureView = this.view.feature(feature.id());
             if (featureView == null) {
-               this.localStatus = "The server did not provide this upgrade state";
+               this.localStatus = "Upgrade status is unavailable";
                return true;
             }
 
@@ -1155,7 +1158,7 @@ public final class AnglersSatchelScreen extends Screen {
                return true;
             }
 
-            this.localStatus = "This upgrade's optional server prerequisite is unavailable";
+            this.localStatus = "This upgrade is unavailable on this server";
             return true;
          }
       }
@@ -1234,9 +1237,9 @@ public final class AnglersSatchelScreen extends Screen {
    private void dispatch(AnglersSatchelScreen.Pending action, boolean sent) {
       if (sent) {
          this.pending = action;
-         this.localStatus = "Waiting for server...";
+         this.localStatus = "Updating satchel...";
       } else {
-         this.localStatus = "Satchel networking is unavailable";
+         this.localStatus = "Could not reach the server";
       }
    }
 
@@ -1422,7 +1425,7 @@ public final class AnglersSatchelScreen extends Screen {
          case RECORD_KEEPER -> "Records";
          case TRAIT_SCANNER -> "Trait Scanner";
          case TROPHY_LOCK -> "Trophy Lock";
-         case SHARED_LEDGER -> "Shared Ledger";
+         case SHARED_LEDGER -> "Shared Discoveries";
       };
    }
 

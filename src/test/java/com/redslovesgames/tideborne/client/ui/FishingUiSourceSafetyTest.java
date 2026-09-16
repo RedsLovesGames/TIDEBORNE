@@ -44,9 +44,9 @@ class FishingUiSourceSafetyTest {
     @Test
     void discoveryBadgesAreGroupedByCanonicalCategories() throws IOException {
         String source = Files.readString(Path.of(AFFECTED_UI.get(5)));
-        assertTrue(source.contains("\"Body Type\""));
+        assertTrue(source.contains("\"Body\""));
         assertTrue(source.contains("\"Condition\""));
-        assertTrue(source.contains("\"Pigmentation\""));
+        assertTrue(source.contains("\"Color\""));
         assertTrue(source.contains("\"Quality\""));
         assertTrue(source.contains("\"Size\""));
         assertFalse(source.contains("MUTATIONS ="));
@@ -56,7 +56,7 @@ class FishingUiSourceSafetyTest {
     void speciesFallbackDoesNotDuplicateCanonicalSpecimenBlock() throws IOException {
         String source = Files.readString(Path.of(AFFECTED_UI.get(3)));
         assertTrue(source.contains("JournalSpecimenStore.LATEST"));
-        assertTrue(source.contains("No canonical specimen recorded"));
+        assertTrue(source.contains("No recorded fish details"));
     }
 
     @Test
@@ -65,7 +65,7 @@ class FishingUiSourceSafetyTest {
         assertTrue(stats.contains("BASE_LINE_STEP = 9"));
         assertTrue(stats.contains("BEST_SECTION_HEIGHT = 43"));
         assertTrue(stats.contains("graphics.fill(x + 4, y + cursorY"));
-        assertTrue(stats.contains("\"Best Specimen\""));
+        assertTrue(stats.contains("\"Best Fish\""));
         assertTrue(stats.contains("\"PC \""));
 
         String mixins = Files.readString(Path.of("src/main/resources/tideborne.client.mixins.json"));

@@ -17,13 +17,13 @@ public final class TideborneCommandUi {
     public static int showRoot(ServerCommandSource source) {
         send(source, title("══════════════ TIDEBORNE ══════════════"));
         send(source, Text.empty());
-        send(source, button("OPEN TEAM JOURNAL", "/tideborne journal", ClickEvent.Action.RUN_COMMAND,
-                Formatting.AQUA, "View your team's catches, records, history and rankings"));
+        send(source, button("OPEN TEAM RECORDS", "/tideborne journal", ClickEvent.Action.RUN_COMMAND,
+                Formatting.AQUA, "View your team's catches, records, history, and rankings"));
         send(source, Text.empty());
-        send(source, Text.literal("Fishing System 2.0                  ").formatted(Formatting.GRAY)
+        send(source, Text.literal("Fishing                              ").formatted(Formatting.GRAY)
                 .append(Text.literal("✓ Active").formatted(Formatting.GREEN)));
         send(source, button("Status", "/tideborne status", ClickEvent.Action.RUN_COMMAND,
-                Formatting.AQUA, "View Tideborne server and Fishing System status"));
+                Formatting.AQUA, "View Tideborne server and fishing status"));
         if (source.hasPermissionLevel(2)) {
             send(source, Text.empty());
             send(source, Text.literal("Administration").formatted(Formatting.GOLD, Formatting.BOLD));
@@ -31,7 +31,7 @@ public final class TideborneCommandUi {
                     Formatting.GREEN, "Reload Tideborne server configuration");
             admin.append(Text.literal("    "));
             admin.append(button("Debug Tools", "/tideborne debug", ClickEvent.Action.RUN_COMMAND,
-                    Formatting.GOLD, "Open Fishing System 2.0 developer tools"));
+                    Formatting.GOLD, "Open Tideborne developer tools"));
             send(source, admin);
         }
         send(source, Text.literal(RULE).formatted(Formatting.DARK_GRAY));
@@ -43,16 +43,16 @@ public final class TideborneCommandUi {
         send(source, Text.empty());
         send(source, Text.literal("Fishing").formatted(Formatting.GRAY));
         send(source, button("Fishing Tools", "/tideborne debug fishing", ClickEvent.Action.RUN_COMMAND,
-                Formatting.AQUA, "Inspect and reproduce canonical catches"));
+                Formatting.AQUA, "Inspect and reproduce catches"));
         send(source, Text.literal("Specimens").formatted(Formatting.GRAY));
         send(source, button("Specimen Tools", "/tideborne debug specimen", ClickEvent.Action.RUN_COMMAND,
-                Formatting.AQUA, "Inspect or edit canonical held specimens"));
+                Formatting.AQUA, "Inspect or edit held specimens"));
         send(source, Text.literal("Data").formatted(Formatting.GRAY));
         MutableText registries = button("Fish Registry", "/tideborne debug registry", ClickEvent.Action.RUN_COMMAND,
                 Formatting.AQUA, "Dump registered Tide fish profile diagnostics");
         registries.append(Text.literal("  "));
         registries.append(button("Gear Registry", "/tideborne debug gear", ClickEvent.Action.RUN_COMMAND,
-                Formatting.AQUA, "Dump canonical fishing gear profile diagnostics"));
+                Formatting.AQUA, "Dump fishing gear profile diagnostics"));
         send(source, registries);
         send(source, Text.empty());
         send(source, back("/tideborne", "Back to Tideborne"));
@@ -64,7 +64,7 @@ public final class TideborneCommandUi {
         send(source, title("════════════ FISHING DEBUG ════════════"));
         send(source, Text.empty());
         send(source, button("Inspect Active Catch", "/tideborne debug fishing inspect", ClickEvent.Action.RUN_COMMAND,
-                Formatting.GREEN, "View server-owned canonical state for your active catch"));
+                Formatting.GREEN, "View server-owned specimen state for your active catch"));
         send(source, button("Reproduce Catch", "/tideborne debug fishing reproduce ", ClickEvent.Action.SUGGEST_COMMAND,
                 Formatting.AQUA, "Prepare deterministic catch reproduction arguments in chat"));
         send(source, Text.empty());
@@ -81,7 +81,7 @@ public final class TideborneCommandUi {
                 Formatting.GREEN, "Inspect the held Tide specimen"));
         send(source, Text.literal("Edit").formatted(Formatting.GRAY));
         MutableText edit = button("Percentile", "/tideborne debug specimen set percentile ", ClickEvent.Action.SUGGEST_COMMAND,
-                Formatting.AQUA, "Prepare a canonical natural percentile edit");
+                Formatting.AQUA, "Prepare a natural percentile edit");
         edit.append(Text.literal("  "));
         edit.append(button("Body Type", "/tideborne debug specimen body", ClickEvent.Action.RUN_COMMAND,
                 Formatting.AQUA, "Choose Normal, Giant, or Dwarf"));
@@ -110,13 +110,13 @@ public final class TideborneCommandUi {
     public static int showBodyTypes(ServerCommandSource source) {
         send(source, title("════════════ SET BODY TYPE ════════════"));
         MutableText line = button("Normal", "/tideborne debug specimen set body normal", ClickEvent.Action.RUN_COMMAND,
-                Formatting.GREEN, "Set canonical Body Type to Normal");
+                Formatting.GREEN, "Set Body Type to Normal");
         line.append(Text.literal("  "));
         line.append(button("Giant", "/tideborne debug specimen set body giant", ClickEvent.Action.RUN_COMMAND,
-                Formatting.GOLD, "Set canonical Body Type to Giant and recompute physical size"));
+                Formatting.GOLD, "Set Body Type to Giant and recompute physical size"));
         line.append(Text.literal("  "));
         line.append(button("Dwarf", "/tideborne debug specimen set body dwarf", ClickEvent.Action.RUN_COMMAND,
-                Formatting.GOLD, "Set canonical Body Type to Dwarf and recompute physical size"));
+                Formatting.GOLD, "Set Body Type to Dwarf and recompute physical size"));
         send(source, line);
         send(source, back("/tideborne debug specimen", "Back to Specimen Tools"));
         return 1;
@@ -146,13 +146,13 @@ public final class TideborneCommandUi {
 
     private static MutableText choiceLine(Choice first, Choice second, Choice third, String prefix) {
         MutableText line = button(first.label(), prefix + first.value(), ClickEvent.Action.RUN_COMMAND,
-                Formatting.GREEN, "Set canonical value to " + first.label());
+                Formatting.GREEN, "Set value to " + first.label());
         line.append(Text.literal("  "));
         line.append(button(second.label(), prefix + second.value(), ClickEvent.Action.RUN_COMMAND,
-                Formatting.GOLD, "Set canonical value to " + second.label()));
+                Formatting.GOLD, "Set value to " + second.label()));
         line.append(Text.literal("  "));
         line.append(button(third.label(), prefix + third.value(), ClickEvent.Action.RUN_COMMAND,
-                Formatting.LIGHT_PURPLE, "Set canonical value to " + third.label()));
+                Formatting.LIGHT_PURPLE, "Set value to " + third.label()));
         return line;
     }
 

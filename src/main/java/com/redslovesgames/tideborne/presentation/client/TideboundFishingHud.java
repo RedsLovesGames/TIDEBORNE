@@ -37,35 +37,35 @@ final class TideboundFishingHud {
          TideFishingHook hook = HookAccessor.getHook(minecraft.player);
          if (hook != null) {
             List<Text> rows = new ArrayList<>();
-            rows.add(Text.literal("Tidebound Fishing").styled(style -> style.withBold(true)));
+            rows.add(Text.literal("Tideborne Fishing").styled(style -> style.withBold(true)));
             if (ClientTideboundSettings.bool("myths_active") && hook.getLine().isOf(TideboundItems.TENTACLE_LINE)) {
-               rows.add(Text.literal("Tentacle: " + TideboundTooltips.multiplier("tentacle_zone") + " zone; native movement"));
+               rows.add(Text.literal("Tentacle Line: Catch Zone " + TideboundTooltips.multiplier("tentacle_zone") + "; Fish Movement " + TideboundTooltips.multiplier("tentacle_speed")));
             }
 
             if (ClientTideboundSettings.bool("myths_active") && hook.getLine().isOf(TideboundItems.SWIFT_LINE)) {
-               rows.add(Text.literal("Abaia: " + TideboundTooltips.multiplier("swift_zone") + " zone"));
+               rows.add(Text.literal("Abaia Line: Catch Zone " + TideboundTooltips.multiplier("swift_zone") + "; Fish Movement " + TideboundTooltips.multiplier("swift_speed")));
             }
 
             if (ClientTideboundSettings.bool("apex_active") && SteelLeaderAttachment.hasOnHook(hook)) {
-               rows.add(Text.literal("Steel Leader: " + TideboundTooltips.percent("steel_prevent") + " catch-loss protection"));
+               rows.add(Text.literal("Steel Leader: " + TideboundTooltips.percent("steel_prevent") + " Shark Protection"));
             }
 
             if (ClientTideboundSettings.bool("myths_active") && hook.getHook().isOf(TideboundItems.SEAFARERS_HOOK)) {
-               rows.add(Text.literal("Seafarer: night ocean legendary focus"));
+               rows.add(Text.literal("Seafarer's Hook: favors legendary fish at night in the ocean"));
             }
 
             if (ClientTideboundSettings.bool("apex_active") && hook.getHook().isOf(TideboundItems.SHARK_TOOTH_HOOK)) {
-               rows.add(Text.literal("Shark Tooth: large/predatory focus"));
+               rows.add(Text.literal("Shark Tooth Hook: favors large and predatory fish"));
             }
 
             if (ClientTideboundSettings.bool("myths_active") && BaitUtils.hasBait(TideboundItems.LEVIATHAN_BAIT, hook.getRod())) {
-               rows.add(Text.literal("Leviathan Bait: fish-only pool; harder fight"));
+               rows.add(Text.literal("Leviathan Bait: always hooks a fish, but makes the fight harder"));
             }
 
             if (ClientTideboundSettings.bool("apex_active")
                && ClientTideboundSettings.bool("shark_attraction")
                && hook.getHookedItems().stream().anyMatch(SharkScentManager::isLargeCatch)) {
-               rows.add(Text.literal("Large catch: produces shark scent"));
+               rows.add(Text.literal("Large catch: attracting sharks"));
             }
 
             if (rows.size() != 1) {
