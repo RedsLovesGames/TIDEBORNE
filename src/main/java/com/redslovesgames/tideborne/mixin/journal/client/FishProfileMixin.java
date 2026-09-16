@@ -25,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(FishProfile.class)
 abstract class FishProfileMixin {
+   @SuppressWarnings("PMD.UnusedPrivateMethod")
    @Inject(method = "render", at = @At("HEAD"))
    private void tideTeamJournal$restoreProfileBlendState(
       DrawContext graphics,
