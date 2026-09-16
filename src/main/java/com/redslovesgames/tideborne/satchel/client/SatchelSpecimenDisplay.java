@@ -4,9 +4,12 @@ import com.redslovesgames.tideborne.api.TideborneFishingApi;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.WeakHashMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.item.ItemStack;
@@ -17,36 +20,46 @@ import net.minecraft.item.ItemStack;
  */
 @Environment(EnvType.CLIENT)
 final class SatchelSpecimenDisplay {
-   private final SpecimenData specimen;
-   private final CanonicalSpecimenPresentation.View presentation;
+   private static final Map<ItemStack, Optional<SatchelSpecimenDisplay>> DISPLAY_CACHE = Collections.synchronizedMap(new WeakHashMap<>());
 
-   private SatchelSpecimenDisplay(SpecimenData specimen, CanonicalSpecimenPresentation.View presentation) {
+   private final SpecimenData specimen;
+   private final Integer knownRarityStars;
+   private CanonicalSpecimenPresentation.View presentation;
+
+   private SatchelSpecimenDisplay(SpecimenData specimen, Integer knownRarityStars) {
       this.specimen = specimen;
-      this.presentation = presentation;
+      this.knownRarityStars = knownRarityStars;
    }
 
    static Optional<SatchelSpecimenDisplay> from(ItemStack stack) {
-      return TideborneFishingApi.readCurrentSpecimen(stack).map(specimen -> {
-         int rarityStars = TideborneFishingApi.resolveSpeciesProfile(specimen.speciesId())
-            .map(profile -> profile.rarity().stars())
-            .orElse(0);
-         return fromCanonical(specimen, rarityStars);
-      });
+      if (stack == null || stack.isEmpty()) {
+         return Optional.empty();
+      }
+      return DISPLAY_CACHE.computeIfAbsent(
+         stack,
+         value -> TideborneFishingApi.readCurrentSpecimen(value).map(specimen -> new SatchelSpecimenDisplay(specimen, null))
+      );
    }
 
    static SatchelSpecimenDisplay fromCanonical(SpecimenData specimen, int rarityStars) {
       if (specimen == null) {
          throw new IllegalArgumentException("canonical specimen is required");
       }
-      return new SatchelSpecimenDisplay(specimen, CanonicalSpecimenPresentation.present(specimen, rarityStars));
+      return new SatchelSpecimenDisplay(specimen, rarityStars);
    }
 
    CanonicalSpecimenPresentation.View presentation() {
+      if (this.presentation == null) {
+         int rarityStars = this.knownRarityStars != null
+            ? this.knownRarityStars
+            : TideborneFishingApi.resolveSpeciesProfile(this.specimen.speciesId()).map(profile -> profile.rarity().stars()).orElse(0);
+         this.presentation = CanonicalSpecimenPresentation.present(this.specimen, rarityStars);
+      }
       return this.presentation;
    }
 
    List<TraitDisplay> traits() {
-      return this.presentation.traits();
+      return this.presentation().traits();
    }
 
    double length() {
@@ -54,7 +67,7 @@ final class SatchelSpecimenDisplay {
    }
 
    String lengthLabel() {
-      return this.presentation.length();
+      return this.presentation().length();
    }
 
    double percentile() {
@@ -62,7 +75,7 @@ final class SatchelSpecimenDisplay {
    }
 
    String percentileLabel() {
-      return this.presentation.percentile();
+      return this.presentation().percentile();
    }
 
    SpecimenData.BodyType bodyType() {
@@ -94,26 +107,26 @@ final class SatchelSpecimenDisplay {
    }
 
    String scoreLabel() {
-      return this.presentation.fishScore();
+      return CanonicalSpecimenPresentation.fishScore(this.fishScore());
    }
 
    String bodyTypeLabel() {
-      return this.presentation.trait(CanonicalSpecimenPresentation.TraitAxis.BODY_TYPE).value();
+      return this.presentation().trait(CanonicalSpecimenPresentation.TraitAxis.BODY_TYPE).value();
    }
 
    String conditionLabel() {
-      return this.presentation.trait(CanonicalSpecimenPresentation.TraitAxis.CONDITION).value();
+      return this.presentation().trait(CanonicalSpecimenPresentation.TraitAxis.CONDITION).value();
    }
 
    String pigmentationLabel() {
-      return this.presentation.trait(CanonicalSpecimenPresentation.TraitAxis.PIGMENTATION).value();
+      return this.presentation().trait(CanonicalSpecimenPresentation.TraitAxis.PIGMENTATION).value();
    }
 
    String qualityLabel() {
-      return this.presentation.trait(CanonicalSpecimenPresentation.TraitAxis.QUALITY).value();
+      return this.presentation().trait(CanonicalSpecimenPresentation.TraitAxis.QUALITY).value();
    }
 
    String rarityStarsLabel() {
-      return this.presentation.rarityStars();
+      return this.presentation().rarityStars();
    }
 }

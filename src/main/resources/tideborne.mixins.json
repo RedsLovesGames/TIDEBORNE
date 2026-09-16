@@ -21,6 +21,7 @@
     "journal.RecordEventCanonicalScorePayloadMixin",
     "journal.RecordHolderCanonicalJournalMixin",
     "journal.RecordHolderNetworkProjectionMixin",
+    "satchel.SatchelNetworkingRecordLookupMixin",
     "tide.AnglingTableLeaderMixin",
     "tide.CrateDataMixin",
     "tide.FishCatchMinigameMixin",
@@ -32,6 +33,7 @@
     "journal.client.FishingJournalMixin",
     "journal.client.GuiGraphicsMixin",
     "journal.client.ScreenAccessor",
+    "satchel.client.AnglersSatchelRecordsLayoutMixin",
     "tide.AnglingTableScreenLeaderMixin"
   ],
   "injectors": {
