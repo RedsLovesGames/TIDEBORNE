@@ -45,7 +45,6 @@ public final class ClientConfigScreen {
          entries.startSelector(
                Text.translatable("config.tideborne.team_journal.default_tab"), new String[]{"summary", "leaderboard", "history"}, values.defaultTab
             )
-            .setNameProvider(value -> Text.translatable("screen.tideborne.team_journal." + value))
             .setDefaultValue("summary")
             .setSaveConsumer(value -> values.defaultTab = value)
             .build()
@@ -56,7 +55,6 @@ public final class ClientConfigScreen {
                new String[]{"catches", "species", "record_events", "active_records"},
                values.defaultMetric
             )
-            .setNameProvider(value -> Text.translatable("metric.tideborne.team_journal." + value))
             .setDefaultValue("catches")
             .setSaveConsumer(value -> values.defaultMetric = value)
             .build()
@@ -64,7 +62,6 @@ public final class ClientConfigScreen {
       ConfigCategory alerts = builder.getOrCreateCategory(Text.translatable("config.tideborne.team_journal.alerts"));
       alerts.addEntry(
          entries.startSelector(Text.translatable("config.tideborne.team_journal.toast_mode"), new String[]{"full", "compact", "off"}, values.toastMode)
-            .setNameProvider(value -> Text.translatable("config.tideborne.team_journal.toast_mode." + value))
             .setDefaultValue("full")
             .setSaveConsumer(value -> values.toastMode = value)
             .build()
