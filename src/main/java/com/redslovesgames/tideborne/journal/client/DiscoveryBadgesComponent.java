@@ -89,7 +89,7 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
          graphics.enableScissor(x, clipTop, x + 174, clipBottom);
 
          GroupRender body = this.renderGroup(
-            graphics, font, "Body Type", BODY_TYPE, BadgeKind.TRAIT, snapshot, contentX, y, mouseX, mouseY, clipTop, clipBottom
+            graphics, font, "Body", BODY_TYPE, BadgeKind.TRAIT, snapshot, contentX, y, mouseX, mouseY, clipTop, clipBottom
          );
          GroupRender condition = this.renderGroup(
             graphics,
@@ -110,7 +110,7 @@ public final class DiscoveryBadgesComponent extends ProfileComponent {
          GroupRender pigment = this.renderGroup(
             graphics,
             font,
-            "Pigmentation",
+            "Color",
             PIGMENTATION,
             BadgeKind.TRAIT,
             snapshot,
