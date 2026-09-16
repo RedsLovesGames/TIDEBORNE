@@ -173,10 +173,10 @@ ensure_semgrep() {
     local venv="$cache_root/semgrep-1.176.0"
     mkdir -p "$cache_root"
     if [[ ! -x "$venv/bin/semgrep" ]]; then
-        echo "Installing Semgrep 1.176.0 into $venv"
-        python3 -m venv "$venv"
-        "$venv/bin/python" -m pip install --disable-pip-version-check --upgrade pip
-        "$venv/bin/python" -m pip install --disable-pip-version-check 'semgrep==1.176.0'
+        echo "Installing Semgrep 1.176.0 into $venv" >&2
+        python3 -m venv "$venv" >&2
+        "$venv/bin/python" -m pip install --disable-pip-version-check --upgrade pip >&2
+        "$venv/bin/python" -m pip install --disable-pip-version-check 'semgrep==1.176.0' >&2
     fi
     printf '%s\n' "$venv/bin/semgrep"
 }
@@ -297,7 +297,6 @@ require_command jq "sudo apt-get install jq"
 require_command unzip "sudo apt-get install unzip"
 require_command sha256sum "sudo apt-get install coreutils"
 require_command strings "sudo apt-get install binutils"
-require_command rg "sudo apt-get install ripgrep"
 test -x ./gradlew || { echo "gradlew is missing or not executable." >&2; exit 1; }
 
 run_step "Java 21 preflight" check_java_21
@@ -335,6 +334,7 @@ if [[ "$MODE" != "fast" ]]; then
 fi
 
 if [[ "$MODE" == "full" ]]; then
+    require_command rg "sudo apt-get install ripgrep"
     require_command xvfb-run "sudo apt-get install xvfb"
     run_step "Runtime required-only" runtime_variant "required-only" "false" "false"
     run_step "Runtime Apex-only" runtime_variant "apex-only" "true" "false"
