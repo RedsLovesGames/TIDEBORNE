@@ -4,9 +4,12 @@ import com.redslovesgames.tideborne.api.TideborneFishingApi;
 import com.redslovesgames.tideborne.fishing.specimen.SpecimenData;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation;
 import com.redslovesgames.tideborne.presentation.CanonicalSpecimenPresentation.TraitDisplay;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.WeakHashMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.item.ItemStack;
@@ -17,6 +20,8 @@ import net.minecraft.item.ItemStack;
  */
 @Environment(EnvType.CLIENT)
 final class SatchelSpecimenDisplay {
+   private static final Map<ItemStack, Optional<SatchelSpecimenDisplay>> DISPLAY_CACHE = Collections.synchronizedMap(new WeakHashMap<>());
+
    private final SpecimenData specimen;
    private final Integer knownRarityStars;
    private CanonicalSpecimenPresentation.View presentation;
@@ -27,7 +32,13 @@ final class SatchelSpecimenDisplay {
    }
 
    static Optional<SatchelSpecimenDisplay> from(ItemStack stack) {
-      return TideborneFishingApi.readCurrentSpecimen(stack).map(specimen -> new SatchelSpecimenDisplay(specimen, null));
+      if (stack == null || stack.isEmpty()) {
+         return Optional.empty();
+      }
+      return DISPLAY_CACHE.computeIfAbsent(
+         stack,
+         value -> TideborneFishingApi.readCurrentSpecimen(value).map(specimen -> new SatchelSpecimenDisplay(specimen, null))
+      );
    }
 
    static SatchelSpecimenDisplay fromCanonical(SpecimenData specimen, int rarityStars) {
