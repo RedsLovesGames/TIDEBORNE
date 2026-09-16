@@ -69,6 +69,24 @@ public final class PersonalTideJournal {
       }
    }
 
+   /**
+    * Loads native Tide journal data for read-only record lookups without running canonical legacy
+    * backfill. Satchel opening only needs aggregate largest/smallest stats, so doing migration here
+    * would add avoidable work to the screen-open path.
+    */
+   public static Optional<TidePlayerData> loadForRecordLookup(ServerPlayerEntity player) {
+      if (player == null) {
+         return Optional.empty();
+      }
+
+      try {
+         return Optional.of(TidePlayerData.getOrCreate(Tide.PLATFORM.getPlayerData(player)));
+      } catch (RuntimeException | LinkageError failure) {
+         warn(player, "read personal Tide journal records", failure);
+         return Optional.empty();
+      }
+   }
+
    public static Optional<FishStats> statsFor(TidePlayerData personalData, ItemStack specimen) {
       if (personalData != null && specimen != null && !specimen.isEmpty()) {
          try {
