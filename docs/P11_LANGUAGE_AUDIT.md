@@ -1,6 +1,6 @@
 # P11 Player Language Audit
 
-Status: implemented on `agent/p10-5-runtime-fixes`; final non-GameTest validation is in progress.
+Status: completed and merged into `dev` through PR #7 on 2026-09-16. Final validated worker source head: `35ac604ae0b6055edd44d913798252845d92404e`. Merge commit: `16b71c2af0cddd489d670647fe4b092338113c0c`.
 
 This audit covers player-visible language only. Public item IDs, fish IDs, recipe IDs, networking IDs, persistence keys, NBT/component IDs, commands, specimen identity, RNG, balance, catch selection, FishScore math, Satchel storage behavior, Journal behavior, records, and external Tide IDs are out of scope for renaming or behavioral changes.
 
@@ -135,13 +135,15 @@ Resolved centrally in `CanonicalSpecimenPresentation`:
 - `Body Type` display label -> `Body`
 - `Pigmentation` display label -> `Color`
 
+The Discovery badge UI and its source-safety tests now use the same `Body` and `Color` player terminology.
+
 Internal class names, enum names, persistence names, and API names remain unchanged.
 
 Percentile formatting remains `Pxx.x` for now. The numeric direction must be verified end-to-end before replacing it with a `Top X%` phrase so the ranking cannot be inverted.
 
 ### Top Fish
 
-Resolved on the current worker:
+Resolved:
 
 - `CANONICAL SPECIMEN` -> `FISH DETAILS`
 - `Specimen` -> `Fish`
@@ -154,7 +156,7 @@ The screen still uses the existing percentile value because its ranking directio
 
 ### Angler's Satchel
 
-Resolved on the current worker with display-string-only changes. Internal specimen classes, score accessors, network calls, sorting, storage, and interaction logic were left unchanged.
+Resolved with display-string-only changes. Internal specimen classes, score accessors, network calls, sorting, storage, and interaction logic were left unchanged.
 
 - ordinary `Specimen` / `specimens` labels -> `Fish` / `fish`
 - `FishScore` -> `Score`
@@ -178,7 +180,7 @@ The internal `renderSharedLedger`, `SatchelSpecimenDisplay`, `CanonicalSpecimenP
 
 ### Main Tideborne config
 
-Resolved on the current worker:
+Resolved:
 
 - ordinary descriptions no longer say `authoritative`, `synchronized`, `server-side discovery ledger`, or `canonical stored-specimen records`
 - Tentacle and Abaia controls use `Catch Zone` and `Fish Movement`
@@ -200,9 +202,9 @@ Intentionally retained in advanced/operator tuning:
 
 These are mathematical/operator controls where the technical value is useful.
 
-### Team Records and localization
+### Team Records, Journal, and localization
 
-Resolved in `en_us.json`:
+Resolved in `en_us.json` and Journal presentation:
 
 - `Records & Shared Ledger` -> `Records & Team History`
 - `History` tab -> `Catch History`
@@ -221,6 +223,9 @@ Resolved in `en_us.json`:
 - transient chat separators simplified
 - Apex player message now says `integration`, not compatibility
 - shark catch-loss message now says a shark stole the catch rather than teaching an uncertain reel-in sequence
+- Journal `Best Specimen` -> `Best Fish`
+- fish-profile fallback `No canonical specimen recorded` -> `No recorded fish details`
+- fish-profile fallback `Recorded FishScore` -> `Recorded Score`
 
 Technical ownership and repair terms remain in operator command flows where they describe actual maintenance actions.
 
@@ -313,6 +318,9 @@ Rewritten during this pass where found on ordinary surfaces:
 - synchronized specimen components
 - multi-rule sorting
 - optional server prerequisite language
+- Best Specimen
+- No canonical specimen recorded
+- Recorded FishScore
 
 ## Known findings still open
 
@@ -329,20 +337,33 @@ A future localization-only maintenance pass can move additional hardcoded `Text.
 - Chum particle density was present in the advanced item tooltip even though it is presentation detail rather than a fishing decision. That line was removed from the item tooltip and remains available only as an advanced config control.
 - The Satchel mixed reconstructed implementation terminology directly into ordinary UI even though the underlying mechanics were already stable. Those strings were changed without changing its data or interaction paths.
 - `No verified churn yet` from the earlier audit appears to have been stale/reconstructed wording and was not present in the current worker version of `TideboundTooltips.java` during implementation.
+- Final source-safety tests still expected `Body Type`, `Pigmentation`, `Best Specimen`, and the canonical-specimen fallback after the UI had been cleaned. Those expectations were updated to match the finished player wording.
 
-## Validation policy
+## Final validation
 
-For this pass:
+Validated worker source head: `35ac604ae0b6055edd44d913798252845d92404e`.
 
-- validate `en_us.json`
-- verify translation keys used by modified Java exist
-- run repository validation and unit tests through the branch CI where available
-- run clean production build/release validation where the repository workflow provides it
-- run the non-GameTest P10.5 runtime matrix relevant to these changes
-- do not run or fix GameTests, per project direction
-- inspect final worker diff for generated files, formatting churn, line-ending noise, and behavior changes
-- leave `build.gradle` untouched unless a validation failure proves it is required
+Passed before merge:
+
+- repository structure and release metadata validation
+- production Gradle build and unit tests
+- production release artifact validation and JAR upload
+- Java 21 production compile
+- PMD changed-line gate
+- CPD changed-line gate
+- Semgrep changed-line gate
+- Qodana JVM changed-code gate
+- aggregate Java / AI quality gate
+- P10.5 runtime matrix `required-only`
+- P10.5 runtime matrix `myths-only`
+- P10.5 runtime matrix `apex-only`
+- P10.5 runtime matrix `apex-and-myths`
+- dedicated server plus real client join in all four runtime variants
+
+GameTests were intentionally not run or repaired during this closeout, per project direction.
+
+A targeted `PMD.UnusedPrivateMethod` suppression remains on the Mixin `@Inject` callback `tideTeamJournal$restoreProfileBlendState`. PMD cannot see framework injection usage; this is a static-analysis annotation only and does not change runtime behavior.
 
 ## Scope guard
 
-This pass must not alter fishing balance, selection math, RNG, specimen generation, FishScore, records, Satchel storage, network IDs, migration formats, or minigame behavior. If wording uncovers a gameplay defect, record it separately rather than fixing mechanics inside the language pass.
+This pass did not alter fishing balance, selection math, RNG, specimen generation, FishScore, records, Satchel storage, network IDs, migration formats, or minigame behavior as part of the language cleanup. `build.gradle` was left untouched.
