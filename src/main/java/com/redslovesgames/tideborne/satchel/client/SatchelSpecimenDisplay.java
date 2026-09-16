@@ -107,7 +107,7 @@ final class SatchelSpecimenDisplay {
    }
 
    String scoreLabel() {
-      return this.presentation().fishScore();
+      return CanonicalSpecimenPresentation.fishScore(this.fishScore());
    }
 
    String bodyTypeLabel() {
