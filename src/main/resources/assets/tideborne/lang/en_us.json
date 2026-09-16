@@ -153,7 +153,6 @@
   "tooltip.tideborne.fishing.leviathan_bait.luck": "Fishing Luck: +%s",
   "tooltip.tideborne.fishing.leviathan_bait.difficulty": "Fish Movement %s | Catch Zone %s",
   "tooltip.tideborne.fishing.leviathan_bait.conditions": "Unusual fish still require their normal habitat and conditions.",
-  "guide.tideborne.fishing.leviathan_bait": "[Leviathan Bait] Always hooks a Tide fish instead of junk, treasure, or crates. Adds +%s Fishing Luck. Fish still need their normal habitat and conditions.",
   "message.tideborne.fishing.chum_disabled": "Chum has no effect while the Apex integration is disabled.",
   "message.tideborne.fishing.chum_ocean_only": "Chum must land in ocean water.",
   "message.tideborne.fishing.chum_returned": "The Chum Bucket was returned because it did not land in water.",
@@ -163,6 +162,5 @@
   "toast.tideborne.fishing.catch_lost.body": "A shark stole your catch.",
   "command.tideborne.fishing.reload": "Reloaded Tideborne fishing balance settings and refreshed connected clients. Changing Myths or Apex integration switches requires a server restart.",
   "command.tideborne.fishing.status": "Tideborne fishing integrations | Myths: %s | Apex: %s | active scent zones: %s",
-  "key.tideborne.fishing.open_guide": "Open Tideborne Field Guide",
   "key.categories.tideborne": "Tideborne"
 }
