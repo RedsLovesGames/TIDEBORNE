@@ -11,6 +11,7 @@
 | Page | Use it for |
 | --- | --- |
 | [Getting Started](GETTING_STARTED.md) | Requirements, installation, first steps, and what Tideborne changes |
+| [Fishing System 2.0](FISHING_SYSTEM.md) | Catch pipeline, Fishing Luck, Perfect Catch, Strength, and Tempo |
 | [Specimens & Traits](SPECIMENS_AND_TRAITS.md) | Body Type, Condition, Pigmentation, Perfect Specimens, Trait Luck, and Momentum |
 | [FishScore](FISHSCORE.md) | Exact 1-3000 scoring formula and point values |
 | [Angler's Satchel](ANGLERS_SATCHEL.md) | Crafting, conversion, capacity, upgrades, sorting, Auto-Stow, and Trophy Lock |
