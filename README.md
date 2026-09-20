@@ -2,6 +2,10 @@
 
 Tideborne is a Fabric 1.21.1 addon for Tide 2. Fishing System 2.0 is the current server-authoritative fishing architecture and covers specimen generation, traits, fights, FishScore, persistence, migration, gear, Journal, Satchel, records, networking, and compatibility paths.
 
+## Player wiki
+
+The player-facing documentation is in [`docs/wiki/README.md`](docs/wiki/README.md). It currently targets the supplied Tideborne 2.1.0 release artifact and is verified against that JAR. Release documentation is kept separate from the development-version metadata below so unreleased branch work is not accidentally advertised as shipped behavior.
+
 ## Current versions
 
 - current published release: `2.0.0`
@@ -58,6 +62,7 @@ See `docs/VALIDATION.md` for the current validation routing policy.
 
 Start with `docs/INDEX.md` instead of reading every historical Markdown document.
 
+- `docs/wiki/README.md`: player-facing Tideborne release wiki
 - `AGENTS.md`: permanent development, ownership, compatibility, and validation rules
 - `docs/CURRENT_STATE.md`: authoritative verified implementation state
 - `docs/TODO.md`: authoritative unfinished work
