@@ -2,7 +2,7 @@
 
 [← Fishing Gear & Integrations](FISHING_GEAR_AND_INTEGRATIONS.md) | [Wiki Home](README.md) | [Configuration & Commands →](CONFIGURATION_AND_COMMANDS.md)
 
-This page lists the crafting recipes that are actually bundled in the Tideborne 2.1.0 JAR. Optional recipes only become meaningful when their required integration mod is present.
+This page lists the crafting recipes that are actually bundled in the Tideborne 2.1.0 JAR. Optional recipes only become meaningful when their required integration mod is present. A dot below means an empty crafting-grid slot.
 
 ## Angler's Satchel
 
@@ -24,11 +24,15 @@ An existing Tide Fish Satchel can also be converted by sneak-using it and paying
 
 ### Tentacle Line
 
+Shapeless:
+
 - Kraken Tentacle
 - Tide Fishing Line
 - Output: `tidebound_compatibility:tentacle_line`
 
 ### Abaia Line
+
+Shapeless:
 
 - Abaia Fin
 - Tide Fishing Line
@@ -38,18 +42,18 @@ The internal ID remains `swift_line` for compatibility, while the player-facing 
 
 ### Seafarer's Hook
 
+Shapeless:
+
 - Hippocampus Eye
 - Tide Fishing Hook
 - Output: `tidebound_compatibility:seafarers_hook`
 
 ### Kujira Bone Fishing Rod
 
-Shaped recipe:
-
 ```text
-    B
-  B S
-B   S
+. . B
+. B S
+B . S
 ```
 
 - `B` = `myths_of_the_sea:bake_kujira_bone`
@@ -58,10 +62,10 @@ B   S
 
 ### Leviathan Bait
 
-Shapeless recipe:
+Shapeless:
 
-- 1 Leviathan Heart
-- Output: **12 Leviathan Bait**
+- 1 `myths_of_the_sea:leviathan_heart`
+- Output: **12** `tidebound_compatibility:leviathan_bait`
 
 ## Apex Waters recipes
 
@@ -70,19 +74,19 @@ Shapeless recipe:
 ```text
 F F F
 F B F
-  F
+. F .
 ```
 
-- `F` = an item accepted by Tideborne's shark-food tag
+- `F` = an item in `#tidebound_compatibility:shark_food`
 - `B` = bucket
 - Output = `tidebound_compatibility:chum_bucket`
 
 ### Copper Leader
 
 ```text
-  C
+. C .
 C X C
-  C
+. C .
 ```
 
 - `C` = copper ingot
@@ -92,9 +96,9 @@ C X C
 ### Iron Leader
 
 ```text
-    I I
-  I C I
-I I
+. I I
+I C I
+I I .
 ```
 
 - `I` = iron nugget
@@ -106,9 +110,9 @@ The registry ID is historically `steel_leader`, but the current player-facing it
 ### Gold Leader
 
 ```text
-    G G
-  G X G
-G G
+. G G
+G X G
+G G .
 ```
 
 - `G` = gold nugget
@@ -118,9 +122,9 @@ G G
 ### Diamond Leader
 
 ```text
-  D
+. D .
 D X D
-  D
+. D .
 ```
 
 - `D` = diamond
@@ -129,10 +133,10 @@ D X D
 
 ### Shark Tooth Hook
 
-Shapeless recipe:
+Shapeless:
 
-- Great White Shark Tooth
-- Tide Fishing Hook
+- `tidebound_compatibility:shark_tooth`
+- `tide:fishing_hook`
 - Output = `tidebound_compatibility:shark_tooth_hook`
 
 ## Hall Record Display
