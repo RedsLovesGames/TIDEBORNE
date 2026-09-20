@@ -102,10 +102,10 @@ Public score:
 
 ```text
 round(1 + 2999 × ((704 - 50) / 875))
-≈ 2242
+= 2243
 ```
 
-So that specimen is approximately **2242 FishScore**.
+So that specimen is **2243 FishScore**.
 
 ## Why final percentile matters
 

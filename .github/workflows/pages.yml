@@ -1,0 +1,70 @@
+name: Deploy Tideborne Wiki to GitHub Pages
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'docs/wiki/**'
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v6
+
+      - name: Assemble static site
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site/content
+          cp -R site/. _site/
+          cp docs/wiki/*.md _site/content/
+          cp site/index.html _site/404.html
+          touch _site/.nojekyll
+
+      - name: Verify required pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f _site/index.html
+          test -f _site/assets/app.js
+          test -f _site/assets/styles.css
+          test -f _site/assets/tideborne-icon.png
+          test -f _site/content/README.md
+          test -f _site/content/FISHSCORE.md
+          expected=13
+          actual=$(find _site/content -maxdepth 1 -type f -name '*.md' | wc -l)
+          test "$actual" -eq "$expected"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
