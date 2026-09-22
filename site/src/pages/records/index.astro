@@ -1,0 +1,192 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import {
+  hallSortModes,
+  journalCommands,
+  leaderboardMetrics,
+  recordEventTypes,
+  sharedTeamData,
+} from '../../data/records/recordsReference';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Journal, Records & Hall',
+    description: 'How Tideborne tracks shared fishing progress, record events, leaderboards, history, Top Fish, and in-world Hall displays.',
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <main class="tb-records">
+    <header class="tb-records__hero">
+      <div>
+        <p class="tb-records__kicker">Shared fishing history</p>
+        <h1>Journal, Records & Hall</h1>
+        <p>
+          Tideborne keeps more than a current leaderboard. Discoveries, catches, size records, FishScore, ownership, contributors, and historical specimen identity stay connected as a team fishing story.
+        </p>
+      </div>
+      <div class="tb-records__quick">
+        <span>Open in game</span>
+        <code>/ttj</code>
+        <small>or `/ttj open`</small>
+      </div>
+    </header>
+
+    <section class="tb-records__pipeline" aria-label="Record data flow">
+      <article><span>01</span><div><strong>Catch</strong><p>A canonical specimen is resolved and preserved.</p></div></article>
+      <article><span>02</span><div><strong>Journal</strong><p>Team discoveries and contribution totals update.</p></div></article>
+      <article><span>03</span><div><strong>Records</strong><p>Largest, smallest, Best FishScore, and Top Fish state can change.</p></div></article>
+      <article><span>04</span><div><strong>History</strong><p>Important events remain meaningful after records are beaten.</p></div></article>
+      <article><span>05</span><div><strong>Hall</strong><p>Stored specimen data can be revisited as an in-world display.</p></div></article>
+    </section>
+
+    <section class="tb-records__section" aria-labelledby="shared-heading">
+      <div class="tb-records__section-heading">
+        <div>
+          <p class="tb-records__kicker">FTB Teams party progression</p>
+          <h2 id="shared-heading">What the team shares</h2>
+        </div>
+        <p>Server configuration can disable or adjust parts of the team system.</p>
+      </div>
+      <div class="tb-records__chips">
+        {sharedTeamData.map((item) => <span>{item}</span>)}
+      </div>
+    </section>
+
+    <section class="tb-records__split">
+      <div class="tb-records__section">
+        <div class="tb-records__section-heading tb-records__section-heading--stacked">
+          <div>
+            <p class="tb-records__kicker">Persistent history</p>
+            <h2>Record events</h2>
+          </div>
+          <p>Recovery events are explicitly distinguished from real live catches.</p>
+        </div>
+        <div class="tb-event-list">
+          {recordEventTypes.map((event) => (
+            <article>
+              <div class="tb-event-list__head">
+                <h3>{event.name}</h3>
+                <span class:list={{ 'tb-event-live': event.liveCatchEvent, 'tb-event-repair': !event.liveCatchEvent }}>
+                  {event.liveCatchEvent ? 'Catch event' : 'Recovery'}
+                </span>
+              </div>
+              <p>{event.description}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div class="tb-records__section">
+        <div class="tb-records__section-heading tb-records__section-heading--stacked">
+          <div>
+            <p class="tb-records__kicker">Different achievements</p>
+            <h2>Leaderboard metrics</h2>
+          </div>
+          <p>Size records and FishScore remain separate achievements.</p>
+        </div>
+        <ol class="tb-metric-list">
+          {leaderboardMetrics.map((metric, index) => <li><span>{index + 1}</span><strong>{metric}</strong></li>)}
+        </ol>
+      </div>
+    </section>
+
+    <section class="tb-hall" aria-labelledby="hall-heading">
+      <div class="tb-hall__intro">
+        <p class="tb-records__kicker">In-world history</p>
+        <h2 id="hall-heading">Hall Record Display</h2>
+        <p>
+          Personal and team history can be turned into a trophy room, museum, tournament hall, or fishing cabin. A historical specimen can retain size and traits when that canonical data exists.
+        </p>
+        <div class="tb-hall__warning">
+          <strong>No invented recipe</strong>
+          <span>The 2.1.0 release registers the Hall Record Display but does not ship a standard JSON crafting recipe for it.</span>
+        </div>
+      </div>
+      <div class="tb-hall__controls" aria-label="Hall history sort modes">
+        <span>History sort modes</span>
+        <div>{hallSortModes.map((mode, index) => <button type="button" class:list={{ active: index === 0 }} disabled>{mode}</button>)}</div>
+        <p>History is paged and can use species-oriented selection for larger collections.</p>
+      </div>
+    </section>
+
+    <section class="tb-records__section" aria-labelledby="commands-heading">
+      <div class="tb-records__section-heading">
+        <div>
+          <p class="tb-records__kicker">Useful commands</p>
+          <h2 id="commands-heading">Team Journal shortcuts</h2>
+        </div>
+        <p>Ownership repair and bulk administrative commands may require elevated team or operator permission.</p>
+      </div>
+      <div class="tb-command-grid">
+        {journalCommands.map((entry) => (
+          <article><code>{entry.command}</code><span>{entry.purpose}</span></article>
+        ))}
+      </div>
+    </section>
+
+    <footer class="tb-records__footer">
+      <a href="/TIDEBORNE/team-journal-and-records/">Full Team Journal reference →</a>
+      <a href="/TIDEBORNE/hall-record-display/">Full Hall Record Display reference →</a>
+    </footer>
+  </main>
+</StarlightPage>
+
+<style>
+  .tb-records { display: grid; gap: 3rem; width: min(100%, 88rem); margin-inline: auto; }
+  .tb-records__hero, .tb-records__section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+  .tb-records__hero h1 { margin: 0; max-width: 60rem; font-size: clamp(2.7rem, 6.5vw, 5.5rem); line-height: .93; letter-spacing: -.055em; }
+  .tb-records__hero > div:first-child > p:last-child { max-width: 55rem; margin: .9rem 0 0; color: var(--tb-text-secondary); font-size: 1rem; line-height: 1.6; }
+  .tb-records__kicker { margin: 0 0 .35rem; color: var(--tb-accent); font-size: .68rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+  .tb-records__quick { display: grid; gap: .2rem; flex: none; min-width: 12rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .8rem 1rem; }
+  .tb-records__quick span, .tb-records__quick small { color: var(--tb-text-muted); font-size: .64rem; }
+  .tb-records__quick code { color: var(--tb-accent); font-size: 1rem; font-weight: 850; }
+  .tb-records__pipeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: .55rem; }
+  .tb-records__pipeline article { position: relative; display: grid; grid-template-columns: auto 1fr; gap: .6rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .85rem; }
+  .tb-records__pipeline article:not(:last-child)::after { content: '›'; position: absolute; z-index: 2; top: 50%; right: -.5rem; transform: translate(50%, -50%); color: var(--tb-accent); font-size: 1.3rem; font-weight: 900; }
+  .tb-records__pipeline article > span { color: var(--tb-accent); font-size: .61rem; font-weight: 900; }
+  .tb-records__pipeline strong { display: block; font-size: .78rem; }
+  .tb-records__pipeline p { margin: .25rem 0 0; color: var(--tb-text-muted); font-size: .65rem; line-height: 1.4; }
+  .tb-records__section { display: grid; gap: 1.15rem; }
+  .tb-records__section-heading h2 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.55rem); letter-spacing: -.035em; }
+  .tb-records__section-heading > p { max-width: 31rem; margin: 0; color: var(--tb-text-muted); font-size: .76rem; text-align: right; }
+  .tb-records__section-heading--stacked { align-items: start; flex-direction: column; gap: .35rem; }
+  .tb-records__section-heading--stacked > p { text-align: left; }
+  .tb-records__chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .tb-records__chips span { border: 1px solid var(--tb-border-subtle); border-radius: 999px; background: var(--tb-surface); padding: .4rem .7rem; color: var(--tb-text-secondary); font-size: .7rem; font-weight: 750; }
+  .tb-records__split { display: grid; grid-template-columns: 1.25fr .75fr; gap: 1rem; }
+  .tb-event-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+  .tb-event-list article { border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .9rem; }
+  .tb-event-list__head { display: flex; align-items: center; justify-content: space-between; gap: .7rem; }
+  .tb-event-list h3 { margin: 0; font-size: .88rem; }
+  .tb-event-list__head span { flex: none; border-radius: 999px; padding: .2rem .42rem; font-size: .58rem; font-weight: 850; }
+  .tb-event-live { background: color-mix(in srgb, var(--tb-success) 11%, transparent); color: var(--tb-success); }
+  .tb-event-repair { background: color-mix(in srgb, var(--tb-warning) 11%, transparent); color: var(--tb-warning); }
+  .tb-event-list p { margin: .5rem 0 0; color: var(--tb-text-secondary); font-size: .7rem; line-height: 1.45; }
+  .tb-metric-list { display: grid; gap: .55rem; margin: 0; padding: 0; list-style: none; }
+  .tb-metric-list li { display: flex; align-items: center; gap: .7rem; border-bottom: 1px solid var(--tb-border-subtle); padding: .55rem 0; }
+  .tb-metric-list li span { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--tb-surface-raised); color: var(--tb-text-muted); font-size: .6rem; font-weight: 900; }
+  .tb-metric-list strong { font-size: .8rem; }
+  .tb-hall { display: grid; grid-template-columns: 1fr .8fr; gap: 1rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: linear-gradient(145deg, color-mix(in srgb, var(--tb-score) 7%, var(--tb-surface)), var(--tb-surface)); padding: clamp(1rem, 3vw, 1.5rem); }
+  .tb-hall h2 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -.04em; }
+  .tb-hall__intro > p:not(.tb-records__kicker) { max-width: 44rem; color: var(--tb-text-secondary); font-size: .8rem; line-height: 1.55; }
+  .tb-hall__warning { display: grid; gap: .18rem; margin-top: 1rem; border-left: 2px solid var(--tb-score); padding-left: .75rem; }
+  .tb-hall__warning strong { color: var(--tb-score); font-size: .7rem; }
+  .tb-hall__warning span { color: var(--tb-text-muted); font-size: .67rem; }
+  .tb-hall__controls { align-self: center; display: grid; gap: .7rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-background); padding: 1rem; }
+  .tb-hall__controls > span { color: var(--tb-text-muted); font-size: .64rem; font-weight: 850; text-transform: uppercase; }
+  .tb-hall__controls > div { display: grid; grid-template-columns: repeat(2, 1fr); gap: .4rem; }
+  .tb-hall__controls button { border: 1px solid var(--tb-border-subtle); border-radius: .5rem; background: var(--tb-surface); padding: .55rem; color: var(--tb-text-secondary); font: inherit; font-size: .7rem; opacity: 1; }
+  .tb-hall__controls button.active { border-color: color-mix(in srgb, var(--tb-accent) 50%, var(--tb-border-subtle)); background: color-mix(in srgb, var(--tb-accent) 10%, var(--tb-surface)); color: var(--tb-accent); }
+  .tb-hall__controls p { margin: 0; color: var(--tb-text-muted); font-size: .64rem; line-height: 1.4; }
+  .tb-command-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .55rem; }
+  .tb-command-grid article { display: grid; gap: .25rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .75rem; }
+  .tb-command-grid code { color: var(--tb-accent); font-size: .68rem; overflow-wrap: anywhere; }
+  .tb-command-grid span { color: var(--tb-text-muted); font-size: .64rem; }
+  .tb-records__footer { display: flex; flex-wrap: wrap; gap: .75rem 1.2rem; border-top: 1px solid var(--tb-border-subtle); padding-top: 1.25rem; }
+  .tb-records__footer a { color: var(--tb-accent); font-size: .72rem; font-weight: 800; text-decoration: none; }
+  @media (max-width: 68rem) { .tb-records__pipeline { grid-template-columns: repeat(2, 1fr); } .tb-records__pipeline article::after { display: none; } .tb-records__split, .tb-hall { grid-template-columns: 1fr; } }
+  @media (max-width: 48rem) { .tb-records__hero, .tb-records__section-heading { align-items: start; flex-direction: column; } .tb-records__section-heading > p { text-align: left; } .tb-event-list, .tb-command-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 32rem) { .tb-records__pipeline { grid-template-columns: 1fr; } }
+</style>
