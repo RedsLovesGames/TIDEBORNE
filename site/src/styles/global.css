@@ -1,0 +1,67 @@
+@layer base, starlight, theme, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import './tokens.css';
+
+@theme {
+  --color-background: var(--tb-background);
+  --color-foreground: var(--tb-text-primary);
+  --color-card: var(--tb-surface);
+  --color-card-foreground: var(--tb-text-primary);
+  --color-popover: var(--tb-surface-raised);
+  --color-popover-foreground: var(--tb-text-primary);
+  --color-primary: var(--tb-accent-strong);
+  --color-primary-foreground: var(--tb-foam-50);
+  --color-secondary: var(--tb-surface-raised);
+  --color-secondary-foreground: var(--tb-text-primary);
+  --color-muted: var(--tb-surface-raised);
+  --color-muted-foreground: var(--tb-text-muted);
+  --color-accent: color-mix(in srgb, var(--tb-accent) 16%, transparent);
+  --color-accent-foreground: var(--tb-text-primary);
+  --color-destructive: var(--tb-danger);
+  --color-border: var(--tb-border-subtle);
+  --color-input: var(--tb-border-strong);
+  --color-ring: var(--tb-accent);
+  --radius-sm: var(--tb-radius-sm);
+  --radius-md: var(--tb-radius-md);
+  --radius-lg: var(--tb-radius-lg);
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--tb-accent);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--tb-accent) 35%, transparent);
+    color: var(--tb-text-primary);
+  }
+}
+
+@layer components {
+  .tb-version-note {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--tb-space-2);
+    border: 1px solid var(--tb-border-subtle);
+    border-radius: var(--tb-radius-sm);
+    background: var(--tb-surface-raised);
+    padding: var(--tb-space-2) var(--tb-space-3);
+    color: var(--tb-text-secondary);
+    font-size: 0.8125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

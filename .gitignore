@@ -26,6 +26,16 @@ dev/libs/*.jar
 reconstruction/work/
 reconstruction/generated/
 
+# Tideborne Field Guide build output
+site/node_modules/
+site/dist/
+site/.astro/
+site/src/content/docs/*
+!site/src/content/docs/.gitkeep
+
+# Superpowers execution scratch
+.superpowers/
+
 # OS
 .DS_Store
 Thumbs.db
