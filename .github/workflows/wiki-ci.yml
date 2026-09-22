@@ -35,6 +35,17 @@ jobs:
         working-directory: site
         run: npm test -- --passWithNoTests
 
+      - name: Generate pinned fish catalog
+        working-directory: site
+        run: npm run import:fish
+
+      - name: Preserve normalized fish catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: normalized-fish-catalog
+          path: site/src/data/generated/fish.json
+          if-no-files-found: error
+
       - name: Typecheck and build
         working-directory: site
         run: npm run build
