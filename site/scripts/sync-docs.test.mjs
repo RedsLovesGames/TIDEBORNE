@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe('syncDocs', () => {
-  it('rebuilds generated docs cleanly while reserving / for the custom homepage', async () => {
+  it('rebuilds generated docs cleanly and rewrites source links to published routes', async () => {
     const { syncDocs } = await import('./sync-docs.mjs');
     const { sourceDir, outputDir } = fixture();
 
@@ -51,9 +51,9 @@ describe('syncDocs', () => {
     const wikiHome = readFileSync(join(outputDir, 'wiki-home.md'), 'utf8');
     const fishScore = readFileSync(join(outputDir, 'fishscore.md'), 'utf8');
     expect(wikiHome).toContain('title: Tideborne Wiki');
-    expect(wikiHome).toContain('[FishScore](fishscore.md)');
-    expect(wikiHome).toContain('[FishScore section](fishscore.md#mapping)');
-    expect(fishScore).toContain('[Wiki Home](wiki-home.md)');
+    expect(wikiHome).toContain('[FishScore](../fishscore/)');
+    expect(wikiHome).toContain('[FishScore section](../fishscore/#mapping)');
+    expect(fishScore).toContain('[Wiki Home](../wiki-home/)');
     expect(fishScore).toContain('[External](https://example.com/FISHSCORE.md)');
     expect(existsSync(join(outputDir, 'STALE.md'))).toBe(false);
 
