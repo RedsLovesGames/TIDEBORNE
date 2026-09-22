@@ -27,6 +27,12 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
 
+      - name: Restore pinned fish renders
+        uses: actions/cache@v4
+        with:
+          path: site/public/fish/renders
+          key: ${{ runner.os }}-tideborne-fish-renders-${{ hashFiles('site/src/data/generated/fish.json') }}
+
       - name: Install website dependencies
         working-directory: site
         run: npm ci
