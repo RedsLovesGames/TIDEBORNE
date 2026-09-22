@@ -33,8 +33,9 @@ export default defineConfig({
         {
           label: 'Specimens',
           items: [
-            { slug: 'specimens-and-traits', label: 'Specimens & Traits' },
-            { slug: 'fishscore', label: 'FishScore' },
+            { label: 'Specimen System', link: '/TIDEBORNE/specimens/' },
+            { slug: 'specimens-and-traits', label: 'Specimens & Traits Reference' },
+            { slug: 'fishscore', label: 'FishScore Reference' },
           ],
         },
         {
