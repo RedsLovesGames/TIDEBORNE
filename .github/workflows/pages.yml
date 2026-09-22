@@ -1,4 +1,4 @@
-name: Deploy Tideborne Wiki to GitHub Pages
+name: Deploy Tideborne Field Guide to GitHub Pages
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/wiki/**'
       - 'site/**'
+      - 'src/main/resources/data/**/recipe/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -21,34 +22,43 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
     steps:
       - name: Checkout dev
         uses: actions/checkout@v6
 
-      - name: Assemble static site
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf _site
-          mkdir -p _site/content
-          cp -R site/. _site/
-          cp docs/wiki/*.md _site/content/
-          cp site/index.html _site/404.html
-          touch _site/.nojekyll
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
 
-      - name: Verify required pages
+      - name: Install website dependencies
+        run: npm ci
+
+      - name: Run website tests
+        run: npm test -- --passWithNoTests
+
+      - name: Build Field Guide
+        run: npm run build
+
+      - name: Verify Pages output
         shell: bash
         run: |
           set -euo pipefail
-          test -f _site/index.html
-          test -f _site/assets/app.js
-          test -f _site/assets/styles.css
-          test -f _site/assets/tideborne-icon.png
-          test -f _site/content/README.md
-          test -f _site/content/FISHSCORE.md
-          expected=13
-          actual=$(find _site/content -maxdepth 1 -type f -name '*.md' | wc -l)
-          test "$actual" -eq "$expected"
+          test -f dist/index.html
+          test -f dist/fish/index.html
+          test -f dist/gear/index.html
+          test -f dist/tools/fishscore/index.html
+          test -f dist/satchel/index.html
+          test -f dist/specimens/index.html
+          test -f dist/records/index.html
+          test -f dist/wiki-home/index.html
+          grep -q '/TIDEBORNE/' dist/index.html
+          touch dist/.nojekyll
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -56,7 +66,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: _site
+          path: site/dist
 
   deploy:
     environment:
