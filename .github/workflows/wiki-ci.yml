@@ -39,6 +39,10 @@ jobs:
         working-directory: site
         run: npm run build
 
+      - name: Validate built routes and links
+        working-directory: site
+        run: npm run validate:build
+
       - name: Verify repository base-path output
         working-directory: site
         shell: bash
