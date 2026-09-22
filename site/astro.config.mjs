@@ -41,8 +41,9 @@ export default defineConfig({
           label: 'Progression & Records',
           items: [
             { label: "Angler's Satchel", link: '/TIDEBORNE/satchel/' },
-            { slug: 'team-journal-and-records', label: 'Team Journal & Records' },
-            { slug: 'hall-record-display', label: 'Hall Record Display' },
+            { label: 'Journal, Records & Hall', link: '/TIDEBORNE/records/' },
+            { slug: 'team-journal-and-records', label: 'Team Journal Reference' },
+            { slug: 'hall-record-display', label: 'Hall Display Reference' },
           ],
         },
         {
