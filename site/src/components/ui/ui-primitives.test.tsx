@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Button } from './button';
@@ -8,7 +7,6 @@ import { Checkbox } from './checkbox';
 
 
 afterEach(cleanup);
-
 describe('Tideborne UI primitives', () => {
   it('preserves native button semantics and disabled behavior', () => {
     render(<Button disabled>Apply filters</Button>);
