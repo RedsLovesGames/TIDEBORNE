@@ -9,13 +9,15 @@ import './fish-explorer.css';
 type FishExplorerProps = {
   records: readonly FishRecord[];
   basePath: string;
-  sourceRevision: string;
 };
 
-const legacyRenderRoot = (revision: string) =>
-  `https://raw.githubusercontent.com/RedsLovesGames/random-info-pages/${revision}/tideborne/assets/fish/renders`;
-
 const normalizeBase = (basePath: string) => basePath.endsWith('/') ? basePath : `${basePath}/`;
+
+const localRenderUrl = (path: string | null | undefined, basePath: string) => {
+  if (!path) return null;
+  const normalized = path.replace(/^\/+/, '');
+  return `${normalizeBase(basePath)}${normalized}`;
+};
 
 const titleCase = (value: string) => value
   .replaceAll('_', ' ')
@@ -36,10 +38,9 @@ const sizeText = (record: FishRecord) => {
   return `${low}–${high} cm`;
 };
 
-function FishRender({ record, sourceRevision }: { record: FishRecord; sourceRevision: string }) {
+function FishRender({ record, basePath }: { record: FishRecord; basePath: string }) {
   const [failed, setFailed] = useState(false);
-  const filename = record.render?.split('/').pop();
-  const src = filename ? `${legacyRenderRoot(sourceRevision)}/${encodeURIComponent(filename)}` : null;
+  const src = localRenderUrl(record.render, basePath);
 
   if (!src || failed) {
     return (
@@ -63,13 +64,13 @@ function FishRender({ record, sourceRevision }: { record: FishRecord; sourceRevi
   );
 }
 
-function FishCard({ record, basePath, sourceRevision }: { record: FishRecord; basePath: string; sourceRevision: string }) {
+function FishCard({ record, basePath }: { record: FishRecord; basePath: string }) {
   const href = `${normalizeBase(basePath)}fish/${record.namespace ?? 'unknown'}/${record.slug ?? encodeURIComponent(record.id)}/`;
   const stars = Math.max(0, Math.min(5, Number(record.stars ?? record.rarity ?? 0)));
 
   return (
     <a className="tb-fish-card" href={href} aria-label={`Open ${record.name ?? record.id} fish details`}>
-      <FishRender record={record} sourceRevision={sourceRevision} />
+      <FishRender record={record} basePath={basePath} />
       <div className="tb-fish-card__body">
         <div className="tb-fish-card__eyebrow">
           <Badge variant="secondary">{record.source ?? record.namespace ?? 'Unknown source'}</Badge>
@@ -94,7 +95,7 @@ function FishCard({ record, basePath, sourceRevision }: { record: FishRecord; ba
 const uniqueStrings = (values: Array<string | null | undefined>) =>
   [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b));
 
-export function FishExplorer({ records, basePath, sourceRevision }: FishExplorerProps) {
+export function FishExplorer({ records, basePath }: FishExplorerProps) {
   const [query, setQuery] = useState('');
   const [source, setSource] = useState('');
   const [rarity, setRarity] = useState('');
@@ -203,7 +204,7 @@ export function FishExplorer({ records, basePath, sourceRevision }: FishExplorer
           {filtered.length > 0 ? (
             <div className="tb-fish-grid">
               {filtered.map((record) => (
-                <FishCard key={record.id} record={record} basePath={basePath} sourceRevision={sourceRevision} />
+                <FishCard key={record.id} record={record} basePath={basePath} />
               ))}
             </div>
           ) : (
