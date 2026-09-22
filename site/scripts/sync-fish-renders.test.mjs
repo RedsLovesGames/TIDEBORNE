@@ -37,7 +37,7 @@ describe('fish render asset sync', () => {
 
     const catalogFile = join(root, 'fish.json');
     writeFileSync(catalogFile, JSON.stringify({
-      meta: { sourceRevision: 'abc123' },
+      meta: { sourceRevision: 'abc1234' },
       records: [{
         render: '/fish/renders/dragon.png',
         variants: { giant: '/fish/renders/dragon__giant.png' },
@@ -49,7 +49,7 @@ describe('fish render asset sync', () => {
 
     expect(result).toEqual({ total: 2, downloaded: 1, reused: 1 });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(String(fetchImpl.mock.calls[0][0])).toContain('/abc123/tideborne/assets/fish/renders/dragon__giant.png');
+    expect(String(fetchImpl.mock.calls[0][0])).toContain('/abc1234/tideborne/assets/fish/renders/dragon__giant.png');
     expect([...readFileSync(join(outputDir, 'dragon__giant.png'))]).toEqual([1, 2, 3]);
   });
 });
