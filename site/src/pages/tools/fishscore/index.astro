@@ -1,8 +1,7 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { FishScoreCalculator } from '../../../components/fishscore/FishScoreCalculator';
-
-const basePath = import.meta.env.BASE_URL;
+import { sitePath } from '../../../lib/urls';
 ---
 
 <StarlightPage
@@ -24,7 +23,7 @@ const basePath = import.meta.env.BASE_URL;
         Ownership, records, catch age, and the angler who caught the fish do not add FishScore points.
       </p>
     </div>
-    <a href={`${basePath}fishscore/`}>Read the full FishScore reference →</a>
+    <a href={sitePath('/fishscore/')}>Read the full FishScore reference →</a>
   </section>
 </StarlightPage>
 
