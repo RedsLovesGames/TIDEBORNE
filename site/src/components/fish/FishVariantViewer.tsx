@@ -5,7 +5,7 @@ type VariantMap = Readonly<Partial<Record<string, string>>>;
 
 type FishVariantViewerProps = {
   fishName: string;
-  sourceRevision: string;
+  basePath: string;
   variants: VariantMap;
 };
 
@@ -20,17 +20,15 @@ const labels: Record<string, string> = {
   parasite_ridden: 'Parasite-Ridden',
 };
 
-const renderRoot = (sourceRevision: string) =>
-  `https://raw.githubusercontent.com/RedsLovesGames/random-info-pages/${sourceRevision}/tideborne/assets/fish/renders`;
-
-const renderUrl = (path: string, sourceRevision: string) => {
-  const filename = path.split('/').pop();
-  return filename ? `${renderRoot(sourceRevision)}/${encodeURIComponent(filename)}` : null;
+const normalizeBase = (basePath: string) => basePath.endsWith('/') ? basePath : `${basePath}/`;
+const renderUrl = (path: string, basePath: string) => {
+  const normalized = path.replace(/^\/+/, '');
+  return normalized ? `${normalizeBase(basePath)}${normalized}` : null;
 };
 
 const titleCase = (value: string) => labels[value] ?? value.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
-export function FishVariantViewer({ fishName, sourceRevision, variants }: FishVariantViewerProps) {
+export function FishVariantViewer({ fishName, basePath, variants }: FishVariantViewerProps) {
   const available = useMemo(() => {
     const entries = Object.entries(variants).filter((entry): entry is [string, string] => Boolean(entry[1]));
     return entries.sort(([a], [b]) => {
@@ -43,7 +41,7 @@ export function FishVariantViewer({ fishName, sourceRevision, variants }: FishVa
   const [active, setActive] = useState(() => available.find(([key]) => key === 'normal')?.[0] ?? available[0]?.[0] ?? '');
   const [failed, setFailed] = useState(false);
   const selected = available.find(([key]) => key === active) ?? available[0];
-  const selectedUrl = selected ? renderUrl(selected[1], sourceRevision) : null;
+  const selectedUrl = selected ? renderUrl(selected[1], basePath) : null;
   const activeLabel = selected ? titleCase(selected[0]) : 'Unavailable';
 
   if (!selected || !selectedUrl) {
