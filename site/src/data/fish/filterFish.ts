@@ -17,7 +17,7 @@ export type FishRecord = {
     recordHigh?: number | null;
   };
   render?: string | null;
-  variants?: Readonly<Record<string, string>>;
+  variants?: Readonly<Partial<Record<string, string>>>;
   associatedMods?: readonly string[];
   conditions?: readonly unknown[];
 };
