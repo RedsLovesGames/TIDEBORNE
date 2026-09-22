@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "npm run sync:docs && astro dev",
     "sync:docs": "node scripts/sync-docs.mjs",
+    "import:fish": "node scripts/import-fish-catalog.mjs",
     "build": "npm run sync:docs && astro check && astro build",
     "check": "astro check",
     "test": "vitest run"
