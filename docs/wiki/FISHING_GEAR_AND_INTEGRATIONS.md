@@ -39,13 +39,16 @@ A specialized rod crafted from baked Kujira Bone and string.
 
 ### Leviathan Bait
 
-Crafted from a Leviathan Heart, producing 12 bait. The 2.1.0 player-facing behavior is:
+Crafted from a Leviathan Heart, producing 12 bait. In the canonical Fishing System 2 gear path, Leviathan Bait:
 
-- guarantees a Tide fish instead of junk, treasure, or crates
-- adds **+15 fish-selection Fishing Luck**
+- restricts the Tideborne catch category to **fish**, preventing junk, treasure, or crates from being selected through that path
+- adds **+4 Fishing Luck** to canonical species weighting
+- adds **+1 Trait Luck** to canonical specimen generation
+- applies **1.30x Strength** and **1.20x Tempo** to the fight profile
+- applies a **2.00x boss target-weight multiplier** in the canonical gear modifier object
 - does not bypass the fish's normal habitat or eligibility conditions
-- makes the catch harder, with the documented canonical profile applying approximately **1.15x Strength** and **1.15x Tempo**
-- also participates in Tideborne's trait-oriented progression rather than acting as a simple vanilla luck item
+
+Historical configuration and audit fields for older Leviathan tuning are still retained for compatibility. The values above describe the current Fishing System 2 modifier object used by the canonical gear path rather than those older tuning snapshots.
 
 Myths of the Sea is optional. Tideborne must continue to run without resolving its classes when the mod is absent.
 
