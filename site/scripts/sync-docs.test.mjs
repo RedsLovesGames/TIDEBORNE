@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe('syncDocs', () => {
-  it('rebuilds generated docs cleanly and removes output for deleted sources', async () => {
+  it('rebuilds generated docs cleanly while reserving / for the custom homepage', async () => {
     const { syncDocs } = await import('./sync-docs.mjs');
     const { sourceDir, outputDir } = fixture();
 
@@ -41,14 +41,14 @@ describe('syncDocs', () => {
 
     await syncDocs({ sourceDir, outputDir });
 
-    expect(readdirSync(outputDir).sort()).toEqual(['fishscore.md', 'index.md']);
-    expect(readFileSync(join(outputDir, 'index.md'), 'utf8')).toContain('title: Tideborne Wiki');
+    expect(readdirSync(outputDir).sort()).toEqual(['fishscore.md', 'wiki-home.md']);
+    expect(readFileSync(join(outputDir, 'wiki-home.md'), 'utf8')).toContain('title: Tideborne Wiki');
     expect(readFileSync(join(outputDir, 'fishscore.md'), 'utf8')).toContain('# FishScore');
     expect(existsSync(join(outputDir, 'STALE.md'))).toBe(false);
 
     unlinkSync(join(sourceDir, 'FISHSCORE.md'));
     await syncDocs({ sourceDir, outputDir });
 
-    expect(readdirSync(outputDir)).toEqual(['index.md']);
+    expect(readdirSync(outputDir)).toEqual(['wiki-home.md']);
   });
 });
