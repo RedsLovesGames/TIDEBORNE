@@ -11,7 +11,7 @@ export default defineConfig({
     starlight({
       title: 'Tideborne',
       description: 'Official Tideborne field guide and wiki.',
-      favicon: '/TIDEBORNE/tideborne-icon.png',
+      favicon: '/tideborne-icon.png',
       customCss: ['./src/styles/global.css'],
       pagefind: true,
       sidebar: [
@@ -25,15 +25,15 @@ export default defineConfig({
         {
           label: 'Explore',
           items: [
-            { label: 'Fish Explorer', link: '/TIDEBORNE/fish/' },
-            { label: 'Gear Builder & Recipes', link: '/TIDEBORNE/gear/' },
-            { label: 'FishScore Calculator', link: '/TIDEBORNE/tools/fishscore/' },
+            { label: 'Fish Explorer', link: '/fish/' },
+            { label: 'Gear Builder & Recipes', link: '/gear/' },
+            { label: 'FishScore Calculator', link: '/tools/fishscore/' },
           ],
         },
         {
           label: 'Specimens',
           items: [
-            { label: 'Specimen System', link: '/TIDEBORNE/specimens/' },
+            { label: 'Specimen System', link: '/specimens/' },
             { slug: 'specimens-and-traits', label: 'Specimens & Traits Reference' },
             { slug: 'fishscore', label: 'FishScore Reference' },
           ],
@@ -41,8 +41,8 @@ export default defineConfig({
         {
           label: 'Progression & Records',
           items: [
-            { label: "Angler's Satchel", link: '/TIDEBORNE/satchel/' },
-            { label: 'Journal, Records & Hall', link: '/TIDEBORNE/records/' },
+            { label: "Angler's Satchel", link: '/satchel/' },
+            { label: 'Journal, Records & Hall', link: '/records/' },
             { slug: 'team-journal-and-records', label: 'Team Journal Reference' },
             { slug: 'hall-record-display', label: 'Hall Display Reference' },
           ],
