@@ -1,0 +1,139 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { FishVariantViewer } from '../../../components/fish/FishVariantViewer';
+import { buildFishRoutes } from '../../../data/fish/fishRoutes';
+import fishCatalog from '../../../data/generated/fish.json';
+import '../../../styles/fish-detail.css';
+
+export function getStaticPaths() {
+  return buildFishRoutes(fishCatalog.records);
+}
+
+type CatalogRecord = (typeof fishCatalog.records)[number];
+const { record } = Astro.props as { record: CatalogRecord };
+const basePath = import.meta.env.BASE_URL;
+const sourceRevision = fishCatalog.meta.sourceRevision;
+
+const titleCase = (value: string | null | undefined) => value
+  ? value.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase())
+  : 'Unknown';
+
+const rarityLabel = record.rarityKey ? titleCase(record.rarityKey) : record.rarity ? `Rarity ${record.rarity}` : 'Unknown';
+const stars = Math.max(0, Math.min(5, Number(record.stars ?? record.rarity ?? 0)));
+const low = record.size?.typicalLow;
+const typicalHigh = record.size?.typicalHigh;
+const recordHigh = record.size?.recordHigh;
+const sizeRange = low == null && recordHigh == null && typicalHigh == null
+  ? 'Unknown'
+  : low == null
+    ? `Up to ${recordHigh ?? typicalHigh} cm`
+    : `From ${low} cm${(recordHigh ?? typicalHigh) != null ? ` to ${recordHigh ?? typicalHigh} cm` : ''}`;
+const verifiedVariants = Object.entries(record.variants ?? {})
+  .filter((entry): entry is [string, string] => Boolean(entry[1]))
+  .map(([key]) => key);
+const variantLabel = (key: string) => key === 'parasite_ridden' ? 'Parasite-Ridden' : titleCase(key);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: `${record.name} - Tideborne Fish`,
+    description: `${record.name} fish entry for the Tideborne Field Guide.`,
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <article class="tb-fish-detail">
+    <nav class="tb-fish-detail__crumbs" aria-label="Breadcrumb">
+      <a href={`${basePath}fish/`}>Fish Explorer</a>
+      <span aria-hidden="true">/</span>
+      <span>{record.source}</span>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{record.name}</span>
+    </nav>
+
+    <div class="tb-fish-detail__hero">
+      <FishVariantViewer
+        client:load
+        fishName={record.name}
+        sourceRevision={sourceRevision}
+        variants={record.variants}
+      />
+
+      <div class="tb-fish-detail__summary">
+        <div class="tb-fish-detail__identity">
+          <p class="tb-fish-kicker">{record.source} field entry</p>
+          <h1>{record.name}</h1>
+          <code>{record.id}</code>
+        </div>
+
+        <div class="tb-fish-detail__badges" aria-label="Fish classification">
+          <span class="tb-version-note">{rarityLabel}</span>
+          <span class="tb-version-note" aria-label={`${stars} star rarity`}>{'★'.repeat(stars) || 'Rarity unverified'}</span>
+          {record.group && <span class="tb-version-note">{titleCase(record.group)}</span>}
+        </div>
+
+        <dl class="tb-fish-detail__facts">
+          <div>
+            <dt>Habitat</dt>
+            <dd>{record.habitats?.[0] ?? 'Unknown'}</dd>
+          </div>
+          <div>
+            <dt>Size range</dt>
+            <dd>{sizeRange}</dd>
+          </div>
+          <div>
+            <dt>Typical high</dt>
+            <dd>{typicalHigh != null ? `${typicalHigh} cm` : 'Unknown'}</dd>
+          </div>
+          <div>
+            <dt>Record high</dt>
+            <dd>{recordHigh != null ? `${recordHigh} cm` : 'Unknown'}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <section class="tb-fish-detail__section" aria-labelledby="verified-renders">
+      <h2 id="verified-renders">Verified specimen renders</h2>
+      <p>
+        These variants are shown only when the runtime render export contains a validated source-backed render for this fish.
+        Missing variants are left out rather than reconstructed or approximated.
+      </p>
+      <div class="tb-fish-detail__variant-list">
+        {verifiedVariants.length > 0
+          ? verifiedVariants.map((variant) => <span>{variantLabel(variant)}</span>)
+          : <span>No validated renders</span>}
+      </div>
+    </section>
+
+    <section class="tb-fish-detail__section" aria-labelledby="technical-data">
+      <h2 id="technical-data">Technical data</h2>
+      <div class="tb-fish-detail__technical">
+        <div class="tb-fish-detail__panel">
+          <h3>Registry ID</h3>
+          <code>{record.id}</code>
+        </div>
+        <div class="tb-fish-detail__panel">
+          <h3>Namespace</h3>
+          <p>{record.namespace}</p>
+        </div>
+        <div class="tb-fish-detail__panel">
+          <h3>Catalog route</h3>
+          <code>{record.namespace}/{record.slug}</code>
+        </div>
+        <div class="tb-fish-detail__panel">
+          <h3>Location key</h3>
+          <code>{record.locationKey ?? 'Unknown'}</code>
+        </div>
+        <div class="tb-fish-detail__panel">
+          <h3>Journal category</h3>
+          <p>{record.journalCategory ?? 'Not specified by source data'}</p>
+        </div>
+        <div class="tb-fish-detail__panel">
+          <h3>Catalog provenance</h3>
+          <code>{sourceRevision.slice(0, 12)}</code>
+        </div>
+      </div>
+    </section>
+  </article>
+</StarlightPage>
