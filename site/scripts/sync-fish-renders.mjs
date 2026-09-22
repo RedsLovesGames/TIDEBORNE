@@ -26,7 +26,7 @@ export function collectRenderFiles(catalog) {
     }
   }
 
-  return [...files].sort((a, b) => a.localeCompare(b));
+  return [...files];
 }
 
 async function exists(path) {
