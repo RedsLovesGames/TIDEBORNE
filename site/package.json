@@ -13,6 +13,7 @@
     "generate:recipes": "node scripts/generate-recipes.mjs",
     "import:fish": "node scripts/import-fish-catalog.mjs",
     "build": "npm run prepare:content && astro check && astro build",
+    "validate:build": "node scripts/validate-build.mjs",
     "check": "astro check",
     "test": "vitest run"
   },
