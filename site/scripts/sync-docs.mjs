@@ -1,0 +1,64 @@
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, extname, join, resolve } from 'node:path';
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+function toSlug(filename) {
+  if (filename.toLowerCase() === 'readme.md') return 'index.md';
+  const stem = filename.slice(0, -extname(filename).length);
+  return `${stem
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[_\s]+/g, '-')
+    .replace(/[^a-zA-Z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase()}.md`;
+}
+
+function deriveTitle(markdown, filename) {
+  const heading = markdown.match(/^#\s+(.+?)\s*$/m)?.[1]?.trim();
+  if (heading) return heading;
+
+  const stem = filename.slice(0, -extname(filename).length);
+  return stem
+    .replace(/[_-]+/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function yamlTitle(title) {
+  return /^[A-Za-z0-9 .&'()/-]+$/.test(title) ? title : JSON.stringify(title);
+}
+
+function withFrontmatter(markdown, filename) {
+  if (/^\uFEFF?---\s*\r?\n/.test(markdown)) return markdown;
+  const title = deriveTitle(markdown, filename);
+  return `---\ntitle: ${yamlTitle(title)}\n---\n\n${markdown}`;
+}
+
+export async function syncDocs({ sourceDir, outputDir }) {
+  await rm(outputDir, { recursive: true, force: true });
+  await mkdir(outputDir, { recursive: true });
+
+  const entries = (await readdir(sourceDir, { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.md'))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const entry of entries) {
+    const sourcePath = join(sourceDir, entry.name);
+    const outputPath = join(outputDir, toSlug(entry.name));
+    const markdown = await readFile(sourcePath, 'utf8');
+    await writeFile(outputPath, withFrontmatter(markdown, entry.name), 'utf8');
+  }
+}
+
+async function main() {
+  const sourceDir = resolve(here, '../../docs/wiki');
+  const outputDir = resolve(here, '../src/content/docs');
+  await syncDocs({ sourceDir, outputDir });
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
+}
