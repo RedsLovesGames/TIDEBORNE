@@ -1,0 +1,173 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import recipeData from '../../data/generated/recipes.json';
+
+const names: Record<string, string> = {
+  'tide_traits:anglers_satchel': "Angler's Satchel",
+  'tidebound_compatibility:chum_bucket': 'Chum Bucket',
+  'tidebound_compatibility:copper_leader': 'Copper Leader',
+  'tidebound_compatibility:diamond_leader': 'Diamond Leader',
+  'tidebound_compatibility:gold_leader': 'Gold Leader',
+  'tidebound_compatibility:kujira_bone_fishing_rod': 'Kujira Bone Fishing Rod',
+  'tidebound_compatibility:leviathan_bait': 'Leviathan Bait',
+  'tidebound_compatibility:seafarers_hook': "Seafarer's Hook",
+  'tidebound_compatibility:shark_tooth_hook': 'Shark Tooth Hook',
+  'tidebound_compatibility:steel_leader': 'Iron Leader',
+  'tidebound_compatibility:swift_line': 'Abaia Line',
+  'tidebound_compatibility:tentacle_line': 'Tentacle Line',
+};
+
+const descriptions: Record<string, string> = {
+  'tidebound_compatibility:tentacle_line': 'A line that seems to reach farther than it should.',
+  'tidebound_compatibility:seafarers_hook': 'Its watchful eye never seems to mind the dark.',
+  'tidebound_compatibility:swift_line': 'A living-current line that refuses to sit still.',
+  'tidebound_compatibility:copper_leader': '30% catch-loss protection with a very small handling cost.',
+  'tidebound_compatibility:steel_leader': '55% catch-loss protection with a moderate handling cost.',
+  'tidebound_compatibility:gold_leader': '75% catch-loss protection with a meaningful handling cost.',
+  'tidebound_compatibility:diamond_leader': '95% catch-loss protection, at the cost of the hardest handling.',
+  'tidebound_compatibility:shark_tooth_hook': 'A jagged hook made for equally jagged catches.',
+  'tidebound_compatibility:leviathan_bait': 'Guarantees a Tide fish, adds +15 fish-selection Fishing Luck, and applies a harder fight profile.',
+  'tidebound_compatibility:chum_bucket': 'An Apex Waters ocean mechanic that only functions with Apex compatibility active.',
+};
+
+const displayName = (id: string) => names[id] ?? id.split(':').pop()?.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? id;
+const shortItem = (id: string) => id.split(':').pop()?.replaceAll('_', ' ') ?? id;
+const recipeById = recipeData.recipes;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Gear & Recipes',
+    description: 'Current Tideborne integration gear and crafting recipes generated from the 2.1.0 resources.',
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <main class="tb-gear-page">
+    <header class="tb-gear-hero">
+      <div>
+        <p class="tb-fish-kicker">Generated from current resources</p>
+        <h1>Gear & Recipes</h1>
+        <p>
+          These crafting layouts come directly from the recipe JSON in this Tideborne commit. Optional integration items show the mod they require instead of pretending they are always available.
+        </p>
+      </div>
+      <span class="tb-gear-count">{recipeData.recipeCount} recipes</span>
+    </header>
+
+    <section class="tb-gear-callouts" aria-label="Notable gear effects">
+      <article>
+        <span>Apex Waters</span>
+        <h2>Leaders stop catch loss</h2>
+        <p>Copper 30%, Iron 55%, Gold 75%, Diamond 95%. Stronger protection comes with progressively harder handling.</p>
+      </article>
+      <article>
+        <span>Myths of the Sea</span>
+        <h2>Leviathan Bait</h2>
+        <p>Guarantees a Tide fish instead of junk, treasure, or crates, adds +15 fish-selection Fishing Luck, and keeps normal habitat eligibility.</p>
+      </article>
+      <article>
+        <span>Compatibility-safe IDs</span>
+        <h2>Player names can differ</h2>
+        <p>Abaia Line keeps the internal ID <code>swift_line</code>. Iron Leader keeps <code>steel_leader</code> for old-world compatibility.</p>
+      </article>
+    </section>
+
+    <section class="tb-recipe-section" aria-labelledby="recipe-heading">
+      <div class="tb-recipe-section__heading">
+        <div>
+          <p class="tb-fish-kicker">Crafting reference</p>
+          <h2 id="recipe-heading">Tideborne-owned recipes</h2>
+        </div>
+        <p>Ingredient IDs are shown exactly so the page stays useful even without item-art assets.</p>
+      </div>
+
+      <div class="tb-recipe-grid">
+        {recipeById.map((recipe) => (
+          <article class="tb-recipe-card">
+            <header>
+              <div>
+                <h3>{displayName(recipe.result.id)}</h3>
+                <code>{recipe.result.id}</code>
+              </div>
+              {recipe.result.count > 1 && <span class="tb-recipe-output">×{recipe.result.count}</span>}
+            </header>
+
+            {descriptions[recipe.result.id] && <p class="tb-recipe-description">{descriptions[recipe.result.id]}</p>}
+
+            {recipe.requiredMods.length > 0 && (
+              <div class="tb-recipe-mods">
+                {recipe.requiredMods.map((mod) => <span>Requires {mod.replaceAll('_', ' ')}</span>)}
+              </div>
+            )}
+
+            {recipe.type === 'shaped' ? (
+              <div class="tb-crafting-block">
+                <div class="tb-crafting-grid" aria-label={`${displayName(recipe.result.id)} crafting pattern`}>
+                  {recipe.pattern.map((row) => [...row].map((symbol) => {
+                    const item = symbol === ' ' ? null : recipe.key[symbol];
+                    return (
+                      <div class:list={['tb-crafting-cell', { 'tb-crafting-cell--empty': !item }]} title={item?.id ?? ''}>
+                        {item && <span>{shortItem(item.id)}</span>}
+                      </div>
+                    );
+                  }))}
+                </div>
+                <div class="tb-recipe-key">
+                  {Object.entries(recipe.key).map(([symbol, item]) => (
+                    <div><strong>{symbol}</strong><code>{item.id}</code></div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div class="tb-shapeless" aria-label={`${displayName(recipe.result.id)} shapeless ingredients`}>
+                <strong>Shapeless</strong>
+                {recipe.ingredients.map((item) => <code>{item.id}</code>)}
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+</StarlightPage>
+
+<style>
+  .tb-gear-page { display: grid; gap: 3rem; width: min(100%, 88rem); margin-inline: auto; }
+  .tb-gear-hero { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+  .tb-gear-hero h1 { margin: 0; font-size: clamp(2.5rem, 6vw, 5rem); line-height: .95; letter-spacing: -.05em; }
+  .tb-gear-hero p:not(.tb-fish-kicker) { max-width: 52rem; margin: .9rem 0 0; color: var(--tb-text-secondary); }
+  .tb-gear-count { flex: none; border: 1px solid var(--tb-border-subtle); border-radius: 999px; background: var(--tb-surface); padding: .5rem .85rem; color: var(--tb-text-secondary); font-size: .78rem; font-weight: 800; }
+  .tb-gear-callouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .tb-gear-callouts article { border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: 1.25rem; }
+  .tb-gear-callouts article > span { color: var(--tb-accent); font-size: .7rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+  .tb-gear-callouts h2 { margin: .45rem 0 .55rem; font-size: 1.05rem; }
+  .tb-gear-callouts p { margin: 0; color: var(--tb-text-secondary); font-size: .83rem; line-height: 1.55; }
+  .tb-recipe-section { display: grid; gap: 1.25rem; }
+  .tb-recipe-section__heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+  .tb-recipe-section__heading h2 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.5rem); letter-spacing: -.035em; }
+  .tb-recipe-section__heading > p { max-width: 31rem; margin: 0; color: var(--tb-text-muted); font-size: .78rem; text-align: right; }
+  .tb-recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: 1rem; }
+  .tb-recipe-card { display: grid; align-content: start; gap: 1rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: 1.15rem; box-shadow: 0 14px 36px rgb(0 0 0 / .09); }
+  .tb-recipe-card > header { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }
+  .tb-recipe-card h3 { margin: 0; font-size: 1rem; }
+  .tb-recipe-card header code { display: block; margin-top: .25rem; color: var(--tb-text-muted); font-size: .64rem; overflow-wrap: anywhere; }
+  .tb-recipe-output { border-radius: 999px; background: color-mix(in srgb, var(--tb-score) 14%, var(--tb-surface-raised)); padding: .25rem .5rem; color: var(--tb-score); font-size: .72rem; font-weight: 900; }
+  .tb-recipe-description { margin: 0; color: var(--tb-text-secondary); font-size: .8rem; line-height: 1.5; }
+  .tb-recipe-mods { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .tb-recipe-mods span { border: 1px solid var(--tb-border-subtle); border-radius: 999px; padding: .25rem .5rem; color: var(--tb-text-muted); font-size: .66rem; font-weight: 700; text-transform: capitalize; }
+  .tb-crafting-block { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: .9rem; align-items: start; }
+  .tb-crafting-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .2rem; aspect-ratio: 1; }
+  .tb-crafting-cell { display: grid; place-items: center; min-width: 0; border: 1px solid var(--tb-border-strong); border-radius: .35rem; background: var(--tb-background); padding: .2rem; text-align: center; }
+  .tb-crafting-cell span { max-width: 100%; overflow: hidden; color: var(--tb-text-secondary); font-size: .55rem; line-height: 1.05; text-overflow: ellipsis; }
+  .tb-crafting-cell--empty { opacity: .35; }
+  .tb-recipe-key { display: grid; gap: .35rem; }
+  .tb-recipe-key > div { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); gap: .4rem; align-items: baseline; }
+  .tb-recipe-key strong { color: var(--tb-accent); }
+  .tb-recipe-key code { min-width: 0; color: var(--tb-text-muted); font-size: .6rem; overflow-wrap: anywhere; }
+  .tb-shapeless { display: grid; gap: .45rem; border: 1px dashed var(--tb-border-strong); border-radius: var(--tb-radius-md); padding: .85rem; }
+  .tb-shapeless strong { color: var(--tb-text-secondary); font-size: .72rem; }
+  .tb-shapeless code { color: var(--tb-text-muted); font-size: .68rem; overflow-wrap: anywhere; }
+  @media (max-width: 62rem) { .tb-gear-callouts { grid-template-columns: 1fr; } }
+  @media (max-width: 46rem) { .tb-gear-hero, .tb-recipe-section__heading { align-items: start; flex-direction: column; } .tb-recipe-section__heading > p { text-align: left; } }
+</style>
