@@ -45,18 +45,13 @@ jobs:
       - name: Build Field Guide
         run: npm run build
 
+      - name: Validate built routes and links
+        run: npm run validate:build
+
       - name: Verify Pages output
         shell: bash
         run: |
           set -euo pipefail
-          test -f dist/index.html
-          test -f dist/fish/index.html
-          test -f dist/gear/index.html
-          test -f dist/tools/fishscore/index.html
-          test -f dist/satchel/index.html
-          test -f dist/specimens/index.html
-          test -f dist/records/index.html
-          test -f dist/wiki-home/index.html
           grep -q '/TIDEBORNE/' dist/index.html
           touch dist/.nojekyll
 
