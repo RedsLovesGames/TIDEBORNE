@@ -35,15 +35,26 @@ describe('syncDocs', () => {
     const { syncDocs } = await import('./sync-docs.mjs');
     const { sourceDir, outputDir } = fixture();
 
-    writeFileSync(join(sourceDir, 'README.md'), '# Tideborne Wiki\n\nWelcome.\n');
-    writeFileSync(join(sourceDir, 'FISHSCORE.md'), '# FishScore\n\nExact scoring.\n');
+    writeFileSync(
+      join(sourceDir, 'README.md'),
+      '# Tideborne Wiki\n\n[FishScore](FISHSCORE.md) · [FishScore section](FISHSCORE.md#mapping)\n',
+    );
+    writeFileSync(
+      join(sourceDir, 'FISHSCORE.md'),
+      '# FishScore\n\n[Wiki Home](README.md) · [External](https://example.com/FISHSCORE.md)\n',
+    );
     writeFileSync(join(outputDir, 'STALE.md'), '# Old output\n');
 
     await syncDocs({ sourceDir, outputDir });
 
     expect(readdirSync(outputDir).sort()).toEqual(['fishscore.md', 'wiki-home.md']);
-    expect(readFileSync(join(outputDir, 'wiki-home.md'), 'utf8')).toContain('title: Tideborne Wiki');
-    expect(readFileSync(join(outputDir, 'fishscore.md'), 'utf8')).toContain('# FishScore');
+    const wikiHome = readFileSync(join(outputDir, 'wiki-home.md'), 'utf8');
+    const fishScore = readFileSync(join(outputDir, 'fishscore.md'), 'utf8');
+    expect(wikiHome).toContain('title: Tideborne Wiki');
+    expect(wikiHome).toContain('[FishScore](fishscore.md)');
+    expect(wikiHome).toContain('[FishScore section](fishscore.md#mapping)');
+    expect(fishScore).toContain('[Wiki Home](wiki-home.md)');
+    expect(fishScore).toContain('[External](https://example.com/FISHSCORE.md)');
     expect(existsSync(join(outputDir, 'STALE.md'))).toBe(false);
 
     unlinkSync(join(sourceDir, 'FISHSCORE.md'));
