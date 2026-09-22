@@ -4,7 +4,6 @@ import { FishExplorer } from '../../components/fish/FishExplorer';
 import fishCatalog from '../../data/generated/fish.json';
 
 const basePath = import.meta.env.BASE_URL;
-const sourceRevision = fishCatalog.meta.sourceRevision;
 ---
 
 <StarlightPage
@@ -19,6 +18,5 @@ const sourceRevision = fishCatalog.meta.sourceRevision;
     client:load
     records={fishCatalog.records}
     basePath={basePath}
-    sourceRevision={sourceRevision}
   />
 </StarlightPage>
