@@ -7,10 +7,12 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "npm run sync:docs && astro dev",
+    "dev": "npm run prepare:content && astro dev",
+    "prepare:content": "npm run sync:docs && npm run generate:recipes",
     "sync:docs": "node scripts/sync-docs.mjs",
+    "generate:recipes": "node scripts/generate-recipes.mjs",
     "import:fish": "node scripts/import-fish-catalog.mjs",
-    "build": "npm run sync:docs && astro check && astro build",
+    "build": "npm run prepare:content && astro check && astro build",
     "check": "astro check",
     "test": "vitest run"
   },
