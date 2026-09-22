@@ -48,10 +48,14 @@ afterEach(cleanup);
 
 describe('FishExplorer', () => {
   it('searches and filters fish while keeping an accessible result count', () => {
-    render(<FishExplorer records={fish} basePath="/TIDEBORNE/" sourceRevision="test-revision" />);
+    render(<FishExplorer records={fish} basePath="/TIDEBORNE/" />);
 
     expect(screen.getByText('2 fish')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Dragon Fish/i })).toBeTruthy();
+    const dragon = screen.getByRole('link', { name: /Dragon Fish/i });
+    expect(dragon).toBeTruthy();
+    const renderImage = dragon.querySelector('img');
+    expect(renderImage?.getAttribute('src')).toBe('/TIDEBORNE/fish/renders/tide__dragon_fish.png');
+    expect(renderImage?.getAttribute('src')).not.toContain('raw.githubusercontent.com');
 
     fireEvent.change(screen.getByRole('searchbox', { name: /Search fish/i }), {
       target: { value: 'dragon' },
