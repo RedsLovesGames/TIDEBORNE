@@ -1,0 +1,228 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import fishData from '../data/generated/fish.json';
+import { sitePath } from '../lib/urls';
+
+const heroFish = fishData.records.find((fish) => fish.id === 'tide:dragon_fish');
+const heroFilename = heroFish?.render?.split('/').pop();
+const heroRender = heroFilename
+  ? `https://raw.githubusercontent.com/RedsLovesGames/random-info-pages/${fishData.meta.sourceRevision}/tideborne/assets/fish/renders/${encodeURIComponent(heroFilename)}`
+  : null;
+
+const explore = [
+  { eyebrow: '156 species', title: 'Fish Explorer', description: 'Search real Tide and integration fish by rarity, habitat, source mod, size, and verified render availability.', href: sitePath('/fish/') },
+  { eyebrow: 'Canonical math', title: 'FishScore Calculator', description: 'Build a specimen and see the exact 1–3000 score breakdown using the same V2 arithmetic as the mod.', href: sitePath('/tools/fishscore/') },
+  { eyebrow: 'Current recipes', title: 'Gear Builder', description: 'Combine rods, lines, hooks, leaders, and bait while keeping Tideborne modifiers and optional integrations explicit.', href: sitePath('/gear/') },
+  { eyebrow: 'Progression', title: "Angler's Satchel", description: 'Understand capacity upgrades, Auto-Stow, trait scanning, Trophy Lock, and the Shared Ledger.', href: sitePath('/satchel/') },
+  { eyebrow: 'Persistent identity', title: 'Specimen System', description: 'See how one natural specimen becomes a physical fish with independent Body, Condition, Pigmentation, and Quality axes.', href: sitePath('/specimens/') },
+  { eyebrow: 'Team history', title: 'Journal & Records', description: 'Follow discoveries, largest and smallest records, Best FishScore, Top Fish, history events, and Hall displays.', href: sitePath('/records/') },
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Tideborne Field Guide',
+    description: 'Official Tideborne wiki, fish explorer, specimen reference, gear builder, FishScore calculator, Satchel progression, and records guide.',
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <main class="tb-home">
+    <section class="tb-home-hero">
+      <div class="tb-home-hero__copy">
+        <div class="tb-home-badges" aria-label="Supported versions">
+          <span>Tideborne 2.1.0</span>
+          <span>Minecraft 1.21.1</span>
+          <span>Fabric</span>
+          <span>Tide 2.1.1</span>
+        </div>
+        <p class="tb-home-kicker">Official Field Guide</p>
+        <h1>Every Catch Has a Story.</h1>
+        <p class="tb-home-lede">
+          Tide 2 does the fishing. Tideborne turns every catch into a persistent specimen with size, traits, FishScore, progression, records, and history that follow that fish everywhere it matters.
+        </p>
+        <div class="tb-home-actions">
+          <a class="tb-home-button tb-home-button--primary" href={sitePath('/fish/')}>Explore Fish</a>
+          <a class="tb-home-button" href={sitePath('/getting-started/')}>Get Started</a>
+        </div>
+        <div class="tb-home-proof">
+          <div><strong>{fishData.meta.recordCount}</strong><span>normalized fish</span></div>
+          <div><strong>1–3000</strong><span>FishScore scale</span></div>
+          <div><strong>4</strong><span>independent trait axes</span></div>
+        </div>
+      </div>
+
+      <div class="tb-home-specimen" aria-label="Featured Dragon Fish specimen">
+        <div class="tb-home-specimen__water" aria-hidden="true"></div>
+        {heroRender ? <img src={heroRender} alt="Source-backed Tide Dragon Fish render" decoding="async" /> : <div class="tb-home-specimen__missing">◇</div>}
+        <div class="tb-home-specimen__label">
+          <div>
+            <span>Featured species</span>
+            <strong>{heroFish?.name ?? 'Dragon Fish'}</strong>
+          </div>
+          <span class="tb-home-stars" aria-label="5 star rarity">★★★★★</span>
+        </div>
+        <dl>
+          <div><dt>Source</dt><dd>Tide</dd></div>
+          <div><dt>Rarity</dt><dd>Legendary</dd></div>
+          <div><dt>Typical</dt><dd>{heroFish?.size?.typicalLow ?? 550}–{heroFish?.size?.typicalHigh ?? 750} cm</dd></div>
+          <div><dt>Record high</dt><dd>{heroFish?.size?.recordHigh ?? 1250} cm</dd></div>
+        </dl>
+        <a href={sitePath('/fish/tide/dragon-fish/')}>Open species entry →</a>
+      </div>
+    </section>
+
+    <section class="tb-home-search" aria-label="Fish Explorer shortcut">
+      <div>
+        <p class="tb-home-kicker">Find the fish first</p>
+        <h2>Start with the catalog, not a wall of docs.</h2>
+      </div>
+      <a href={sitePath('/fish/')}>
+        <span aria-hidden="true">⌕</span>
+        <div><strong>Search 156 fish</strong><small>rarity · habitat · source mod · size · variants</small></div>
+        <b aria-hidden="true">→</b>
+      </a>
+    </section>
+
+    <section class="tb-home-loop" aria-labelledby="loop-heading">
+      <div class="tb-home-section-heading">
+        <div>
+          <p class="tb-home-kicker">Fishing System 2.0</p>
+          <h2 id="loop-heading">One server-owned catch lifecycle</h2>
+        </div>
+        <p>The specimen is generated once and carried forward. Later systems project the same canonical state rather than inventing a new fish.</p>
+      </div>
+      <ol>
+        <li><span>01</span><strong>Catch</strong><small>Tide resolves eligibility and catch context.</small></li>
+        <li><span>02</span><strong>Generate Specimen</strong><small>Tideborne creates deterministic size and trait state.</small></li>
+        <li><span>03</span><strong>Fight</strong><small>Gear and species profiles shape the minigame.</small></li>
+        <li><span>04</span><strong>Score</strong><small>FishScore V2 evaluates the finalized specimen.</small></li>
+        <li><span>05</span><strong>Keep</strong><small>Satchel, Journal, records, and Hall preserve the catch.</small></li>
+      </ol>
+    </section>
+
+    <section class="tb-home-explore" aria-labelledby="explore-heading">
+      <div class="tb-home-section-heading">
+        <div>
+          <p class="tb-home-kicker">Field tools</p>
+          <h2 id="explore-heading">Use the part you need</h2>
+        </div>
+        <p>The Field Guide is designed around player tasks. Deep technical reference remains searchable when you need exact IDs, commands, recipes, or compatibility details.</p>
+      </div>
+      <div class="tb-home-explore__grid">
+        {explore.map((item, index) => (
+          <a href={item.href} class:list={['tb-home-feature', { 'tb-home-feature--wide': index < 2 }]}>
+            <span>{item.eyebrow}</span>
+            <h3>{item.title}</h3>
+            <p>{item.description}</p>
+            <b aria-hidden="true">↗</b>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="tb-home-specimen-preview">
+      <div>
+        <p class="tb-home-kicker">Specimen identity</p>
+        <h2>Rare is more than one number.</h2>
+        <p>Body Type, Condition, Pigmentation, and Specimen Quality are independent. That means a catch can be Giant, Scarred, Iridescent, and Perfect at the same time.</p>
+        <a href={sitePath('/specimens/')}>Understand specimen traits →</a>
+      </div>
+      <div class="tb-home-axis-stack" aria-label="Four specimen trait axes">
+        <div><span>Body Type</span><strong>Normal · Giant · Dwarf</strong></div>
+        <div><span>Condition</span><strong>Normal · Scarred · Parasite-Ridden</strong></div>
+        <div><span>Pigmentation</span><strong>Normal · Albino · Iridescent</strong></div>
+        <div><span>Quality</span><strong>Normal · Perfect Specimen</strong></div>
+      </div>
+    </section>
+
+    <footer class="tb-home-footer">
+      <div><strong>Tideborne Field Guide</strong><span>Verified 2.1.0 player reference</span></div>
+      <nav aria-label="Homepage reference links">
+        <a href={sitePath('/wiki-home/')}>Wiki Overview</a>
+        <a href={sitePath('/configuration-and-commands/')}>Commands</a>
+        <a href={sitePath('/updating-and-compatibility/')}>Compatibility</a>
+        <a href="https://github.com/RedsLovesGames/TIDEBORNE">GitHub</a>
+      </nav>
+    </footer>
+  </main>
+</StarlightPage>
+
+<style>
+  .tb-home { display: grid; gap: clamp(3.5rem, 7vw, 7rem); width: min(100%, 92rem); margin-inline: auto; }
+  .tb-home-hero { position: relative; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(20rem, .72fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; min-height: min(70vh, 50rem); padding-block: clamp(1rem, 4vw, 4rem); }
+  .tb-home-hero::before { content: ''; position: absolute; z-index: -1; inset: -6rem -20vw auto; height: 38rem; background: radial-gradient(circle at 42% 38%, color-mix(in srgb, var(--tb-accent) 13%, transparent), transparent 48%), linear-gradient(180deg, color-mix(in srgb, var(--tb-background) 20%, transparent), transparent); pointer-events: none; }
+  .tb-home-badges { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1.3rem; }
+  .tb-home-badges span { border: 1px solid var(--tb-border-subtle); border-radius: 999px; background: color-mix(in srgb, var(--tb-surface) 82%, transparent); padding: .3rem .58rem; color: var(--tb-text-muted); font-size: .63rem; font-weight: 750; }
+  .tb-home-kicker { margin: 0 0 .45rem; color: var(--tb-accent); font-size: .68rem; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+  .tb-home-hero h1 { margin: 0; max-width: 55rem; font-size: clamp(3.3rem, 8vw, 7.4rem); line-height: .86; letter-spacing: -.068em; text-wrap: balance; }
+  .tb-home-lede { max-width: 53rem; margin: 1.4rem 0 0; color: var(--tb-text-secondary); font-size: clamp(.95rem, 1.6vw, 1.12rem); line-height: 1.65; }
+  .tb-home-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.55rem; }
+  .tb-home-button { display: inline-flex; align-items: center; justify-content: center; min-height: 2.8rem; border: 1px solid var(--tb-border-strong); border-radius: .7rem; background: var(--tb-surface); padding: .65rem 1rem; color: var(--tb-text); font-size: .78rem; font-weight: 850; text-decoration: none; transition: transform .16s ease, border-color .16s ease, background .16s ease; }
+  .tb-home-button:hover { transform: translateY(-1px); border-color: var(--tb-accent); }
+  .tb-home-button--primary { border-color: transparent; background: var(--tb-accent); color: var(--tb-background); }
+  .tb-home-proof { display: flex; flex-wrap: wrap; gap: .7rem 1.5rem; margin-top: 2rem; }
+  .tb-home-proof > div { display: grid; gap: .08rem; }
+  .tb-home-proof strong { font-size: 1rem; font-variant-numeric: tabular-nums; }
+  .tb-home-proof span { color: var(--tb-text-muted); font-size: .62rem; }
+  .tb-home-specimen { position: relative; display: grid; overflow: hidden; border: 1px solid var(--tb-border-subtle); border-radius: clamp(1.2rem, 3vw, 2rem); background: linear-gradient(160deg, #0b2433, #08141d 62%, #102b34); box-shadow: 0 34px 80px rgb(0 0 0 / .22); }
+  .tb-home-specimen__water { position: absolute; inset: 0; background: radial-gradient(circle at 70% 25%, rgb(134 198 197 / .16), transparent 34%), repeating-linear-gradient(168deg, transparent 0 22px, rgb(255 255 255 / .025) 23px 24px); pointer-events: none; }
+  .tb-home-specimen img, .tb-home-specimen__missing { position: relative; width: 100%; aspect-ratio: 1.2; object-fit: contain; padding: clamp(1.5rem, 5vw, 3.5rem); image-rendering: auto; filter: drop-shadow(0 22px 22px rgb(0 0 0 / .35)); }
+  .tb-home-specimen__missing { display: grid; place-items: center; color: var(--tb-accent); font-size: 4rem; }
+  .tb-home-specimen__label { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid rgb(255 255 255 / .08); background: rgb(7 20 29 / .75); padding: .9rem 1rem; backdrop-filter: blur(8px); }
+  .tb-home-specimen__label > div { display: grid; gap: .15rem; }
+  .tb-home-specimen__label span { color: var(--tb-text-muted); font-size: .61rem; }
+  .tb-home-specimen__label strong { font-size: 1rem; }
+  .tb-home-stars { color: var(--tb-score) !important; letter-spacing: .05em; }
+  .tb-home-specimen dl { position: relative; display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; margin: 0; padding: .9rem 1rem 0; }
+  .tb-home-specimen dl > div { display: grid; gap: .1rem; border-bottom: 1px solid rgb(255 255 255 / .06); padding-bottom: .5rem; }
+  .tb-home-specimen dt { color: var(--tb-text-muted); font-size: .58rem; }
+  .tb-home-specimen dd { margin: 0; color: var(--tb-text); font-size: .7rem; font-weight: 800; }
+  .tb-home-specimen > a { position: relative; margin: .85rem 1rem 1rem; color: var(--tb-accent); font-size: .69rem; font-weight: 850; text-decoration: none; }
+  .tb-home-search { display: grid; grid-template-columns: .8fr 1.2fr; gap: 2rem; align-items: center; border-block: 1px solid var(--tb-border-subtle); padding-block: 1.4rem; }
+  .tb-home-search h2, .tb-home-section-heading h2, .tb-home-specimen-preview h2 { margin: 0; letter-spacing: -.045em; }
+  .tb-home-search h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); }
+  .tb-home-search > a { display: grid; grid-template-columns: auto 1fr auto; gap: .9rem; align-items: center; border: 1px solid var(--tb-border-strong); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: .9rem 1rem; color: var(--tb-text); text-decoration: none; }
+  .tb-home-search > a > span { color: var(--tb-accent); font-size: 1.5rem; }
+  .tb-home-search > a div { display: grid; gap: .1rem; }
+  .tb-home-search > a strong { font-size: .78rem; }
+  .tb-home-search > a small { color: var(--tb-text-muted); font-size: .62rem; }
+  .tb-home-search > a b { color: var(--tb-accent); }
+  .tb-home-loop { display: grid; gap: 1.3rem; }
+  .tb-home-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+  .tb-home-section-heading h2 { font-size: clamp(1.9rem, 4vw, 3rem); }
+  .tb-home-section-heading > p { max-width: 34rem; margin: 0; color: var(--tb-text-muted); font-size: .76rem; line-height: 1.5; text-align: right; }
+  .tb-home-loop ol { display: grid; grid-template-columns: repeat(5, 1fr); gap: .55rem; margin: 0; padding: 0; list-style: none; }
+  .tb-home-loop li { display: grid; gap: .3rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .9rem; }
+  .tb-home-loop li span { color: var(--tb-accent); font-size: .59rem; font-weight: 900; }
+  .tb-home-loop li strong { font-size: .77rem; }
+  .tb-home-loop li small { color: var(--tb-text-muted); font-size: .63rem; line-height: 1.4; }
+  .tb-home-explore { display: grid; gap: 1.2rem; }
+  .tb-home-explore__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+  .tb-home-feature { position: relative; display: grid; align-content: start; min-height: 12rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: 1rem; color: var(--tb-text); text-decoration: none; transition: transform .16s ease, border-color .16s ease; }
+  .tb-home-feature:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--tb-accent) 65%, var(--tb-border-subtle)); }
+  .tb-home-feature--wide { grid-column: span 2; min-height: 13rem; background: linear-gradient(145deg, color-mix(in srgb, var(--tb-accent) 5%, var(--tb-surface)), var(--tb-surface)); }
+  .tb-home-feature > span { color: var(--tb-accent); font-size: .61rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+  .tb-home-feature h3 { margin: .5rem 0 0; font-size: clamp(1rem, 2vw, 1.3rem); }
+  .tb-home-feature p { max-width: 34rem; margin: .45rem 0 0; color: var(--tb-text-secondary); font-size: .7rem; line-height: 1.5; }
+  .tb-home-feature b { position: absolute; right: 1rem; bottom: .85rem; color: var(--tb-accent); font-size: .9rem; }
+  .tb-home-specimen-preview { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(2rem, 6vw, 6rem); align-items: center; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: linear-gradient(145deg, color-mix(in srgb, var(--tb-score) 5%, var(--tb-surface)), var(--tb-surface)); padding: clamp(1.2rem, 4vw, 2.2rem); }
+  .tb-home-specimen-preview h2 { font-size: clamp(2rem, 4vw, 3.4rem); }
+  .tb-home-specimen-preview > div:first-child > p:not(.tb-home-kicker) { color: var(--tb-text-secondary); font-size: .78rem; line-height: 1.55; }
+  .tb-home-specimen-preview a { color: var(--tb-accent); font-size: .7rem; font-weight: 850; text-decoration: none; }
+  .tb-home-axis-stack { display: grid; gap: .55rem; }
+  .tb-home-axis-stack > div { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--tb-border-subtle); padding: .55rem 0; }
+  .tb-home-axis-stack span { color: var(--tb-text-muted); font-size: .67rem; }
+  .tb-home-axis-stack strong { font-size: .75rem; text-align: right; }
+  .tb-home-footer { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; border-top: 1px solid var(--tb-border-subtle); padding-block: 1.2rem; }
+  .tb-home-footer > div { display: grid; gap: .1rem; }
+  .tb-home-footer strong { font-size: .72rem; }
+  .tb-home-footer span { color: var(--tb-text-muted); font-size: .61rem; }
+  .tb-home-footer nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .55rem 1rem; }
+  .tb-home-footer a { color: var(--tb-text-secondary); font-size: .64rem; text-decoration: none; }
+  .tb-home-footer a:hover { color: var(--tb-accent); }
+  @media (max-width: 72rem) { .tb-home-hero { grid-template-columns: 1fr; min-height: 0; } .tb-home-specimen { width: min(100%, 34rem); } .tb-home-loop ol { grid-template-columns: repeat(2, 1fr); } .tb-home-explore__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 52rem) { .tb-home-search, .tb-home-specimen-preview { grid-template-columns: 1fr; } .tb-home-section-heading { align-items: start; flex-direction: column; } .tb-home-section-heading > p { text-align: left; } }
+  @media (max-width: 38rem) { .tb-home-loop ol, .tb-home-explore__grid { grid-template-columns: 1fr; } .tb-home-feature--wide { grid-column: auto; } .tb-home-footer { align-items: start; flex-direction: column; } .tb-home-footer nav { justify-content: flex-start; } .tb-home-axis-stack > div { align-items: start; flex-direction: column; } .tb-home-axis-stack strong { text-align: left; } }
+  @media (prefers-reduced-motion: reduce) { .tb-home-button, .tb-home-feature { transition: none; } .tb-home-button:hover, .tb-home-feature:hover { transform: none; } }
+</style>
