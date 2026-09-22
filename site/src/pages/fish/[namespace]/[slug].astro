@@ -13,6 +13,7 @@ export function getStaticPaths() {
 type CatalogRecord = (typeof fishCatalog.records)[number];
 const { record } = Astro.props as { record: CatalogRecord };
 const sourceRevision = fishCatalog.meta.sourceRevision;
+const basePath = import.meta.env.BASE_URL;
 
 const titleCase = (value: string | null | undefined) => value
   ? value.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase())
@@ -55,7 +56,7 @@ const variantLabel = (key: string) => key === 'parasite_ridden' ? 'Parasite-Ridd
       <FishVariantViewer
         client:load
         fishName={record.name}
-        sourceRevision={sourceRevision}
+        basePath={basePath}
         variants={record.variants}
       />
 
