@@ -1,0 +1,81 @@
+.tb-variant-viewer {
+  display: grid;
+  gap: var(--tb-space-3);
+}
+
+.tb-variant-viewer__stage {
+  display: grid;
+  place-items: center;
+  min-height: 24rem;
+  overflow: hidden;
+  border: 1px solid var(--tb-border-subtle);
+  border-radius: var(--tb-radius-lg);
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--tb-accent) 18%, transparent), transparent 52%),
+    linear-gradient(180deg, color-mix(in srgb, var(--tb-surface-raised) 94%, transparent), var(--tb-background));
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.16);
+}
+
+.tb-variant-viewer__stage img {
+  width: min(100%, 44rem);
+  max-height: 31rem;
+  object-fit: contain;
+  padding: var(--tb-space-5);
+}
+
+.tb-variant-viewer__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tb-space-2);
+}
+
+.tb-variant-viewer__controls button {
+  min-height: 2.35rem;
+  border: 1px solid var(--tb-border-subtle);
+  border-radius: 999px;
+  background: var(--tb-surface-raised);
+  padding: 0.4rem 0.78rem;
+  color: var(--tb-text-secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tb-variant-viewer__controls button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--tb-accent) 75%, var(--tb-border-strong));
+  background: color-mix(in srgb, var(--tb-accent) 18%, var(--tb-surface-raised));
+  color: var(--tb-text-primary);
+}
+
+.tb-variant-viewer--empty,
+.tb-variant-viewer__fallback {
+  display: grid;
+  place-items: center;
+  gap: var(--tb-space-2);
+  min-height: 18rem;
+  color: var(--tb-text-muted);
+  text-align: center;
+}
+
+.tb-variant-viewer--empty > span,
+.tb-variant-viewer__fallback > span {
+  color: var(--tb-border-strong);
+  font-size: 2.75rem;
+}
+
+.tb-variant-viewer__fallback strong,
+.tb-variant-viewer--empty strong {
+  color: var(--tb-text-secondary);
+}
+
+@media (max-width: 40rem) {
+  .tb-variant-viewer__stage {
+    min-height: 18rem;
+  }
+
+  .tb-variant-viewer__stage img {
+    max-height: 22rem;
+    padding: var(--tb-space-3);
+  }
+}
