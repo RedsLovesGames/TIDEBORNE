@@ -2,6 +2,34 @@
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import recipeData from '../../data/generated/recipes.json';
 
+type RecipeIngredient = {
+  type: 'item' | 'tag';
+  id: string;
+};
+
+type RecipeBase = {
+  sourcePath: string;
+  category: string | null;
+  requiredMods: string[];
+  result: {
+    id: string;
+    count: number;
+  };
+};
+
+type ShapedRecipe = RecipeBase & {
+  type: 'shaped';
+  pattern: string[];
+  key: Record<string, RecipeIngredient>;
+};
+
+type ShapelessRecipe = RecipeBase & {
+  type: 'shapeless';
+  ingredients: RecipeIngredient[];
+};
+
+type Recipe = ShapedRecipe | ShapelessRecipe;
+
 const names: Record<string, string> = {
   'tide_traits:anglers_satchel': "Angler's Satchel",
   'tidebound_compatibility:chum_bucket': 'Chum Bucket',
@@ -23,7 +51,7 @@ const descriptions: Record<string, string> = {
   'tidebound_compatibility:swift_line': 'A living-current line that refuses to sit still.',
   'tidebound_compatibility:copper_leader': '30% catch-loss protection with a very small handling cost.',
   'tidebound_compatibility:steel_leader': '55% catch-loss protection with a moderate handling cost.',
-  'tidebound_compatibility:gold_leader': '75% catch-loss protection with a meaningful handling cost.',
+  'tidebound_compatibility:gold_leader': '75% catch-loss protection, with a meaningful handling cost.',
   'tidebound_compatibility:diamond_leader': '95% catch-loss protection, at the cost of the hardest handling.',
   'tidebound_compatibility:shark_tooth_hook': 'A jagged hook made for equally jagged catches.',
   'tidebound_compatibility:leviathan_bait': 'Guarantees a Tide fish, adds +15 fish-selection Fishing Luck, and applies a harder fight profile.',
@@ -32,7 +60,7 @@ const descriptions: Record<string, string> = {
 
 const displayName = (id: string) => names[id] ?? id.split(':').pop()?.replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? id;
 const shortItem = (id: string) => id.split(':').pop()?.replaceAll('_', ' ') ?? id;
-const recipeById = recipeData.recipes;
+const recipeById = recipeData.recipes as unknown as Recipe[];
 ---
 
 <StarlightPage
