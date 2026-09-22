@@ -8,9 +8,10 @@
   },
   "scripts": {
     "dev": "npm run prepare:content && astro dev",
-    "prepare:content": "npm run sync:docs && npm run generate:recipes",
+    "prepare:content": "npm run sync:docs && npm run generate:recipes && npm run sync:fish-renders",
     "sync:docs": "node scripts/sync-docs.mjs",
     "generate:recipes": "node scripts/generate-recipes.mjs",
+    "sync:fish-renders": "node scripts/sync-fish-renders.mjs",
     "import:fish": "node scripts/import-fish-catalog.mjs",
     "build": "npm run prepare:content && astro check && astro build",
     "validate:build": "node scripts/validate-build.mjs",
