@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { GearBuilder } from '../../components/gear/GearBuilder';
 import recipeData from '../../data/generated/recipes.json';
 
 type RecipeIngredient = {
@@ -54,7 +55,7 @@ const descriptions: Record<string, string> = {
   'tidebound_compatibility:gold_leader': '75% catch-loss protection, with a meaningful handling cost.',
   'tidebound_compatibility:diamond_leader': '95% catch-loss protection, at the cost of the hardest handling.',
   'tidebound_compatibility:shark_tooth_hook': 'A jagged hook made for equally jagged catches.',
-  'tidebound_compatibility:leviathan_bait': 'Guarantees a Tide fish, adds +15 fish-selection Fishing Luck, and applies a harder fight profile.',
+  'tidebound_compatibility:leviathan_bait': 'Canonical Fishing System 2 preview: +4 Fishing Luck, +1 Trait Luck, 1.30x Strength, 1.20x Tempo, fish-only catch category, and 2.00x boss target weight while active.',
   'tidebound_compatibility:chum_bucket': 'An Apex Waters ocean mechanic that only functions with Apex compatibility active.',
 };
 
@@ -66,7 +67,7 @@ const recipeById = recipeData.recipes as unknown as Recipe[];
 <StarlightPage
   frontmatter={{
     title: 'Gear & Recipes',
-    description: 'Current Tideborne integration gear and crafting recipes generated from the 2.1.0 resources.',
+    description: 'Current Tideborne integration gear, loadout preview, and crafting recipes generated from the 2.1.0 resources.',
     template: 'splash',
     tableOfContents: false,
   }}
@@ -77,7 +78,7 @@ const recipeById = recipeData.recipes as unknown as Recipe[];
         <p class="tb-fish-kicker">Generated from current resources</p>
         <h1>Gear & Recipes</h1>
         <p>
-          These crafting layouts come directly from the recipe JSON in this Tideborne commit. Optional integration items show the mod they require instead of pretending they are always available.
+          Build a Tideborne-aware loadout, inspect its canonical modifiers, and reference crafting layouts directly from the current recipe JSON. Optional integration content stays clearly labeled.
         </p>
       </div>
       <span class="tb-gear-count">{recipeData.recipeCount} recipes</span>
@@ -92,7 +93,7 @@ const recipeById = recipeData.recipes as unknown as Recipe[];
       <article>
         <span>Myths of the Sea</span>
         <h2>Leviathan Bait</h2>
-        <p>Guarantees a Tide fish instead of junk, treasure, or crates, adds +15 fish-selection Fishing Luck, and keeps normal habitat eligibility.</p>
+        <p>The canonical Fishing System 2 modifier adds +4 Fishing Luck, +1 Trait Luck, 1.30× Strength and 1.20× Tempo while restricting the Tideborne catch category to fish.</p>
       </article>
       <article>
         <span>Compatibility-safe IDs</span>
@@ -100,6 +101,8 @@ const recipeById = recipeData.recipes as unknown as Recipe[];
         <p>Abaia Line keeps the internal ID <code>swift_line</code>. Iron Leader keeps <code>steel_leader</code> for old-world compatibility.</p>
       </article>
     </section>
+
+    <GearBuilder client:load />
 
     <section class="tb-recipe-section" aria-labelledby="recipe-heading">
       <div class="tb-recipe-section__heading">
