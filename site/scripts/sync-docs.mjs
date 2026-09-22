@@ -31,6 +31,26 @@ function yamlTitle(title) {
   return /^[A-Za-z0-9 .&'()/-]+$/.test(title) ? title : JSON.stringify(title);
 }
 
+function rewriteLocalMarkdownLinks(markdown, filenameMap) {
+  return markdown.replace(/\]\(([^)]+)\)/g, (match, destination) => {
+    const trimmed = destination.trim();
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('/') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+      return match;
+    }
+
+    const fragmentIndex = trimmed.indexOf('#');
+    const queryIndex = trimmed.indexOf('?');
+    const suffixIndex = [fragmentIndex, queryIndex].filter((index) => index >= 0).sort((a, b) => a - b)[0] ?? -1;
+    const filePart = suffixIndex >= 0 ? trimmed.slice(0, suffixIndex) : trimmed;
+    const suffix = suffixIndex >= 0 ? trimmed.slice(suffixIndex) : '';
+
+    if (!filePart.toLowerCase().endsWith('.md') || filePart.includes('/')) return match;
+
+    const outputName = filenameMap.get(filePart.toLowerCase());
+    return outputName ? `](${outputName}${suffix})` : match;
+  });
+}
+
 function withFrontmatter(markdown, filename) {
   if (/^\uFEFF?---\s*\r?\n/.test(markdown)) return markdown;
   const title = deriveTitle(markdown, filename);
@@ -44,12 +64,14 @@ export async function syncDocs({ sourceDir, outputDir }) {
   const entries = (await readdir(sourceDir, { withFileTypes: true }))
     .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.md'))
     .sort((a, b) => a.name.localeCompare(b.name));
+  const filenameMap = new Map(entries.map((entry) => [entry.name.toLowerCase(), toSlug(entry.name)]));
 
   for (const entry of entries) {
     const sourcePath = join(sourceDir, entry.name);
     const outputPath = join(outputDir, toSlug(entry.name));
     const markdown = await readFile(sourcePath, 'utf8');
-    await writeFile(outputPath, withFrontmatter(markdown, entry.name), 'utf8');
+    const rewritten = rewriteLocalMarkdownLinks(markdown, filenameMap);
+    await writeFile(outputPath, withFrontmatter(rewritten, entry.name), 'utf8');
   }
 }
 
