@@ -3,6 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { FishVariantViewer } from '../../../components/fish/FishVariantViewer';
 import { buildFishRoutes } from '../../../data/fish/fishRoutes';
 import fishCatalog from '../../../data/generated/fish.json';
+import { sitePath } from '../../../lib/urls';
 import '../../../styles/fish-detail.css';
 
 export function getStaticPaths() {
@@ -11,7 +12,6 @@ export function getStaticPaths() {
 
 type CatalogRecord = (typeof fishCatalog.records)[number];
 const { record } = Astro.props as { record: CatalogRecord };
-const basePath = import.meta.env.BASE_URL;
 const sourceRevision = fishCatalog.meta.sourceRevision;
 
 const titleCase = (value: string | null | undefined) => value
@@ -44,7 +44,7 @@ const variantLabel = (key: string) => key === 'parasite_ridden' ? 'Parasite-Ridd
 >
   <article class="tb-fish-detail">
     <nav class="tb-fish-detail__crumbs" aria-label="Breadcrumb">
-      <a href={`${basePath}fish/`}>Fish Explorer</a>
+      <a href={sitePath('/fish/')}>Fish Explorer</a>
       <span aria-hidden="true">/</span>
       <span>{record.source}</span>
       <span aria-hidden="true">/</span>
