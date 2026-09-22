@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -39,12 +39,18 @@ jobs:
         working-directory: site
         run: npm run import:fish
 
-      - name: Preserve normalized fish catalog
-        uses: actions/upload-artifact@v4
-        with:
-          name: normalized-fish-catalog
-          path: site/src/data/generated/fish.json
-          if-no-files-found: error
+      - name: Commit normalized fish catalog once
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- site/src/data/generated/fish.json && git ls-files --error-unmatch site/src/data/generated/fish.json >/dev/null 2>&1; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/src/data/generated/fish.json
+          git commit -m "chore(wiki): snapshot normalized fish catalog"
+          git push origin HEAD:wiki/official-field-guide
 
       - name: Typecheck and build
         working-directory: site
