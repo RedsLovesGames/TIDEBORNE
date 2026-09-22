@@ -1,0 +1,204 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { perfectSpecimenCurve, rarityTraitFactors, specimenAxes } from '../../data/specimens/specimenReference';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'Specimens & Traits',
+    description: 'A visual guide to Tideborne specimen identity, trait axes, Trait Luck, rarity compensation, Perfect Catch, and Momentum.',
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <main class="tb-specimens">
+    <header class="tb-specimens__hero">
+      <div>
+        <p class="tb-specimens__kicker">Every catch is an individual</p>
+        <h1>One fish. One specimen.</h1>
+        <p>
+          Tideborne rolls one natural specimen, then builds persistent size and trait state around it. The same identity is reused by FishScore, Satchels, records, history, entities, buckets, displays, and network projections.
+        </p>
+      </div>
+      <div class="tb-specimens__rule">
+        <strong>No reroll loop</strong>
+        <span>Body Type changes the physical result. It does not secretly generate a second natural percentile.</span>
+      </div>
+    </header>
+
+    <section class="tb-specimen-flow" aria-label="Canonical specimen generation flow">
+      <article><span>01</span><strong>Species</strong><p>Tide eligibility + weighted species selection</p></article>
+      <article><span>02</span><strong>Natural specimen</strong><p>One percentile and base physical size</p></article>
+      <article><span>03</span><strong>Independent traits</strong><p>Body, condition, pigmentation, quality</p></article>
+      <article><span>04</span><strong>Final physical result</strong><p>Body transformation updates length and final percentile</p></article>
+      <article><span>05</span><strong>FishScore</strong><p>Canonical 1–3000 score from finalized specimen state</p></article>
+    </section>
+
+    <section class="tb-specimens__section" aria-labelledby="axes-heading">
+      <div class="tb-specimens__section-heading">
+        <div>
+          <p class="tb-specimens__kicker">Independent axes</p>
+          <h2 id="axes-heading">Traits combine instead of replacing one another</h2>
+        </div>
+        <p>A Giant can also be Scarred, Iridescent, and a Perfect Specimen. Each category contributes its own result.</p>
+      </div>
+      <div class="tb-axis-grid">
+        {specimenAxes.map((axis, index) => (
+          <article>
+            <header><span>{String(index + 1).padStart(2, '0')}</span><h3>{axis.name}</h3></header>
+            <div class="tb-axis-outcomes">{axis.outcomes.map((outcome) => <span>{outcome}</span>)}</div>
+            <p>{axis.description}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="tb-specimens__split">
+      <article class="tb-specimen-card tb-specimen-card--size">
+        <p class="tb-specimens__kicker">Physical size</p>
+        <h2>Giant & Dwarf</h2>
+        <p>The base Body Type event starts at 5% before canonical rarity, Trait Luck, Perfect Catch, and other modifiers.</p>
+        <div class="tb-size-pair">
+          <div><strong>Giant</strong><span>1.10×–1.30×</span><small>final length multiplier</small></div>
+          <div><strong>Dwarf</strong><span>0.60×–0.82×</span><small>final length multiplier</small></div>
+        </div>
+      </article>
+
+      <article class="tb-specimen-card">
+        <p class="tb-specimens__kicker">Performance bonus</p>
+        <h2>Perfect Catch ≠ Perfect Specimen</h2>
+        <p>A Perfect Catch is a minigame-performance result. It can improve temporary trait opportunities without replacing the specimen's natural-size roll.</p>
+        <dl>
+          <div><dt>Temporary Trait Luck</dt><dd>+10</dd></div>
+          <div><dt>Body Type event</dt><dd>1.25×</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="tb-specimens__math" aria-labelledby="luck-heading">
+      <div>
+        <p class="tb-specimens__kicker">Trait Luck</p>
+        <h2 id="luck-heading">Probability scales, it does not simply add a percentage</h2>
+        <pre><code>P′ = 1 - (1 - P)^(1 + T / 10)</code></pre>
+        <p><code>P</code> = probability before Trait Luck, <code>T</code> = Trait Luck, <code>P′</code> = adjusted probability.</p>
+      </div>
+      <div class="tb-specimens__example">
+        <span>Example</span>
+        <strong>5% base + 10 Trait Luck → 9.75%</strong>
+        <p>This keeps low-probability traits valuable without treating every event like a flat +10 percentage points.</p>
+      </div>
+    </section>
+
+    <section class="tb-specimens__section" aria-labelledby="rarity-heading">
+      <div class="tb-specimens__section-heading">
+        <div>
+          <p class="tb-specimens__kicker">Rarity compensation</p>
+          <h2 id="rarity-heading">Rare species get stronger trait scaling</h2>
+        </div>
+        <p>The factor modifies trait probability through the canonical service. It is not itself a visible trait.</p>
+      </div>
+      <div class="tb-rarity-row">
+        {rarityTraitFactors.map((factor, index) => (
+          <div><span>{'★'.repeat(index + 1)}</span><strong>{factor.toFixed(2)}×</strong></div>
+        ))}
+      </div>
+    </section>
+
+    <section class="tb-specimens__split">
+      <article class="tb-specimen-card">
+        <p class="tb-specimens__kicker">Quality curve</p>
+        <h2>Perfect Specimen favors exceptional natural fish</h2>
+        <div class="tb-curve-table">
+          {perfectSpecimenCurve.map((point) => (
+            <div><span>{point.percentile}</span><strong>{point.chance}</strong></div>
+          ))}
+        </div>
+        <small>Documented V2 base curve before Trait Luck and Perfect Catch modifiers.</small>
+      </article>
+
+      <article class="tb-specimen-card tb-specimen-card--momentum">
+        <p class="tb-specimens__kicker">Species targeting</p>
+        <h2>Trait Momentum</h2>
+        <p>Ordinary catches of the same species can build temporary Trait Luck for that player/species pair. Notable trait results reset or reduce the stored momentum according to canonical rules.</p>
+        <div class="tb-momentum-bar"><span style="width: 72%"></span></div>
+        <dl>
+          <div><dt>Typical ordinary catch</dt><dd>≈ +1</dd></div>
+          <div><dt>Practical species cap</dt><dd>≈ +15</dd></div>
+        </dl>
+        <small>Momentum is server-owned and never becomes specimen identity.</small>
+      </article>
+    </section>
+
+    <footer class="tb-specimens__footer">
+      <a href="/TIDEBORNE/specimens-and-traits/">Read the full specimen article →</a>
+      <a href="/TIDEBORNE/tools/fishscore/">Open FishScore Calculator →</a>
+      <a href="/TIDEBORNE/fish/">Explore fish species →</a>
+    </footer>
+  </main>
+</StarlightPage>
+
+<style>
+  .tb-specimens { display: grid; gap: 3rem; width: min(100%, 88rem); margin-inline: auto; }
+  .tb-specimens__hero, .tb-specimens__section-heading, .tb-specimens__math { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+  .tb-specimens__hero h1 { margin: 0; font-size: clamp(2.8rem, 7vw, 5.8rem); line-height: .92; letter-spacing: -.06em; }
+  .tb-specimens__hero > div:first-child > p:last-child { max-width: 56rem; margin: .9rem 0 0; color: var(--tb-text-secondary); font-size: 1rem; line-height: 1.6; }
+  .tb-specimens__kicker { margin: 0 0 .35rem; color: var(--tb-accent); font-size: .68rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+  .tb-specimens__rule { display: grid; gap: .2rem; max-width: 20rem; border: 1px solid color-mix(in srgb, var(--tb-accent) 35%, var(--tb-border-subtle)); border-radius: var(--tb-radius-md); background: color-mix(in srgb, var(--tb-accent) 7%, var(--tb-surface)); padding: .85rem 1rem; }
+  .tb-specimens__rule strong { color: var(--tb-accent); font-size: .74rem; }
+  .tb-specimens__rule span { color: var(--tb-text-muted); font-size: .66rem; line-height: 1.4; }
+  .tb-specimen-flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: .55rem; }
+  .tb-specimen-flow article { display: grid; gap: .25rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .85rem; }
+  .tb-specimen-flow span { color: var(--tb-accent); font-size: .6rem; font-weight: 900; }
+  .tb-specimen-flow strong { font-size: .78rem; }
+  .tb-specimen-flow p { margin: 0; color: var(--tb-text-muted); font-size: .64rem; line-height: 1.4; }
+  .tb-specimens__section { display: grid; gap: 1.2rem; }
+  .tb-specimens__section-heading h2, .tb-specimen-card h2, .tb-specimens__math h2 { margin: 0; letter-spacing: -.04em; }
+  .tb-specimens__section-heading h2 { max-width: 48rem; font-size: clamp(1.8rem, 4vw, 2.7rem); }
+  .tb-specimens__section-heading > p { max-width: 31rem; margin: 0; color: var(--tb-text-muted); font-size: .76rem; text-align: right; }
+  .tb-axis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .7rem; }
+  .tb-axis-grid article { display: grid; align-content: start; gap: .8rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: 1rem; }
+  .tb-axis-grid header { display: flex; align-items: center; gap: .55rem; }
+  .tb-axis-grid header span { color: var(--tb-text-muted); font-size: .6rem; font-weight: 900; }
+  .tb-axis-grid h3 { margin: 0; font-size: .9rem; }
+  .tb-axis-outcomes { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .tb-axis-outcomes span { border-radius: 999px; background: var(--tb-surface-raised); padding: .3rem .5rem; color: var(--tb-text-secondary); font-size: .63rem; font-weight: 750; }
+  .tb-axis-grid article > p { margin: 0; color: var(--tb-text-muted); font-size: .68rem; line-height: 1.45; }
+  .tb-specimens__split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .tb-specimen-card { border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: 1.2rem; }
+  .tb-specimen-card--size { background: linear-gradient(145deg, color-mix(in srgb, var(--tb-accent) 6%, var(--tb-surface)), var(--tb-surface)); }
+  .tb-specimen-card--momentum { background: linear-gradient(145deg, color-mix(in srgb, var(--tb-score) 6%, var(--tb-surface)), var(--tb-surface)); }
+  .tb-specimen-card > p:not(.tb-specimens__kicker) { color: var(--tb-text-secondary); font-size: .76rem; line-height: 1.55; }
+  .tb-size-pair { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: 1rem; }
+  .tb-size-pair > div { display: grid; gap: .15rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-background); padding: .8rem; }
+  .tb-size-pair strong { font-size: .73rem; }
+  .tb-size-pair span { color: var(--tb-accent); font-size: 1.3rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .tb-size-pair small, .tb-specimen-card > small { color: var(--tb-text-muted); font-size: .61rem; }
+  .tb-specimen-card dl { display: grid; gap: .4rem; margin: 1rem 0 0; }
+  .tb-specimen-card dl > div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--tb-border-subtle); padding: .45rem 0; }
+  .tb-specimen-card dt { color: var(--tb-text-secondary); font-size: .7rem; }
+  .tb-specimen-card dd { margin: 0; color: var(--tb-score); font-size: .75rem; font-weight: 900; }
+  .tb-specimens__math { align-items: center; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-background); padding: clamp(1rem, 3vw, 1.5rem); }
+  .tb-specimens__math > div:first-child { max-width: 48rem; }
+  .tb-specimens__math pre { margin: .8rem 0 .45rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .85rem; overflow: auto; }
+  .tb-specimens__math pre code { color: var(--tb-accent); font-size: clamp(.85rem, 2vw, 1.1rem); }
+  .tb-specimens__math > div:first-child > p:last-child { color: var(--tb-text-muted); font-size: .67rem; }
+  .tb-specimens__example { display: grid; gap: .25rem; max-width: 22rem; border-left: 2px solid var(--tb-score); padding-left: 1rem; }
+  .tb-specimens__example span { color: var(--tb-score); font-size: .62rem; font-weight: 900; text-transform: uppercase; }
+  .tb-specimens__example strong { font-size: .84rem; }
+  .tb-specimens__example p { margin: 0; color: var(--tb-text-muted); font-size: .66rem; line-height: 1.4; }
+  .tb-rarity-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: .55rem; }
+  .tb-rarity-row > div { display: grid; place-items: center; gap: .3rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .75rem .4rem; }
+  .tb-rarity-row span { color: var(--tb-score); font-size: .66rem; letter-spacing: .03em; }
+  .tb-rarity-row strong { font-size: .85rem; }
+  .tb-curve-table { display: grid; gap: .3rem; margin: 1rem 0 .7rem; }
+  .tb-curve-table > div { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--tb-border-subtle); padding: .35rem 0; }
+  .tb-curve-table span { color: var(--tb-text-secondary); font-size: .68rem; }
+  .tb-curve-table strong { color: var(--tb-score); font-size: .7rem; }
+  .tb-momentum-bar { height: .48rem; margin: 1rem 0 .6rem; border-radius: 999px; background: var(--tb-background); overflow: hidden; }
+  .tb-momentum-bar span { display: block; height: 100%; border-radius: inherit; background: var(--tb-score); }
+  .tb-specimens__footer { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; border-top: 1px solid var(--tb-border-subtle); padding-top: 1.25rem; }
+  .tb-specimens__footer a { color: var(--tb-accent); font-size: .72rem; font-weight: 800; text-decoration: none; }
+  @media (max-width: 68rem) { .tb-specimen-flow { grid-template-columns: repeat(2, 1fr); } .tb-axis-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 48rem) { .tb-specimens__hero, .tb-specimens__section-heading, .tb-specimens__math { align-items: start; flex-direction: column; } .tb-specimens__section-heading > p { text-align: left; } .tb-specimens__split { grid-template-columns: 1fr; } .tb-rarity-row { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 32rem) { .tb-specimen-flow, .tb-axis-grid, .tb-rarity-row { grid-template-columns: 1fr; } }
+</style>
