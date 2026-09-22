@@ -16,6 +16,10 @@ function toSlug(filename) {
     .toLowerCase()}.md`;
 }
 
+function outputRoute(outputName) {
+  return `../${outputName.slice(0, -extname(outputName).length)}/`;
+}
+
 function deriveTitle(markdown, filename) {
   const heading = markdown.match(/^#\s+(.+?)\s*$/m)?.[1]?.trim();
   if (heading) return heading;
@@ -47,7 +51,7 @@ function rewriteLocalMarkdownLinks(markdown, filenameMap) {
     if (!filePart.toLowerCase().endsWith('.md') || filePart.includes('/')) return match;
 
     const outputName = filenameMap.get(filePart.toLowerCase());
-    return outputName ? `](${outputName}${suffix})` : match;
+    return outputName ? `](${outputRoute(outputName)}${suffix})` : match;
   });
 }
 
