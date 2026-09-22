@@ -40,7 +40,7 @@ export default defineConfig({
         {
           label: 'Progression & Records',
           items: [
-            { slug: 'anglers-satchel', label: "Angler's Satchel" },
+            { label: "Angler's Satchel", link: '/TIDEBORNE/satchel/' },
             { slug: 'team-journal-and-records', label: 'Team Journal & Records' },
             { slug: 'hall-record-display', label: 'Hall Record Display' },
           ],
