@@ -1,0 +1,67 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { FishScoreCalculator } from '../../../components/fishscore/FishScoreCalculator';
+
+const basePath = import.meta.env.BASE_URL;
+---
+
+<StarlightPage
+  frontmatter={{
+    title: 'FishScore Calculator',
+    description: 'Calculate the canonical Tideborne FishScore V2 for a specimen.',
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <FishScoreCalculator client:load />
+
+  <section class="tb-score-reference">
+    <div>
+      <p class="tb-fish-kicker">Exact mechanics</p>
+      <h2>What the calculator uses</h2>
+      <p>
+        FishScore combines species rarity, final percentile, Condition, Body Type, Pigmentation, and Specimen Quality.
+        Ownership, records, catch age, and the angler who caught the fish do not add FishScore points.
+      </p>
+    </div>
+    <a href={`${basePath}fishscore/`}>Read the full FishScore reference →</a>
+  </section>
+</StarlightPage>
+
+<style>
+  .tb-score-reference {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--tb-space-6);
+    width: min(100%, 84rem);
+    margin: var(--tb-space-8, 2rem) auto 0;
+    border-top: 1px solid var(--tb-border-subtle);
+    padding-top: var(--tb-space-6);
+  }
+
+  .tb-score-reference h2 {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .tb-score-reference p:not(.tb-fish-kicker) {
+    max-width: 50rem;
+    margin: var(--tb-space-3) 0 0;
+    color: var(--tb-text-secondary);
+  }
+
+  .tb-score-reference a {
+    flex: none;
+    color: var(--tb-accent);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  @media (max-width: 46rem) {
+    .tb-score-reference {
+      align-items: start;
+      flex-direction: column;
+    }
+  }
+</style>
