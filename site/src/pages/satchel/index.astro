@@ -1,0 +1,188 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { capacityLevels, satchelFeatures, satchelSortKeys, trophyLockEvidence } from '../../data/satchel/satchelProgression';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Angler's Satchel",
+    description: 'Capacity progression, feature upgrades, Auto-Stow, sorting, and Trophy Lock behavior for Tideborne 2.1.0.',
+    template: 'splash',
+    tableOfContents: false,
+  }}
+>
+  <main class="tb-satchel">
+    <header class="tb-satchel__hero">
+      <div>
+        <p class="tb-satchel__kicker">Collection progression</p>
+        <h1>Angler's Satchel</h1>
+        <p>
+          Portable fish storage becomes a specimen-aware progression system with configurable capacity, sorting, Auto-Stow, records, trait inspection, and trophy protection.
+        </p>
+      </div>
+      <div class="tb-satchel__version">
+        <strong>2.1.0 reference</strong>
+        <span>Costs are raw XP points, not levels.</span>
+      </div>
+    </header>
+
+    <section class="tb-satchel__notice" aria-label="Configuration notice">
+      <strong>Server-configurable progression</strong>
+      <p>The values below are the standard defaults. Servers can change conversion cost, capacity progression, feature costs, protection rules, and related behavior.</p>
+    </section>
+
+    <section class="tb-satchel__section" aria-labelledby="capacity-heading">
+      <div class="tb-satchel__section-heading">
+        <div>
+          <p class="tb-satchel__kicker">Storage</p>
+          <h2 id="capacity-heading">Capacity progression</h2>
+        </div>
+        <p>Capacity multiplies Tide's resolved base Fish Satchel capacity instead of assuming a fixed slot count.</p>
+      </div>
+
+      <div class="tb-capacity-track">
+        {capacityLevels.map((level, index) => (
+          <article class="tb-capacity-step">
+            <div class="tb-capacity-step__index">{index}</div>
+            <div>
+              <h3>{level.name}</h3>
+              <strong>{level.multiplier.toFixed(1)}× capacity</strong>
+              <span>{level.xpCost === 0 ? 'Included' : `${level.xpCost} XP`}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="tb-satchel__section" aria-labelledby="features-heading">
+      <div class="tb-satchel__section-heading">
+        <div>
+          <p class="tb-satchel__kicker">Feature unlocks</p>
+          <h2 id="features-heading">Six Satchel upgrades</h2>
+        </div>
+        <p>The defaults come from the current `SatchelFeature` enum. Each feature cost is read through server configuration at runtime.</p>
+      </div>
+
+      <div class="tb-feature-grid">
+        {satchelFeatures.map((feature, index) => (
+          <article class="tb-feature-card">
+            <header>
+              <span class="tb-feature-card__number">{String(index + 1).padStart(2, '0')}</span>
+              <span class="tb-feature-card__cost">{feature.xpCost} XP</span>
+            </header>
+            <div>
+              <p class="tb-feature-card__stage">{feature.stage}</p>
+              <h3>{feature.name}</h3>
+              <p>{feature.purpose}</p>
+            </div>
+            <footer>
+              <code>{feature.id}</code>
+              {feature.requiresMultiplayerExtras && <span>Multiplayer Extras</span>}
+            </footer>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="tb-satchel__split">
+      <article class="tb-satchel__panel">
+        <p class="tb-satchel__kicker">Organization</p>
+        <h2>Specimen-aware sorting</h2>
+        <p>Sorting reads existing catch information. It does not reroll traits or create a new specimen.</p>
+        <div class="tb-chip-list">
+          {satchelSortKeys.map((key) => <span>{key}</span>)}
+        </div>
+      </article>
+
+      <article class="tb-satchel__panel tb-satchel__panel--accent">
+        <p class="tb-satchel__kicker">Protection</p>
+        <h2>Trophy Lock evidence</h2>
+        <p>Once unlocked, automatic protection can use configured evidence such as records, rarity, size, and specimen traits.</p>
+        <ul>
+          {trophyLockEvidence.map((evidence) => <li>{evidence}</li>)}
+        </ul>
+      </article>
+    </section>
+
+    <section class="tb-satchel__flow" aria-labelledby="stow-heading">
+      <div>
+        <p class="tb-satchel__kicker">Server-owned retrieval</p>
+        <h2 id="stow-heading">What Auto-Stow actually does</h2>
+      </div>
+      <ol>
+        <li><span>1</span><p><strong>Tide resolves the catch.</strong> Species selection and catch logging happen before Satchel delivery.</p></li>
+        <li><span>2</span><p><strong>Tideborne checks the active Satchel.</strong> An enabled Auto-Stow target can defer normal entity delivery.</p></li>
+        <li><span>3</span><p><strong>The server inserts the existing catch.</strong> The canonical specimen is stored, not regenerated.</p></li>
+        <li><span>4</span><p><strong>Protection and organization run after insertion.</strong> If storage fails, Tideborne falls back to normal catch spawning.</p></li>
+      </ol>
+    </section>
+
+    <section class="tb-satchel__release-scope">
+      <div>
+        <p class="tb-satchel__kicker">Release scope</p>
+        <h2>2.1.0 vs newer development notes</h2>
+      </div>
+      <p>
+        This release guide intentionally excludes the later development-only physical multi-preset tackle manager with up to 12 named rod/line/hook/bobber/bait/leader presets. The published 2.1.0 Satchel reference above stays limited to behavior verified for that release.
+      </p>
+      <a href="/TIDEBORNE/anglers-satchel/">Read the full Satchel article →</a>
+    </section>
+  </main>
+</StarlightPage>
+
+<style>
+  .tb-satchel { display: grid; gap: 3rem; width: min(100%, 88rem); margin-inline: auto; }
+  .tb-satchel__hero, .tb-satchel__section-heading, .tb-satchel__release-scope { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+  .tb-satchel__hero h1 { margin: 0; font-size: clamp(2.8rem, 7vw, 5.7rem); line-height: .92; letter-spacing: -.055em; }
+  .tb-satchel__hero > div:first-child > p:last-child { max-width: 53rem; margin: .9rem 0 0; color: var(--tb-text-secondary); font-size: 1rem; line-height: 1.6; }
+  .tb-satchel__kicker { margin: 0 0 .35rem; color: var(--tb-accent); font-size: .68rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+  .tb-satchel__version { display: grid; gap: .15rem; min-width: 14rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .8rem 1rem; }
+  .tb-satchel__version strong { font-size: .76rem; }
+  .tb-satchel__version span { color: var(--tb-text-muted); font-size: .68rem; }
+  .tb-satchel__notice { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; align-items: baseline; border: 1px solid color-mix(in srgb, var(--tb-score) 38%, var(--tb-border-subtle)); border-radius: var(--tb-radius-md); background: color-mix(in srgb, var(--tb-score) 7%, var(--tb-surface)); padding: .85rem 1rem; }
+  .tb-satchel__notice strong { color: var(--tb-score); font-size: .75rem; }
+  .tb-satchel__notice p { margin: 0; color: var(--tb-text-secondary); font-size: .76rem; }
+  .tb-satchel__section { display: grid; gap: 1.25rem; }
+  .tb-satchel__section-heading h2, .tb-satchel__panel h2, .tb-satchel__flow h2, .tb-satchel__release-scope h2 { margin: 0; letter-spacing: -.035em; }
+  .tb-satchel__section-heading h2 { font-size: clamp(1.8rem, 4vw, 2.7rem); }
+  .tb-satchel__section-heading > p { max-width: 32rem; margin: 0; color: var(--tb-text-muted); font-size: .78rem; text-align: right; }
+  .tb-capacity-track { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; }
+  .tb-capacity-step { position: relative; display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: center; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: 1rem; }
+  .tb-capacity-step:not(:last-child)::after { content: ''; position: absolute; z-index: 2; right: -.82rem; width: .82rem; height: 1px; background: var(--tb-border-strong); }
+  .tb-capacity-step__index { display: grid; place-items: center; width: 2.35rem; height: 2.35rem; border-radius: 50%; background: color-mix(in srgb, var(--tb-accent) 14%, var(--tb-surface-raised)); color: var(--tb-accent); font-size: .78rem; font-weight: 900; }
+  .tb-capacity-step h3 { margin: 0; font-size: .82rem; }
+  .tb-capacity-step strong, .tb-capacity-step span { display: block; }
+  .tb-capacity-step strong { margin-top: .22rem; color: var(--tb-text); font-size: .76rem; }
+  .tb-capacity-step span { margin-top: .1rem; color: var(--tb-text-muted); font-size: .65rem; }
+  .tb-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
+  .tb-feature-card { display: grid; grid-template-rows: auto 1fr auto; gap: .9rem; min-height: 14rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: linear-gradient(160deg, color-mix(in srgb, var(--tb-accent) 4%, var(--tb-surface)), var(--tb-surface)); padding: 1rem; }
+  .tb-feature-card header, .tb-feature-card footer { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+  .tb-feature-card__number { color: var(--tb-text-muted); font-size: .64rem; font-weight: 850; }
+  .tb-feature-card__cost { border-radius: 999px; background: color-mix(in srgb, var(--tb-score) 10%, transparent); padding: .22rem .48rem; color: var(--tb-score); font-size: .66rem; font-weight: 850; }
+  .tb-feature-card__stage { margin: 0 0 .3rem; color: var(--tb-accent); font-size: .62rem; font-weight: 850; text-transform: uppercase; }
+  .tb-feature-card h3 { margin: 0; font-size: 1.05rem; }
+  .tb-feature-card div > p:last-child { margin: .5rem 0 0; color: var(--tb-text-secondary); font-size: .76rem; line-height: 1.5; }
+  .tb-feature-card footer { align-items: end; }
+  .tb-feature-card code { color: var(--tb-text-muted); font-size: .58rem; overflow-wrap: anywhere; }
+  .tb-feature-card footer span { color: var(--tb-score); font-size: .58rem; font-weight: 800; text-align: right; }
+  .tb-satchel__split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .tb-satchel__panel { border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-lg); background: var(--tb-surface); padding: 1.2rem; }
+  .tb-satchel__panel--accent { background: linear-gradient(150deg, color-mix(in srgb, var(--tb-score) 7%, var(--tb-surface)), var(--tb-surface)); }
+  .tb-satchel__panel > p:not(.tb-satchel__kicker) { color: var(--tb-text-secondary); font-size: .78rem; line-height: 1.55; }
+  .tb-chip-list { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: 1rem; }
+  .tb-chip-list span { border: 1px solid var(--tb-border-subtle); border-radius: 999px; background: var(--tb-background); padding: .34rem .58rem; color: var(--tb-text-secondary); font-size: .67rem; font-weight: 750; }
+  .tb-satchel__panel ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem .8rem; margin: 1rem 0 0; padding-left: 1rem; color: var(--tb-text-secondary); font-size: .73rem; }
+  .tb-satchel__flow { display: grid; grid-template-columns: minmax(12rem, .32fr) 1fr; gap: 2rem; align-items: start; }
+  .tb-satchel__flow ol { display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem; margin: 0; padding: 0; list-style: none; }
+  .tb-satchel__flow li { display: grid; grid-template-columns: auto 1fr; gap: .65rem; border: 1px solid var(--tb-border-subtle); border-radius: var(--tb-radius-md); background: var(--tb-surface); padding: .85rem; }
+  .tb-satchel__flow li > span { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--tb-accent); color: var(--tb-background); font-size: .68rem; font-weight: 900; }
+  .tb-satchel__flow li p { margin: 0; color: var(--tb-text-secondary); font-size: .72rem; line-height: 1.45; }
+  .tb-satchel__flow li strong { color: var(--tb-text); }
+  .tb-satchel__release-scope { align-items: start; border-top: 1px solid var(--tb-border-subtle); padding-top: 1.5rem; }
+  .tb-satchel__release-scope > div { min-width: 16rem; }
+  .tb-satchel__release-scope > p { max-width: 42rem; margin: 0; color: var(--tb-text-secondary); font-size: .76rem; line-height: 1.55; }
+  .tb-satchel__release-scope a { flex: none; color: var(--tb-accent); font-size: .72rem; font-weight: 800; text-decoration: none; }
+  @media (max-width: 68rem) { .tb-capacity-track { grid-template-columns: repeat(2, 1fr); } .tb-capacity-step::after { display: none; } .tb-feature-grid { grid-template-columns: repeat(2, 1fr); } .tb-satchel__flow { grid-template-columns: 1fr; } }
+  @media (max-width: 48rem) { .tb-satchel__hero, .tb-satchel__section-heading, .tb-satchel__release-scope { align-items: start; flex-direction: column; } .tb-satchel__section-heading > p { text-align: left; } .tb-satchel__split, .tb-satchel__flow ol { grid-template-columns: 1fr; } }
+  @media (max-width: 36rem) { .tb-capacity-track, .tb-feature-grid { grid-template-columns: 1fr; } .tb-satchel__panel ul { grid-template-columns: 1fr; } .tb-satchel__notice { grid-template-columns: 1fr; } }
+</style>
