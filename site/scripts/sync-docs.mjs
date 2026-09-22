@@ -5,7 +5,7 @@ import { dirname, extname, join, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 
 function toSlug(filename) {
-  if (filename.toLowerCase() === 'readme.md') return 'index.md';
+  if (filename.toLowerCase() === 'readme.md') return 'wiki-home.md';
   const stem = filename.slice(0, -extname(filename).length);
   return `${stem
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
