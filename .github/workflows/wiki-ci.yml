@@ -31,6 +31,10 @@ jobs:
         working-directory: site
         run: npm ci
 
+      - name: Run website tests
+        working-directory: site
+        run: npm test -- --passWithNoTests
+
       - name: Typecheck and build
         working-directory: site
         run: npm run build
